@@ -1,0 +1,145 @@
+@baseUrl = http://localhost:5000
+@adminToken = <PUT_ADMIN_JWT_HERE>
+@customerToken = <PUT_CUSTOMER_JWT_HERE>
+
+### Notes
+# Replace @adminToken and @customerToken with JWTs containing claims as used in project (NameIdentifier, Role, BranchID, AreaID).
+# The seeder creates sample IDs; use them if needed:
+# adminUserId = dddddddd-dddd-dddd-dddd-dddddddddddd
+# customerUserId = eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee
+# customerId = ffffffff-ffff-ffff-ffff-ffffffffffff
+
+### LOYALTY - Earn points (Admin)
+POST {{baseUrl}}/api/loyalty/earn/ffffffff-ffff-ffff-ffff-ffffffffffff?points=50&description=Order+#123
+Authorization: Bearer {{adminToken}}
+
+### LOYALTY - Redeem points (Admin)
+POST {{baseUrl}}/api/loyalty/redeem/ffffffff-ffff-ffff-ffff-ffffffffffff?points=20&description=Redeem+for+voucher
+Authorization: Bearer {{adminToken}}
+
+### LOYALTY - History (Customer or Admin)
+GET {{baseUrl}}/api/loyalty/history/ffffffff-ffff-ffff-ffff-ffffffffffff?page=1&pageSize=20
+Authorization: Bearer {{customerToken}}
+
+### PROMOTIONS - Admin create promotion
+POST {{baseUrl}}/api/admin/promotions
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "Code": "WELCOME10",
+  "Title": "Welcome 10%",
+  "Description": "10% off for new customers",
+  "StartAt": "2024-01-01T00:00:00Z",
+  "EndAt": "2030-12-31T23:59:59Z",
+  "IsActive": true,
+  "BranchId": null
+}
+
+### PROMOTIONS - Get public promotions (Customer)
+GET {{baseUrl}}/api/promotions/public
+
+### PROMOTIONS - Assign promotion to customer (Admin)
+# Replace <promotionId-from-create-response> with the returned id from create above
+POST {{baseUrl}}/api/admin/promotions/assign/<promotionId-from-create-response>
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+["ffffffff-ffff-ffff-ffff-ffffffffffff"]
+
+### PROMOTIONS - Customer wallet
+GET {{baseUrl}}/api/promotions/wallet/ffffffff-ffff-ffff-ffff-ffffffffffff
+Authorization: Bearer {{customerToken}}
+
+### PROMOTIONS - Apply voucher (Customer) - mark as used
+# Example: apply code WELCOME10
+POST {{baseUrl}}/api/promotions/apply?code=WELCOME10&orderId=00000000-0000-0000-0000-000000000001
+Authorization: Bearer {{customerToken}}
+
+### FEEDBACK - Customer send feedback
+POST {{baseUrl}}/api/feedbacks
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "BranchId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+  "ProductId": null,
+  "Rating": 5,
+  "Content": "Great coffee and service!",
+  "AreaId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+}
+
+### FEEDBACK - Admin list feedbacks (apply filters)
+POST {{baseUrl}}/api/admin/feedbacks/list
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "Status": null,
+  "Rating": null,
+  "BranchId": null,
+  "Page": 1,
+  "PageSize": 20
+}
+
+### FEEDBACK - Admin reply
+PUT {{baseUrl}}/api/admin/feedbacks/<feedbackId>/reply
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "Status": "Resolved",
+  "ResponseContent": "Thank you for your feedback. We will reward you next time."
+}
+
+### SURVEYS - Admin create survey
+POST {{baseUrl}}/api/admin/surveys
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "Title": "Customer Satisfaction Survey",
+  "Description": "Short survey about store experience",
+  "StartAt": "2024-01-01T00:00:00Z",
+  "EndAt": "2030-12-31T23:59:59Z",
+  "Questions": [
+    { "QuestionKey": "q1", "QuestionText": "How do you rate our coffee?" },
+    { "QuestionKey": "q2", "QuestionText": "How do you rate our service?" }
+  ],
+  "IsActive": true
+}
+
+### SURVEYS - Admin send survey to customers
+# Replace <surveyId> with returned id from create
+POST {{baseUrl}}/api/admin/surveys/send/<surveyId>
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+["ffffffff-ffff-ffff-ffff-ffffffffffff"]
+
+### SURVEYS - Admin analytics
+GET {{baseUrl}}/api/admin/surveys/<surveyId>/analytics
+Authorization: Bearer {{adminToken}}
+
+### SURVEYS - Customer get active surveys
+GET {{baseUrl}}/api/surveys/active
+Authorization: Bearer {{customerToken}}
+
+### SURVEYS - Customer submit survey
+POST {{baseUrl}}/api/surveys/<surveyId>/submit
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "CustomerId": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+  "Answers": [
+    { "QuestionKey": "q1", "Answer": "5" },
+    { "QuestionKey": "q2", "Answer": "5" }
+  ]
+}
+
+### STATS CRM - Admin overview
+GET {{baseUrl}}/api/admin/stats/crm/overview
+Authorization: Bearer {{adminToken}}
+
+# End of file

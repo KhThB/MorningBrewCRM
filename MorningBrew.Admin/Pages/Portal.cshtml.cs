@@ -7,6 +7,8 @@ public class PortalModel(CrmApi api):PageModel
 {
     public static readonly Dictionary<string,string> Titles=new(){["profile"]="Hồ sơ thành viên",["loyalty"]="Lịch sử điểm",["wallet"]="Ví voucher",["promotions"]="Ưu đãi",["feedbacks"]="Phản hồi của tôi",["surveys"]="Khảo sát dành cho tôi"};
     [BindProperty(SupportsGet=true)] public string Section{get;set;}="profile";
+    [BindProperty(SupportsGet=true)] public string? PageToken {get;set;}
+    public string? NextPageToken {get;set;}
     public string Title=>Titles.GetValueOrDefault(Section,"Thành viên");
     public List<Dictionary<string,JsonElement>> Rows{get;set;}=[];
     public async Task<IActionResult> OnGetAsync()
@@ -14,8 +16,8 @@ public class PortalModel(CrmApi api):PageModel
         if(!Titles.ContainsKey(Section))return NotFound();
         try
         {
-            if(Section=="profile")Rows=[await api.Get<Dictionary<string,JsonElement>>("api/customer/profile")];
-            else Rows=await api.Get<List<Dictionary<string,JsonElement>>>($"api/customer/{Section}");
+            if(Section=="profile")Rows=[await api.Get<Dictionary<string,JsonElement>>("v1/me/profile")];
+            else { var page=await api.Get<ApiPage>($"v1/me/{Section}?pageToken={Uri.EscapeDataString(PageToken??"")}"); Rows=page.Items; NextPageToken=page.NextPageToken; }
         }
         catch(CrmApiException e){TempData["Error"]=e.Message;}
         return Page();
@@ -28,11 +30,11 @@ public class PortalModel(CrmApi api):PageModel
             switch(operation)
             {
                 case "feedback":
-                    await api.Send(HttpMethod.Post,"api/customer/feedbacks",new {content=Text("content"),type=Text("type"),rating=int.Parse(Text("rating")),branchId=string.IsNullOrEmpty(Text("branchId"))?(int?)null:int.Parse(Text("branchId"))});break;
+                    await api.Send(HttpMethod.Post,"v1/me/feedbacks",new {content=Text("content"),type=Text("type"),rating=int.Parse(Text("rating")),branchId=string.IsNullOrEmpty(Text("branchId"))?(int?)null:int.Parse(Text("branchId"))});break;
                 case "redeem":
-                    await api.Send(HttpMethod.Post,$"api/customer/promotions/{int.Parse(Text("id"))}/redeem",new {requestKey=Guid.Parse(Text("requestKey"))});break;
+                    await api.Send(HttpMethod.Post,$"v1/me/promotions/{int.Parse(Text("id"))}:redeem",new {requestKey=Guid.Parse(Text("requestKey"))});break;
                 case "profile":
-                    await api.Send(HttpMethod.Put,"api/customer/profile",new {fullName=Text("fullName"),phone=Text("phone"),dateOfBirth=string.IsNullOrEmpty(Text("birth"))?(DateTime?)null:DateTime.Parse(Text("birth")),gender=Text("gender")});break;
+                    await api.Send(HttpMethod.Patch,"v1/me/profile",new {fullName=Text("fullName"),phone=Text("phone"),dateOfBirth=string.IsNullOrEmpty(Text("birth"))?null:Text("birth"),gender=Text("gender")},etag:Text("etag"));break;
                 default:return BadRequest();
             }
             TempData["Success"]="Đã lưu thành công.";

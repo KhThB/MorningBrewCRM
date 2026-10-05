@@ -5,23 +5,23 @@ public static class RowDisplay
 {
     private static readonly Dictionary<string,string> Names=new()
     {
-        ["CustomerID"]="Mã khách",["UserID"]="Mã tài khoản",["FullName"]="Họ tên",["Phone"]="Điện thoại",
-        ["DateOfBirth"]="Ngày sinh",["Gender"]="Giới tính",["LoyaltyPoints"]="Điểm",["IsActive"]="Hoạt động",
-        ["FeedbackID"]="Mã phản hồi",["BranchID"]="Mã chi nhánh",["Type"]="Loại",["Content"]="Nội dung",
-        ["Rating"]="Đánh giá",["Status"]="Trạng thái",["ResponseContent"]="Trả lời",["CreatedAt"]="Ngày tạo",
-        ["SurveyID"]="Mã khảo sát",["Title"]="Tiêu đề",["Scope"]="Phạm vi",["AreaID"]="Mã khu vực",
-        ["StartsAt"]="Bắt đầu",["EndsAt"]="Kết thúc",["Invited"]="Đã mời",["Completed"]="Đã trả lời",
-        ["PromotionID"]="Mã ưu đãi",["Name"]="Tên",["Description"]="Mô tả",["DiscountType"]="Kiểu giảm",
-        ["DiscountValue"]="Mức giảm",["PointsCost"]="Điểm đổi",["ProductID"]="Mã sản phẩm",
-        ["Category"]="Danh mục",["VariantID"]="Mã biến thể",["Size"]="Kích cỡ",["BasePrice"]="Giá cơ bản",
-        ["Role"]="Vai trò",["Permission"]="Quyền",["Branch"]="Chi nhánh",["ShiftID"]="Mã ca",
-        ["Hours"]="Số giờ",["IsCancelled"]="Đã hủy",["SupplierID"]="Mã nhà cung cấp",["Code"]="Mã",
-        ["ProductGroup"]="Nhóm sản phẩm",["CompletedOrders"]="Đơn hoàn tất",["GrossRevenue"]="Doanh thu",
-        ["RefundedRevenue"]="Đã hoàn tiền",["NetRevenue"]="Doanh thu thuần",["QuestionID"]="Mã câu hỏi",
-        ["Text"]="Câu hỏi",["TextValue"]="Trả lời",["RatingValue"]="Điểm đánh giá",["SelectedOptions"]="Lựa chọn",
-        ["LoyaltyTransactionID"]="Mã giao dịch điểm",["Kind"]="Loại giao dịch",["Points"]="Số điểm",
-        ["Note"]="Ghi chú",["CustomerPromotionID"]="Mã voucher",["PointsSpent"]="Điểm đã dùng",
-        ["ExpiresAt"]="Hết hạn",["CompletedAt"]="Hoàn thành",["MaxDiscount"]="Giảm tối đa",["MinSubtotal"]="Đơn tối thiểu"
+        ["customer_id"]="Mã khách",["user_id"]="Mã tài khoản",["full_name"]="Họ tên",["phone"]="Điện thoại",
+        ["date_of_birth"]="Ngày sinh",["gender"]="Giới tính",["loyalty_points"]="Điểm",["is_active"]="Hoạt động",
+        ["feedback_id"]="Mã phản hồi",["branch_id"]="Mã chi nhánh",["type"]="Loại",["content"]="Nội dung",
+        ["rating"]="Đánh giá",["status"]="Trạng thái",["response_content"]="Trả lời",["create_time"]="Ngày tạo",
+        ["survey_id"]="Mã khảo sát",["title"]="Tiêu đề",["scope"]="Phạm vi",["area_id"]="Mã khu vực",
+        ["start_time"]="Bắt đầu",["end_time"]="Kết thúc",["invited"]="Đã mời",["completed"]="Đã trả lời",
+        ["promotion_id"]="Mã ưu đãi",["display_name"]="Tên",["description"]="Mô tả",["discount_type"]="Kiểu giảm",
+        ["discount_value"]="Mức giảm",["points_cost"]="Điểm đổi",["product_id"]="Mã sản phẩm",
+        ["category"]="Danh mục",["variant_id"]="Mã biến thể",["size"]="Kích cỡ",["base_price"]="Giá cơ bản",
+        ["role"]="Vai trò",["permission"]="Quyền",["branch"]="Chi nhánh",["shift_id"]="Mã ca",
+        ["hours"]="Số giờ",["is_cancelled"]="Đã hủy",["supplier_id"]="Mã nhà cung cấp",["code"]="Mã",
+        ["product_group"]="Nhóm sản phẩm",["completed_orders"]="Đơn hoàn tất",["gross_revenue"]="Doanh thu",
+        ["refunded_revenue"]="Đã hoàn tiền",["net_revenue"]="Doanh thu thuần",["question_id"]="Mã câu hỏi",
+        ["text"]="Câu hỏi",["text_value"]="Trả lời",["rating_value"]="Điểm đánh giá",["selected_options"]="Lựa chọn",
+        ["loyalty_transaction_id"]="Mã giao dịch điểm",["kind"]="Loại giao dịch",["points"]="Số điểm",
+        ["note"]="Ghi chú",["customer_promotion_id"]="Mã voucher",["points_spent"]="Điểm đã dùng",
+        ["expire_time"]="Hết hạn",["complete_time"]="Hoàn thành",["max_discount"]="Giảm tối đa",["min_subtotal"]="Đơn tối thiểu"
     };
     private static readonly Dictionary<string,string> Values=new()
     {
@@ -38,11 +38,11 @@ public static class RowDisplay
         if(value.ValueKind==JsonValueKind.Null)return "—";
         if(value.ValueKind is JsonValueKind.True or JsonValueKind.False)return value.GetBoolean()?"Có":"Không";
         var text=value.ToString();
-        if(key=="DateOfBirth"&&DateTime.TryParse(text,CultureInfo.InvariantCulture,DateTimeStyles.None,out var birthday))
+        if(key=="date_of_birth"&&DateTime.TryParse(text,CultureInfo.InvariantCulture,DateTimeStyles.None,out var birthday))
             return birthday.ToString("dd/MM/yyyy");
-        if(key.EndsWith("At")&&DateTime.TryParse(text,CultureInfo.InvariantCulture,DateTimeStyles.None,out var time))
+        if(key.EndsWith("_time")&&DateTime.TryParse(text,CultureInfo.InvariantCulture,DateTimeStyles.None,out var time))
             return DateTime.SpecifyKind(time,DateTimeKind.Utc).ToLocalTime().ToString("dd/MM/yyyy HH:mm");
-        if(key is "Status" or "Scope" or "Role" or "Gender" or "Kind")return Values.GetValueOrDefault(text,text);
+        if(key is "status" or "scope" or "role" or "gender" or "kind")return Values.GetValueOrDefault(text,text);
         return text;
     }
 }

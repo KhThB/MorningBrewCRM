@@ -9,7 +9,11 @@ public sealed class SqlStore(IConfiguration configuration)
         => Run(sql, CommandType.Text, values);
     public Task<List<Dictionary<string, object?>>> Procedure(string name, params (string, object?)[] values)
         => Run(name, CommandType.StoredProcedure, values);
+    public Task<List<List<Dictionary<string, object?>>>> ProcedureSets(string name, params (string, object?)[] values)
+        => RunSets(name, CommandType.StoredProcedure, values);
     private async Task<List<Dictionary<string, object?>>> Run(string sql, CommandType type, (string, object?)[] values)
+        => (await RunSets(sql, type, values)).FirstOrDefault() ?? [];
+    private async Task<List<List<Dictionary<string, object?>>>> RunSets(string sql, CommandType type, (string, object?)[] values)
     {
         await using var connection = new SqlConnection(configuration.GetConnectionString("MorningBrew")
             ?? throw new InvalidOperationException("Configure ConnectionStrings:MorningBrew."));
@@ -21,19 +25,28 @@ public sealed class SqlStore(IConfiguration configuration)
             else command.Parameters.AddWithValue(key, value ?? DBNull.Value);
         }
         await using var reader = await command.ExecuteReaderAsync();
-        var result = new List<Dictionary<string, object?>>();
-        while (await reader.ReadAsync())
+        var sets = new List<List<Dictionary<string, object?>>>();
+        do
         {
-            var row = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-            for (var i = 0; i < reader.FieldCount; i++) row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
-            result.Add(row);
-        }
-        return result;
+            if (reader.FieldCount == 0) continue;
+            var result = new List<Dictionary<string, object?>>();
+            while (await reader.ReadAsync())
+            {
+                var row = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                for (var i = 0; i < reader.FieldCount; i++)
+                    row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetDataTypeName(i) == "date"
+                        ? DateOnly.FromDateTime(reader.GetDateTime(i)) : reader.GetValue(i);
+                result.Add(row);
+            }
+            sets.Add(result);
+        } while (await reader.NextResultAsync());
+        return sets;
     }
 }
-public sealed class ApiException(int status, string message) : Exception(message)
+public sealed class ApiException(int status, string message, ErrorDetail[]? details = null) : Exception(message)
 {
     public int Status { get; } = status;
+    public ErrorDetail[] Details { get; } = details ?? [];
 }
 public sealed class ApiErrors(RequestDelegate next, ILogger<ApiErrors> logger)
 {
@@ -42,10 +55,15 @@ public sealed class ApiErrors(RequestDelegate next, ILogger<ApiErrors> logger)
         try { await next(context); }
         catch (Exception ex)
         {
+            if (context.Response.HasStarted || context.RequestAborted.IsCancellationRequested) throw;
             var (status, message) = ex switch
             {
                 ApiException e => (e.Status, e.Message),
                 SqlException { Number: 51103 } => (403, "Thao tác nằm ngoài quyền hoặc phạm vi của bạn."),
+                SqlException { Number: 51104 } => (404, "Không tìm thấy tài nguyên."),
+                SqlException { Number: 51112 } => (412, "Dữ liệu đã thay đổi. Hãy tải lại trước khi lưu."),
+                SqlException { Number: 51109 } => (409, "Yêu cầu xung đột với trạng thái hoặc yêu cầu trước đó."),
+                BadHttpRequestException e => (e.StatusCode, "Yêu cầu HTTP không hợp lệ."),
                 SqlException e when e.Number is 2601 or 2627 => (409, "Dữ liệu đã tồn tại hoặc yêu cầu đã được xử lý."),
                 SqlException e when e.Number is 547 or 515 or 2628 => (400, "Dữ liệu không hợp lệ hoặc đang được sử dụng."),
                 SqlException e when e.Number >= 51000 && e.Number < 52000 => (400, e.Message),
@@ -54,7 +72,9 @@ public sealed class ApiErrors(RequestDelegate next, ILogger<ApiErrors> logger)
             };
             if (status >= 500) logger.LogError(ex, "Request failed: {Path}", context.Request.Path);
             context.Response.StatusCode = status;
-            await context.Response.WriteAsJsonAsync(new { message });
+            var error = ApiContract.Error(status, message, (ex as ApiException)?.Details);
+            if (ex is SqlException { Number: 51109 }) error = error with { Error = error.Error with { Status = "ABORTED" } };
+            await context.Response.WriteAsJsonAsync(error);
         }
     }
 }

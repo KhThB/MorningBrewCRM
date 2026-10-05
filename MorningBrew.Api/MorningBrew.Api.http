@@ -1,24 +1,63 @@
-@baseUrl = https://localhost:7132
-@token = paste-token-from-login-response
+@host = https://localhost:7132
+@ownerToken = PASTE_OWNER_TOKEN
+@customerToken = PASTE_CUSTOMER_TOKEN
+@profileEtag = "PASTE_ETAG_FROM_PROFILE"
 
-### Login: seeded development account only
-POST {{baseUrl}}/api/auth/login
+### 1. Login as Owner; copy token to ownerToken above
+POST {{host}}/v1/auth/login
 Content-Type: application/json
 
 {"username":"owner@morningbrew.test","password":"MorningBrew!2026"}
 
-### Current account and assigned branches
-GET {{baseUrl}}/api/auth/me
-Authorization: Bearer {{token}}
+### 2. Current identity
+GET {{host}}/v1/auth/me
+Authorization: Bearer {{ownerToken}}
 
-### CRM overview
-GET {{baseUrl}}/api/admin/dashboard/overview
-Authorization: Bearer {{token}}
+### 3. Customers; use next_page_token as pageToken to continue with the same q
+GET {{host}}/v1/customers?pageSize=20&q=
+Authorization: Bearer {{ownerToken}}
 
-### Scoped customer list
-GET {{baseUrl}}/api/admin/customers?skip=0
-Authorization: Bearer {{token}}
+### 4. Shared products
+GET {{host}}/v1/products?pageSize=20
+Authorization: Bearer {{ownerToken}}
 
-### Revoke current session
-POST {{baseUrl}}/api/auth/logout
-Authorization: Bearer {{token}}
+### 5. Shared variants and prices
+GET {{host}}/v1/variants?pageSize=20
+Authorization: Bearer {{ownerToken}}
+
+### 6. Set shared price (Owner only). Select a real variant ID first.
+PUT {{host}}/v1/variants/1/price
+Authorization: Bearer {{ownerToken}}
+Content-Type: application/json
+
+{"price":30000}
+
+### 7. Login as Customer; copy token to customerToken above
+POST {{host}}/v1/auth/login
+Content-Type: application/json
+
+{"username":"lan@morningbrew.test","password":"MorningBrew!2026"}
+
+### 8. Read profile; copy ETag header exactly (including quotes) to profileEtag
+GET {{host}}/v1/me/profile
+Authorization: Bearer {{customerToken}}
+
+### 9. Partial update. Read profile again before repeating this request.
+PATCH {{host}}/v1/me/profile
+Authorization: Bearer {{customerToken}}
+If-Match: {{profileEtag}}
+Content-Type: application/json
+
+{"phone":"0901234567"}
+
+### 10. Voucher wallet
+GET {{host}}/v1/me/wallet?pageSize=20
+Authorization: Bearer {{customerToken}}
+
+### 11. Validation example: pageSize out of range -> 400 error envelope
+GET {{host}}/v1/customers?pageSize=101
+Authorization: Bearer {{ownerToken}}
+
+### 12. Logout customer -> 204; invalidates this token
+POST {{host}}/v1/auth/logout
+Authorization: Bearer {{customerToken}}

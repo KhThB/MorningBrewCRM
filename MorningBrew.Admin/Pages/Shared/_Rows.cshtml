@@ -3,7 +3,7 @@
 {<div class="empty-state">Chưa có dữ liệu trong phạm vi này.</div>}
 else
 {
-<div class="table-wrap"><table><thead><tr>@foreach(var column in Model[0].Keys){<th>@RowDisplay.Label(column)</th>}</tr></thead><tbody>
-@foreach(var row in Model){<tr>@foreach(var cell in row){<td>@RowDisplay.Value(cell.Key,cell.Value)</td>}</tr>}
+<div class="table-wrap"><table><thead><tr>@foreach(var column in Model[0].Keys.Where(k=>k is not ("name" or "etag"))){<th>@RowDisplay.Label(column)</th>}</tr></thead><tbody>
+@foreach(var row in Model){<tr>@foreach(var cell in row.Where(x=>x.Key is not ("name" or "etag"))){<td>@RowDisplay.Value(cell.Key,cell.Value)</td>}</tr>}
 </tbody></table></div>
 }

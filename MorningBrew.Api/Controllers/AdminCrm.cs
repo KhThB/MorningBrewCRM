@@ -13,12 +13,12 @@ public sealed partial class AdminController
         [Required,MinLength(1),MaxLength(40)] QuestionInput[] Questions);
 
     [HttpPost("surveys")]
-    public async Task<object> CreateSurvey(SurveyInput input)
+    public async Task<IActionResult> CreateSurvey(SurveyInput input)
     {
         if (input.EndsAt <= input.StartsAt) throw new ApiException(400,"Ngày kết thúc phải sau ngày bắt đầu.");
         foreach (var q in input.Questions)
         {
-            if (q.Type is not ("Text" or "Rating" or "SingleChoice" or "MultipleChoice") ||
+            if (q is null || q.Type is not ("Text" or "Rating" or "SingleChoice" or "MultipleChoice") ||
                 string.IsNullOrWhiteSpace(q.Text) || q.Text.Length>2000 ||
                 (q.Type=="Rating" && (q.RatingMin is null || q.RatingMax is null || q.RatingMin>=q.RatingMax)) ||
                 (q.Type is "SingleChoice" or "MultipleChoice" && (q.Options is null || q.Options.Length<2 || q.Options.Length>30 || q.Options.Any(x=>string.IsNullOrWhiteSpace(x)||x.Length>500))))
@@ -26,7 +26,7 @@ public sealed partial class AdminController
         }
         var questions = input.Questions.Select((q,i)=>new { text=q.Text,type=q.Type,required=q.IsRequired,position=i,
             min=q.Type=="Rating"?q.RatingMin:null,max=q.Type=="Rating"?q.RatingMax:null,options=q.Options });
-        return await db.Query("""
+        var created = await db.Query("""
             SET XACT_ABORT ON; BEGIN TRAN;
             IF dbo.CanScope(@actor,@scope,@area,@branch,'Surveys.Manage')=0 THROW 51103,'Scope denied.',1;
             INSERT dbo.Surveys(Title,Description,CreatedBy,Scope,AreaID,BranchID,StartsAt,EndsAt)
@@ -44,13 +44,15 @@ public sealed partial class AdminController
             """, ("@actor",Actor),("@scope",input.Scope),("@area",input.AreaId),("@branch",input.BranchId),
             ("@title",input.Title),("@description",input.Description),("@start",input.StartsAt.UtcDateTime),("@end",input.EndsAt.UtcDateTime),
             ("@questions",JsonSerializer.Serialize(questions)));
+        var id = (int)created.Single()["SurveyID"]!;
+        return Created($"/v1/surveys/{id}", await ReadResource("surveys", id));
     }
-    [HttpPost("surveys/{id:int}/publish")]
+    [HttpPost("surveys/{id:int}:publish")]
     public async Task<IActionResult> Publish(int id)
     {
         await db.Procedure("dbo.PublishSurvey",("@ActorID",Actor),("@SurveyID",id)); return NoContent();
     }
-    [HttpPost("surveys/{id:int}/close")]
+    [HttpPost("surveys/{id:int}:close")]
     public async Task<IActionResult> Close(int id)
     {
         await db.Query("""
@@ -60,29 +62,32 @@ public sealed partial class AdminController
             """,("@id",id),("@actor",Actor)); return NoContent();
     }
     public record CustomerInput([Range(1,int.MaxValue)] int CustomerId);
-    [HttpPost("surveys/{id:int}/invite")]
+    [HttpPost("surveys/{id:int}:invite")]
     public async Task<IActionResult> Invite(int id,CustomerInput input)
     {
         await db.Procedure("dbo.InviteSurvey",("@ActorID",Actor),("@SurveyID",id),("@CustomerID",input.CustomerId)); return NoContent();
     }
     [HttpGet("surveys/{id:int}/results")]
-    public async Task<object> SurveyResults(int id)
+    public async Task<ApiPage> SurveyResults(int id, [FromQuery] PageRequest page)
     {
         await db.Query("IF NOT EXISTS(SELECT 1 FROM dbo.Surveys WHERE SurveyID=@id AND dbo.CanScope(@actor,Scope,AreaID,BranchID,'Surveys.Manage')=1) THROW 51103,'Scope denied.',1;",("@actor",Actor),("@id",id));
-        return await db.Query("""
-            SELECT q.QuestionID,q.Text,q.Type,r.CustomerID,r.TextValue,r.RatingValue,
+        var result = await pages.Read("""
+            SELECT q.QuestionID,q.Text,q.Type,r.CustomerID,COALESCE(r.CustomerID,0) AS CursorCustomerID,r.TextValue,r.RatingValue,
             STRING_AGG(CONVERT(nvarchar(max),o.Text),N', ') AS SelectedOptions
             FROM dbo.SurveyQuestions q LEFT JOIN dbo.SurveyResponses r ON r.QuestionID=q.QuestionID
             LEFT JOIN dbo.SurveyAnswerOptions a ON a.ResponseID=r.ResponseID LEFT JOIN dbo.SurveyQuestionOptions o ON o.OptionID=a.OptionID
             WHERE q.SurveyID=@id GROUP BY q.QuestionID,q.Text,q.Type,r.CustomerID,r.TextValue,r.RatingValue
-            ORDER BY q.QuestionID,r.CustomerID
-            """,("@id",id));
+            """,["QuestionID","CursorCustomerID"],false,page,$"{Actor}:surveyResults:{id}",[("@id",id)]);
+        foreach (var row in result.Items) row.Remove("CursorCustomerID");
+        return result;
     }
     public record PromotionInput([Required,MaxLength(150)] string Name,[MaxLength(2000)] string? Description,
         [Required] string Scope,int? AreaId,int? BranchId,[Required] string DiscountType,decimal DiscountValue,
         decimal? MaxDiscount,decimal MinSubtotal,DateTimeOffset StartsAt,DateTimeOffset EndsAt,int? PointsCost,int TotalLimit,int PerCustomerLimit);
     [HttpPost("promotions")]
-    public Task<List<Dictionary<string,object?>>> CreatePromotion(PromotionInput input) => db.Query("""
+    public async Task<IActionResult> CreatePromotion(PromotionInput input)
+    {
+        var created = await db.Query("""
         SET XACT_ABORT ON; BEGIN TRAN;
         IF dbo.CanScope(@actor,@scope,@area,@branch,'Promotions.Manage')=0 THROW 51103,'Scope denied.',1;
         INSERT dbo.Promotions(Name,Description,CreatedBy,Scope,AreaID,BranchID,DiscountType,DiscountValue,MaxDiscount,MinSubtotal,StartsAt,EndsAt,PointsCost,TotalLimit,PerCustomerLimit)
@@ -94,6 +99,9 @@ public sealed partial class AdminController
         ("@name",input.Name),("@description",input.Description),("@type",input.DiscountType),("@value",input.DiscountValue),
         ("@max",input.MaxDiscount),("@min",input.MinSubtotal),("@start",input.StartsAt.UtcDateTime),("@end",input.EndsAt.UtcDateTime),
         ("@points",input.PointsCost),("@limit",input.TotalLimit),("@per",input.PerCustomerLimit));
+        var id = (int)created.Single()["PromotionID"]!;
+        return Created($"/v1/promotions/{id}", await ReadResource("promotions", id));
+    }
     [HttpPut("promotions/{id:int}/active")]
     public async Task<IActionResult> PromotionActive(int id,ActiveInput input)
     {
@@ -103,14 +111,15 @@ public sealed partial class AdminController
             """,("@actor",Actor),("@id",id),("@active",input.IsActive)); return NoContent();
     }
     public record VoucherInput([Range(1,int.MaxValue)] int CustomerId,Guid RequestKey);
-    [HttpPost("promotions/{id:int}/issue")]
-    public Task<List<Dictionary<string,object?>>> Issue(int id,VoucherInput input)
+    [HttpPost("promotions/{id:int}:issue")]
+    public async Task<Dictionary<string,object?>> Issue(int id,VoucherInput input)
     {
         if(input.RequestKey==Guid.Empty) throw new ApiException(400,"RequestKey không được rỗng.");
-        return db.Procedure("dbo.IssueVoucher",("@ActorID",Actor),("@PromotionID",id),("@CustomerID",input.CustomerId),("@RequestKey",input.RequestKey));
+        var rows = await db.Procedure("dbo.IssueVoucher",("@ActorID",Actor),("@PromotionID",id),("@CustomerID",input.CustomerId),("@RequestKey",input.RequestKey));
+        return await VouchersController.Read(db,Actor,(int)rows.Single()["CustomerPromotionID"]!);
     }
     public record AdjustInput(int Delta,[Required,StringLength(300,MinimumLength=3)] string Note,Guid RequestKey);
-    [HttpPost("customers/{id:int}/points")]
+    [HttpPost("customers/{id:int}:adjustPoints")]
     public async Task<IActionResult> AdjustPoints(int id,AdjustInput input)
     {
         await RequireOwner();

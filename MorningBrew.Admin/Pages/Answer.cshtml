@@ -3,13 +3,13 @@
 @{ViewData["Title"]="Trả lời khảo sát";}
 <section class="panel"><h1>Chia sẻ trải nghiệm của bạn</h1><form method="post">
 @foreach(var q in Model.Survey["questions"]){
-var id=q["QuestionID"].GetInt32();var required=q["IsRequired"].GetBoolean();
-<label>@q["Text"] @(required?"*":"")</label>
-@switch(q["Type"].ToString()){
+var id=q["question_id"].GetInt32();var required=q["is_required"].GetBoolean();
+<label>@q["text"] @(required?"*":"")</label>
+@switch(q["type"].ToString()){
 case "Text":<textarea name="answer_@id" maxlength="4000" required="@required"></textarea>break;
-case "Rating":<input name="answer_@id" type="number" min="@q["RatingMin"]" max="@q["RatingMax"]" required="@required">break;
-case "SingleChoice":<select name="answer_@id" required="@required"><option value="">Chọn câu trả lời</option>@foreach(var o in Model.Survey["options"].Where(o=>o["QuestionID"].GetInt32()==id)){<option value="@o["OptionID"]">@o["Text"]</option>}</select>break;
-case "MultipleChoice":@foreach(var o in Model.Survey["options"].Where(o=>o["QuestionID"].GetInt32()==id)){<label><input style="width:auto" type="checkbox" name="answer_@id" value="@o["OptionID"]"> @o["Text"]</label>}break;
+case "Rating":<input name="answer_@id" type="number" min="@q["rating_min"]" max="@q["rating_max"]" required="@required">break;
+case "SingleChoice":<select name="answer_@id" required="@required"><option value="">Chọn câu trả lời</option>@foreach(var o in Model.Survey["options"].Where(o=>o["question_id"].GetInt32()==id)){<option value="@o["option_id"]">@o["text"]</option>}</select>break;
+case "MultipleChoice":@foreach(var o in Model.Survey["options"].Where(o=>o["question_id"].GetInt32()==id)){<label><input style="width:auto" type="checkbox" name="answer_@id" value="@o["option_id"]"> @o["text"]</label>}break;
 }
 }
 <button class="primary">Gửi câu trả lời</button></form></section>

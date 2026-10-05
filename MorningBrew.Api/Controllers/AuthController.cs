@@ -8,12 +8,14 @@ using Microsoft.AspNetCore.RateLimiting;
 using MorningBrew.Api.Infrastructure;
 namespace MorningBrew.Api.Controllers;
 
-[ApiController, Route("api/auth")]
+[ApiController, Route("v1/auth")]
 public sealed class AuthController(SqlStore db) : ControllerBase
 {
     public record LoginRequest([Required, EmailAddress, MaxLength(254)] string Username, [Required, MaxLength(200)] string Password);
+    public record IdentityInfo(int Id, string Email, string FullName, string Role);
+    public record LoginResponse(string Token, DateTime ExpiresAt, IdentityInfo User);
     [HttpPost("login"), EnableRateLimiting("login")]
-    public async Task<object> Login(LoginRequest request)
+    public async Task<LoginResponse> Login(LoginRequest request)
     {
         var users = await db.Query("""
             SELECT u.UserID,u.Email,u.FullName,u.PasswordHash,u.IsActive,r.Code AS Role
@@ -30,7 +32,7 @@ public sealed class AuthController(SqlStore db) : ControllerBase
         var expiresAt = DateTime.UtcNow.AddHours(8);
         await db.Query("INSERT dbo.UserSessions(UserID,TokenHash,ExpiresAt,DeviceName) VALUES(@id,@hash,@expires,'MorningBrew');",
             ("@id", user["UserID"]), ("@hash", SessionAuthentication.Hash(token)), ("@expires", expiresAt));
-        return new { token, expiresAt, user = new { id = user["UserID"], email = user["Email"], fullName = user["FullName"], role = user["Role"] } };
+        return new(token, expiresAt, new((int)user["UserID"]!, (string)user["Email"]!, (string)user["FullName"]!, (string)user["Role"]!));
     }
     [Authorize, HttpGet("me")]
     public async Task<object> Me() => new {

@@ -81,7 +81,7 @@ BEGIN
  INSERT @lines(ItemIndex,VariantID,Quantity,Note,Options)
  SELECT CONVERT(int,j.[key]),x.variantId,x.quantity,x.note,COALESCE(x.optionIds,N'[]') FROM OPENJSON(@Items) j CROSS APPLY OPENJSON(j.value) WITH(variantId int,quantity int,note nvarchar(300),optionIds nvarchar(max) AS JSON) x;
  IF NOT EXISTS(SELECT 1 FROM @lines) OR (SELECT COUNT(*) FROM @lines)>100 OR EXISTS(SELECT 1 FROM @lines WHERE VariantID IS NULL OR Quantity IS NULL OR Quantity NOT BETWEEN 1 AND 100 OR LEFT(LTRIM(Options),1)<>'[') THROW 51100,N'Invalid order lines.',1;
- UPDATE l SET ProductID=p.ProductID,ProductName=p.Name,VariantName=v.Name,UnitPrice=COALESCE(bv.SellingPrice,v.BasePrice),ModifierTotal=0 FROM @lines l
+ UPDATE l SET ProductID=p.ProductID,ProductName=p.Name,VariantName=v.Name,UnitPrice=v.BasePrice,ModifierTotal=0 FROM @lines l
  JOIN dbo.ProductVariants v WITH(HOLDLOCK) ON v.VariantID=l.VariantID AND v.IsActive=1 JOIN dbo.Products p WITH(HOLDLOCK) ON p.ProductID=v.ProductID AND p.IsActive=1
  JOIN dbo.Categories cat ON cat.CategoryID=p.CategoryID AND cat.IsActive=1 JOIN dbo.BranchProducts bp WITH(HOLDLOCK) ON bp.ProductID=p.ProductID AND bp.BranchID=@BranchID AND bp.IsAvailable=1
  LEFT JOIN dbo.BranchProductVariants bv WITH(HOLDLOCK) ON bv.VariantID=v.VariantID AND bv.BranchID=@BranchID WHERE COALESCE(bv.IsAvailable,1)=1;
@@ -89,7 +89,7 @@ BEGIN
  DECLARE @opts TABLE(ItemIndex int,OptionID int,GroupID int,GroupName nvarchar(100),OptionName nvarchar(100),Price decimal(18,2),PRIMARY KEY(ItemIndex,OptionID));
  IF EXISTS(SELECT 1 FROM @lines l CROSS APPLY OPENJSON(l.Options) o WHERE o.type<>2 OR TRY_CONVERT(int,o.value) IS NULL) THROW 51100,N'Option IDs must be integers.',1;
  INSERT @opts(ItemIndex,OptionID) SELECT l.ItemIndex,CONVERT(int,o.value) FROM @lines l CROSS APPLY OPENJSON(l.Options) o;
- UPDATE o SET GroupID=g.ModifierGroupID,GroupName=g.Name,OptionName=mo.Name,Price=COALESCE(bo.ExtraPrice,mo.ExtraPrice) FROM @opts o JOIN @lines l ON l.ItemIndex=o.ItemIndex
+ UPDATE o SET GroupID=g.ModifierGroupID,GroupName=g.Name,OptionName=mo.Name,Price=mo.ExtraPrice FROM @opts o JOIN @lines l ON l.ItemIndex=o.ItemIndex
  JOIN dbo.ModifierOptions mo WITH(HOLDLOCK) ON mo.ModifierOptionID=o.OptionID AND mo.IsActive=1 JOIN dbo.ModifierGroups g ON g.ModifierGroupID=mo.ModifierGroupID AND g.IsActive=1
  JOIN dbo.ProductModifierGroups pg ON pg.ProductID=l.ProductID AND pg.ModifierGroupID=g.ModifierGroupID
  LEFT JOIN dbo.BranchModifierOptions bo WITH(HOLDLOCK) ON bo.BranchID=@BranchID AND bo.ModifierOptionID=mo.ModifierOptionID WHERE COALESCE(bo.IsAvailable,1)=1;

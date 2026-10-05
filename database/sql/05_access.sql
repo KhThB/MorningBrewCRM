@@ -55,11 +55,11 @@ AS
 BEGIN
  SET NOCOUNT ON;
  SELECT b.BranchID,b.Name,b.Address,b.Phone,b.OpeningTime,b.ClosingTime,b.AcceptingOrders,b.PickupEnabled,b.DeliveryEnabled,b.DeliveryFee FROM dbo.Branches b WHERE b.BranchID=@BranchID AND b.IsActive=1;
- SELECT p.ProductID,p.Name,p.Description,p.ImageURL,p.CategoryID,v.VariantID,v.Name AS VariantName,COALESCE(bv.SellingPrice,v.BasePrice) AS Price,v.DisplayOrder
+ SELECT p.ProductID,p.Name,p.Description,p.ImageURL,p.CategoryID,v.VariantID,v.Name AS VariantName,v.BasePrice AS Price,v.DisplayOrder
  FROM dbo.BranchProducts bp JOIN dbo.Branches b ON b.BranchID=bp.BranchID AND b.IsActive=1 JOIN dbo.Products p ON p.ProductID=bp.ProductID AND p.IsActive=1
  JOIN dbo.Categories c ON c.CategoryID=p.CategoryID AND c.IsActive=1 JOIN dbo.ProductVariants v ON v.ProductID=p.ProductID AND v.IsActive=1
  LEFT JOIN dbo.BranchProductVariants bv ON bv.BranchID=bp.BranchID AND bv.VariantID=v.VariantID WHERE bp.BranchID=@BranchID AND bp.IsAvailable=1 AND COALESCE(bv.IsAvailable,1)=1 ORDER BY p.ProductID,v.DisplayOrder;
- SELECT pg.ProductID,g.ModifierGroupID,g.Name AS GroupName,g.Kind,pg.MinSelections,pg.MaxSelections,o.ModifierOptionID,o.Name AS OptionName,COALESCE(bo.ExtraPrice,o.ExtraPrice) AS ExtraPrice
+ SELECT pg.ProductID,g.ModifierGroupID,g.Name AS GroupName,g.Kind,pg.MinSelections,pg.MaxSelections,o.ModifierOptionID,o.Name AS OptionName,o.ExtraPrice AS ExtraPrice
  FROM dbo.ProductModifierGroups pg JOIN dbo.ModifierGroups g ON g.ModifierGroupID=pg.ModifierGroupID AND g.IsActive=1
  JOIN dbo.ModifierOptions o ON o.ModifierGroupID=g.ModifierGroupID AND o.IsActive=1 JOIN dbo.BranchProducts bp ON bp.ProductID=pg.ProductID AND bp.BranchID=@BranchID AND bp.IsAvailable=1
  LEFT JOIN dbo.BranchModifierOptions bo ON bo.BranchID=@BranchID AND bo.ModifierOptionID=o.ModifierOptionID WHERE COALESCE(bo.IsAvailable,1)=1;

@@ -1,5 +1,7 @@
 # Bản ghi tích hợp — 05/10/2026
 
+> Cập nhật 2026-10-05: API hiện dùng `/v1`, JSON snake_case và giá chung toàn chuỗi. Nội dung bên dưới ghi lại lần ghép nhánh ban đầu; hợp đồng hiện hành và cách nâng cấp ở [API v1](api-v1.md).
+
 ## Nguồn và lịch sử
 
 | Nguồn | Commit đã đối chiếu | Kết quả |

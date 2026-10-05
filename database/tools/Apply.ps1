@@ -14,7 +14,7 @@ $create = "IF DB_ID(N'$Database') IS NOT NULL THROW 51000, N'Database already ex
 if ($LASTEXITCODE -ne 0) { throw 'Database creation refused or failed.' }
 $files = @('01_schema.sql','02_rules.sql','03_orders.sql','04_crm.sql','05_access.sql')
 if (-not $NoSeed) { $files += @('06_seed.sql','07_demo.sql') }
-$files += '08_admin.sql'
+$files += @('08_admin.sql','09_shared_prices.sql')
 foreach ($name in $files) {
     Write-Host "Applying $name"
     & sqlcmd -S $Server -d $Database -E -C -I -b -f 65001 -i (Join-Path $dbRoot "sql/$name")

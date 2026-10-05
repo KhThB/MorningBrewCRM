@@ -7,10 +7,10 @@
 @if(Model.Section=="reports"){<p class="muted">Doanh thu 30 ngày gần nhất, đã trừ khoản hoàn tiền trong kỳ. Mốc thời gian tính theo UTC.</p>}
 @if(Model.Section=="shifts"){<p class="muted">Lên lịch làm việc cho nhân viên tại các chi nhánh bạn phụ trách.</p>}
 <section class="panel"><h2>@(ViewData["Results"] is true ? "Kết quả khảo sát" : "Danh sách")</h2><partial name="_Rows" model="Model.Rows" />
-@if(Model.Section!="reports" && ViewData["Results"] is not true){
+@if(Model.Section!="reports"){
 <div class="flow">
-@if(Model.Skip>0){<a asp-route-section="@Model.Section" asp-route-skip="@Math.Max(0,Model.Skip-50)" asp-route-q="@Model.Q">← Trang trước</a>}
-@if(Model.Rows.Count==50){<a asp-route-section="@Model.Section" asp-route-skip="@(Model.Skip+50)" asp-route-q="@Model.Q">Trang tiếp →</a>}
+@if(!string.IsNullOrEmpty(Model.PageToken)){<a asp-route-section="@Model.Section" asp-route-surveyId="@Model.SurveyId" asp-route-q="@Model.Q">Về trang đầu</a>}
+@if(!string.IsNullOrEmpty(Model.NextPageToken)){<a asp-route-section="@Model.Section" asp-route-surveyId="@Model.SurveyId" asp-route-pageToken="@Model.NextPageToken" asp-route-q="@Model.Q">Trang tiếp →</a>}
 </div>}</section>
 @if(ViewData["Results"] is true){<a asp-page="/Workspace" asp-route-section="surveys">Về danh sách khảo sát</a>}
 else if(Model.Section is "accounts" or "customers" && owner){
@@ -21,31 +21,31 @@ else if(Model.Section is "accounts" or "customers" && owner){
 @if(Model.Section=="customers"){<input type="hidden" name="role" value="Customer">}
 else{
 <label>Vai trò</label><select name="role"><option>Customer</option><option>Staff</option><option>BranchManager</option><option>AreaManager</option><option>Owner</option></select>
-<label>Chi nhánh phụ trách (Staff / BranchManager)</label><select name="branchId"><option value="">Không chọn</option>@foreach(var x in Model.Choices("branches")){<option value="@x["Id"]">@x["Name"]</option>}</select>
-<label>Khu vực phụ trách (AreaManager)</label><select name="areaId"><option value="">Không chọn</option>@foreach(var x in Model.Choices("areas")){<option value="@x["Id"]">@x["Name"]</option>}</select>
+<label>Chi nhánh phụ trách (Staff / BranchManager)</label><select name="branchId"><option value="">Không chọn</option>@foreach(var x in Model.Choices("branches")){<option value="@x["id"]">@x["display_name"]</option>}</select>
+<label>Khu vực phụ trách (AreaManager)</label><select name="areaId"><option value="">Không chọn</option>@foreach(var x in Model.Choices("areas")){<option value="@x["id"]">@x["display_name"]</option>}</select>
 }<button class="primary">Tạo tài khoản</button></form></section>
 @if(Model.Section=="accounts"){
 <section class="panel"><h2>Trạng thái tài khoản</h2><form method="post"><input type="hidden" name="operation" value="account-active">
-<label>Tài khoản</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["UserID"]">@x["FullName"] · @x["Email"]</option>}</select>
+<label>Tài khoản</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["user_id"]">@x["full_name"] · @x["email"]</option>}</select>
 <label>Trạng thái mới</label><select name="active"><option value="false">Khóa</option><option value="true">Mở khóa</option></select><button class="primary">Cập nhật</button></form><p class="muted">Khóa tài khoản giữ lại lịch sử giao dịch và thu hồi các phiên đăng nhập.</p></section>}
 else{
 <section class="panel"><h2>Điều chỉnh điểm</h2><form method="post"><input type="hidden" name="operation" value="points"><input type="hidden" name="requestKey" value="@Guid.NewGuid()">
-<label>Khách hàng</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["CustomerID"]">@x["FullName"]</option>}</select>
+<label>Khách hàng</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["customer_id"]">@x["full_name"]</option>}</select>
 <label>Số điểm cộng hoặc trừ</label><input name="delta" type="number" required><label>Lý do</label><input name="note" minlength="3" maxlength="300" required><button class="primary">Ghi điều chỉnh</button></form></section>}
 </div>}
 else if(Model.Section=="feedbacks"){
 <section class="panel"><h2>Trả lời phản hồi</h2><form method="post"><input type="hidden" name="operation" value="feedback">
-<label>Phản hồi</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["FeedbackID"]">#@x["FeedbackID"] · @x["FullName"] · @x["Content"]</option>}</select>
+<label>Phản hồi</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["feedback_id"]">#@x["feedback_id"] · @x["full_name"] · @x["content"]</option>}</select>
 <label>Trạng thái</label><select name="status"><option value="Processing">Đang xử lý</option><option value="Resolved">Đã giải quyết</option></select>
 <label>Nội dung trả lời</label><textarea name="response" maxlength="4000" required></textarea><button class="primary">Gửi trả lời</button></form></section>}
 else if(Model.Section=="surveys"){
 <div class="grid-2"><section class="panel"><h2>Tạo khảo sát</h2><form method="post"><input type="hidden" name="operation" value="survey">
 <label>Tiêu đề</label><input name="title" maxlength="250" required><label>Mô tả</label><textarea name="description" maxlength="2000"></textarea>
 <label>Câu hỏi đánh giá 1–5 (mỗi dòng một câu)</label><textarea name="questions" required></textarea><partial name="_Scope" model="Model" /><button class="primary">Tạo bản nháp</button></form></section>
-<section class="panel"><h2>Quản lý khảo sát</h2><form method="post"><label>Khảo sát</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["SurveyID"]">@x["Title"] · @x["Status"]</option>}</select>
+<section class="panel"><h2>Quản lý khảo sát</h2><form method="post"><label>Khảo sát</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["survey_id"]">@x["title"] · @x["status"]</option>}</select>
 <button class="primary" name="operation" value="publish">Phát hành</button> <button class="secondary" name="operation" value="close">Đóng</button> <button class="secondary" name="operation" value="results">Xem kết quả</button></form>
-<h3>Mời khách hàng</h3><form method="post"><input type="hidden" name="operation" value="invite"><label>Khảo sát đang mở</label><select name="id">@foreach(var x in Model.Rows.Where(x=>x["Status"].ToString()=="Open")){<option value="@x["SurveyID"]">@x["Title"]</option>}</select>
-<label>Khách hàng</label><select name="customerId">@foreach(var x in Model.Choices("customers")){<option value="@x["Id"]">@x["Name"]</option>}</select><button class="primary">Gửi lời mời</button></form></section></div>}
+<h3>Mời khách hàng</h3><form method="post"><input type="hidden" name="operation" value="invite"><label>Khảo sát đang mở</label><select name="id">@foreach(var x in Model.Rows.Where(x=>x["status"].ToString()=="Open")){<option value="@x["survey_id"]">@x["title"]</option>}</select>
+<label>Khách hàng</label><select name="customerId">@foreach(var x in Model.Choices("customers")){<option value="@x["id"]">@x["display_name"]</option>}</select><button class="primary">Gửi lời mời</button></form></section></div>}
 else if(Model.Section=="promotions"){
 <div class="grid-2"><section class="panel"><h2>Tạo ưu đãi</h2><form method="post"><input type="hidden" name="operation" value="promotion">
 <label>Tên</label><input name="name" required maxlength="150"><label>Mô tả</label><textarea name="description" maxlength="2000"></textarea>
@@ -55,28 +55,28 @@ else if(Model.Section=="promotions"){
 <label>Số lượng toàn chương trình</label><input name="totalLimit" type="number" min="1" value="100" required><label>Số lượt mỗi khách</label><input name="perCustomerLimit" type="number" min="1" value="1" required>
 <partial name="_Scope" model="Model" /><button class="primary">Tạo ưu đãi</button></form></section>
 <section class="panel"><h2>Cấp voucher</h2><form method="post"><input type="hidden" name="operation" value="issue"><input type="hidden" name="requestKey" value="@Guid.NewGuid()">
-<label>Ưu đãi</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["PromotionID"]">@x["Name"]</option>}</select>
-<label>Khách hàng</label><select name="customerId">@foreach(var x in Model.Choices("customers")){<option value="@x["Id"]">@x["Name"]</option>}</select><button class="primary">Cấp voucher</button></form>
-<h3>Trạng thái chương trình</h3><form method="post"><input type="hidden" name="operation" value="promotion-active"><select name="id" aria-label="Ưu đãi">@foreach(var x in Model.Rows){<option value="@x["PromotionID"]">@x["Name"]</option>}</select>
+<label>Ưu đãi</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["promotion_id"]">@x["display_name"]</option>}</select>
+<label>Khách hàng</label><select name="customerId">@foreach(var x in Model.Choices("customers")){<option value="@x["id"]">@x["display_name"]</option>}</select><button class="primary">Cấp voucher</button></form>
+<h3>Trạng thái chương trình</h3><form method="post"><input type="hidden" name="operation" value="promotion-active"><select name="id" aria-label="Ưu đãi">@foreach(var x in Model.Rows){<option value="@x["promotion_id"]">@x["display_name"]</option>}</select>
 <select name="active" aria-label="Trạng thái"><option value="false">Dừng cấp mới</option><option value="true">Hoạt động</option></select><button class="secondary">Cập nhật</button></form></section></div>}
 else if(Model.Section=="products"){
 <div class="grid-2">
 @if(owner){
 <section class="panel"><h2>Thêm sản phẩm</h2><form method="post"><input type="hidden" name="operation" value="product">
 <label>Tên sản phẩm</label><input name="name" maxlength="150" required><label>Mô tả</label><textarea name="description" maxlength="2000"></textarea>
-<label>Danh mục</label><select name="categoryId">@foreach(var x in Model.Choices("categories")){<option value="@x["Id"]">@x["Name"]</option>}</select>
+<label>Danh mục</label><select name="categoryId">@foreach(var x in Model.Choices("categories")){<option value="@x["id"]">@x["display_name"]</option>}</select>
 <label>Kích cỡ</label><input name="size" value="M" maxlength="60" required><label>Giá cơ bản (VND)</label><input name="price" type="number" min="0" required><button class="primary">Tạo sản phẩm</button></form>
-<h3>Trạng thái sản phẩm</h3><form method="post"><input type="hidden" name="operation" value="product-active"><select name="id" aria-label="Sản phẩm">@foreach(var x in Model.Rows){<option value="@x["ProductID"]">@x["Name"]</option>}</select><select name="active" aria-label="Trạng thái"><option value="false">Ngừng bán</option><option value="true">Đang bán</option></select><button class="secondary">Cập nhật</button></form></section>}
-<section class="panel"><h2>Giá tại chi nhánh</h2><form method="post"><input type="hidden" name="operation" value="price"><label>Chi nhánh</label><select name="branchId">@foreach(var x in Model.Choices("branches")){<option value="@x["Id"]">@x["Name"]</option>}</select>
-<label>Sản phẩm / kích cỡ</label><select name="variantId">@foreach(var x in Model.Rows){<option value="@x["VariantID"]">@x["Name"] · @x["Size"]</option>}</select>
-<label>Giá bán (VND)</label><input name="price" type="number" min="0" required><label>Trạng thái</label><select name="available"><option value="true">Có bán</option><option value="false">Tạm hết</option></select><button class="primary">Lưu giá</button></form></section>
+<h3>Trạng thái sản phẩm</h3><form method="post"><input type="hidden" name="operation" value="product-active"><select name="id" aria-label="Sản phẩm">@foreach(var x in Model.Rows){<option value="@x["product_id"]">@x["display_name"]</option>}</select><select name="active" aria-label="Trạng thái"><option value="false">Ngừng bán</option><option value="true">Đang bán</option></select><button class="secondary">Cập nhật</button></form></section>}
+@if(owner){<section class="panel"><h2>Giá chung toàn chuỗi</h2><form method="post"><input type="hidden" name="operation" value="price">
+<label>Sản phẩm / kích cỡ</label><select name="variantId">@foreach(var x in Model.Rows){<option value="@x["variant_id"]">@x["display_name"] · @x["size"]</option>}</select>
+<label>Giá bán (VND)</label><input name="price" type="number" min="0" required><button class="primary">Lưu giá chung</button></form></section>}
 </div>}
 @if(Model.Section=="suppliers" && owner){
 <div class="grid-2"><section class="panel"><h2>Thêm nhà cung cấp</h2><form method="post"><input type="hidden" name="operation" value="supplier">
 <label>Mã nhà cung cấp</label><input name="code" maxlength="30" required><label>Tên</label><input name="name" maxlength="150" required><label>Điện thoại</label><input name="phone" maxlength="20"><label>Email</label><input name="email" type="email"><label>Nhóm sản phẩm</label><input name="productGroup" maxlength="150"><button class="primary">Lưu nhà cung cấp</button></form></section>
-<section class="panel"><h2>Trạng thái hợp tác</h2><form method="post"><input type="hidden" name="operation" value="supplier-active"><label>Nhà cung cấp</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["SupplierID"]">@x["Name"]</option>}</select><label>Trạng thái</label><select name="active"><option value="false">Tạm ngưng</option><option value="true">Đang hợp tác</option></select><button class="primary">Cập nhật</button></form></section></div>}
+<section class="panel"><h2>Trạng thái hợp tác</h2><form method="post"><input type="hidden" name="operation" value="supplier-active"><label>Nhà cung cấp</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["supplier_id"]">@x["display_name"]</option>}</select><label>Trạng thái</label><select name="active"><option value="false">Tạm ngưng</option><option value="true">Đang hợp tác</option></select><button class="primary">Cập nhật</button></form></section></div>}
 @if(Model.Section=="shifts"){
-<div class="grid-2"><section class="panel"><h2>Phân ca</h2><form method="post"><input type="hidden" name="operation" value="shift"><label>Nhân viên</label><select name="userId">@foreach(var x in Model.Choices("staff")){<option value="@x["Id"]">@x["Name"]</option>}</select><label>Chi nhánh</label><select name="branchId">@foreach(var x in Model.Choices("branches")){<option value="@x["Id"]">@x["Name"]</option>}</select><label>Bắt đầu</label><input name="startsAt" type="datetime-local" required><label>Kết thúc</label><input name="endsAt" type="datetime-local" required><button class="primary">Lưu ca</button></form></section>
-<section class="panel"><h2>Hủy ca</h2><form method="post"><input type="hidden" name="operation" value="shift-cancel"><label>Ca làm</label><select name="id">@foreach(var x in Model.Rows.Where(x=>!x["IsCancelled"].GetBoolean())){<option value="@x["ShiftID"]">@x["FullName"] · @x["StartsAt"]</option>}</select><button class="danger">Hủy ca đã chọn</button></form></section></div>}
+<div class="grid-2"><section class="panel"><h2>Phân ca</h2><form method="post"><input type="hidden" name="operation" value="shift"><label>Nhân viên</label><select name="userId">@foreach(var x in Model.Choices("staff")){<option value="@x["id"]">@x["display_name"]</option>}</select><label>Chi nhánh</label><select name="branchId">@foreach(var x in Model.Choices("branches")){<option value="@x["id"]">@x["display_name"]</option>}</select><label>Bắt đầu</label><input name="startsAt" type="datetime-local" required><label>Kết thúc</label><input name="endsAt" type="datetime-local" required><button class="primary">Lưu ca</button></form></section>
+<section class="panel"><h2>Hủy ca</h2><form method="post"><input type="hidden" name="operation" value="shift-cancel"><label>Ca làm</label><select name="id">@foreach(var x in Model.Rows.Where(x=>!x["is_cancelled"].GetBoolean())){<option value="@x["shift_id"]">@x["full_name"] · @x["start_time"]</option>}</select><button class="danger">Hủy ca đã chọn</button></form></section></div>}
 @if(Model.Section=="permissions" && owner){
 <section class="panel"><h2>Quyền vận hành theo vai trò</h2><p class="muted">Thay đổi áp dụng cho mọi tài khoản có vai trò đã chọn. Phạm vi khu vực/chi nhánh vẫn được giữ.</p><form method="post"><input type="hidden" name="operation" value="permission"><label>Vai trò</label><select name="role"><option>AreaManager</option><option>BranchManager</option></select><label>Quyền</label><select name="code">@foreach(var code in new[]{"Orders.Create","Orders.Manage","Orders.Cancel","Orders.Read","Payments.Manage","Refunds.Manage","Menu.Manage","Customers.Lookup","Customers.Read","Promotions.Manage","Surveys.Manage","Feedbacks.Manage","Reports.Read","Staff.Manage"}){<option>@code</option>}</select><label>Áp dụng</label><select name="allowed"><option value="true">Cho phép</option><option value="false">Thu hồi</option></select><button class="primary">Lưu quyền</button></form></section>}

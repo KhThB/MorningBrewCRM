@@ -7,22 +7,26 @@ public sealed partial class AdminController
     public record SupplierInput([Required,MaxLength(30)] string Code,[Required,MaxLength(150)] string Name,
         [MaxLength(20)] string? Phone,[EmailAddress,MaxLength(254)] string? Email,[MaxLength(150)] string? ProductGroup);
     [HttpPost("suppliers")]
-    public async Task<object> Supplier(SupplierInput input)
+    public async Task<IActionResult> Supplier(SupplierInput input)
     {
         await RequireOwner();
-        return await db.Query("INSERT dbo.Suppliers(Code,Name,Phone,Email,ProductGroup) OUTPUT inserted.SupplierID VALUES(@code,@name,@phone,@email,@group)",
+        var created = await db.Query("INSERT dbo.Suppliers(Code,Name,Phone,Email,ProductGroup) OUTPUT inserted.SupplierID VALUES(@code,@name,@phone,@email,@group)",
             ("@code",input.Code),("@name",input.Name),("@phone",input.Phone),("@email",input.Email),("@group",input.ProductGroup));
+        var id = (int)created.Single()["SupplierID"]!;
+        return Created($"/v1/suppliers/{id}", await ReadResource("suppliers", id));
     }
     [HttpPut("suppliers/{id:int}/active")]
     public async Task<IActionResult> SupplierActive(int id,ActiveInput input)
     {
         await RequireOwner();
-        await db.Query("UPDATE dbo.Suppliers SET IsActive=@active WHERE SupplierID=@id; IF @@ROWCOUNT=0 THROW 51100,'Supplier not found.',1;",("@active",input.IsActive),("@id",id));
+        await db.Query("UPDATE dbo.Suppliers SET IsActive=@active WHERE SupplierID=@id; IF @@ROWCOUNT=0 THROW 51104,'Supplier not found.',1;",("@active",input.IsActive),("@id",id));
         return NoContent();
     }
     public record ShiftInput(int UserId,int BranchId,DateTimeOffset StartsAt,DateTimeOffset EndsAt);
     [HttpPost("shifts")]
-    public Task<List<Dictionary<string,object?>>> Shift(ShiftInput input)=>db.Query("""
+    public async Task<IActionResult> Shift(ShiftInput input)
+    {
+        var created = await db.Query("""
         SET XACT_ABORT ON; BEGIN TRAN;
         IF dbo.CanBranch(@actor,@branch,'Staff.Manage')=0 THROW 51103,'Scope denied.',1;
         -- Serialize per employee, including assignments to different branches.
@@ -38,7 +42,10 @@ public sealed partial class AdminController
         INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID) VALUES(@actor,@branch,'Shift.Create','StaffShifts',@id);
         COMMIT; SELECT @id AS ShiftID;
         """,("@actor",Actor),("@userId",input.UserId),("@branch",input.BranchId),("@start",input.StartsAt.UtcDateTime),("@end",input.EndsAt.UtcDateTime));
-    [HttpPost("shifts/{id:int}/cancel")]
+        var id = (int)created.Single()["ShiftID"]!;
+        return Created($"/v1/shifts/{id}", await ReadResource("shifts", id));
+    }
+    [HttpPost("shifts/{id:int}:cancel")]
     public async Task<IActionResult> CancelShift(int id)
     {
         await db.Query("""
@@ -46,13 +53,13 @@ public sealed partial class AdminController
             IF @@ROWCOUNT=0 THROW 51103,'Shift outside scope.',1;
             """,("@actor",Actor),("@id",id)); return NoContent();
     }
-    public record PermissionInput([Required] string Role,[Required] string Code,bool Allowed);
-    [HttpPut("permissions")]
-    public async Task<IActionResult> Permission(PermissionInput input)
+    public record PermissionInput([property: System.Text.Json.Serialization.JsonRequired] bool Allowed);
+    [HttpPut("roles/{role}/permissions/{code}")]
+    public async Task<IActionResult> Permission(string role, string code, PermissionInput input)
     {
         await RequireOwner();
-        if(input.Role is not ("AreaManager" or "BranchManager") ||
-           input.Code is "Security.Manage" or "Organization.Manage" or "Catalog.Manage")
+        if(role is not ("AreaManager" or "BranchManager") ||
+           code is "Security.Manage" or "Organization.Manage" or "Catalog.Manage")
             throw new ApiException(400,"Chỉ sửa quyền vận hành của vai trò quản lý khu vực/chi nhánh.");
         await db.Query("""
             SET XACT_ABORT ON; BEGIN TRAN;
@@ -64,7 +71,7 @@ public sealed partial class AdminController
             END ELSE DELETE dbo.RolePermissions WHERE RoleID=@role AND PermissionID=@permission;
             INSERT dbo.AuditLogs(ActorID,Action,EntityType,Details) VALUES(@actor,'Permission.Change','RolePermissions',CONCAT(@roleCode,':',@code,':',@allowed));
             COMMIT;
-            """,("@actor",Actor),("@roleCode",input.Role),("@code",input.Code),("@allowed",input.Allowed));
+            """,("@actor",Actor),("@roleCode",role),("@code",code),("@allowed",input.Allowed));
         return NoContent();
     }
 }

@@ -3,7 +3,7 @@
 @{ViewData["Title"]="Tổng quan";}
 <div class="topbar"><div><h1>Tổng quan CRM</h1><p class="muted">Hoạt động trong phạm vi bạn phụ trách.</p></div><span class="role-badge">@User.FindFirstValue(ClaimTypes.Role)</span></div>
 <div class="cards">
-@foreach(var item in new[]{("Customers","Khách hàng"),("PendingFeedbacks","Phản hồi cần xử lý"),("OpenSurveys","Khảo sát đang mở"),("Branches","Chi nhánh")})
+@foreach(var item in new[]{("customers","Khách hàng"),("pending_feedbacks","Phản hồi cần xử lý"),("open_surveys","Khảo sát đang mở"),("branches","Chi nhánh")})
 {<div class="stat"><span>@item.Item2</span><b>@Model.Stats.GetValueOrDefault(item.Item1)</b></div>}
 </div>
 <section class="panel"><h2>Công việc hôm nay</h2><div class="flow"><a class="primary" asp-page="/Workspace" asp-route-section="feedbacks">Xử lý phản hồi</a><a class="secondary" asp-page="/Workspace" asp-route-section="customers">Chăm sóc khách hàng</a><a class="secondary" asp-page="/Workspace" asp-route-section="surveys">Theo dõi khảo sát</a></div></section>

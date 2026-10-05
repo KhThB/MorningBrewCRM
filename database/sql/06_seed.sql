@@ -34,11 +34,11 @@ INSERT dbo.Categories(Name) VALUES(N'Cà phê'),(N'Trà'),(N'Bánh');
 INSERT dbo.Products(CategoryID,Name,Description,ImageURL) VALUES(1,N'Cà phê sữa',N'Cà phê và sữa đặc','/images/coffee.jpg'),(2,N'Trà đào',N'Trà đào thơm mát','/images/tea.jpg'),(3,N'Bánh tiramisu',N'Bánh vị cà phê','/images/cake.jpg');
 INSERT dbo.ProductVariants(ProductID,Name,BasePrice,DisplayOrder) VALUES(1,'M',30000,1),(1,'L',40000,2),(2,'M',35000,1),(3,'Standard',45000,1);
 INSERT dbo.BranchProducts(BranchID,ProductID) SELECT b.BranchID,p.ProductID FROM dbo.Branches b CROSS JOIN dbo.Products p;
-INSERT dbo.BranchProductVariants(BranchID,VariantID,ProductID,SellingPrice) VALUES(1,1,1,32000),(2,1,1,34000);
+INSERT dbo.BranchProductVariants(BranchID,VariantID,ProductID,SellingPrice) VALUES(1,1,1,30000),(2,1,1,30000);
 INSERT dbo.ModifierGroups(Name,Kind) VALUES(N'Đường','Sugar'),(N'Đá','Ice'),(N'Topping','Topping');
 INSERT dbo.ModifierOptions(ModifierGroupID,Name,ExtraPrice,DisplayOrder) VALUES(1,N'50% đường',0,1),(1,N'100% đường',0,2),(2,N'50% đá',0,1),(2,N'100% đá',0,2),(3,N'Trân châu',5000,1),(3,N'Pudding',7000,2);
 INSERT dbo.ProductModifierGroups(ProductID,ModifierGroupID,MinSelections,MaxSelections) VALUES(1,1,1,1),(1,2,1,1),(1,3,0,2),(2,1,1,1),(2,2,1,1),(2,3,0,2);
-INSERT dbo.BranchModifierOptions(BranchID,ModifierOptionID,ExtraPrice,IsAvailable) VALUES(2,5,6000,1),(3,6,7000,0);
+INSERT dbo.BranchModifierOptions(BranchID,ModifierOptionID,ExtraPrice,IsAvailable) VALUES(2,5,5000,1),(3,6,7000,0);
 INSERT dbo.CustomerPreferences(CustomerID,ProductID) VALUES(1,1),(1,3),(2,2);
 INSERT dbo.LoyaltyPolicies(Name,AmountPerPoint,EffectiveFrom) VALUES(N'10.000 đồng đổi 1 điểm',10000,'2020-01-01');
 INSERT dbo.Promotions(Name,Description,Scope,CreatedBy,DiscountType,DiscountValue,MaxDiscount,MinSubtotal,StartsAt,EndsAt,PointsCost,TotalLimit,PerCustomerLimit) VALUES

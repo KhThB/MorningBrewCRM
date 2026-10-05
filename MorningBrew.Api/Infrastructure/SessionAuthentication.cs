@@ -12,6 +12,12 @@ public sealed class SessionAuthentication(IOptionsMonitor<AuthenticationSchemeOp
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     public static byte[] Hash(string token) => SHA256.HashData(Encoding.UTF8.GetBytes(token));
+    protected override Task HandleChallengeAsync(AuthenticationProperties properties)
+    {
+        Response.Headers.WWWAuthenticate = "Bearer";
+        Response.StatusCode = 401;
+        return Task.CompletedTask;
+    }
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var header = Request.Headers.Authorization.ToString();

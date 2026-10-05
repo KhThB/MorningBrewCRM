@@ -1,5 +1,7 @@
 # Morning Brew CRM — database và tài liệu đồ án
 
+> Cập nhật API v1: giá sản phẩm và topping dùng chung toàn chuỗi. Database đã có cần áp dụng `sql/09_shared_prices.sql`; lịch sử đơn hàng không bị tính lại. Xem [hợp đồng API](../docs/api-v1.md).
+
 SQL Server 2022+ · **41 bảng / 314 trường lõi**, cộng **2 bảng Admin** trong `08_admin.sql` (Suppliers, StaffShifts): tổng **43 bảng** khi cài bộ tích hợp.
 
 ## Mở tài liệu
@@ -50,10 +52,12 @@ Thứ tự script:
 | `01_schema.sql` | 41 bảng, CHECK, UNIQUE, FK đơn/ghép, index; yêu cầu database trống. |
 | `02_rules.sql` | Hàm quyền và trigger bảo vệ vai trò, thời hạn chính sách, dữ liệu bất biến, khảo sát. |
 | `03_orders.sql` | Đặt đơn, voucher, thanh toán, trạng thái, giao hàng, hủy, hoàn, hết hạn. |
-| `04_crm.sql` | Địa chỉ, giá chi nhánh, khảo sát và phản hồi. |
+| `04_crm.sql` | Địa chỉ, khảo sát và phản hồi; procedure giá chi nhánh cũ được vô hiệu hóa ở `09`. |
 | `05_access.sql` | Đọc dữ liệu theo quyền, phân nhóm, doanh thu, đối chiếu và database role. |
 | `06_seed.sql` | Vai trò, quyền, 11 tài khoản, 2 khu vực, 3 quán, menu và chính sách. |
 | `07_demo.sql` | Chạy quy trình để tạo 5 đơn mẫu, phản hồi và khảo sát thực tế. |
+| `08_admin.sql` | Nhà cung cấp, ca làm và quyền API. |
+| `09_shared_prices.sql` | Giá chung khi tạo đơn/đọc menu nội bộ; giữ giá lịch sử. |
 
 Nếu chạy thủ công bằng `sqlcmd`, dùng `-I -b -f 65001`: bật quoted identifiers cho filtered index, dừng khi lỗi và đọc tiếng Việt UTF-8. Các script nghiệp vụ hỗ trợ CREATE OR ALTER; script schema/seed không dùng để chạy lặp trên database đã có dữ liệu.
 

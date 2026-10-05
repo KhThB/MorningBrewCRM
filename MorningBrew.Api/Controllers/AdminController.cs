@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using MorningBrew.Api.Infrastructure;
 namespace MorningBrew.Api.Controllers;
 
-[ApiController, Route("api/admin"), Authorize(Roles = "Owner,AreaManager,BranchManager")]
-public sealed partial class AdminController(SqlStore db) : ControllerBase
+[ApiController, Route("v1"), Authorize(Roles = "Owner,AreaManager,BranchManager")]
+public sealed partial class AdminController(SqlStore db, PageReader pages) : ControllerBase
 {
     private int Actor => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
     // A customer belongs to a manager's CRM scope after a completed purchase at a managed branch.
@@ -24,16 +24,39 @@ public sealed partial class AdminController(SqlStore db) : ControllerBase
         if (allowed.Count == 0) throw new ApiException(403, "Không có quyền quản trị.");
     }
 
-    [HttpGet("{section}")]
-    public async Task<object> List(string section, string? q = null, int skip = 0)
+    [HttpGet("customers")]
+    public Task<ApiPage> ListCustomers([FromQuery] PageRequest page, string? q = null) => List("customers", page, q);
+    [HttpGet("feedbacks")]
+    public Task<ApiPage> ListFeedbacks([FromQuery] PageRequest page) => List("feedbacks", page);
+    [HttpGet("surveys")]
+    public Task<ApiPage> ListSurveys([FromQuery] PageRequest page) => List("surveys", page);
+    [HttpGet("promotions")]
+    public Task<ApiPage> ListPromotions([FromQuery] PageRequest page) => List("promotions", page);
+    [HttpGet("products")]
+    public Task<ApiPage> ListProducts([FromQuery] PageRequest page) => pages.Read(
+        "SELECT ProductID,CategoryID,Name,Description,ImageURL,IsActive FROM dbo.Products",
+        ["ProductID"],true,page,$"{Actor}:productResources",[],"products","ProductID");
+    [HttpGet("variants")]
+    public Task<ApiPage> ListVariants([FromQuery] PageRequest page) => List("products", page);
+    [HttpGet("accounts")]
+    public Task<ApiPage> ListAccounts([FromQuery] PageRequest page) => List("accounts", page);
+    [HttpGet("permissions")]
+    public Task<ApiPage> ListPermissions([FromQuery] PageRequest page) => List("permissions", page);
+    [HttpGet("staff")]
+    public Task<ApiPage> ListStaff([FromQuery] PageRequest page) => List("staff", page);
+    [HttpGet("shifts")]
+    public Task<ApiPage> ListShifts([FromQuery] PageRequest page) => List("shifts", page);
+    [HttpGet("suppliers")]
+    public Task<ApiPage> ListSuppliers([FromQuery] PageRequest page) => List("suppliers", page);
+
+    private async Task<ApiPage> List(string section, PageRequest page, string? q = null)
     {
-        skip = Math.Clamp(skip, 0, 1000000);
         string sql;
         switch (section.ToLowerInvariant())
         {
             case "suppliers":
                 await RequireOwner();
-                sql = "SELECT SupplierID,Code,Name,Phone,Email,ProductGroup,IsActive FROM dbo.Suppliers ORDER BY SupplierID DESC OFFSET @skip ROWS FETCH NEXT 50 ROWS ONLY";
+                sql = "SELECT SupplierID,Code,Name,Phone,Email,ProductGroup,IsActive FROM dbo.Suppliers ";
                 break;
             case "shifts":
                 sql = """
@@ -41,14 +64,14 @@ public sealed partial class AdminController(SqlStore db) : ControllerBase
                     CAST(DATEDIFF(minute,s.StartsAt,s.EndsAt)/60.0 AS decimal(5,2)) AS Hours,s.IsCancelled
                     FROM dbo.StaffShifts s JOIN dbo.Users u ON u.UserID=s.UserID JOIN dbo.Branches b ON b.BranchID=s.BranchID
                     WHERE dbo.CanBranch(@actor,s.BranchID,'Staff.Manage')=1
-                    ORDER BY s.StartsAt DESC OFFSET @skip ROWS FETCH NEXT 50 ROWS ONLY
+
                     """; break;
             case "customers":
                 sql = $"""
                     SELECT c.CustomerID,u.FullName,u.Email,u.Phone,c.DateOfBirth,c.Gender,c.LoyaltyPoints,u.IsActive
                     FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID WHERE {CustomerScope}
                     AND (@q='' OR u.FullName LIKE @search OR u.Email LIKE @search OR u.Phone LIKE @search)
-                    ORDER BY c.CustomerID DESC OFFSET @skip ROWS FETCH NEXT 50 ROWS ONLY
+
                     """; break;
             case "feedbacks":
                 sql = """
@@ -56,7 +79,7 @@ public sealed partial class AdminController(SqlStore db) : ControllerBase
                     FROM dbo.Feedbacks f JOIN dbo.Customers c ON c.CustomerID=f.CustomerID JOIN dbo.Users u ON u.UserID=c.UserID
                     WHERE (f.BranchID IS NULL AND dbo.CanScope(@actor,'Chain',NULL,NULL,'Feedbacks.Manage')=1)
                     OR dbo.CanBranch(@actor,f.BranchID,'Feedbacks.Manage')=1
-                    ORDER BY f.FeedbackID DESC OFFSET @skip ROWS FETCH NEXT 50 ROWS ONLY
+
                     """; break;
             case "surveys":
                 sql = """
@@ -64,33 +87,33 @@ public sealed partial class AdminController(SqlStore db) : ControllerBase
                     (SELECT COUNT(*) FROM dbo.SurveyRecipients r WHERE r.SurveyID=s.SurveyID) AS Invited,
                     (SELECT COUNT(*) FROM dbo.SurveyRecipients r WHERE r.SurveyID=s.SurveyID AND r.CompletedAt IS NOT NULL) AS Completed
                     FROM dbo.Surveys s WHERE dbo.CanScope(@actor,s.Scope,s.AreaID,s.BranchID,'Surveys.Manage')=1
-                    ORDER BY s.SurveyID DESC OFFSET @skip ROWS FETCH NEXT 50 ROWS ONLY
+
                     """; break;
             case "promotions":
                 sql = """
                     SELECT PromotionID,Name,Scope,AreaID,BranchID,DiscountType,DiscountValue,PointsCost,StartsAt,EndsAt,IsActive
                     FROM dbo.Promotions WHERE dbo.CanScope(@actor,Scope,AreaID,BranchID,'Promotions.Manage')=1
-                    ORDER BY PromotionID DESC OFFSET @skip ROWS FETCH NEXT 50 ROWS ONLY
+
                     """; break;
             case "products":
                 sql = """
                     SELECT p.ProductID,p.Name,c.Name AS Category,v.VariantID,v.Name AS Size,v.BasePrice,p.IsActive
                     FROM dbo.Products p JOIN dbo.Categories c ON c.CategoryID=p.CategoryID JOIN dbo.ProductVariants v ON v.ProductID=p.ProductID
-                    ORDER BY p.ProductID,v.DisplayOrder OFFSET @skip ROWS FETCH NEXT 50 ROWS ONLY
+
                     """; break;
             case "accounts":
                 await RequireOwner();
                 sql = """
                     SELECT u.UserID,u.FullName,u.Email,u.Phone,r.Code AS Role,u.IsActive,u.CreatedAt
                     FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
-                    ORDER BY u.UserID DESC OFFSET @skip ROWS FETCH NEXT 50 ROWS ONLY
+
                     """; break;
             case "permissions":
                 await RequireOwner();
                 sql = """
                     SELECT r.Code AS Role,p.Code AS Permission,p.Description
                     FROM dbo.RolePermissions rp JOIN dbo.Roles r ON r.RoleID=rp.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
-                    ORDER BY r.RoleID,p.Code OFFSET @skip ROWS FETCH NEXT 50 ROWS ONLY
+
                     """; break;
             case "staff":
                 sql = """
@@ -99,11 +122,21 @@ public sealed partial class AdminController(SqlStore db) : ControllerBase
                     WHERE dbo.CanBranch(@actor,b.BranchID,'Customers.Read')=1
                     UNION ALL SELECT u.UserID,u.FullName,u.Email,b.BranchID,b.Name,'BranchManager',u.IsActive
                     FROM dbo.Branches b JOIN dbo.Users u ON u.UserID=b.ManagerID WHERE dbo.CanBranch(@actor,b.BranchID,'Customers.Read')=1
-                    ORDER BY BranchID,UserID OFFSET @skip ROWS FETCH NEXT 50 ROWS ONLY
+
                     """; break;
             default: throw new ApiException(404, "Không tìm thấy chức năng.");
         }
-        return await db.Query(sql, ("@actor", Actor), ("@q", q ?? ""), ("@search", "%" + (q ?? "") + "%"), ("@skip", skip));
+        var keys = section switch
+        {
+            "suppliers" => new[] { "SupplierID" }, "shifts" => ["ShiftID"], "customers" => ["CustomerID"],
+            "feedbacks" => ["FeedbackID"], "surveys" => ["SurveyID"], "promotions" => ["PromotionID"],
+            "products" => ["VariantID"], "accounts" => ["UserID"], "permissions" => ["Role", "Permission"],
+            "staff" => ["BranchID", "UserID", "Role"], _ => throw new ApiException(404, "Resource not found.")
+        };
+        return await pages.Read(sql, keys, section is not ("permissions" or "staff"), page,
+            JsonSerializer.Serialize(new { Actor, section, q = q ?? "" }),
+            [("@actor", Actor), ("@q", q ?? ""), ("@search", "%" + (q ?? "") + "%")],
+            section is "permissions" or "staff" ? null : section == "products" ? "variants" : section, keys[0]);
     }
 
     [HttpGet("dashboard/overview")]
@@ -118,9 +151,9 @@ public sealed partial class AdminController(SqlStore db) : ControllerBase
         """, ("@actor", Actor))).Single();
 
     [HttpGet("reports/revenue")]
-    public Task<List<Dictionary<string, object?>>> Revenue(DateTime? from = null, DateTime? to = null, int? branchId = null)
-        => db.Procedure("dbo.RevenueReport", ("@ActorID", Actor), ("@FromUTC", from ?? DateTime.UtcNow.Date.AddDays(-30)),
-            ("@ToUTC", to ?? DateTime.UtcNow.Date.AddDays(1)), ("@BranchID", branchId));
+    public async Task<ApiPage> Revenue(DateTimeOffset? fromTime = null, DateTimeOffset? toTime = null, int? branchId = null)
+        => new(await db.Procedure("dbo.RevenueReport", ("@ActorID", Actor), ("@FromUTC", fromTime?.UtcDateTime ?? DateTime.UtcNow.Date.AddDays(-30)),
+            ("@ToUTC", toTime?.UtcDateTime ?? DateTime.UtcNow.Date.AddDays(1)), ("@BranchID", branchId)), null);
 
     [HttpGet("lookups/options")]
     public async Task<object> Options() => new
@@ -138,14 +171,14 @@ public sealed partial class AdminController(SqlStore db) : ControllerBase
         [Required] string Role = "Customer", int? BranchId = null, int? AreaId = null);
 
     [HttpPost("accounts")]
-    public async Task<object> CreateAccount(AccountInput input)
+    public async Task<IActionResult> CreateAccount(AccountInput input)
     {
         await RequireOwner();
         if (input.Role is not ("Owner" or "AreaManager" or "BranchManager" or "Staff" or "Customer"))
             throw new ApiException(400, "Vai trò không hợp lệ.");
         if ((input.Role == "Staff" && input.BranchId is null) || (input.Role == "AreaManager" && input.AreaId is null))
             throw new ApiException(400, "Cần chọn chi nhánh hoặc khu vực phụ trách.");
-        return await db.Query("""
+        var created = await db.Query("""
             SET XACT_ABORT ON; BEGIN TRAN;
             DECLARE @role int=(SELECT RoleID FROM dbo.Roles WHERE Code=@code);
             INSERT dbo.Users(RoleID,Email,NormalizedEmail,FullName,Phone,PasswordHash)
@@ -162,8 +195,10 @@ public sealed partial class AdminController(SqlStore db) : ControllerBase
             COMMIT; SELECT @id AS UserID;
             """, ("@code", input.Role), ("@email", input.Email.Trim()), ("@name", input.FullName.Trim()), ("@phone", input.Phone),
             ("@hash", new PasswordHasher<string>().HashPassword(input.Email, input.Password)), ("@branch", input.BranchId), ("@area", input.AreaId), ("@actor", Actor));
+        var id = (int)created.Single()["UserID"]!;
+        return Created($"/v1/accounts/{id}", await ReadResource("accounts", id));
     }
-    public record ActiveInput(bool IsActive);
+    public record ActiveInput([property: System.Text.Json.Serialization.JsonRequired] bool IsActive);
     [HttpPut("accounts/{id:int}/active")]
     public async Task<IActionResult> AccountActive(int id, ActiveInput input)
     {
@@ -172,7 +207,7 @@ public sealed partial class AdminController(SqlStore db) : ControllerBase
         await db.Query("""
             SET XACT_ABORT ON; BEGIN TRAN;
             UPDATE dbo.Users SET IsActive=@active WHERE UserID=@id;
-            IF @@ROWCOUNT=0 THROW 51100,'Account not found.',1;
+            IF @@ROWCOUNT=0 THROW 51104,'Account not found.',1;
             IF @active=0 UPDATE dbo.UserSessions SET RevokedAt=SYSUTCDATETIME() WHERE UserID=@id AND RevokedAt IS NULL;
             INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID) VALUES(@actor,'Account.Status','Users',@id);
             COMMIT;
@@ -181,7 +216,7 @@ public sealed partial class AdminController(SqlStore db) : ControllerBase
     }
 
     public record ReplyInput([Required] string Status, [MaxLength(4000)] string? ResponseContent);
-    [HttpPost("feedbacks/{id:int}/reply")]
+    [HttpPost("feedbacks/{id:int}:reply")]
     public async Task<IActionResult> Reply(int id, ReplyInput input)
     {
         await db.Procedure("dbo.HandleFeedback", ("@ActorID", Actor), ("@FeedbackID", id), ("@Status", input.Status), ("@Response", input.ResponseContent));
@@ -191,10 +226,10 @@ public sealed partial class AdminController(SqlStore db) : ControllerBase
     public record ProductInput([Required, MaxLength(150)] string Name, [MaxLength(2000)] string? Description,
         [Range(1,int.MaxValue)] int CategoryId, [Required, MaxLength(60)] string Size, [Range(0,100000000)] decimal Price);
     [HttpPost("products")]
-    public async Task<object> CreateProduct(ProductInput input)
+    public async Task<IActionResult> CreateProduct(ProductInput input)
     {
         await RequireOwner();
-        return await db.Query("""
+        var created = await db.Query("""
             SET XACT_ABORT ON; BEGIN TRAN;
             INSERT dbo.Products(CategoryID,Name,Description) VALUES(@category,@name,@description);
             DECLARE @id int=SCOPE_IDENTITY();
@@ -203,19 +238,39 @@ public sealed partial class AdminController(SqlStore db) : ControllerBase
             INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID) VALUES(@actor,'Product.Create','Products',@id);
             COMMIT; SELECT @id AS ProductID;
             """, ("@category",input.CategoryId), ("@name",input.Name), ("@description",input.Description), ("@size",input.Size), ("@price",input.Price), ("@actor",Actor));
+        var id = (int)created.Single()["ProductID"]!;
+        return Created($"/v1/products/{id}", await ReadResource("products", id));
     }
     [HttpPut("products/{id:int}/active")]
     public async Task<IActionResult> ProductActive(int id, ActiveInput input)
     {
         await RequireOwner();
-        await db.Query("UPDATE dbo.Products SET IsActive=@active WHERE ProductID=@id", ("@id",id), ("@active",input.IsActive));
+        await db.Query("UPDATE dbo.Products SET IsActive=@active WHERE ProductID=@id; IF @@ROWCOUNT=0 THROW 51104,'Product not found.',1;", ("@id",id), ("@active",input.IsActive));
         return NoContent();
     }
-    public record PriceInput(int BranchId,int VariantId,[Range(0,100000000)] decimal Price,bool IsAvailable=true);
-    [HttpPost("products/price")]
-    public async Task<IActionResult> Price(PriceInput input)
+    public record PriceInput([property: System.Text.Json.Serialization.JsonRequired] [Range(0,100000000)] decimal Price);
+    [HttpGet("variants/{id:int}/price")]
+    public async Task<object> Price(int id)
     {
-        await db.Procedure("dbo.SetBranchPrice", ("@ActorID",Actor), ("@BranchID",input.BranchId), ("@VariantID",input.VariantId), ("@Price",input.Price), ("@IsAvailable",input.IsAvailable));
-        return NoContent();
+        var row = (await db.Query("SELECT VariantID,BasePrice AS Price FROM dbo.ProductVariants WHERE VariantID=@id",("@id",id))).SingleOrDefault()
+            ?? throw new ApiException(404,"Không tìm thấy biến thể sản phẩm.");
+        row["ResourceName"] = $"variants/{id}/price";
+        return row;
+    }
+    [HttpPut("variants/{id:int}/price")]
+    public async Task<object> Price(int id, PriceInput input)
+    {
+        await RequireOwner();
+        var rows = await db.Query("""
+            SET XACT_ABORT ON; BEGIN TRAN;
+            UPDATE dbo.ProductVariants SET BasePrice=@price WHERE VariantID=@id;
+            IF @@ROWCOUNT=0 THROW 51104,'Variant not found.',1;
+            UPDATE dbo.BranchProductVariants SET SellingPrice=@price WHERE VariantID=@id;
+            INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details)
+            VALUES(@actor,'Variant.Price','ProductVariants',@id,CONVERT(nvarchar(50),@price));
+            COMMIT; SELECT VariantID,BasePrice AS Price FROM dbo.ProductVariants WHERE VariantID=@id;
+            """, ("@actor",Actor), ("@id",id), ("@price",input.Price));
+        var row = rows.Single(); row["ResourceName"] = $"variants/{id}/price";
+        return row;
     }
 }

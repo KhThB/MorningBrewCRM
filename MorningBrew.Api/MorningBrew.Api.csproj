@@ -6,6 +6,7 @@
     <UserSecretsId>MorningBrewCRM-Api</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../Shared/ApiJson.cs" Link="Contracts/ApiJson.cs" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.6" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
   </ItemGroup>

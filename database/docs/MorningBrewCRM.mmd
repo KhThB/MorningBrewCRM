@@ -1,0 +1,474 @@
+erDiagram
+    Roles {
+        int RoleID PK
+        varchar Code
+        nvarchar Name
+    }
+    Permissions {
+        int PermissionID PK
+        varchar Code
+        nvarchar Description
+    }
+    RolePermissions {
+        int RoleID PK
+        int PermissionID PK
+    }
+    Users {
+        int UserID PK
+        int RoleID FK
+        nvarchar Email
+        nvarchar NormalizedEmail
+        varchar PasswordHash
+        nvarchar FullName
+        varchar Phone
+        bit IsActive
+        datetime2 CreatedAt
+        rowversion Version
+    }
+    UserSessions {
+        int SessionID PK
+        int UserID FK
+        binary TokenHash
+        nvarchar DeviceName
+        datetime2 CreatedAt
+        datetime2 ExpiresAt
+        datetime2 RevokedAt
+    }
+    Areas {
+        int AreaID PK
+        nvarchar Name
+        bit IsActive
+    }
+    Branches {
+        int BranchID PK
+        int AreaID FK
+        int ManagerID FK
+        varchar Code
+        nvarchar Name
+        nvarchar Address
+        varchar Phone
+        time OpeningTime
+        time ClosingTime
+        bit IsActive
+        bit AcceptingOrders
+        bit PickupEnabled
+        bit DeliveryEnabled
+        decimal DeliveryFee
+        rowversion Version
+    }
+    AreaManagers {
+        int AreaID PK
+        int UserID PK
+        datetime2 AssignedAt
+        bit IsActive
+    }
+    StaffBranches {
+        int UserID PK
+        int BranchID PK
+        datetime2 AssignedAt
+        bit IsActive
+    }
+    Customers {
+        int CustomerID PK
+        int UserID FK
+        date DateOfBirth
+        varchar Gender
+        int LoyaltyPoints
+        datetime2 CreatedAt
+        rowversion Version
+    }
+    CustomerAddresses {
+        int AddressID PK
+        int CustomerID FK
+        nvarchar Label
+        nvarchar RecipientName
+        varchar Phone
+        nvarchar AddressText
+        nvarchar Note
+        bit IsDefault
+        bit IsActive
+        datetime2 CreatedAt
+    }
+    Categories {
+        int CategoryID PK
+        nvarchar Name
+        bit IsActive
+    }
+    Products {
+        int ProductID PK
+        int CategoryID FK
+        nvarchar Name
+        nvarchar Description
+        nvarchar ImageURL
+        bit IsActive
+        rowversion Version
+    }
+    ProductVariants {
+        int VariantID PK
+        int ProductID FK
+        nvarchar Name
+        decimal BasePrice
+        int DisplayOrder
+        bit IsActive
+    }
+    BranchProducts {
+        int BranchID PK
+        int ProductID PK
+        bit IsAvailable
+    }
+    BranchProductVariants {
+        int BranchID PK
+        int VariantID PK
+        int ProductID FK
+        decimal SellingPrice
+        bit IsAvailable
+    }
+    ModifierGroups {
+        int ModifierGroupID PK
+        nvarchar Name
+        varchar Kind
+        bit IsActive
+    }
+    ModifierOptions {
+        int ModifierOptionID PK
+        int ModifierGroupID FK
+        nvarchar Name
+        decimal ExtraPrice
+        int DisplayOrder
+        bit IsActive
+    }
+    ProductModifierGroups {
+        int ProductID PK
+        int ModifierGroupID PK
+        int MinSelections
+        int MaxSelections
+    }
+    BranchModifierOptions {
+        int BranchID PK
+        int ModifierOptionID PK
+        decimal ExtraPrice
+        bit IsAvailable
+    }
+    CustomerPreferences {
+        int CustomerID PK
+        int ProductID PK
+        datetime2 CreatedAt
+    }
+    LoyaltyPolicies {
+        int PolicyID PK
+        nvarchar Name
+        decimal AmountPerPoint
+        datetime2 EffectiveFrom
+        datetime2 EffectiveTo
+    }
+    Promotions {
+        int PromotionID PK
+        nvarchar Name
+        nvarchar Description
+        varchar Scope
+        int AreaID FK
+        int BranchID FK
+        int CreatedBy FK
+        varchar DiscountType
+        decimal DiscountValue
+        decimal MaxDiscount
+        decimal MinSubtotal
+        datetime2 StartsAt
+        datetime2 EndsAt
+        int PointsCost
+        int TotalLimit
+        int PerCustomerLimit
+        bit IsActive
+        rowversion Version
+    }
+    CustomerPromotions {
+        int CustomerPromotionID PK
+        int CustomerID FK
+        int PromotionID FK
+        varchar Code
+        uniqueidentifier RequestKey
+        varchar Status
+        datetime2 IssuedAt
+        datetime2 ExpiresAt
+        int PointsSpent
+        varchar DiscountType
+        decimal DiscountValue
+        decimal MaxDiscount
+        decimal MinSubtotal
+        int ReservedOrderID FK
+        int UsedOrderID FK
+        datetime2 UsedAt
+        rowversion Version
+    }
+    Orders {
+        int OrderID PK
+        varchar OrderCode
+        uniqueidentifier RequestKey
+        binary RequestHash
+        int BranchID FK
+        int CustomerID FK
+        int CreatedBy FK
+        varchar Source
+        varchar Fulfillment
+        varchar PaymentMode
+        varchar Status
+        nvarchar ContactName
+        varchar ContactPhone
+        nvarchar Note
+        decimal Subtotal
+        decimal DiscountAmount
+        decimal DeliveryFee
+        decimal TotalAmount
+        int CustomerPromotionID FK
+        int PolicyID FK
+        decimal AmountPerPoint
+        datetime2 CreatedAt
+        datetime2 PaymentDueAt
+        datetime2 CompletedAt
+        datetime2 CancelledAt
+        rowversion Version
+    }
+    OrderDetails {
+        int OrderDetailID PK
+        int OrderID FK
+        int ProductID FK
+        int VariantID FK
+        nvarchar ProductName
+        nvarchar VariantName
+        int Quantity
+        decimal UnitPrice
+        decimal ModifierTotal
+        decimal LineTotal
+        nvarchar Note
+    }
+    OrderItemModifiers {
+        int OrderDetailID PK
+        int ModifierOptionID PK
+        nvarchar GroupName
+        nvarchar OptionName
+        decimal ExtraPrice
+    }
+    OrderStatusHistory {
+        int HistoryID PK
+        int OrderID FK
+        varchar FromStatus
+        varchar ToStatus
+        int ChangedBy FK
+        nvarchar Reason
+        datetime2 CreatedAt
+    }
+    Deliveries {
+        int OrderID PK
+        nvarchar RecipientName
+        varchar Phone
+        nvarchar AddressText
+        nvarchar Note
+        varchar Status
+        nvarchar CourierName
+        varchar CourierPhone
+        nvarchar FailureReason
+        int AttemptCount
+        datetime2 DispatchedAt
+        datetime2 DeliveredAt
+        rowversion Version
+    }
+    PaymentAttempts {
+        int PaymentID PK
+        int OrderID FK
+        uniqueidentifier RequestKey
+        varchar Method
+        varchar Provider
+        varchar ProviderReference
+        decimal Amount
+        varchar Status
+        nvarchar FailureReason
+        datetime2 CreatedAt
+        datetime2 SettledAt
+    }
+    Refunds {
+        int RefundID PK
+        int PaymentID FK
+        int OrderID FK
+        uniqueidentifier RequestKey
+        decimal Amount
+        varchar Status
+        nvarchar Reason
+        int RequestedBy FK
+        varchar ProviderReference
+        int AttemptCount
+        nvarchar FailureReason
+        datetime2 CreatedAt
+        datetime2 CompletedAt
+    }
+    LoyaltyTransactions {
+        int LoyaltyTransactionID PK
+        int CustomerID FK
+        int OrderID FK
+        int CustomerPromotionID FK
+        varchar Kind
+        int Points
+        uniqueidentifier RequestKey
+        nvarchar Note
+        datetime2 CreatedAt
+    }
+    Feedbacks {
+        int FeedbackID PK
+        int CustomerID FK
+        int OrderID FK
+        int BranchID FK
+        int ProductID FK
+        varchar Type
+        nvarchar Content
+        tinyint Rating
+        varchar Status
+        int HandledBy FK
+        nvarchar ResponseContent
+        datetime2 CreatedAt
+        datetime2 HandledAt
+    }
+    Surveys {
+        int SurveyID PK
+        nvarchar Title
+        nvarchar Description
+        int CreatedBy FK
+        varchar Scope
+        int AreaID FK
+        int BranchID FK
+        datetime2 StartsAt
+        datetime2 EndsAt
+        varchar Status
+    }
+    SurveyQuestions {
+        int QuestionID PK
+        int SurveyID FK
+        nvarchar Text
+        varchar Type
+        bit IsRequired
+        int DisplayOrder
+        int RatingMin
+        int RatingMax
+    }
+    SurveyQuestionOptions {
+        int OptionID PK
+        int QuestionID FK
+        nvarchar Text
+        int DisplayOrder
+    }
+    SurveyRecipients {
+        int SurveyID PK
+        int CustomerID PK
+        datetime2 SentAt
+        datetime2 CompletedAt
+    }
+    SurveyResponses {
+        int ResponseID PK
+        int SurveyID FK
+        int QuestionID FK
+        int CustomerID FK
+        nvarchar TextValue
+        int RatingValue
+        datetime2 SubmittedAt
+    }
+    SurveyAnswerOptions {
+        int ResponseID PK
+        int OptionID PK
+        int QuestionID FK
+    }
+    Notifications {
+        int NotificationID PK
+        int UserID FK
+        nvarchar Title
+        nvarchar Body
+        int OrderID FK
+        int CustomerPromotionID FK
+        int SurveyID FK
+        datetime2 CreatedAt
+        datetime2 ReadAt
+    }
+    AuditLogs {
+        int AuditID PK
+        int ActorID FK
+        int BranchID FK
+        varchar Action
+        varchar EntityType
+        int EntityID
+        nvarchar Details
+        datetime2 CreatedAt
+    }
+    Roles ||--o{ RolePermissions : "RoleID"
+    Permissions ||--o{ RolePermissions : "PermissionID"
+    Roles ||--o{ Users : "RoleID"
+    Users ||--o{ UserSessions : "UserID"
+    Areas ||--o{ Branches : "AreaID"
+    Users |o--o{ Branches : "ManagerID"
+    Areas ||--o{ AreaManagers : "AreaID"
+    Users ||--o{ AreaManagers : "UserID"
+    Users ||--o{ StaffBranches : "UserID"
+    Branches ||--o{ StaffBranches : "BranchID"
+    Users ||--o| Customers : "UserID"
+    Customers ||--o{ CustomerAddresses : "CustomerID"
+    Categories ||--o{ Products : "CategoryID"
+    Products ||--o{ ProductVariants : "ProductID"
+    Branches ||--o{ BranchProducts : "BranchID"
+    Products ||--o{ BranchProducts : "ProductID"
+    Branches ||--o{ BranchProductVariants : "BranchID"
+    ProductVariants ||--o{ BranchProductVariants : "VariantID"
+    Products ||--o{ BranchProductVariants : "ProductID"
+    ModifierGroups ||--o{ ModifierOptions : "ModifierGroupID"
+    Products ||--o{ ProductModifierGroups : "ProductID"
+    ModifierGroups ||--o{ ProductModifierGroups : "ModifierGroupID"
+    Branches ||--o{ BranchModifierOptions : "BranchID"
+    ModifierOptions ||--o{ BranchModifierOptions : "ModifierOptionID"
+    Customers ||--o{ CustomerPreferences : "CustomerID"
+    Products ||--o{ CustomerPreferences : "ProductID"
+    Areas |o--o{ Promotions : "AreaID"
+    Branches |o--o{ Promotions : "BranchID"
+    Users ||--o{ Promotions : "CreatedBy"
+    Customers ||--o{ CustomerPromotions : "CustomerID"
+    Promotions ||--o{ CustomerPromotions : "PromotionID"
+    Orders |o--o{ CustomerPromotions : "ReservedOrderID"
+    Orders |o--o{ CustomerPromotions : "UsedOrderID"
+    Branches ||--o{ Orders : "BranchID"
+    Customers |o--o{ Orders : "CustomerID"
+    Users ||--o{ Orders : "CreatedBy"
+    CustomerPromotions |o--o{ Orders : "CustomerPromotionID"
+    LoyaltyPolicies ||--o{ Orders : "PolicyID"
+    Orders ||--o{ OrderDetails : "OrderID"
+    Products ||--o{ OrderDetails : "ProductID"
+    ProductVariants ||--o{ OrderDetails : "VariantID"
+    OrderDetails ||--o{ OrderItemModifiers : "OrderDetailID"
+    ModifierOptions ||--o{ OrderItemModifiers : "ModifierOptionID"
+    Orders ||--o{ OrderStatusHistory : "OrderID"
+    Users |o--o{ OrderStatusHistory : "ChangedBy"
+    Orders ||--o| Deliveries : "OrderID"
+    Orders ||--o{ PaymentAttempts : "OrderID"
+    PaymentAttempts ||--o| Refunds : "PaymentID"
+    Orders ||--o{ Refunds : "OrderID"
+    Users ||--o{ Refunds : "RequestedBy"
+    Customers ||--o{ LoyaltyTransactions : "CustomerID"
+    Orders |o--o{ LoyaltyTransactions : "OrderID"
+    CustomerPromotions |o--o{ LoyaltyTransactions : "CustomerPromotionID"
+    Customers ||--o{ Feedbacks : "CustomerID"
+    Orders |o--o{ Feedbacks : "OrderID"
+    Branches |o--o{ Feedbacks : "BranchID"
+    Products |o--o{ Feedbacks : "ProductID"
+    Users |o--o{ Feedbacks : "HandledBy"
+    Users ||--o{ Surveys : "CreatedBy"
+    Areas |o--o{ Surveys : "AreaID"
+    Branches |o--o{ Surveys : "BranchID"
+    Surveys ||--o{ SurveyQuestions : "SurveyID"
+    SurveyQuestions ||--o{ SurveyQuestionOptions : "QuestionID"
+    Surveys ||--o{ SurveyRecipients : "SurveyID"
+    Customers ||--o{ SurveyRecipients : "CustomerID"
+    Surveys ||--o{ SurveyResponses : "SurveyID"
+    SurveyQuestions ||--o{ SurveyResponses : "QuestionID"
+    Customers ||--o{ SurveyResponses : "CustomerID"
+    SurveyResponses ||--o{ SurveyAnswerOptions : "ResponseID"
+    SurveyQuestionOptions ||--o{ SurveyAnswerOptions : "OptionID"
+    SurveyQuestions ||--o{ SurveyAnswerOptions : "QuestionID"
+    Users ||--o{ Notifications : "UserID"
+    Orders |o--o{ Notifications : "OrderID"
+    CustomerPromotions |o--o{ Notifications : "CustomerPromotionID"
+    Surveys |o--o{ Notifications : "SurveyID"
+    Users |o--o{ AuditLogs : "ActorID"
+    Branches |o--o{ AuditLogs : "BranchID"

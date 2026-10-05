@@ -52,7 +52,7 @@ def race(name,commands,expected_successes=1):
     print('PASS',name,flush=True)
 
 try:
-    test('41 tables and trusted foreign keys',"IF (SELECT COUNT(*) FROM sys.tables)<>41 THROW 52000,'Wrong table count',1; IF EXISTS(SELECT 1 FROM sys.foreign_keys WHERE is_not_trusted=1 OR is_disabled=1) THROW 52000,'Untrusted FK',1;")
+    test('43 tables and trusted foreign keys',"IF (SELECT COUNT(*) FROM sys.tables)<>43 THROW 52000,'Wrong table count',1; IF EXISTS(SELECT 1 FROM sys.foreign_keys WHERE is_not_trusted=1 OR is_disabled=1) THROW 52000,'Untrusted FK',1;")
     test('Pickup price, voucher and awarded points',"IF NOT EXISTS(SELECT 1 FROM dbo.Orders WHERE OrderID=1 AND Subtotal=74000 AND DiscountAmount=10000 AND TotalAmount=64000 AND Status='Completed') THROW 52000,'Wrong total',1; IF NOT EXISTS(SELECT 1 FROM dbo.LoyaltyTransactions WHERE OrderID=1 AND Kind='Earn' AND Points=6) THROW 52000,'Wrong points',1;")
     test('Idempotent completion and successful payment callback',"EXEC dbo.AdvanceOrder 4,1,'Completed'; EXEC dbo.SimulatePayment 5,2,'Succeeded'; IF (SELECT COUNT(*) FROM dbo.LoyaltyTransactions WHERE OrderID=1 AND Kind='Earn')<>1 THROW 52000,'Duplicate points',1;")
     test('Guest POS has no customer or points',"IF NOT EXISTS(SELECT 1 FROM dbo.Orders WHERE OrderID=3 AND CustomerID IS NULL AND Status='Completed') THROW 52000,'Guest missing',1; IF EXISTS(SELECT 1 FROM dbo.LoyaltyTransactions WHERE OrderID=3) THROW 52000,'Guest points',1;")

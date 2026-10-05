@@ -1,0 +1,22 @@
+@page "{section?}"
+@model PortalModel
+@{ViewData["Title"]=Model.Title;}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">Cảm ơn bạn đã đồng hành cùng Morning Brew.</p></div></div>
+<section class="panel"><partial name="_Rows" model="Model.Rows" /></section>
+@if(Model.Section=="profile"&&Model.Rows.Count>0){
+var profile=Model.Rows[0];
+<section class="panel"><h2>Cập nhật hồ sơ</h2><form method="post"><input type="hidden" name="operation" value="profile">
+<label>Họ tên</label><input name="fullName" value="@profile["FullName"]" required maxlength="120"><label>Điện thoại</label><input name="phone" value="@profile["Phone"]" maxlength="20">
+<label>Ngày sinh</label><input name="birth" type="date" value="@(profile["DateOfBirth"].ValueKind==JsonValueKind.String?profile["DateOfBirth"].GetDateTime().ToString("yyyy-MM-dd"):"")">
+<label>Giới tính</label><select name="gender">@foreach(var g in new[]{"Undisclosed","Male","Female","Other"}){<option selected="@(profile["Gender"].ToString()==g)">@g</option>}</select>
+<button class="primary">Lưu hồ sơ</button></form></section>}
+@if(Model.Section=="feedbacks"){
+<section class="panel"><h2>Gửi góp ý</h2><form method="post"><input type="hidden" name="operation" value="feedback">
+<label>Loại phản hồi</label><select name="type"><option value="Service">Phục vụ</option><option value="Product">Sản phẩm</option><option value="Space">Không gian</option><option value="Other">Khác</option></select>
+<label>Đánh giá</label><select name="rating"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select><label>Nội dung</label><textarea name="content" required maxlength="4000"></textarea><button class="primary">Gửi phản hồi</button></form></section>}
+@if(Model.Section=="promotions"&&Model.Rows.Count>0){
+<section class="panel"><h2>Nhận ưu đãi</h2><form method="post"><input type="hidden" name="operation" value="redeem"><input type="hidden" name="requestKey" value="@Guid.NewGuid()"><label>Ưu đãi</label>
+<select name="id">@foreach(var row in Model.Rows){<option value="@row["PromotionID"]">@row["Name"] · @row["PointsCost"] điểm</option>}</select><button class="primary">Đổi điểm / nhận voucher</button></form></section>}
+@if(Model.Section=="surveys"){
+<section class="panel"><h2>Tham gia khảo sát</h2>@foreach(var row in Model.Rows.Where(x=>x["Status"].ToString()=="Open"&&x["CompletedAt"].ValueKind==JsonValueKind.Null)){
+<div class="survey-card"><b>@row["Title"]</b><a class="primary" asp-page="/Answer" asp-route-id="@row["SurveyID"]">Trả lời</a></div>}</section>}

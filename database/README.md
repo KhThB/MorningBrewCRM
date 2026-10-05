@@ -1,6 +1,6 @@
 # Morning Brew CRM — database và tài liệu đồ án
 
-SQL Server 2022+ · **41 bảng / 314 trường** · 21 bảng gốc + 20 bảng bổ sung.
+SQL Server 2022+ · **41 bảng / 314 trường lõi**, cộng **2 bảng Admin** trong `08_admin.sql` (Suppliers, StaffShifts): tổng **43 bảng** khi cài bộ tích hợp.
 
 ## Mở tài liệu
 
@@ -11,7 +11,7 @@ SQL Server 2022+ · **41 bảng / 314 trường** · 21 bảng gốc + 20 bảng
 - [ERD Mermaid](docs/MorningBrewCRM.mmd): bản sơ đồ bằng văn bản.
 - [Kết quả kiểm thử](docs/verification.md): các kịch bản đã chạy trên SQL Server thực.
 
-Đây là phần database, không phải ba ứng dụng đã hoàn thiện. Repo ASP.NET hiện có chưa được nối tới database. Các stored procedure cung cấp luồng nghiệp vụ để backend tiếp tục tích hợp.
+API và web Admin hiện đã nối database chung. POS vẫn là project khung. Xem [hướng dẫn chạy](../README.md) và [bản ghi tích hợp](../docs/integration.md). ERD/Word gốc mô tả 41 bảng lõi; hai bảng Admin được mô tả trực tiếp trong script bổ sung.
 
 ## Database trên máy hiện tại
 

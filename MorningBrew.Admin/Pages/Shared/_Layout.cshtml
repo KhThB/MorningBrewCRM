@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · Morning Brew</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">M</div><div><strong>MORNING BREW</strong><small>Customer relationship management</small></div></div>
+        @if(User.Identity?.IsAuthenticated==true)
+        {
+            <div class="user-box"><div class="avatar">@(User.Identity.Name?.FirstOrDefault())</div><div class="user-info"><b>@User.Identity.Name</b><small>@User.FindFirstValue(ClaimTypes.Role)</small></div></div>
+            <nav>
+            @if(User.IsInRole("Customer"))
+            {
+                @foreach(var entry in new[]{("profile","Hồ sơ"),("loyalty","Điểm tích lũy"),("wallet","Ví voucher"),("promotions","Ưu đãi"),("feedbacks","Phản hồi"),("surveys","Khảo sát")})
+                { <a asp-page="/Portal" asp-route-section="@entry.Item1">@entry.Item2</a> }
+            }
+            else
+            {
+                <a asp-page="/Index">⌂ Tổng quan</a>
+                <a asp-page="/Workspace" asp-route-section="shifts">Lịch làm việc</a>
+                @foreach(var entry in new[]{("customers","Khách hàng"),("feedbacks","Phản hồi"),("surveys","Khảo sát"),("promotions","Ưu đãi"),("products","Sản phẩm"),("staff","Nhân sự"),("reports","Báo cáo")})
+                { <a asp-page="/Workspace" asp-route-section="@entry.Item1">@entry.Item2</a> }
+                @if(User.IsInRole("Owner"))
+                {
+                    <a asp-page="/Workspace" asp-route-section="suppliers">Nhà cung cấp</a>
+                    <a asp-page="/Workspace" asp-route-section="accounts">Tài khoản</a>
+                    <a asp-page="/Workspace" asp-route-section="permissions">Phân quyền theo vai trò</a>
+                }
+            }
+            </nav>
+            <form method="post" asp-page="/Logout" class="logout-form"><button>Đăng xuất</button></form>
+        }
+    </aside>
+    <main class="content">
+        @if(TempData["Error"] is string error){ <div class="alert" role="alert">@error</div> }
+        @if(TempData["Success"] is string success){ <div class="success" role="status">@success</div> }
+        @RenderBody()
+        <footer class="footer">Morning Brew CRM</footer>
+    </main>
+</div>
+<script src="~/js/ui.js" asp-append-version="true" defer></script>
+</body>
+</html>

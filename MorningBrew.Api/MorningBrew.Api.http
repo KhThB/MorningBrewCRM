@@ -1,6 +1,24 @@
-@MorningBrew.Api_HostAddress = http://localhost:5029
+@baseUrl = https://localhost:7132
+@token = paste-token-from-login-response
 
-GET {{MorningBrew.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Login: seeded development account only
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
 
-###
+{"username":"owner@morningbrew.test","password":"MorningBrew!2026"}
+
+### Current account and assigned branches
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### CRM overview
+GET {{baseUrl}}/api/admin/dashboard/overview
+Authorization: Bearer {{token}}
+
+### Scoped customer list
+GET {{baseUrl}}/api/admin/customers?skip=0
+Authorization: Bearer {{token}}
+
+### Revoke current session
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{token}}

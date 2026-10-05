@@ -1,0 +1,9 @@
+@model WorkspaceModel
+<label>Phạm vi</label><select name="scope">
+@if(User.IsInRole("Owner")){<option value="Chain">Toàn chuỗi</option>}
+@if(User.IsInRole("Owner")||User.IsInRole("AreaManager")){<option value="Area">Khu vực</option>}
+<option value="Branch">Chi nhánh</option></select>
+<label>Khu vực (chỉ chọn khi phạm vi là khu vực)</label><select name="areaId"><option value="">Không chọn</option>@foreach(var x in Model.Choices("areas")){<option value="@x["Id"]">@x["Name"]</option>}</select>
+<label>Chi nhánh (chỉ chọn khi phạm vi là chi nhánh)</label><select name="branchId"><option value="">Không chọn</option>@foreach(var x in Model.Choices("branches")){<option value="@x["Id"]">@x["Name"]</option>}</select>
+<label>Bắt đầu (giờ máy hiện tại)</label><input name="startsAt" type="datetime-local" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required>
+<label>Kết thúc</label><input name="endsAt" type="datetime-local" value="@DateTime.Now.AddDays(30).ToString("yyyy-MM-ddTHH:mm")" required>

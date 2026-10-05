@@ -1,85 +1,112 @@
 # MorningBrewCRM
 
-API CRM xây dựng trên ASP.NET Core và .NET 10.
+Hệ thống CRM cho chuỗi quán cà phê, .NET 10 + SQL Server 2022/LocalDB.
 
-## Tiến trình dự án
+## Cấu trúc hiện tại
 
-### Customers
-- Tạo, lấy, cập nhật Customer profile.
-- Tìm kiếm và lọc theo từ khóa, điểm Loyalty, ngày đăng ký và phân trang.
-- Đã sửa ánh xạ `AppUser.Id` sang `Customer.Id` từ JWT.
+| Project | Vai trò |
+|---|---|
+| MorningBrew.Api | API xác thực, phân quyền và nghiệp vụ dùng SQL Server |
+| MorningBrew.Admin | Razor Pages: quản trị CRM và cổng khách hàng; gọi API qua HTTP |
+| MorningBrew.Pos | Khung Blazor của nhóm, chưa có luồng bán hàng hoàn chỉnh |
+| database | Schema, stored procedure, dữ liệu demo, tài liệu và kiểm thử |
 
-### Loyalty
-- Tích điểm, trừ điểm, điều chỉnh điểm và lịch sử điểm.
-- Kiểm tra không cho số dư điểm âm.
+Admin và API dùng **một database**. Admin không mở kết nối database, không còn SQLite hoặc dữ liệu giả trong bộ nhớ. Giao diện/các chức năng của nhánh Admin được chuyển sang Razor Pages .NET 10, thay cho template Blazor Admin ban đầu. POS vẫn là project riêng. Cổng khách hàng là web trong Admin, **chưa phải ứng dụng mobile**.
 
-### Promotions và CustomerPromotions
-- Tạo, cập nhật Promotion.
-- Phát voucher, lấy ví voucher và áp dụng voucher.
-- Kiểm tra Customer tồn tại và ngăn tạo bản ghi trùng.
+## Chạy trên Visual Studio
 
-### Feedbacks
-- Khách hàng gửi Feedback.
-- Admin và quản lý xem, lọc, cập nhật trạng thái và phản hồi.
-- `BranchId`, `ProductId` và `HandledBy` hỗ trợ nullable `int`.
+1. Cài workload **ASP.NET and web development**, SDK .NET 10 và SQL Server 2022 Express LocalDB (`sqlcmd` cần cho script cài database).
+2. Clone repo, mở `MorningBrewCRM.slnx`.
+3. Nếu **chưa có** database, mở PowerShell tại thư mục solution:
 
-### Surveys
-- Tạo khảo sát và câu hỏi.
-- Gửi khảo sát cho khách hàng.
-- Lấy khảo sát đang mở và gửi câu trả lời.
-- Thống kê số người nhận và hoàn thành.
-- Kiểm tra câu hỏi thuộc đúng khảo sát, ngăn trả lời trùng.
+   ```powershell
+   .\database\tools\Apply.ps1
+   ```
 
-### CRM Stats
-- Thống kê khách hàng, Feedback, Survey và Loyalty points.
-- Thống kê Feedback theo trạng thái.
-- Hỗ trợ lọc theo `branchId`:
+   Script tạo `MorningBrewCRM`, áp dụng `01`–`08` và seed demo. Nó từ chối ghi đè database đã tồn tại. File MDF/LDF nằm trong `database/.local/`, không được commit hoặc di chuyển khi đang attach.
 
-`GET /api/admin/stats/crm/overview?branchId=1`
+   Nếu đã cài bộ schema `01`–`07` của repo, chỉ chạy phần bổ sung, không chạy lại seed:
 
-## Thay đổi chung
+   ```powershell
+   sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM -E -C -I -b -f 65001 -i database/sql/08_admin.sql
+   ```
 
-- Các khóa chính và khóa ngoại CRM liên quan dùng `int` tự tăng.
-- Đã loại bỏ `Guid.NewGuid()` và `Guid.TryParse()` khỏi API CRM.
-- Route ID dùng constraint `:int`.
-- Đã cấu hình các quan hệ chính trong `ApplicationDbContext`.
-- Đã bổ sung xử lý các trường nullable như `BranchId`, `ProductId` và `HandledBy`.
+4. Kiểm tra `MorningBrew.Api/appsettings.Development.json`: kết nối mặc định `(localdb)\MSSQLLocalDB`, database `MorningBrewCRM`, Windows Authentication.
+5. Trong Solution Properties → Startup Project, chọn chạy **MorningBrew.Api** và **MorningBrew.Admin**; dùng profile `https` cho cả hai. Có thể thêm POS để tiếp tục phát triển.
+6. Nhấn F5, mở [Admin](https://localhost:7287), [API Swagger](https://localhost:7132/swagger).
 
-## API chính
-
-- `GET/PUT /api/Customer/me`
-- `POST /api/Customer`
-- `POST /api/Customer/search`
-- `POST /api/Loyalty/earn/{customerId}`
-- `POST /api/Loyalty/redeem/{customerId}`
-- `POST /api/Loyalty/adjust/{customerId}`
-- `GET /api/Loyalty/history/{customerId}`
-- `POST/PUT /api/admin/AdminPromotions`
-- `POST /api/admin/AdminPromotions/assign/{promotionId}`
-- `GET /api/Promotions/public`
-- `GET /api/Promotions/wallet/{customerId}`
-- `POST /api/Feedbacks`
-- `POST /api/admin/AdminFeedbacks/list`
-- `PUT /api/admin/AdminFeedbacks/{id}/reply`
-- `POST /api/admin/AdminSurveys`
-- `POST /api/admin/AdminSurveys/send/{surveyId}`
-- `GET /api/Surveys/active`
-- `POST /api/Surveys/{id}/submit`
-- `GET /api/admin/AdminSurveys/{id}/analytics`
-- `GET /api/admin/stats/crm/overview`
-
-## Kiểm tra
-
-- Build toàn bộ solution: thành công.
-- Chưa có project test tự động trong solution.
-- Môi trường phát triển hiện sử dụng InMemory Database.
-
-## Chạy dự án
+Chạy từ terminal (hai cửa sổ):
 
 ```powershell
-dotnet restore
-dotnet build
-dotnet run --project MorningBrew.Api/MorningBrew.Api.csproj
+dotnet run --project MorningBrew.Api --launch-profile https
+dotnet run --project MorningBrew.Admin --launch-profile https
 ```
 
-Swagger: `/swagger`
+Nếu máy chưa tin chứng chỉ HTTPS phát triển: `dotnet dev-certs https --trust`.
+
+### Tài khoản demo
+
+Chỉ có sau khi chạy seed. Mật khẩu: **MorningBrew!2026**.
+
+| Email | Vai trò |
+|---|---|
+| owner@morningbrew.test | Chủ chuỗi |
+| area.east@morningbrew.test | Quản lý khu Đông, chi nhánh 1 và 2 |
+| manager.1@morningbrew.test | Quản lý chi nhánh 1 |
+| staff.1@morningbrew.test | Nhân viên POS; không vào web quản trị |
+| lan@morningbrew.test | Khách hàng, vào cổng thành viên |
+
+Không đưa seed/tài khoản demo lên môi trường thực. API không tự tạo/reset database khi khởi động.
+
+## Chức năng đã nối SQL Server
+
+- Đăng nhập theo email bằng PasswordHasher; phiên bearer ngẫu nhiên, chỉ lưu SHA-256 trong `UserSessions`. Mỗi request kiểm tra tài khoản còn hoạt động, vai trò hiện tại và phạm vi từ SQL.
+- Dashboard, tìm khách hàng, tạo tài khoản/hồ sơ, khóa/mở tài khoản, điều chỉnh điểm có lý do và chống ghi lặp.
+- Phản hồi khách hàng → quản lý trả lời → khách thấy kết quả.
+- Khảo sát: tạo nháp, phát hành, mời, trả lời, xem kết quả, đóng. API hỗ trợ Text/Rating/SingleChoice/MultipleChoice; form tạo nhanh trên Admin dùng thang điểm 1–5.
+- Ưu đãi, cấp voucher, đổi điểm; dùng stored procedure để kiểm soát hạn mức và bảo toàn sổ điểm.
+- Danh mục sản phẩm/biến thể, giá chi nhánh, nhà cung cấp, nhân sự và ca làm; từ chối ca trùng hoặc ngoài phạm vi.
+- Quyền quản lý theo **vai trò**, áp dụng ngay; báo cáo doanh thu có trừ hoàn tiền.
+- Cổng khách hàng: hồ sơ, điểm, voucher, phản hồi, khảo sát.
+
+## Các quyết định khi ghép nhánh
+
+Xem [bản ghi tích hợp](docs/integration.md). Lịch sử `master`, `lmt`, `Admin`, `Backend2(test)` và commit setup trên máy được giữ qua merge commits. ZIP Admin được giải nén thành mã nguồn có thể build; không dùng ZIP làm bản chạy.
+
+Các contract API được thống nhất lại theo schema SQL hiện tại. Không tương thích nguyên trạng với client dùng route/DTO/JWT demo cũ; dùng Swagger và [request mẫu](MorningBrew.Api/MorningBrew.Api.http). Các API chính:
+
+- `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`
+- `GET /api/admin/{customers|feedbacks|surveys|promotions|products|accounts|staff|shifts|suppliers|permissions}`; trang 50 bản ghi qua `skip`.
+- `GET /api/admin/dashboard/overview`, `/api/admin/reports/revenue`, `/api/admin/lookups/options`
+- `POST /api/admin/accounts`, `/api/admin/surveys`, `/api/admin/promotions`, `/api/admin/products`, `/api/admin/shifts`, `/api/admin/suppliers`
+- Các thao tác chi tiết và cổng khách hàng xem trong Swagger.
+
+`UserID` và `CustomerID` khác nhau. API tự tìm CustomerID từ phiên đăng nhập. Client không được tự quyết ActorID, quyền hoặc phạm vi.
+
+## Cấu hình
+
+- API: `ConnectionStrings__MorningBrew` hoặc .NET User Secrets; không commit mật khẩu SQL.
+- Admin: `Api__BaseUrl` mặc định `https://localhost:7132/`.
+- Production cần HTTPS, cấu hình URL đúng và lưu Data Protection keys ổn định cho cookie.
+- SQL role `MorningBrewApi` dành riêng cho tài khoản dịch vụ API có quyền CRUD metadata/EXECUTE, không có quyền DDL. Không cấp credential này cho frontend/người dùng. Role `MorningBrewRuntime` cũ chỉ dùng cho các procedure, không đủ để chạy phần metadata của API này.
+
+## Kiểm thử
+
+```powershell
+dotnet build MorningBrewCRM.slnx
+.\database\tools\Apply.ps1 -Database MorningBrewCRM_TestRun
+python database/tests/verify.py --database MorningBrewCRM_TestRun
+python tests/integration.py --database MorningBrewCRM_TestRun
+```
+
+Cần Python 3 trên PATH để chạy test. Dùng tên database mới cho mỗi lần chạy bộ SQL gốc. Bộ test cố ý thay đổi dữ liệu và từ chối tên không chứa `Test` hoặc `Verify`. Test API mở cổng loopback 15029/15191 và tự dừng các tiến trình do nó tạo; không tác động tiến trình Visual Studio. Log/kết quả ở `database/qa/`, được bỏ qua bởi Git.
+
+## Làm việc nhóm sau khi ghép
+
+```powershell
+git switch master
+git pull --ff-only origin master
+git switch -c feature/ten-chuc-nang
+```
+
+Commit source thay vì ZIP, mở Pull Request vào `master`, kiểm tra build và luồng liên quan trước khi merge. Không force-push lên master; giữ nhánh thành viên cho đến khi mọi người xác nhận phần việc.

@@ -1,191 +1,79 @@
-# MorningBrewCRM - Tổng quan dự án
+# Admin_MC + MorningBrew SQL Server
 
-Tài liệu này tóm tắt các file chính trong repo, cấu trúc database (từ entity classes), API contract (các endpoint chính), JSON mẫu và hướng dẫn Swagger. Nội dung bằng tiếng Việt.
+Đã thay backend của Admin_MC bằng MorningBrew.Api trong file MorningBrewCRM-integration-crm-sqlserver.zip. Giao diện Razor, bố cục, CSS và JavaScript của Admin_MC là nền giao diện. Các trường/nút được chỉnh theo hợp đồng API mới.
 
-## Tổng quan
+## Chạy trên Windows
 
-MorningBrew.API là service backend (ASP.NET) cung cấp các API cho CRM/B2 khách hàng: quản lý khách hàng, loyalty, promotion, feedback và module khảo sát (surveys). Dùng InMemory EF Core trong Program.cs (phục vụ phát triển).
+1. Cài **.NET 10 SDK** (project MorningBrew gốc là net10.0), SQL Server 2022+ hoặc LocalDB tương thích, và `sqlcmd`. Nếu Visual Studio hiện tại không hỗ trợ net10.0, vẫn có thể mở thư mục và chạy các file CMD bằng SDK; không đổi riêng một project về net8.0.
+2. Giải nén toàn bộ ZIP. Mở đúng thư mục có `CHAY_CA_HAI.cmd` và `MorningBrewCRM.slnx`.
+3. Nếu chưa có database: chạy `TAO_DATABASE_MOI.cmd`. Bộ cài dùng schema, procedure và seed **của MorningBrew**, không dùng dữ liệu Admin_MC. Script từ chối ghi đè database đã tồn tại. Nếu đã có MorningBrewCRM đủ script 01–09, bỏ qua bước tạo mới.
+4. Sửa `MorningBrew.Api/appsettings.Development.json` nếu dùng server khác:
 
-## File và chức năng chính
-
-- MorningBrew.Api/Program.cs
-  - Cấu hình ứng dụng: DI, Authentication (JWT), DbContext (InMemory), Swagger, middleware, seed data.
-
-- MorningBrew.Api/Data/DbInitializer.cs
-  - Seed dữ liệu mẫu (Roles, Area, Branch, Users, Customer) khi khởi chạy.
-
-- MorningBrew.Api/Domain/Entities/*.cs
-  - Các entity domain mapping tới bảng DB (EF Core). Các file chính:
-	- Survey.cs: metadata khảo sát (Id, Title, Description, StartAt, EndAt, IsActive, CreatedBy, CreatedAt). Có navigation collection Questions.
-	- SurveyQuestion.cs: câu hỏi (QuestionKey, QuestionText, QuestionType, OptionsJSON, DisplayOrder).
-	- SurveyRecipient.cs: khảo sát gán cho khách (SurveyId, CustomerId, Status, AssignedAt, CompletedAt).
-	- SurveyResponse.cs: header một lần submit của khách (SurveyId, CustomerId, CreatedAt).
-	- SurveyAnswer.cs: từng câu trả lời (SurveyResponseId, QuestionKey, Answer).
-	- Các entity khác: AppUser, Area, Branch, Customer, Promotion, Feedback, LoyaltyTransaction, Role, CustomerPromotion (xem file tương ứng để chi tiết).
-
-- MorningBrew.Api/DTOs/
-  - DTOs cho request/response giữa client và API. File chính:
-	- DTOs/Surveys/SurveyDtos.cs: CreateQuestionRequest, CreateSurveyRequest, SurveyQuestionResponse, SurveyResponse (DTO), SubmitAnswerRequest, SubmitSurveyRequest, SurveyAnalyticsResponse.
-	- Các DTOs khác cho Auth, Customers, Feedbacks, Promotions.
-
-- MorningBrew.Api/Controllers/*
-  - API endpoints. Một vài controller quan trọng:
-	- SurveysController.cs (route: api/surveys)
-	  - GET api/surveys/active (Authorized): lấy khảo sát active cho khách.
-	  - POST api/surveys/{id}/submit (Authorized): nộp khảo sát.
-
-	- AdminSurveysController.cs (route: api/admin/surveys) [Authorize Roles Admin,Owner]
-	  - POST api/admin/surveys: tạo khảo sát (CreateSurveyRequest)
-	  - POST api/admin/surveys/send/{surveyId}: gửi khảo sát tới danh sách khách (body: array of GUID)
-	  - GET api/admin/surveys/{id}/analytics: lấy analytics (SurveyAnalyticsResponse)
-
-	- AdminFeedbacksController.cs (route: api/admin/adminfeedbacks) [Authorize roles]
-	  - POST list, PUT {id}/reply (xem file để chi tiết)
-
-- MorningBrew.Api/Services/Interfaces/*.cs và Implementations/*.cs
-  - Các service chứa logic nghiệp vụ. Ví dụ ISurveyService + SurveyService implements:
-	- CreateSurveyAsync(CreateSurveyRequest)
-	- SendSurveyToCustomersAsync(Guid, IEnumerable<Guid>)
-	- GetSurveyAnalyticsAsync(Guid)
-	- GetActiveSurveysAsync(Guid customerId)
-	- SubmitSurveyAsync(Guid, SubmitSurveyRequest)
-
-## Cấu trúc Database (từ các Entity classes)
-
-Bảng chính liên quan Surveys:
-
-- Surveys
-  - Id: GUID (PK)
-  - Title: string
-  - Description: string?
-  - StartAt: DateTime
-  - EndAt: DateTime
-  - IsActive: bool
-  - CreatedBy: GUID
-  - CreatedAt: DateTime
-
-- SurveyQuestions
-  - Id: GUID (PK)
-  - SurveyId: GUID (FK -> Surveys.Id)
-  - QuestionKey: string
-  - QuestionText: string
-  - QuestionType: string (Text, SingleChoice, MultipleChoice, Rating...)
-  - OptionsJSON: string? (JSON array of options for choice questions)
-  - DisplayOrder: int
-
-- SurveyRecipients
-  - Id: GUID (PK)
-  - SurveyId: GUID (FK)
-  - CustomerId: GUID
-  - Status: string (Assigned, Completed)
-  - AssignedAt: DateTime
-  - CompletedAt: DateTime?
-
-- SurveyResponses
-  - Id: GUID (PK)
-  - SurveyId: GUID (FK)
-  - CustomerId: GUID
-  - CreatedAt: DateTime
-
-- SurveyAnswers
-  - Id: GUID (PK)
-  - SurveyResponseId: GUID (FK -> SurveyResponses.Id)
-  - QuestionKey: string
-  - Answer: string
-
-Các bảng khác: Customers (Customer.cs), AppUser, Promotions, Feedbacks, LoyaltyTransaction, Roles, Branch, Area, CustomerPromotion.
-
-## API Contract (chính liên quan đến Surveys)
-
-1) Lấy khảo sát active cho khách
-  - Method: GET
-  - Route: /api/surveys/active
-  - Auth: Bearer JWT (Authorized)
-  - Request: none (customerId được lấy từ Claim NameIdentifier)
-  - Response: 200 OK
-	- Body: IEnumerable<SurveyResponse> (DTO)
-	  - SurveyResponse: { Id, Title, Description, StartAt, EndAt, IsActive, Questions: [ SurveyQuestionResponse ] }
-	  - SurveyQuestionResponse: { QuestionKey, QuestionText, QuestionType, OptionsJSON, DisplayOrder }
-
-2) Khách nộp khảo sát
-  - Method: POST
-  - Route: /api/surveys/{id}/submit
-  - Auth: Bearer JWT
-  - Request Body: SubmitSurveyRequest
-	- { "customerId": "<guid>", "answers": [ { "questionKey": "q1", "answer": "..." }, ... ] }
-  - Response: 204 No Content
-
-3) Admin tạo khảo sát
-  - Method: POST
-  - Route: /api/admin/surveys
-  - Auth: Roles Admin,Owner
-  - Request Body: CreateSurveyRequest
-	- { "title": "...", "description": "...", "startAt": "2026-01-01T00:00:00Z", "endAt": "2026-02-01T00:00:00Z", "questions": [ { "questionKey": "q1", "questionText": "...", "questionType": "SingleChoice", "optionsJSON": "[\"A\",\"B\"]", "displayOrder": 1 } ], "isActive": true }
-  - Response: 200 OK
-	- Body: { "surveyId": "<guid>" }
-
-4) Admin gửi khảo sát cho danh sách khách
-  - Method: POST
-  - Route: /api/admin/surveys/send/{surveyId}
-  - Auth: Roles Admin,Owner
-  - Request Body: [ "guid1", "guid2", ... ]
-  - Response: 204 No Content
-
-5) Admin xem analytics
-  - Method: GET
-  - Route: /api/admin/surveys/{id}/analytics
-  - Response: 200 OK
-	- Body: SurveyAnalyticsResponse { surveyId, totalRecipients, completedCount, completionRate }
-
-## JSON mẫu
-
-CreateSurveyRequest mẫu:
-
+```json
 {
-  "title": "Khảo sát hài lòng khách hàng",
-  "description": "Survey về trải nghiệm",
-  "startAt": "2026-09-01T00:00:00Z",
-  "endAt": "2026-09-30T23:59:59Z",
-  "questions": [
-	{ "questionKey": "q1", "questionText": "Bạn đánh giá dịch vụ thế nào?", "questionType": "SingleChoice", "optionsJSON": "[\"Tốt\",\"Trung Bình\",\"Kém\"]", "displayOrder": 1 }
-  ],
-  "isActive": true
+  "ConnectionStrings": {
+    "MorningBrew": "Server=(localdb)\\MSSQLLocalDB;Database=MorningBrewCRM;Integrated Security=true;TrustServerCertificate=true"
+  }
 }
+```
 
-SubmitSurveyRequest mẫu:
+5. Chạy `BUILD.cmd`. Sau khi build thành công, chạy `CHAY_CA_HAI.cmd`.
+6. Đợi cả hai cửa sổ báo `Now listening on`. Mở **http://localhost:5199**. API: **http://localhost:5099**; kiểm tra database: **http://localhost:5099/health**; Swagger trong Development: **http://localhost:5099/swagger**.
 
-{
-  "customerId": "ffffffff-ffff-ffff-ffff-ffffffffffff",
-  "answers": [ { "questionKey": "q1", "answer": "Tốt" } ]
-}
+Nếu chạy bằng PowerShell từ thư mục gốc:
 
-Send survey (list of customer ids) mẫu:
+```powershell
+dotnet build .\MorningBrewCRM.slnx
+.\CHAY_CA_HAI.cmd
+```
 
-[ "ffffffff-ffff-ffff-ffff-ffffffffffff", "00000000-0000-0000-0000-000000000000" ]
+Không chạy `dotnet build` từ thư mục cha chỉ chứa file ZIP; đó là nguyên nhân MSB1003. Khi giải nén, giữ nguyên `wwwroot` trong project web để CSS/JS được phục vụ.
 
-SurveyAnalyticsResponse mẫu:
+## Đăng nhập
 
-{
-  "surveyId": "<guid>",
-  "totalRecipients": 100,
-  "completedCount": 40,
-  "completionRate": 40.0
-}
+Chỉ có các tài khoản dưới đây nếu đã nạp seed MorningBrew. Mật khẩu seed: `MorningBrew!2026`.
 
-## Swagger / thử nghiệm
+| Email | Vai trò |
+|---|---|
+| owner@morningbrew.test | Owner |
+| area.east@morningbrew.test | AreaManager |
+| manager.1@morningbrew.test | BranchManager |
+| staff.1@morningbrew.test | Staff — trang hồ sơ và ca cá nhân |
+| lan@morningbrew.test | Customer — cổng thành viên |
 
-- Swagger UI được bật trong Program.cs tại /swagger. Mở `https://<host>/swagger` khi ứng dụng chạy để thử các endpoint.
-- Postman / HTTP file: MorningBrew.Api/MorningBrew.Api.http có một số request mẫu.
+Các tài khoản owner/area/store/employee và mật khẩu 123456 của Admin_MC cũ đã bị bỏ. Không có đăng nhập dự phòng khi SQL Server/API tắt.
 
-## Gợi ý cải thiện (tùy chọn)
+## Cấu trúc
 
-- Đổi tên entity domain SurveyResponse (bản ghi response) thành SurveySubmission hoặc SurveySubmissionHeader để tránh trùng tên với DTO SurveyResponse.
-- Thêm DataAnnotations / validation attributes vào DTO để đảm bảo dữ liệu vào hợp lệ.
-- Nếu muốn persist, chuyển từ InMemoryDatabase sang một provider thực (SqlServer/Postgres) và tạo migrations.
+- `Admin_MC/`: frontend Razor Pages và lớp gọi HTTP API; không có kết nối database.
+- `MorningBrew.Api/`: toàn bộ backend SQL Server của MorningBrew; thêm hai API chỉ đọc cho ca cá nhân và thống kê sản phẩm yêu thích.
+- `Shared/ApiJson.cs`: quy ước JSON dùng chung nguyên bản MorningBrew.
+- `database/`: schema, procedure, dữ liệu seed, công cụ cài SQL Server của MorningBrew.
+- `MorningBrew.Pos/`: project POS nguyên bản của MorningBrew, vẫn là khung, không được coi là POS hoàn thiện.
+- `tests/`: kiểm thử nguồn và bộ kiểm thử tích hợp cần .NET/SQL Server.
 
----
+## Thay đổi nghiệp vụ trên giao diện
 
-Nếu bạn muốn, tôi có thể:
-- mở rộng README với sơ đồ ER (dạng ASCII hoặc mermaid),
-- sinh swagger.json từ controllers hoặc tạo file OpenAPI chi tiết,
-- hoặc đổi tên domain type để tránh nhầm lẫn loại.
+| Giao diện | Cách dùng backend MorningBrew |
+|---|---|
+| Đăng nhập/đăng xuất | Email và mật khẩu → bearer session; cookie web được bảo vệ; POST logout có chống CSRF |
+| Dashboard | API tổng quan + nhân sự trong phạm vi; không có số liệu hardcode |
+| Khách hàng | Xem/tìm theo API; Owner tạo tài khoản, khóa/mở khóa qua account; phân biệt CustomerID và UserID |
+| Sản phẩm | Biến thể/kích cỡ và giá chung; Owner tạo, sửa giá, ngừng bán/bán trở lại |
+| Nhà cung cấp | Xem/tìm/lọc/thêm/đổi trạng thái; Owner quản lý |
+| Tài khoản | Owner tạo theo vai trò và phạm vi, khóa/mở khóa; không xóa lịch sử |
+| Phân quyền | Theo RolePermissions của MorningBrew, không phải UserPermissions cũ |
+| Ca làm | Chọn nhân viên + chi nhánh, tạo/hủy; ca qua đêm; tổng tháng loại ca đã hủy; giờ Việt Nam |
+| Phản hồi | Gửi/phản hồi/đánh dấu Resolved qua API; nội dung trả lời xuất hiện ở cổng khách |
+| Khảo sát | Tạo nháp, chọn phạm vi/thời hạn, phát hành, mời, trả lời toàn bộ form một lần, đóng |
+| Báo cáo CRM | Độ tuổi, khóa tài khoản, sản phẩm yêu thích, kết quả khảo sát theo dữ liệu trong phạm vi |
+| Ưu đãi/điểm/doanh thu | Các trang MorningBrew bổ sung nằm trong shell Admin_MC |
+| Hồ sơ khách | PATCH kèm ETag để tránh ghi đè cập nhật đồng thời; không thay email đăng nhập |
+
+Các chức năng **không có API tương ứng trong bản MorningBrew** không được giả lập: tự đăng ký khách hàng; xóa cứng tài khoản/khách/sản phẩm/nhà cung cấp; tồn kho kiểu Admin_MC; sửa tên/nhóm danh mục/chi tiết nhà cung cấp; sửa trực tiếp ca đã tạo; mở lại khảo sát đã đóng. Các thao tác được chuyển thành khóa/ngừng bán/hủy khi backend hỗ trợ; trường chỉ xem được đánh dấu readonly. Muốn đổi ca hãy hủy rồi tạo ca mới.
+
+Không chuyển dữ liệu từ crm.db cũ sang SQL Server. Bộ seed MorningBrew cũng là **dữ liệu minh họa trong SQL Server**, không phải dữ liệu kinh doanh thực tế đã xác minh.
+
+## Trạng thái kiểm tra
+
+Đọc `KIEM_TRA.md`. Trong môi trường bàn giao chưa có .NET SDK, SQL Server hay sqlcmd; do đó **chưa xác nhận build, chạy web hay CRUD thực tế thành công**. Không lấy báo cáo kiểm thử của project MorningBrew gốc làm kết quả của bản ghép này.

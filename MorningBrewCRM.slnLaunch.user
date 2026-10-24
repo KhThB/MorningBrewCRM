@@ -1,0 +1,19 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "Admin_MC\\CRMManagementWeb.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "MorningBrew.Api\\MorningBrew.Api.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "MorningBrew.Pos\\MorningBrew.Pos.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

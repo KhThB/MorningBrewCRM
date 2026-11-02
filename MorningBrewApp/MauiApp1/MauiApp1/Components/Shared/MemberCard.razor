@@ -1,0 +1,31 @@
+@* Thẻ thành viên Morning Brew: điểm + hạng hiển thị theo mốc điểm. *@
+<div class="member-card">
+    <div class="member-top">
+        <div>
+            <span class="eyebrow">MORNING BREW CARD</span>
+            <strong class="member-name">@Name</strong>
+        </div>
+        <span class="tier">@tier.Name</span>
+    </div>
+    <div class="member-points">
+        <Icon Name="coin" Size="22" />
+        <b>@Points.ToString("#,0")</b><span>điểm</span>
+    </div>
+    @if (tier.Next > 0)
+    {
+        var percent = Math.Clamp(Points * 100 / tier.Next, 0, 100);
+        <div class="progress" aria-label="Tiến độ lên hạng"><i style="width:@(percent)%"></i></div>
+        <small>Còn @(tier.Next - Points) điểm để lên hạng tiếp theo</small>
+    }
+    else
+    {
+        <small>Bạn đang ở hạng cao nhất</small>
+    }
+</div>
+
+@code {
+    [Parameter] public string Name { get; set; } = "";
+    [Parameter] public int Points { get; set; }
+    private (string Name, int Next) tier;
+    protected override void OnParametersSet() => tier = Fmt.Tier(Points);
+}

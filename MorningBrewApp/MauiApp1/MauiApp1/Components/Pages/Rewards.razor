@@ -1,0 +1,116 @@
+@page "/rewards"
+@inject CrmService Crm
+@inject ToastService Toasts
+
+<section class="hero compact">
+    <h1 class="hero-title">Ưu đãi</h1>
+    <MemberCard Name="@(profile?.FullName ?? "")" Points="@(profile?.LoyaltyPoints ?? 0)" />
+</section>
+
+<div class="page-body overlap">
+    <div class="segmented" role="tablist">
+        <button class="@(tab == 0 ? "active" : "")" @onclick="() => tab = 0">Đổi điểm</button>
+        <button class="@(tab == 1 ? "active" : "")" @onclick="() => tab = 1">Voucher của tôi</button>
+        <button class="@(tab == 2 ? "active" : "")" @onclick="() => tab = 2">Lịch sử điểm</button>
+    </div>
+
+    <StateView Loading="loading" Error="@error" OnRetry="Load">
+        @if (tab == 0)
+        {
+            <StateView Empty="promotions.Count == 0" EmptyText="Hiện chưa có ưu đãi để đổi." EmptyIcon="gift">
+                <div class="grid-2">
+                    @foreach (var p in promotions)
+                    {
+                        var cost = p.PointsCost ?? 0;
+                        var enough = (profile?.LoyaltyPoints ?? 0) >= cost;
+                        <div class="reward-card">
+                            <div class="promo-art"><Icon Name="ticket" Size="28" /><b>@Fmt.Discount(p.DiscountType, p.DiscountValue, p.MaxDiscount)</b></div>
+                            <div class="promo-body">
+                                <b>@p.Name</b>
+                                <small class="muted">@p.Description</small>
+                                <small class="muted">Đơn từ @Fmt.Money(p.MinSubtotal) · HSD @Fmt.Date(p.EndsAt)</small>
+                                <button class="btn btn-sm @(enough ? "btn-primary" : "btn-outline")" disabled="@(!enough || busyId == p.PromotionId)"
+                                        @onclick="() => Redeem(p)">
+                                    @(cost == 0 ? "Nhận miễn phí" : $"Đổi {cost} điểm")
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </StateView>
+        }
+        else if (tab == 1)
+        {
+            <StateView Empty="vouchers.Count == 0" EmptyText="Bạn chưa có voucher nào." EmptyIcon="ticket">
+                @foreach (var v in vouchers)
+                {
+                    var status = Fmt.VoucherStatus(v.Status);
+                    <div class="voucher @(v.Status == "Available" ? "" : "used")">
+                        <div class="voucher-left"><Icon Name="ticket" Size="26" /></div>
+                        <div class="voucher-body">
+                            <b>@v.Name</b>
+                            <span>@Fmt.Discount(v.DiscountType, v.DiscountValue)</span>
+                            <small class="muted">Mã @v.Code · HSD @Fmt.Date(v.ExpiresAt)</small>
+                        </div>
+                        <span class="chip @status.Css">@status.Text</span>
+                    </div>
+                }
+            </StateView>
+        }
+        else
+        {
+            <StateView Empty="history.Count == 0" EmptyText="Chưa có giao dịch điểm." EmptyIcon="coin">
+                <div class="card list">
+                    @foreach (var h in history)
+                    {
+                        <div class="row-between line">
+                            <div><b>@Fmt.PointKind(h.Kind)</b><small class="muted block">@h.Note · @Fmt.When(h.CreatedAt)</small></div>
+                            <b class="@(h.Points >= 0 ? "plus" : "minus")">@(h.Points >= 0 ? "+" : "")@h.Points</b>
+                        </div>
+                    }
+                </div>
+            </StateView>
+        }
+    </StateView>
+</div>
+
+@code {
+    private Profile? profile;
+    private List<Promotion> promotions = [];
+    private List<Voucher> vouchers = [];
+    private List<LoyaltyTransaction> history = [];
+    private int tab;
+    private bool loading = true;
+    private string? error;
+    private int? busyId;
+
+    protected override Task OnInitializedAsync() => Load();
+
+    private async Task Load()
+    {
+        loading = true; error = null;
+        try
+        {
+            profile = await Crm.GetProfileAsync();
+            promotions = await Crm.GetPromotionsAsync();
+            vouchers = await Crm.GetWalletAsync();
+            history = await Crm.GetLoyaltyAsync();
+        }
+        catch (ApiException e) { error = e.Message; }
+        loading = false;
+    }
+
+    private async Task Redeem(Promotion p)
+    {
+        busyId = p.PromotionId;
+        try
+        {
+            await Crm.RedeemAsync(p.PromotionId, Guid.NewGuid());
+            Toasts.Show("Đổi ưu đãi thành công! Voucher đã vào ví.");
+            await Load();
+            tab = 1;
+        }
+        catch (ApiException e) { Toasts.Error(e); }
+        busyId = null;
+    }
+}

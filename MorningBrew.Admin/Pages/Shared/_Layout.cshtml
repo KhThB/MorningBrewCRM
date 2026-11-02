@@ -22,8 +22,7 @@
             else
             {
                 <a asp-page="/Index">⌂ Tổng quan</a>
-                <a asp-page="/Workspace" asp-route-section="shifts">Lịch làm việc</a>
-                @foreach(var entry in new[]{("customers","Khách hàng"),("feedbacks","Phản hồi"),("surveys","Khảo sát"),("promotions","Ưu đãi"),("products","Sản phẩm"),("staff","Nhân sự"),("reports","Báo cáo")})
+                @foreach(var entry in new[]{("customers","Khách hàng"),("feedbacks","Phản hồi"),("surveys","Khảo sát"),("promotions","Ưu đãi"),("products","Sản phẩm"),("reports","Báo cáo")})
                 { <a asp-page="/Workspace" asp-route-section="@entry.Item1">@entry.Item2</a> }
                 @if(User.IsInRole("Owner"))
                 {

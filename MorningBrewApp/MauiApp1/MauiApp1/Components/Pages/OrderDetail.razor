@@ -1,0 +1,80 @@
+@page "/orders/{Id:int}"
+@implements IDisposable
+@inject ShopService Shop
+@inject NavigationManager Nav
+
+<PageHeader Title="Chi tiết đơn" BackTo="/orders" />
+
+<div class="page-body with-footer">
+    <StateView Loading="loading" Error="@error" Empty="order is null" EmptyText="Không tìm thấy đơn hàng." EmptyIcon="receipt">
+        @if (order is not null)
+        {
+            <div class="card center">
+                <span class="muted small">Mã đơn</span>
+                <h2 class="order-code">@order.OrderCode</h2>
+                <span class="chip @Fmt.OrderCss(order.Status)">@Fmt.OrderStatus(order.Status)</span>
+                @if (order.IsDemo) { <p class="demo-tag">Dữ liệu mẫu — trạng thái tự chuyển mỗi vài giây</p> }
+            </div>
+
+            @if (order.Status != "Cancelled")
+            {
+                var current = Array.IndexOf(Fmt.OrderSteps, order.Status);
+                <ol class="steps">
+                    @for (var i = 0; i < Fmt.OrderSteps.Length; i++)
+                    {
+                        var state = i < current ? "done" : i == current ? "current" : "";
+                        <li class="@state"><i></i><span>@Fmt.OrderStatus(Fmt.OrderSteps[i])</span></li>
+                    }
+                </ol>
+            }
+
+            <div class="card">
+                <div class="row-start"><Icon Name="store" Size="18" /><b>@order.BranchName</b></div>
+                <p class="muted small">Nhận tại quán · @Fmt.When(order.CreatedAt)</p>
+            </div>
+
+            <div class="card list">
+                @foreach (var l in order.Lines)
+                {
+                    <div class="row-between line"><span>@l.Quantity× @l.Name <small class="muted">(@l.VariantName)</small></span><span>@Fmt.Money(l.UnitPrice * l.Quantity)</span></div>
+                }
+                <div class="row-between line"><span>Giảm giá</span><span>-@Fmt.Money(order.Discount)</span></div>
+                <div class="row-between line total"><b>Tổng cộng</b><b>@Fmt.Money(order.Total)</b></div>
+            </div>
+        }
+    </StateView>
+</div>
+
+@if (order?.Status == "Completed")
+{
+    <div class="footer-bar">
+        @if (order.FeedbackSent)
+        {
+            <a class="btn btn-outline block" href="/account/feedbacks">Xem phản hồi đã gửi</a>
+        }
+        else
+        {
+            <a class="btn btn-primary block" href="@($"/feedback/new?orderId={order.OrderId}")"><Icon Name="star" Size="18" /> Đánh giá đơn hàng</a>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Order? order;
+    private bool loading = true;
+    private string? error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Shop.Changed -= Refresh;
+        Shop.Changed += Refresh;
+        loading = true; error = null;
+        try { order = await Shop.GetOrderAsync(Id); }
+        catch (ApiException e) { error = e.Message; }
+        loading = false;
+    }
+
+    private void Refresh() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Shop.Changed -= Refresh;
+}

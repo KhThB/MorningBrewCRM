@@ -366,3 +366,13 @@ database/*.zip
 *.db
 *.db-shm
 *.db-wal
+
+# Local test artifacts and backups
+_backup*/
+*.bak
+*.zip
+.env
+.env.*
+!.env.example
+**/.local/
+MorningBrewApp/preview_*.png

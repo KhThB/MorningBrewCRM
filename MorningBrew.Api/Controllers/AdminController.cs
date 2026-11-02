@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using MorningBrew.Api.Infrastructure;
 namespace MorningBrew.Api.Controllers;
 
-[ApiController, Route("v1"), Authorize(Roles = "Owner,AreaManager,BranchManager")]
+[ApiController, Route("v1"), Authorize(Roles = "Owner,BranchManager")]
 public sealed partial class AdminController(SqlStore db, PageReader pages) : ControllerBase
 {
     private int Actor => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -42,10 +42,6 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
     public Task<ApiPage> ListAccounts([FromQuery] PageRequest page) => List("accounts", page);
     [HttpGet("permissions")]
     public Task<ApiPage> ListPermissions([FromQuery] PageRequest page) => List("permissions", page);
-    [HttpGet("staff")]
-    public Task<ApiPage> ListStaff([FromQuery] PageRequest page) => List("staff", page);
-    [HttpGet("shifts")]
-    public Task<ApiPage> ListShifts([FromQuery] PageRequest page) => List("shifts", page);
     [HttpGet("suppliers")]
     public Task<ApiPage> ListSuppliers([FromQuery] PageRequest page) => List("suppliers", page);
 
@@ -58,14 +54,6 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
                 await RequireOwner();
                 sql = "SELECT SupplierID,Code,Name,Phone,Email,ProductGroup,IsActive FROM dbo.Suppliers ";
                 break;
-            case "shifts":
-                sql = """
-                    SELECT s.ShiftID,s.UserID,u.FullName,s.BranchID,b.Name AS Branch,s.StartsAt,s.EndsAt,
-                    CAST(DATEDIFF(minute,s.StartsAt,s.EndsAt)/60.0 AS decimal(5,2)) AS Hours,s.IsCancelled
-                    FROM dbo.StaffShifts s JOIN dbo.Users u ON u.UserID=s.UserID JOIN dbo.Branches b ON b.BranchID=s.BranchID
-                    WHERE dbo.CanBranch(@actor,s.BranchID,'Staff.Manage')=1
-
-                    """; break;
             case "customers":
                 sql = $"""
                     SELECT c.CustomerID,u.FullName,u.Email,u.Phone,c.DateOfBirth,c.Gender,c.LoyaltyPoints,u.IsActive
@@ -115,28 +103,19 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
                     FROM dbo.RolePermissions rp JOIN dbo.Roles r ON r.RoleID=rp.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
 
                     """; break;
-            case "staff":
-                sql = """
-                    SELECT u.UserID,u.FullName,u.Email,b.BranchID,b.Name AS Branch,'Staff' AS Role,s.IsActive
-                    FROM dbo.StaffBranches s JOIN dbo.Users u ON u.UserID=s.UserID JOIN dbo.Branches b ON b.BranchID=s.BranchID
-                    WHERE dbo.CanBranch(@actor,b.BranchID,'Customers.Read')=1
-                    UNION ALL SELECT u.UserID,u.FullName,u.Email,b.BranchID,b.Name,'BranchManager',u.IsActive
-                    FROM dbo.Branches b JOIN dbo.Users u ON u.UserID=b.ManagerID WHERE dbo.CanBranch(@actor,b.BranchID,'Customers.Read')=1
-
-                    """; break;
             default: throw new ApiException(404, "Không tìm thấy chức năng.");
         }
         var keys = section switch
         {
-            "suppliers" => new[] { "SupplierID" }, "shifts" => ["ShiftID"], "customers" => ["CustomerID"],
+            "suppliers" => new[] { "SupplierID" }, "customers" => ["CustomerID"],
             "feedbacks" => ["FeedbackID"], "surveys" => ["SurveyID"], "promotions" => ["PromotionID"],
             "products" => ["VariantID"], "accounts" => ["UserID"], "permissions" => ["Role", "Permission"],
-            "staff" => ["BranchID", "UserID", "Role"], _ => throw new ApiException(404, "Resource not found.")
+            _ => throw new ApiException(404, "Resource not found.")
         };
-        return await pages.Read(sql, keys, section is not ("permissions" or "staff"), page,
+        return await pages.Read(sql, keys, section is not "permissions", page,
             JsonSerializer.Serialize(new { Actor, section, q = q ?? "" }),
             [("@actor", Actor), ("@q", q ?? ""), ("@search", "%" + (q ?? "") + "%")],
-            section is "permissions" or "staff" ? null : section == "products" ? "variants" : section, keys[0]);
+            section is "permissions" ? null : section == "products" ? "variants" : section, keys[0]);
     }
 
     [HttpGet("dashboard/overview")]
@@ -159,42 +138,38 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
     public async Task<object> Options() => new
     {
         branches = await db.Query("SELECT BranchID AS Id,Name FROM dbo.Branches WHERE dbo.CanBranch(@actor,BranchID,'Orders.Read')=1 ORDER BY BranchID", ("@actor", Actor)),
-        areas = await db.Query("SELECT AreaID AS Id,Name FROM dbo.Areas WHERE dbo.CanScope(@actor,'Area',AreaID,NULL,'Surveys.Manage')=1 ORDER BY AreaID", ("@actor", Actor)),
         categories = await db.Query("SELECT CategoryID AS Id,Name FROM dbo.Categories WHERE IsActive=1 ORDER BY CategoryID"),
-        staff = await db.Query("SELECT u.UserID AS Id,CONCAT(u.FullName,' · ',b.Name) AS Name FROM dbo.StaffBranches s JOIN dbo.Users u ON u.UserID=s.UserID JOIN dbo.Branches b ON b.BranchID=s.BranchID WHERE u.IsActive=1 AND s.IsActive=1 AND dbo.CanBranch(@actor,b.BranchID,'Staff.Manage')=1 ORDER BY u.UserID",("@actor",Actor)),
         customers = await db.Query($"SELECT TOP(200) c.CustomerID AS Id,u.FullName AS Name FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID WHERE u.IsActive=1 AND {CustomerScope} ORDER BY c.CustomerID DESC", ("@actor", Actor))
     };
 
     public record AccountInput([Required, EmailAddress, MaxLength(254)] string Email,
         [Required, StringLength(120, MinimumLength=2)] string FullName,
         [Required, StringLength(200, MinimumLength=10)] string Password, [MaxLength(20)] string? Phone,
-        [Required] string Role = "Customer", int? BranchId = null, int? AreaId = null);
+        [Required] string Role = "Customer");
 
     [HttpPost("accounts")]
     public async Task<IActionResult> CreateAccount(AccountInput input)
     {
         await RequireOwner();
-        if (input.Role is not ("Owner" or "AreaManager" or "BranchManager" or "Staff" or "Customer"))
+        // Hệ thống chỉ có 1 cửa hàng: quản lý và thu ngân được gán tự động vào cửa hàng đó.
+        if (input.Role is not ("Owner" or "BranchManager" or "Staff" or "Customer"))
             throw new ApiException(400, "Vai trò không hợp lệ.");
-        if ((input.Role == "Staff" && input.BranchId is null) || (input.Role == "AreaManager" && input.AreaId is null))
-            throw new ApiException(400, "Cần chọn chi nhánh hoặc khu vực phụ trách.");
         var created = await db.Query("""
             SET XACT_ABORT ON; BEGIN TRAN;
             DECLARE @role int=(SELECT RoleID FROM dbo.Roles WHERE Code=@code);
+            DECLARE @branch int=(SELECT TOP(1) BranchID FROM dbo.Branches WHERE IsActive=1 ORDER BY BranchID);
+            IF @role IS NULL THROW 51100,'Role not found.',1;
+            IF @code IN ('Staff','BranchManager') AND @branch IS NULL THROW 51100,'Store not found.',1;
             INSERT dbo.Users(RoleID,Email,NormalizedEmail,FullName,Phone,PasswordHash)
             VALUES(@role,@email,UPPER(LTRIM(RTRIM(@email))),@name,@phone,@hash);
             DECLARE @id int=SCOPE_IDENTITY();
             IF @code='Customer' INSERT dbo.Customers(UserID) VALUES(@id);
             IF @code='Staff' INSERT dbo.StaffBranches(UserID,BranchID) VALUES(@id,@branch);
-            IF @code='AreaManager' INSERT dbo.AreaManagers(UserID,AreaID) VALUES(@id,@area);
-            IF @code='BranchManager' AND @branch IS NOT NULL BEGIN
-                UPDATE dbo.Branches SET ManagerID=@id WHERE BranchID=@branch;
-                IF @@ROWCOUNT=0 THROW 51100,'Branch not found.',1;
-            END;
+            IF @code='BranchManager' UPDATE dbo.Branches SET ManagerID=@id WHERE BranchID=@branch;
             INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID) VALUES(@actor,'Account.Create','Users',@id);
             COMMIT; SELECT @id AS UserID;
             """, ("@code", input.Role), ("@email", input.Email.Trim()), ("@name", input.FullName.Trim()), ("@phone", input.Phone),
-            ("@hash", new PasswordHasher<string>().HashPassword(input.Email, input.Password)), ("@branch", input.BranchId), ("@area", input.AreaId), ("@actor", Actor));
+            ("@hash", new PasswordHasher<string>().HashPassword(input.Email, input.Password)), ("@actor", Actor));
         var id = (int)created.Single()["UserID"]!;
         return Created($"/v1/accounts/{id}", await ReadResource("accounts", id));
     }

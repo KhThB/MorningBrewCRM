@@ -37,7 +37,7 @@ public sealed class ApiDocumentation : IOperationFilter
             };
         operation.Responses ??= new();
         if (context.MethodInfo.Name is "CreateAccount" or "CreateProduct" or "CreateSurvey" or "CreatePromotion"
-            || context.ApiDescription.HttpMethod == "POST" && context.MethodInfo.Name is "Supplier" or "Shift" or "Feedback")
+            || context.ApiDescription.HttpMethod == "POST" && context.MethodInfo.Name is "Supplier" or "Feedback")
         {
             operation.Responses.Remove("200");
             operation.Responses["201"] = new OpenApiResponse

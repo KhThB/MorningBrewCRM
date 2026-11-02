@@ -6,7 +6,7 @@ using MorningBrew.Admin.Services;
 namespace MorningBrew.Admin.Pages;
 public class WorkspaceModel(CrmApi api):PageModel
 {
-    public static readonly Dictionary<string,string> Titles=new() { ["customers"]="Khách hàng",["feedbacks"]="Phản hồi",["surveys"]="Khảo sát",["promotions"]="Ưu đãi",["products"]="Sản phẩm",["accounts"]="Tài khoản",["staff"]="Nhân sự",["shifts"]="Lịch làm việc",["suppliers"]="Nhà cung cấp",["permissions"]="Phân quyền theo vai trò",["reports"]="Báo cáo doanh thu" };
+    public static readonly Dictionary<string,string> Titles=new() { ["customers"]="Khách hàng",["feedbacks"]="Phản hồi",["surveys"]="Khảo sát",["promotions"]="Ưu đãi",["products"]="Sản phẩm",["accounts"]="Tài khoản",["suppliers"]="Nhà cung cấp",["permissions"]="Phân quyền theo vai trò",["reports"]="Báo cáo doanh thu" };
     [BindProperty(SupportsGet=true)] public string Section {get;set;}="customers";
     [BindProperty(SupportsGet=true)] public string? Q {get;set;}
     [BindProperty(SupportsGet=true)] public string? PageToken {get;set;}
@@ -56,14 +56,10 @@ public class WorkspaceModel(CrmApi api):PageModel
                     await api.Send(HttpMethod.Post,"v1/suppliers",new {code=Text("code"),name=Text("name"),phone=Text("phone"),email=string.IsNullOrEmpty(Text("email"))?null:Text("email"),productGroup=Text("productGroup")});break;
                 case "supplier-active":
                     await api.Send(HttpMethod.Put,$"v1/suppliers/{Number("id")}/active",new {isActive=Text("active")=="true"});break;
-                case "shift":
-                    await api.Send(HttpMethod.Post,"v1/shifts",new {userId=Number("userId"),branchId=Number("branchId"),startsAt=Date("startsAt"),endsAt=Date("endsAt")});break;
-                case "shift-cancel":
-                    await api.Send(HttpMethod.Post,$"v1/shifts/{Number("id")}:cancel");break;
                 case "permission":
                     await api.Send(HttpMethod.Put,$"v1/roles/{Uri.EscapeDataString(Text("role"))}/permissions/{Uri.EscapeDataString(Text("code"))}",new {allowed=Text("allowed")=="true"});break;
                 case "account":
-                    await api.Send(HttpMethod.Post,"v1/accounts",new {email=Text("email"),fullName=Text("fullName"),password=Text("password"),phone=Text("phone"),role=Text("role"),branchId=Optional("branchId"),areaId=Optional("areaId")});break;
+                    await api.Send(HttpMethod.Post,"v1/accounts",new {email=Text("email"),fullName=Text("fullName"),password=Text("password"),phone=Text("phone"),role=Text("role")});break;
                 case "account-active":
                     await api.Send(HttpMethod.Put,$"v1/accounts/{Number("id")}/active",new {isActive=Text("active")=="true"});break;
                 case "feedback":

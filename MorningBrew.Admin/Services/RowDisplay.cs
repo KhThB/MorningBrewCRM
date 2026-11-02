@@ -27,8 +27,8 @@ public static class RowDisplay
     {
         ["New"]="Mới",["Processing"]="Đang xử lý",["Resolved"]="Đã giải quyết",["Draft"]="Bản nháp",
         ["Open"]="Đang mở",["Closed"]="Đã đóng",["Chain"]="Toàn chuỗi",["Area"]="Khu vực",["Branch"]="Chi nhánh",
-        ["Owner"]="Chủ chuỗi",["AreaManager"]="Quản lý khu vực",["BranchManager"]="Quản lý chi nhánh",
-        ["Staff"]="Nhân viên",["Customer"]="Khách hàng",["Male"]="Nam",["Female"]="Nữ",["Other"]="Khác",
+        ["Owner"]="Chủ cửa hàng",["BranchManager"]="Quản lý cửa hàng",
+        ["Staff"]="Thu ngân",["Customer"]="Khách hàng",["Male"]="Nam",["Female"]="Nữ",["Other"]="Khác",
         ["Undisclosed"]="Chưa cung cấp",["Available"]="Có thể dùng",["Reserved"]="Đang giữ cho đơn",
         ["Used"]="Đã dùng",["Expired"]="Hết hạn",["Earn"]="Tích điểm",["Redeem"]="Đổi điểm",["Reverse"]="Hoàn tác điểm",["Adjust"]="Điều chỉnh"
     };

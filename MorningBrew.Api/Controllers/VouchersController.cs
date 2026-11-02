@@ -5,7 +5,7 @@ using MorningBrew.Api.Infrastructure;
 
 namespace MorningBrew.Api.Controllers;
 
-[ApiController, Route("v1/vouchers"), Authorize(Roles="Owner,AreaManager,BranchManager,Customer")]
+[ApiController, Route("v1/vouchers"), Authorize(Roles="Owner,BranchManager,Customer")]
 public sealed class VouchersController(SqlStore db) : ControllerBase
 {
     [HttpGet("{id:int}")]

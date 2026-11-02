@@ -1,0 +1,63 @@
+@page "/account/favorites"
+@inject CrmService Crm
+@inject ShopService Shop
+@inject ToastService Toasts
+
+<PageHeader Title="Món yêu thích" BackTo="/account" />
+
+<div class="page-body with-footer">
+    <p class="muted small">Chọn những món bạn thích. Morning Brew dùng thông tin này để gợi ý món và ưu đãi phù hợp hơn.</p>
+    <StateView Loading="loading" Error="@error" OnRetry="Load" Empty="products.Count == 0" EmptyText="Chưa có món nào." EmptyIcon="heart">
+        <div class="card list">
+            @foreach (var p in products)
+            {
+                var on = selected.Contains(p.ProductId);
+                <button class="pick-row @(on ? "on" : "")" @onclick="() => Toggle(p)" aria-pressed="@on">
+                    <ProductThumb Category="@p.Category" />
+                    <span class="grow"><b>@p.Name</b><small class="muted">@p.Category@(p.IsDemo ? " · minh họa" : "")</small></span>
+                    <span class="heart @(on ? "on" : "")"><Icon Name="heart" Filled="on" /></span>
+                </button>
+            }
+        </div>
+    </StateView>
+</div>
+
+<div class="footer-bar">
+    <button class="btn btn-primary block" @onclick="Save" disabled="@busy">@(busy ? "Đang lưu..." : $"Lưu ({selected.Count} món)")</button>
+</div>
+
+@code {
+    private List<MenuProduct> products = [];
+    private HashSet<int> selected = [];
+    private bool loading = true, busy;
+    private string? error;
+
+    protected override Task OnInitializedAsync() => Load();
+
+    private async Task Load()
+    {
+        loading = true; error = null;
+        try
+        {
+            var menu = await Shop.GetMenuAsync();
+            products = menu.Items.GroupBy(x => x.ProductId).Select(g => g.First()).ToList();
+            selected = await Crm.GetFavoritesAsync();
+        }
+        catch (ApiException e) { error = e.Message; }
+        loading = false;
+    }
+
+    private void Toggle(MenuProduct p)
+    {
+        if (p.IsDemo) { Toasts.Show("Món minh họa — chưa có trong cơ sở dữ liệu.", true); return; }
+        if (!selected.Add(p.ProductId)) selected.Remove(p.ProductId);
+    }
+
+    private async Task Save()
+    {
+        busy = true;
+        try { await Crm.SaveFavoritesAsync(selected); Toasts.Show("Đã lưu món yêu thích."); }
+        catch (ApiException e) { Toasts.Error(e); }
+        busy = false;
+    }
+}

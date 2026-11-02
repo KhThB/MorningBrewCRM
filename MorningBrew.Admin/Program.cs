@@ -37,7 +37,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 });
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("Management", policy => policy.RequireRole("Owner","AreaManager","BranchManager"));
+    options.AddPolicy("Management", policy => policy.RequireRole("Owner","BranchManager"));
     options.AddPolicy("Customer", policy => policy.RequireRole("Customer"));
 });
 builder.Services.AddRazorPages(options =>

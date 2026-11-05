@@ -1,0 +1,55 @@
+@model Dictionary<string,JsonElement>
+@{
+    var survey=ReportView.Object(Model,"survey");
+    var questions=ReportView.Rows(Model,"questions");
+    var options=ReportView.Rows(Model,"options");
+    var ratings=ReportView.Rows(Model,"ratings");
+    var texts=ReportView.Rows(Model,"texts");
+    var invited=ReportView.Int(survey,"invited");
+    var completed=ReportView.Int(survey,"completed");
+    var number=0;
+}
+<h2 class="report-title">Thống kê: @ReportView.Text(survey,"title")</h2>
+<div class="cards">
+    <div class="stat"><span>Đã mời</span><b>@invited</b><small>khách hàng</small></div>
+    <div class="stat"><span>Đã hoàn thành</span><b>@completed</b><small>@ReportView.Pct(ReportView.Percent(completed,invited)) số khách được mời</small></div>
+    <div class="stat"><span>Số câu hỏi</span><b>@questions.Count</b><small>@ReportView.Int(survey,"respondents") khách đã trả lời ít nhất 1 câu</small></div>
+    <div class="stat"><span>Trạng thái</span><b class="stat-text">@(survey.TryGetValue("status",out var st) ? RowDisplay.Value("status",st) : "—")</b><small>@(survey.TryGetValue("end_time",out var end) ? "Kết thúc " + RowDisplay.Value("end_time",end) : "")</small></div>
+</div>
+<div class="grid-2 survey-grid">
+@foreach(var q in questions)
+{
+    number++;
+    var id=ReportView.Int(q,"question_id");
+    var type=ReportView.Text(q,"type");
+    var responses=ReportView.Int(q,"responses");
+    <section class="panel question-card">
+        <div class="question-head"><span class="chip">@ReportView.QuestionType(type)</span><small class="muted">@responses lượt trả lời</small></div>
+        <h3>Câu @number. @ReportView.Text(q,"text")</h3>
+        @if(responses==0){<div class="empty-state">Chưa có câu trả lời.</div>}
+        else if(type=="Rating")
+        {
+            var min=ReportView.Int(q,"rating_min"); var max=ReportView.Int(q,"rating_max");
+            if(max<=min){min=1;max=5;}
+            <div class="score"><b>@ReportView.Number(ReportView.Decimal(q,"average_rating"))</b><span>/ @max điểm trung bình</span></div>
+            for(var v=max;v>=min;v--)
+            {
+                var n=ratings.Where(r=>ReportView.Int(r,"question_id")==id && ReportView.Int(r,"rating_value")==v).Sum(r=>ReportView.Int(r,"votes"));
+                <text>@ReportView.Bar(v+" điểm",n,ReportView.Percent(n,responses))</text>
+            }
+        }
+        else if(type is "SingleChoice" or "MultipleChoice")
+        {
+            var list=options.Where(o=>ReportView.Int(o,"question_id")==id).OrderByDescending(o=>ReportView.Int(o,"votes")).ToList();
+            if(type=="MultipleChoice"){<p class="muted">Khách được chọn nhiều đáp án nên tổng tỷ lệ có thể vượt 100%.</p>}
+            foreach(var o in list){ var n=ReportView.Int(o,"votes"); <text>@ReportView.Bar(ReportView.Text(o,"text"),n,ReportView.Percent(n,responses))</text> }
+        }
+        else
+        {
+            var list=texts.Where(t=>ReportView.Int(t,"question_id")==id).Take(5).ToList();
+            <ul class="answers">@foreach(var t in list){<li>“@ReportView.Text(t,"text_value")”</li>}</ul>
+            if(responses>list.Count){<p class="muted">Xem toàn bộ @responses câu trả lời ở bảng chi tiết bên dưới.</p>}
+        }
+    </section>
+}
+</div>

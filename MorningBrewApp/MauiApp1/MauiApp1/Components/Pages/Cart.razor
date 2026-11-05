@@ -1,0 +1,103 @@
+@page "/cart"
+@inject ShopService Shop
+@inject CrmService Crm
+@inject ToastService Toasts
+@inject NavigationManager Nav
+
+<PageHeader Title="Giỏ hàng" />
+
+<div class="page-body with-footer">
+    <StateView Empty="Shop.Cart.Count == 0" EmptyText="Giỏ hàng đang trống." EmptyIcon="bag">
+        <EmptyAction><a class="btn btn-primary" href="/menu">Xem thực đơn</a></EmptyAction>
+        <ChildContent>
+            <div class="card">
+                <div class="row-start"><Icon Name="store" Size="18" /><b>@Shop.CurrentBranch.Name</b></div>
+                <p class="muted small">@Shop.CurrentBranch.Address · Nhận tại quán</p>
+            </div>
+
+            <div class="card list">
+                @foreach (var line in Shop.Cart)
+                {
+                    <div class="cart-line">
+                        <ProductThumb Category="@line.Item.Category" />
+                        <div class="grow"><b>@line.Item.Name</b><small class="muted">Size @line.Item.VariantName</small><span class="price">@Fmt.Money(line.Total)</span></div>
+                        <div class="stepper sm">
+                            <button @onclick="() => Shop.ChangeQuantity(line.Item.VariantId, -1)" aria-label="Giảm"><Icon Name="minus" Size="16" /></button>
+                            <b>@line.Quantity</b>
+                            <button @onclick="() => Shop.ChangeQuantity(line.Item.VariantId, 1)" aria-label="Tăng"><Icon Name="plus" Size="16" /></button>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="card">
+                <div class="row-between"><b><Icon Name="ticket" Size="18" /> Voucher</b>
+                    @if (vouchers.Count == 0) { <span class="muted small">Không có voucher khả dụng</span> }
+                </div>
+                @if (vouchers.Count > 0)
+                {
+                    <select class="input" value="@(Shop.VoucherId?.ToString() ?? "")" @onchange="PickVoucher" aria-label="Chọn voucher">
+                        <option value="">Không dùng voucher</option>
+                        @foreach (var v in vouchers)
+                        {
+                            <option value="@v.CustomerPromotionId">@v.Name · @Fmt.Discount(v.DiscountType, v.DiscountValue)</option>
+                        }
+                    </select>
+                }
+            </div>
+
+            <div class="card summary">
+                <div class="row-between"><span>Tạm tính</span><span>@Fmt.Money(Shop.CartSubtotal)</span></div>
+                <div class="row-between"><span>Giảm giá</span><span>-@Fmt.Money(Discount)</span></div>
+                <div class="row-between total"><b>Tổng cộng</b><b>@Fmt.Money(Shop.CartSubtotal - Discount)</b></div>
+                <p class="muted small">Thanh toán mô phỏng — không trừ tiền thật. Hoàn tất đơn được tích điểm.</p>
+            </div>
+        </ChildContent>
+    </StateView>
+</div>
+
+@if (Shop.Cart.Count > 0)
+{
+    <div class="footer-bar">
+        <button class="btn btn-primary block" @onclick="Place" disabled="@busy">
+            @(busy ? "Đang đặt hàng..." : $"Đặt hàng · {Fmt.Money(Shop.CartSubtotal - Discount)}")
+        </button>
+    </div>
+}
+
+@code {
+    private List<Voucher> vouchers = [];
+    private bool busy;
+    // Mỗi lần mở giỏ tạo 1 khóa yêu cầu: bấm 2 lần không tạo 2 đơn.
+    private readonly Guid requestKey = Guid.NewGuid();
+
+    private decimal Discount => Math.Min(Shop.VoucherDiscount, Shop.CartSubtotal);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { vouchers = (await Crm.GetWalletAsync()).Where(v => v.Status == "Available").ToList(); }
+        catch (ApiException) { }
+    }
+
+    private void PickVoucher(ChangeEventArgs e)
+    {
+        var id = int.TryParse(e.Value?.ToString(), out var x) ? x : (int?)null;
+        var v = vouchers.FirstOrDefault(item => item.CustomerPromotionId == id);
+        Shop.VoucherId = v?.CustomerPromotionId;
+        Shop.VoucherDiscount = v is null ? 0
+            : v.DiscountType == "Percent" ? Math.Floor(Shop.CartSubtotal * v.DiscountValue / 100) : v.DiscountValue;
+    }
+
+    private async Task Place()
+    {
+        busy = true;
+        try
+        {
+            var order = await Shop.PlaceOrderAsync(requestKey);
+            Toasts.Show("Đặt hàng thành công!");
+            Nav.NavigateTo($"/orders/{order.OrderId}", replace: true);
+        }
+        catch (ApiException e) { Toasts.Error(e); }
+        busy = false;
+    }
+}

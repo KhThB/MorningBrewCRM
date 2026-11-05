@@ -1,0 +1,62 @@
+@page "/account/surveys"
+@inject CrmService Crm
+
+<PageHeader Title="Khảo sát" BackTo="/account" />
+
+<div class="page-body">
+    <div class="segmented" role="tablist">
+        <button class="@(tab == 0 ? "active" : "")" @onclick="() => tab = 0">Cần làm @if (Todo.Count > 0){<i class="count">@Todo.Count</i>}</button>
+        <button class="@(tab == 1 ? "active" : "")" @onclick="() => tab = 1">Đã hoàn thành</button>
+        <button class="@(tab == 2 ? "active" : "")" @onclick="() => tab = 2">Hết hạn</button>
+    </div>
+
+    <StateView Loading="loading" Error="@error" OnRetry="Load" Empty="Current.Count == 0"
+               EmptyText="@(tab == 0 ? "Hiện không có khảo sát nào cần làm. Cảm ơn bạn!" : "Không có khảo sát.")" EmptyIcon="clipboard">
+        @foreach (var s in Current)
+        {
+            <div class="card survey-card">
+                <div class="survey-icon"><Icon Name="clipboard" Size="24" /></div>
+                <div class="grow">
+                    <b>@s.Title</b>
+                    @if (!string.IsNullOrWhiteSpace(s.Description)) { <small class="muted block">@s.Description</small> }
+                    <small class="muted block">
+                        @(s.IsDone ? $"Đã trả lời {Fmt.Date(s.CompletedAt)}" : $"Hạn chót {Fmt.Date(s.EndsAt)}")
+                    </small>
+                </div>
+                @if (s.CanAnswer)
+                {
+                    <a class="btn btn-primary btn-sm" href="@($"/surveys/{s.SurveyId}")">Làm ngay</a>
+                }
+                else if (s.IsDone)
+                {
+                    <span class="chip chip-ok"><Icon Name="check" Size="14" /> Xong</span>
+                }
+            </div>
+        }
+    </StateView>
+</div>
+
+@code {
+    private List<SurveyItem> items = [];
+    private int tab;
+    private bool loading = true;
+    private string? error;
+
+    private List<SurveyItem> Todo => items.Where(s => s.CanAnswer).ToList();
+    private List<SurveyItem> Current => tab switch
+    {
+        0 => Todo,
+        1 => items.Where(s => s.IsDone).ToList(),
+        _ => items.Where(s => !s.IsDone && s.IsExpired).ToList()
+    };
+
+    protected override Task OnInitializedAsync() => Load();
+
+    private async Task Load()
+    {
+        loading = true; error = null;
+        try { items = await Crm.GetSurveysAsync(); }
+        catch (ApiException e) { error = e.Message; }
+        loading = false;
+    }
+}

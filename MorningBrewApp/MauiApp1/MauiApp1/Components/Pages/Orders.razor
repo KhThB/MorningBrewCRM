@@ -1,0 +1,56 @@
+@page "/orders"
+@implements IDisposable
+@inject ShopService Shop
+
+<PageHeader Title="Đơn hàng" ShowBack="false" />
+
+<div class="page-body">
+    <StateView Loading="loading" Error="@error" OnRetry="Load" Empty="orders.Count == 0" EmptyText="Bạn chưa có đơn hàng nào." EmptyIcon="receipt">
+        <EmptyAction><a class="btn btn-primary" href="/menu">Đặt món ngay</a></EmptyAction>
+        <ChildContent>
+            @foreach (var o in orders)
+            {
+                <a class="card order-card" href="@($"/orders/{o.OrderId}")">
+                    <div class="row-between">
+                        <b>@o.OrderCode</b>
+                        <span class="chip @Fmt.OrderCss(o.Status)">@Fmt.OrderStatus(o.Status)</span>
+                    </div>
+                    <p class="muted">@o.BranchName</p>
+                    <p>@string.Join(", ", o.Lines.Select(l => $"{l.Quantity}× {l.Name}"))</p>
+                    <div class="row-between">
+                        <span class="muted small">@Fmt.When(o.CreatedAt)</span>
+                        <b>@Fmt.Money(o.Total)</b>
+                    </div>
+                    @if (o.Status == "Completed" && !o.FeedbackSent)
+                    {
+                        <div class="order-cta"><Icon Name="star" Size="16" /> Đánh giá để giúp quán phục vụ tốt hơn</div>
+                    }
+                    @if (o.IsDemo) { <span class="demo-tag">Dữ liệu mẫu</span> }
+                </a>
+            }
+        </ChildContent>
+    </StateView>
+</div>
+
+@code {
+    private List<Order> orders = [];
+    private bool loading = true;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Shop.Changed += Refresh;
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        loading = true; error = null;
+        try { orders = await Shop.GetOrdersAsync(); }
+        catch (ApiException e) { error = e.Message; }
+        loading = false;
+    }
+
+    private void Refresh() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Shop.Changed -= Refresh;
+}

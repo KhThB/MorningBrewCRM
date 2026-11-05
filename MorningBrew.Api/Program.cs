@@ -1,97 +1,76 @@
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-// using OpenApi Models removed
-using MorningBrew.Api.Common;
-using MorningBrew.Api.Data;
-using MorningBrew.Api.Middleware;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authentication;
+using MorningBrew.Api.Infrastructure;
+using MorningBrew.Contracts;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Bind JwtSettings
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
-var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>() ?? new JwtSettings();
-
-// 1. Thêm Controllers & Swagger
-builder.Services.AddControllers();
+builder.Services.AddSingleton<SqlStore>();
+builder.Services.AddAuthentication("Session")
+    .AddScheme<AuthenticationSchemeOptions, SessionAuthentication>("Session", null);
+builder.Services.AddAuthorization();
+builder.Services.AddDataProtection();
+builder.Services.AddSingleton<PageReader>();
+builder.Services.AddControllers(options => options.Filters.Add<ApiStatusFilter>())
+    .AddJsonOptions(options => ApiJson.Configure(options.JsonSerializerOptions))
+    .ConfigureApiBehaviorOptions(options => options.InvalidModelStateResponseFactory = ApiContract.Validation);
+builder.Services.ConfigureHttpJsonOptions(options => ApiJson.Configure(options.SerializerOptions));
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// Authentication setup
-builder.Services.AddAuthentication(options =>
+builder.Services.AddSwaggerGen(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "MorningBrew CRM API", Version = "v1",
+        Description = "JSON snake_case; query pageSize/pageToken; UTC timestamps; opaque bearer sessions. Prices are shared across the chain." });
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSettings.SecretKey)),
-        ValidateIssuer = true,
-        ValidIssuer = jwtSettings.Issuer,
-        ValidateAudience = true,
-        ValidAudience = jwtSettings.Audience,
-        ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero
+        Type = SecuritySchemeType.Http, Scheme = "bearer", BearerFormat = "Opaque session token",
+        Description = "Đăng nhập ở POST /v1/auth/login rồi dán token vào đây."
+    });
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
+    options.OperationFilter<ApiDocumentation>();
+});
+var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
+{
+    if (origins.Length > 0) policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod()
+        .WithExposedHeaders("ETag", "Location", "Retry-After");
+}));
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = 429;
+    options.OnRejected = (context, cancellation) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retry))
+            context.HttpContext.Response.Headers.RetryAfter = Math.Ceiling(retry.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return ValueTask.CompletedTask;
     };
+    options.AddPolicy("login", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 });
-
-// 2. Đăng ký ApplicationDbContext và cấu hình các quan hệ bằng Fluent API
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseInMemoryDatabase("MorningBrewDb"));
-// Các service hiện tại nhận DbContext cơ sở; ánh xạ chúng vào context đã cấu hình.
-builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
-
-// 3. Đăng ký các Services B2
-builder.Services.AddScoped<MorningBrew.Api.Services.Interfaces.ICustomerService, MorningBrew.Api.Services.Implementations.CustomerService>();
-builder.Services.AddScoped<MorningBrew.Api.Services.Interfaces.ILoyaltyService, MorningBrew.Api.Services.Implementations.LoyaltyService>();
-builder.Services.AddScoped<MorningBrew.Api.Services.Interfaces.IPromotionService, MorningBrew.Api.Services.Implementations.PromotionService>();
-builder.Services.AddScoped<MorningBrew.Api.Services.Interfaces.IFeedbackService, MorningBrew.Api.Services.Implementations.FeedbackService>();
-builder.Services.AddScoped<MorningBrew.Api.Services.Interfaces.ISurveyService, MorningBrew.Api.Services.Implementations.SurveyService>();
-builder.Services.AddScoped<MorningBrew.Api.Services.Interfaces.ICrmStatsService, MorningBrew.Api.Services.Implementations.CrmStatsService>();
-
-// Đăng ký AuthService
-builder.Services.AddScoped<MorningBrew.Api.Services.Interfaces.IAuthService, MorningBrew.Api.Services.Implementations.AuthService>();
-
 var app = builder.Build();
-
-// Dùng Middleware xử lý lỗi (phải ở trên cùng để bắt mọi lỗi)
-app.UseMiddleware<GlobalExceptionMiddleware>();
-
-// 4. Bật Swagger ở tất cả môi trường
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+app.UseMiddleware<ApiErrors>();
+app.Use(async (context, next) =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Morning Brew API B2 v1");
-    c.RoutePrefix = "swagger";
+    context.Response.Headers.CacheControl = "no-store";
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    await next();
 });
-
-app.UseHttpsRedirection();
-
-// QUAN TRỌNG: UseAuthentication phải đặt trước UseAuthorization
-app.UseAuthentication(); 
+app.UseStatusCodePages(async status =>
+    await status.HttpContext.Response.WriteAsJsonAsync(ApiContract.Error(status.HttpContext.Response.StatusCode)));
+if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
+else app.UseHttpsRedirection();
+app.UseCors();
+app.UseRateLimiter();
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
-// 5. Thử Seed Data an toàn
-try
+app.MapGet("/health", async (SqlStore db) =>
 {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetService<DbContext>();
-    if (db != null)
-    {
-        MorningBrew.Api.Data.DbInitializer.Seed(db);
-    }
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"[Seed Data Warning]: {ex.Message}");
-}
-
+    await db.Query("SELECT TOP(1) RoleID FROM dbo.Roles");
+    return Results.Ok(new { status = "ready", database = "SqlServer" });
+});
 app.Run();

@@ -1,0 +1,42 @@
+@model Dictionary<string,JsonElement>
+@{
+    var totals=ReportView.Object(Model,"totals");
+    var total=ReportView.Int(totals,"customers");
+    var withPrefs=ReportView.Int(totals,"with_preferences");
+    var ages=ReportView.Rows(Model,"age_groups");
+    var genders=ReportView.Rows(Model,"genders");
+    var products=ReportView.Rows(Model,"products");
+    var categories=ReportView.Rows(Model,"categories");
+    var favorites=ReportView.Rows(Model,"favorite_by_age");
+    var largest=ages.Where(a=>ReportView.Int(a,"group_order")<6).OrderByDescending(a=>ReportView.Int(a,"customers")).FirstOrDefault();
+}
+<h2 class="report-title">Báo cáo khách hàng</h2>
+<div class="cards">
+    <div class="stat"><span>Tổng khách hàng</span><b>@total</b><small>Không tính tài khoản đã xóa</small></div>
+    <div class="stat"><span>Tuổi trung bình</span><b>@ReportView.Number(ReportView.Decimal(totals,"average_age"))</b><small>Theo ngày sinh khách khai báo</small></div>
+    <div class="stat"><span>Nhóm tuổi đông nhất</span><b>@(largest is null || ReportView.Int(largest,"customers")==0 ? "—" : ReportView.Text(largest,"age_group"))</b><small>@(largest is null ? "" : ReportView.Pct(ReportView.Percent(ReportView.Int(largest,"customers"),total))+" khách hàng")</small></div>
+    <div class="stat"><span>Có khai báo sở thích</span><b>@withPrefs</b><small>@ReportView.Pct(ReportView.Percent(withPrefs,total)) khách hàng</small></div>
+</div>
+<div class="grid-2">
+    <section class="panel"><h2>Tỷ lệ độ tuổi</h2>
+        @foreach(var a in ages){ var n=ReportView.Int(a,"customers"); <text>@ReportView.Bar(ReportView.Text(a,"age_group"),n,ReportView.Percent(n,total))</text> }
+    </section>
+    <section class="panel"><h2>Giới tính</h2>
+        @foreach(var g in genders){ var n=ReportView.Int(g,"customers"); <text>@ReportView.Bar(RowDisplay.Value("gender",g["gender"]),n,ReportView.Percent(n,total))</text> }
+    </section>
+</div>
+<div class="grid-2">
+    <section class="panel"><h2>Sở thích — món được yêu thích</h2>
+        <p class="muted">Tỷ lệ trên tổng số khách hàng. Một khách có thể thích nhiều món.</p>
+        @if(products.Count==0){<div class="empty-state">Chưa có khách nào khai báo sở thích.</div>}
+        @foreach(var p in products){ var n=ReportView.Int(p,"customers"); <text>@ReportView.Bar(ReportView.Text(p,"product"),n,ReportView.Percent(n,total),ReportView.Text(p,"category"))</text> }
+    </section>
+    <section class="panel"><h2>Sở thích theo danh mục</h2>
+        @foreach(var c in categories){ var n=ReportView.Int(c,"customers"); <text>@ReportView.Bar(ReportView.Text(c,"category"),n,ReportView.Percent(n,total))</text> }
+        <h3>Món được thích nhất theo nhóm tuổi</h3>
+        @if(favorites.Count==0){<div class="empty-state">Chưa có dữ liệu.</div>}
+        else{<div class="table-wrap"><table><thead><tr><th>Nhóm tuổi</th><th>Món</th><th>Số khách</th></tr></thead><tbody>
+        @foreach(var f in favorites){<tr><td>@ReportView.Text(f,"age_group")</td><td>@ReportView.Text(f,"product")</td><td>@ReportView.Int(f,"customers")</td></tr>}
+        </tbody></table></div>}
+    </section>
+</div>

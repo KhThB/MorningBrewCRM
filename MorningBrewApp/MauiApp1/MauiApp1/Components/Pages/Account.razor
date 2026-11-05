@@ -1,0 +1,79 @@
+@page "/account"
+@inject CrmService Crm
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<section class="hero compact">
+    <div class="account-head">
+        <div class="avatar">@Initial</div>
+        <div>
+            <h1>@(profile?.FullName ?? Auth.User?.FullName)</h1>
+            <span class="muted-light">@profile?.Email</span>
+        </div>
+        <a class="icon-btn light" href="/account/profile" aria-label="Sửa hồ sơ"><Icon Name="edit" /></a>
+    </div>
+    <MemberCard Name="@(profile?.FullName ?? "")" Points="@(profile?.LoyaltyPoints ?? 0)" />
+</section>
+
+<div class="page-body overlap">
+    @if (error is not null) { <div class="alert">@error</div> }
+
+    <div class="card">
+        <h2 class="card-title">Tài khoản của tôi</h2>
+        <div class="menu-grid">
+            <a href="/account/profile"><span class="mg-icon"><Icon Name="user" /></span>Hồ sơ</a>
+            <a href="/account/favorites"><span class="mg-icon"><Icon Name="heart" /></span>Yêu thích</a>
+            <a href="/rewards"><span class="mg-icon"><Icon Name="ticket" /></span>Ví voucher</a>
+            <a href="/orders"><span class="mg-icon"><Icon Name="receipt" /></span>Đơn hàng</a>
+            <a href="/account/feedbacks"><span class="mg-icon"><Icon Name="chat" /></span>Phản hồi</a>
+            <a href="/account/surveys">
+                <span class="mg-icon"><Icon Name="clipboard" />@if (Crm.PendingSurveys > 0){<i class="badge">@Crm.PendingSurveys</i>}</span>Khảo sát
+            </a>
+            <a href="/rewards"><span class="mg-icon"><Icon Name="coin" /></span>Lịch sử điểm</a>
+            <a href="/menu"><span class="mg-icon"><Icon Name="store" /></span>Cửa hàng</a>
+        </div>
+    </div>
+
+    <div class="card list">
+        <h2 class="card-title">Hỗ trợ</h2>
+        <a class="list-link" href="/feedback/new"><Icon Name="chat" Size="20" /><span>Góp ý cho Morning Brew</span><Icon Name="next" Size="16" /></a>
+        <button class="list-link" @onclick="() => about = !about"><Icon Name="info" Size="20" /><span>Về Morning Brew</span><Icon Name="next" Size="16" /></button>
+        @if (about)
+        {
+            <p class="muted small about">Morning Brew là chuỗi cà phê mô phỏng cho đồ án Hệ thống thông tin doanh nghiệp (SGU). Ứng dụng giúp khách tích điểm, nhận ưu đãi, gửi phản hồi và tham gia khảo sát.</p>
+        }
+        <button class="list-link danger" @onclick="Logout"><Icon Name="logout" Size="20" /><span>Đăng xuất</span></button>
+    </div>
+</div>
+
+@code {
+    private Profile? profile;
+    private string? error;
+    private bool about;
+
+    private string Initial
+    {
+        get
+        {
+            var last = (profile?.FullName ?? Auth.User?.FullName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+            return string.IsNullOrEmpty(last) ? "M" : last[..1].ToUpperInvariant();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            profile = await Crm.GetProfileAsync();
+            await Crm.GetSurveysAsync();
+        }
+        catch (ApiException e) { error = e.Message; }
+    }
+
+    private async Task Logout()
+    {
+        await Auth.LogoutAsync();
+        Crm.Reset();
+        Nav.NavigateTo("/login", replace: true);
+    }
+}

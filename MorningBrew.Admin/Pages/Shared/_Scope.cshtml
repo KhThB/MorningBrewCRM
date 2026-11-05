@@ -1,0 +1,14 @@
+@model WorkspaceModel
+@* Hệ thống chỉ có 1 cửa hàng: chủ cửa hàng tạo cho toàn hệ thống, quản lý tạo cho cửa hàng của mình. *@
+@if(User.IsInRole("Owner"))
+{
+<input type="hidden" name="scope" value="Chain">
+}
+else
+{
+<input type="hidden" name="scope" value="Branch">
+<input type="hidden" name="branchId" value="@(Model.Choices("branches").FirstOrDefault()?["id"].ToString())">
+}
+<p class="muted">Áp dụng cho: @(Model.Choices("branches").FirstOrDefault()?["display_name"].ToString() ?? "cửa hàng")</p>
+<label>Bắt đầu (giờ máy hiện tại)</label><input name="startsAt" type="datetime-local" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required>
+<label>Kết thúc</label><input name="endsAt" type="datetime-local" value="@DateTime.Now.AddDays(30).ToString("yyyy-MM-ddTHH:mm")" required>

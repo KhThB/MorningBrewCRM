@@ -1,35 +1,80 @@
-// File: AuthController.cs
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using MorningBrew.Api.Common;
-using MorningBrew.Api.DTOs.Auth;
-using MorningBrew.Api.Services.Interfaces;
+using Microsoft.AspNetCore.RateLimiting;
+using MorningBrew.Api.Infrastructure;
+namespace MorningBrew.Api.Controllers;
 
-namespace MorningBrew.Api.Controllers
+[ApiController, Route("v1/auth")]
+public sealed class AuthController(SqlStore db) : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    // AuthController: endpoint đăng nhập và trả về JWT token cho client
-    // Lưu ý: Login hiện dùng mật khẩu demo; ở production cần validate bằng hash
-    public class AuthController : ControllerBase
+    public record LoginRequest([Required, EmailAddress, MaxLength(254)] string Username, [Required, MaxLength(200)] string Password);
+    public record IdentityInfo(int Id, string Email, string FullName, string Role);
+    public record LoginResponse(string Token, DateTime ExpiresAt, IdentityInfo User);
+    [HttpPost("login"), EnableRateLimiting("login")]
+    public async Task<LoginResponse> Login(LoginRequest request)
     {
-        private readonly IAuthService _authService;
-
-        public AuthController(IAuthService authService)
-        {
-            _authService = authService;
-        }
-
-        // POST api/auth/login
-        // Body: LoginRequest { username, password }
-        // Response: ApiResponse<LoginResponse> chứa token, expiresAt và user info
-        [HttpPost("login")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
-        {
-            var response = await _authService.LoginAsync(request);
-            return Ok(ApiResponse<LoginResponse>.Success(response, "Login successful"));
-        }
+        var users = await db.Query("""
+            SELECT u.UserID,u.Email,u.FullName,u.PasswordHash,u.IsActive,r.Code AS Role
+            FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE u.NormalizedEmail=UPPER(LTRIM(RTRIM(@email)))
+            """, ("@email", request.Username));
+        var user = users.FirstOrDefault();
+        // Hash verification also runs for unknown accounts.
+        const string dummy = "AQAAAAIAAYagAAAAEE8G2F5hjA72TxlV9NrR092YRGzNf1+QMFGndUjRlWxuS/DMviEjHdzD5daFtHJW2w==";
+        var hash = user?["PasswordHash"]?.ToString() ?? dummy;
+        var valid = new PasswordHasher<string>().VerifyHashedPassword(request.Username, hash, request.Password);
+        if (user is null || !(bool)user["IsActive"]! || valid == PasswordVerificationResult.Failed)
+            throw new ApiException(401, "Email hoặc mật khẩu không đúng.");
+        var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        var expiresAt = DateTime.UtcNow.AddHours(8);
+        await db.Query("INSERT dbo.UserSessions(UserID,TokenHash,ExpiresAt,DeviceName) VALUES(@id,@hash,@expires,'MorningBrew');",
+            ("@id", user["UserID"]), ("@hash", SessionAuthentication.Hash(token)), ("@expires", expiresAt));
+        return new(token, expiresAt, new((int)user["UserID"]!, (string)user["Email"]!, (string)user["FullName"]!, (string)user["Role"]!));
+    }
+    // Yêu cầu 4.3: khách hàng tự đăng ký. Email duy nhất (không phân biệt hoa thường), mật khẩu ≥ 10 ký tự.
+    public record RegisterRequest(
+        [Required, EmailAddress, MaxLength(254)] string Email,
+        [Required, StringLength(120, MinimumLength = 2)] string FullName,
+        [MaxLength(20), RegularExpression(@"^0\d{9,10}$", ErrorMessage = "Số điện thoại gồm 10–11 số, bắt đầu bằng 0.")] string? Phone,
+        [Required, StringLength(200, MinimumLength = 10)] string Password,
+        DateOnly? DateOfBirth = null,
+        [RegularExpression("^(Male|Female|Other|Undisclosed)$")] string? Gender = null);
+    [HttpPost("register"), EnableRateLimiting("login")]
+    public async Task<IActionResult> Register(RegisterRequest input)
+    {
+        var email = input.Email.Trim();
+        if (input.DateOfBirth is { } birth && (birth > DateOnly.FromDateTime(DateTime.UtcNow) || birth.Year < 1900))
+            throw new ApiException(400, "Ngày sinh không hợp lệ.", [new("FIELD_INVALID", "date_of_birth")]);
+        var created = await db.Query("""
+            SET XACT_ABORT ON; BEGIN TRAN;
+            IF EXISTS(SELECT 1 FROM dbo.Users WITH(UPDLOCK,HOLDLOCK) WHERE NormalizedEmail=UPPER(LTRIM(RTRIM(@email))))
+                THROW 51120,N'Email đã được sử dụng.',1;
+            DECLARE @role int=(SELECT RoleID FROM dbo.Roles WHERE Code='Customer');
+            INSERT dbo.Users(RoleID,Email,NormalizedEmail,FullName,Phone,PasswordHash)
+            VALUES(@role,@email,UPPER(LTRIM(RTRIM(@email))),@name,@phone,@hash);
+            DECLARE @id int=SCOPE_IDENTITY();
+            INSERT dbo.Customers(UserID,DateOfBirth,Gender) VALUES(@id,@birth,@gender);
+            INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID) VALUES(@id,'Customer.Register','Users',@id);
+            COMMIT; SELECT @id AS UserID;
+            """, ("@email", email), ("@name", input.FullName.Trim()),
+            ("@phone", string.IsNullOrWhiteSpace(input.Phone) ? null : input.Phone.Trim()),
+            ("@hash", new PasswordHasher<string>().HashPassword(email, input.Password)),
+            ("@birth", input.DateOfBirth?.ToDateTime(TimeOnly.MinValue)), ("@gender", input.Gender));
+        var id = (int)created.Single()["UserID"]!;
+        return Created($"/v1/accounts/{id}", new { id, email, fullName = input.FullName.Trim(), role = "Customer" });
+    }
+    [Authorize, HttpGet("me")]
+    public async Task<object> Me() => new {
+        id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!), fullName = User.Identity!.Name,
+        email = User.FindFirstValue(ClaimTypes.Email), role = User.FindFirstValue(ClaimTypes.Role),
+        branches = await db.Query("SELECT BranchID,Name,AreaID FROM dbo.Branches WHERE dbo.CanBranch(@actor,BranchID,'Orders.Read')=1 ORDER BY BranchID", ("@actor", User.FindFirstValue(ClaimTypes.NameIdentifier))) };
+    [Authorize, HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        await db.Query("UPDATE dbo.UserSessions SET RevokedAt=SYSUTCDATETIME() WHERE SessionID=@id AND RevokedAt IS NULL", ("@id", User.FindFirstValue("SessionID")));
+        return NoContent();
     }
 }

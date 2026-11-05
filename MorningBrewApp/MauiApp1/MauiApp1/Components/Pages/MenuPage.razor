@@ -1,0 +1,149 @@
+@page "/menu"
+@inject ShopService Shop
+@inject CrmService Crm
+@inject ToastService Toasts
+
+<header class="menu-header">
+    <div class="branch-picker">
+        <Icon Name="pin" Size="18" />
+        <span class="store-name">@Shop.CurrentBranch.Name</span>
+    </div>
+    <div class="search">
+        <Icon Name="search" Size="18" />
+        <input placeholder="Tìm món..." @bind="query" @bind:event="oninput" aria-label="Tìm món" />
+    </div>
+    <div class="chips" role="tablist">
+        <button class="chip-btn @(category is null ? "active" : "")" @onclick="() => category = null">Tất cả</button>
+        @foreach (var c in categories)
+        {
+            <button class="chip-btn @(category == c ? "active" : "")" @onclick="() => category = c">@c</button>
+        }
+    </div>
+</header>
+
+<div class="page-body">
+    @if (menu?.IsDemo == true)
+    {
+        <div class="demo-note"><Icon Name="info" Size="16" /> Dữ liệu mẫu — máy chủ chưa có API thực đơn cho khách.</div>
+    }
+    <StateView Loading="loading" Error="@error" OnRetry="Load" Empty="Visible.Count == 0" EmptyText="Không tìm thấy món phù hợp." EmptyIcon="cup">
+        @foreach (var group in Visible.GroupBy(x => x.Category))
+        {
+            <h2 class="group-title">@group.Key</h2>
+            @foreach (var product in group.GroupBy(x => x.ProductId))
+            {
+                var first = product.First();
+                var available = product.Any(x => x.IsAvailable);
+                <div class="product-row @(available ? "" : "sold-out")">
+                    <ProductThumb Category="@first.Category" />
+                    <button class="product-info" @onclick="() => Open(product.ToList())" disabled="@(!available)">
+                        <b>@first.Name</b>
+                        <small>@first.Description</small>
+                        <span class="price">@(available ? Fmt.Money(product.Where(x => x.IsAvailable).Min(x => x.Price)) : "Tạm hết")</span>
+                    </button>
+                    <div class="product-actions">
+                        <button class="icon-btn fav @(favorites.Contains(first.ProductId) ? "on" : "")" @onclick="() => ToggleFavorite(first)"
+                                aria-label="Yêu thích"><Icon Name="heart" Size="20" Filled="favorites.Contains(first.ProductId)" /></button>
+                        @if (available)
+                        {
+                            <button class="add-btn" @onclick="() => Open(product.ToList())" aria-label="Thêm vào giỏ"><Icon Name="plus" Size="18" /></button>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </StateView>
+</div>
+
+@if (sheet is not null)
+{
+    <div class="sheet-backdrop" @onclick="() => sheet = null"></div>
+    <div class="sheet" role="dialog" aria-label="@sheet[0].Name">
+        <div class="sheet-handle"></div>
+        <div class="sheet-head">
+            <ProductThumb Category="@sheet[0].Category" Large="true" />
+            <div><h2>@sheet[0].Name</h2><p class="muted">@sheet[0].Description</p></div>
+        </div>
+        <h3>Kích cỡ</h3>
+        <div class="chips wrap">
+            @foreach (var v in sheet.Where(x => x.IsAvailable))
+            {
+                <button class="chip-btn @(variant?.VariantId == v.VariantId ? "active" : "")" @onclick="() => variant = v">
+                    @v.VariantName · @Fmt.Money(v.Price)
+                </button>
+            }
+        </div>
+        <div class="row-between sheet-footer">
+            <div class="stepper">
+                <button @onclick="() => quantity = Math.Max(1, quantity - 1)" aria-label="Giảm"><Icon Name="minus" Size="18" /></button>
+                <b>@quantity</b>
+                <button @onclick="() => quantity++" aria-label="Tăng"><Icon Name="plus" Size="18" /></button>
+            </div>
+            <button class="btn btn-primary" @onclick="AddToCart" disabled="@(variant is null)">
+                Thêm · @Fmt.Money((variant?.Price ?? 0) * quantity)
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    private MenuData? menu;
+    private HashSet<int> favorites = [];
+    private List<string> categories = [];
+    private string? category;
+    private string query = "";
+    private bool loading = true;
+    private string? error;
+    private List<MenuProduct>? sheet;
+    private MenuProduct? variant;
+    private int quantity = 1;
+
+    private List<MenuProduct> Visible => menu is null ? [] : menu.Items
+        .Where(x => category is null || x.Category == category)
+        .Where(x => string.IsNullOrWhiteSpace(query) || x.Name.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    protected override Task OnInitializedAsync() => Load();
+
+    private async Task Load()
+    {
+        loading = true; error = null;
+        try
+        {
+            menu = await Shop.GetMenuAsync();
+            categories = menu.Items.Select(x => x.Category).Distinct().ToList();
+        }
+        catch (ApiException e) { error = e.Message; }
+        try { favorites = await Crm.GetFavoritesAsync(); } catch (ApiException) { }
+        loading = false;
+    }
+
+    private void Open(List<MenuProduct> variants)
+    {
+        sheet = variants;
+        variant = variants.FirstOrDefault(x => x.IsAvailable);
+        quantity = 1;
+    }
+
+    private void AddToCart()
+    {
+        if (variant is null) return;
+        Shop.Add(variant, quantity);
+        Toasts.Show($"Đã thêm {quantity} {variant.Name} vào giỏ");
+        sheet = null;
+    }
+
+    private async Task ToggleFavorite(MenuProduct item)
+    {
+        if (item.IsDemo) { Toasts.Show("Món minh họa — chưa có trong cơ sở dữ liệu.", true); return; }
+        var next = new HashSet<int>(favorites);
+        if (!next.Add(item.ProductId)) next.Remove(item.ProductId);
+        try
+        {
+            await Crm.SaveFavoritesAsync(next);
+            favorites = next;
+            Toasts.Show(favorites.Contains(item.ProductId) ? "Đã thêm vào món yêu thích" : "Đã bỏ khỏi món yêu thích");
+        }
+        catch (ApiException e) { Toasts.Error(e); }
+    }
+}

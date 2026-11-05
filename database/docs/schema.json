@@ -1,0 +1,4080 @@
+{
+  "tables": [
+    {
+      "name": "Roles",
+      "group": "Tài khoản",
+      "purpose": "Năm vai trò nghiệp vụ dùng chung cho ba ứng dụng.",
+      "columns": [
+        {
+          "name": "RoleID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "Code",
+          "type": "varchar(30)",
+          "why": "Mã ổn định dùng trong phân quyền.",
+          "example": "Owner",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Name",
+          "type": "nvarchar(100)",
+          "why": "Tên hiển thị tiếng Việt.",
+          "example": "Chủ doanh nghiệp",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "RoleID"
+      ],
+      "checks": [
+        "Code IN ('Owner','AreaManager','BranchManager','Staff','Customer')"
+      ],
+      "uniques": [
+        [
+          "Code"
+        ]
+      ],
+      "original": true
+    },
+    {
+      "name": "Permissions",
+      "group": "Tài khoản",
+      "purpose": "Tách quyền thao tác khỏi tên vai trò để cấp quyền rõ ràng.",
+      "columns": [
+        {
+          "name": "PermissionID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "Code",
+          "type": "varchar(80)",
+          "why": "Mã chức năng được backend kiểm tra.",
+          "example": "Orders.Manage",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Description",
+          "type": "nvarchar(250)",
+          "why": "Giải thích hành động được cho phép.",
+          "example": "Xử lý đơn hàng trong phạm vi phụ trách",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "PermissionID"
+      ],
+      "checks": [],
+      "uniques": [
+        [
+          "Code"
+        ]
+      ],
+      "original": false
+    },
+    {
+      "name": "RolePermissions",
+      "group": "Tài khoản",
+      "purpose": "Liên kết vai trò với các quyền được cấp.",
+      "columns": [
+        {
+          "name": "RoleID",
+          "type": "int",
+          "why": "Liên kết tới Roles; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Roles.RoleID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "PermissionID",
+          "type": "int",
+          "why": "Liên kết tới Permissions; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Permissions.PermissionID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "RoleID",
+        "PermissionID"
+      ],
+      "checks": [],
+      "uniques": [],
+      "original": false
+    },
+    {
+      "name": "Users",
+      "group": "Tài khoản",
+      "purpose": "Thông tin đăng nhập và liên hệ duy nhất, tránh sao chép sang Customers.",
+      "columns": [
+        {
+          "name": "UserID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "RoleID",
+          "type": "int",
+          "why": "Liên kết tới Roles; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Roles.RoleID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Email",
+          "type": "nvarchar(254)",
+          "why": "Email hiển thị và nhận diện đăng nhập.",
+          "example": "lan@example.test",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "NormalizedEmail",
+          "type": "nvarchar(254)",
+          "why": "Email viết hoa và bỏ khoảng trắng hai đầu; duy nhất không phân biệt hoa thường.",
+          "example": "LAN@EXAMPLE.TEST",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "PasswordHash",
+          "type": "varchar(512)",
+          "why": "Hash PBKDF2 định dạng ASP.NET PasswordHasher; không lưu mật khẩu thô.",
+          "example": "AQAAAAIAAYag...",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "FullName",
+          "type": "nvarchar(120)",
+          "why": "Tên nhân viên/khách hàng.",
+          "example": "Nguyễn Lan",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Phone",
+          "type": "varchar(20)",
+          "why": "Số điện thoại liên hệ; không duy nhất vì có thể dùng chung.",
+          "example": "0901234567",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsActive",
+          "type": "bit",
+          "why": "Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "Version",
+          "type": "rowversion",
+          "why": "Dấu phiên bản để phát hiện ghi đè dữ liệu khi hai người cùng sửa; không phải thời gian.",
+          "example": "0x00000000000007D1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server tự cập nhật mỗi lần ghi."
+        }
+      ],
+      "pk": [
+        "UserID"
+      ],
+      "checks": [
+        "NormalizedEmail = UPPER(LTRIM(RTRIM(Email)))"
+      ],
+      "uniques": [
+        [
+          "NormalizedEmail"
+        ]
+      ],
+      "original": true
+    },
+    {
+      "name": "UserSessions",
+      "group": "Tài khoản",
+      "purpose": "Lưu phiên và hash refresh token để thu hồi đăng nhập từng thiết bị.",
+      "columns": [
+        {
+          "name": "SessionID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "UserID",
+          "type": "int",
+          "why": "Liên kết tới Users; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Users.UserID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "TokenHash",
+          "type": "binary(32)",
+          "why": "SHA-256 của refresh token ngẫu nhiên; không lưu token có thể dùng trực tiếp.",
+          "example": "32 bytes",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DeviceName",
+          "type": "nvarchar(120)",
+          "why": "Nhãn thiết bị cho khách nhận biết phiên.",
+          "example": "Android cá nhân",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "ExpiresAt",
+          "type": "datetime2(3)",
+          "why": "Hạn sử dụng UTC bắt buộc; ngăn phiên hoặc voucher tồn tại vô thời hạn.",
+          "example": "2027-09-17T03:00:00Z",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend ghi khi cấp phiên/voucher; voucher lấy hạn của chương trình."
+        },
+        {
+          "name": "RevokedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        }
+      ],
+      "pk": [
+        "SessionID"
+      ],
+      "checks": [
+        "ExpiresAt IS NOT NULL AND ExpiresAt > CreatedAt",
+        "RevokedAt IS NULL OR RevokedAt >= CreatedAt"
+      ],
+      "uniques": [
+        [
+          "TokenHash"
+        ]
+      ],
+      "original": false
+    },
+    {
+      "name": "Areas",
+      "group": "Tổ chức",
+      "purpose": "Phân vùng chuỗi để giới hạn dữ liệu của quản lý khu vực.",
+      "columns": [
+        {
+          "name": "AreaID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "Name",
+          "type": "nvarchar(120)",
+          "why": "Tên khu vực quản lý.",
+          "example": "Khu vực Đông",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsActive",
+          "type": "bit",
+          "why": "Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "AreaID"
+      ],
+      "checks": [],
+      "uniques": [
+        [
+          "Name"
+        ]
+      ],
+      "original": true
+    },
+    {
+      "name": "Branches",
+      "group": "Tổ chức",
+      "purpose": "Cấu hình vận hành và nhận đơn của từng quán.",
+      "columns": [
+        {
+          "name": "BranchID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "AreaID",
+          "type": "int",
+          "why": "Liên kết tới Areas; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Areas.AreaID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ManagerID",
+          "type": "int",
+          "why": "Quản lý chi nhánh; backend/trigger kiểm tra đúng vai trò.",
+          "example": "2",
+          "nullable": true,
+          "default": null,
+          "ref": "Users.UserID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Code",
+          "type": "varchar(30)",
+          "why": "Mã quán ngắn dùng trên đơn và báo cáo.",
+          "example": "MB01",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Name",
+          "type": "nvarchar(150)",
+          "why": "Tên chi nhánh.",
+          "example": "Morning Brew Thủ Đức",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Address",
+          "type": "nvarchar(500)",
+          "why": "Địa chỉ khách đến nhận hàng.",
+          "example": "12 Võ Văn Ngân, TP.HCM",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Phone",
+          "type": "varchar(20)",
+          "why": "Điện thoại quán.",
+          "example": "02812345678",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "OpeningTime",
+          "type": "time(0)",
+          "why": "Giờ mở cửa hằng ngày theo giờ Việt Nam.",
+          "example": "07:00",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ClosingTime",
+          "type": "time(0)",
+          "why": "Giờ đóng cửa; bản đầu không mở xuyên nửa đêm.",
+          "example": "22:00",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsActive",
+          "type": "bit",
+          "why": "Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "AcceptingOrders",
+          "type": "bit",
+          "why": "Công tắc tạm dừng nhận đơn mới.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "PickupEnabled",
+          "type": "bit",
+          "why": "Cho phép nhận tại quán.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DeliveryEnabled",
+          "type": "bit",
+          "why": "Cho phép giao hàng; có thể tắt để chỉ còn pickup.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DeliveryFee",
+          "type": "decimal(18,2)",
+          "why": "Phí giao cố định của chi nhánh. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Version",
+          "type": "rowversion",
+          "why": "Dấu phiên bản để phát hiện ghi đè dữ liệu khi hai người cùng sửa; không phải thời gian.",
+          "example": "0x00000000000007D1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server tự cập nhật mỗi lần ghi."
+        }
+      ],
+      "pk": [
+        "BranchID"
+      ],
+      "checks": [
+        "OpeningTime < ClosingTime",
+        "DeliveryFee >= 0"
+      ],
+      "uniques": [
+        [
+          "Code"
+        ]
+      ],
+      "original": true
+    },
+    {
+      "name": "AreaManagers",
+      "group": "Tổ chức",
+      "purpose": "Phân công quản lý vào nhiều khu vực.",
+      "columns": [
+        {
+          "name": "AreaID",
+          "type": "int",
+          "why": "Liên kết tới Areas; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Areas.AreaID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "UserID",
+          "type": "int",
+          "why": "Liên kết tới Users; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Users.UserID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "AssignedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "IsActive",
+          "type": "bit",
+          "why": "Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "AreaID",
+        "UserID"
+      ],
+      "checks": [],
+      "uniques": [],
+      "original": true
+    },
+    {
+      "name": "StaffBranches",
+      "group": "Tổ chức",
+      "purpose": "Phân công nhân viên POS; giữ bản ghi khi ngừng phân công.",
+      "columns": [
+        {
+          "name": "UserID",
+          "type": "int",
+          "why": "Liên kết tới Users; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Users.UserID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "BranchID",
+          "type": "int",
+          "why": "Liên kết tới Branches; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Branches.BranchID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "AssignedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "IsActive",
+          "type": "bit",
+          "why": "Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "UserID",
+        "BranchID"
+      ],
+      "checks": [],
+      "uniques": [],
+      "original": true
+    },
+    {
+      "name": "Customers",
+      "group": "CRM",
+      "purpose": "Hồ sơ CRM gắn một tài khoản Customer; tên và liên hệ đọc từ Users.",
+      "columns": [
+        {
+          "name": "CustomerID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "UserID",
+          "type": "int",
+          "why": "Liên kết tới Users; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Users.UserID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DateOfBirth",
+          "type": "date",
+          "why": "Tính tuổi tại thời điểm thống kê, không lưu tuổi bị cũ.",
+          "example": "2002-05-12",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Gender",
+          "type": "varchar(15)",
+          "why": "Phân nhóm tự nguyện; NULL là chưa cung cấp.",
+          "example": "Female",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "LoyaltyPoints",
+          "type": "int",
+          "why": "Số dư cache đối chiếu sổ điểm; có thể âm khi thu hồi điểm đã tiêu.",
+          "example": "0",
+          "nullable": false,
+          "default": "0",
+          "ref": null,
+          "source": "Chỉ nghiệp vụ điểm cập nhật cùng transaction với LoyaltyTransactions."
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "Version",
+          "type": "rowversion",
+          "why": "Dấu phiên bản để phát hiện ghi đè dữ liệu khi hai người cùng sửa; không phải thời gian.",
+          "example": "0x00000000000007D1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server tự cập nhật mỗi lần ghi."
+        }
+      ],
+      "pk": [
+        "CustomerID"
+      ],
+      "checks": [
+        "Gender IS NULL OR Gender IN ('Male','Female','Other','Undisclosed')"
+      ],
+      "uniques": [
+        [
+          "UserID"
+        ]
+      ],
+      "original": true
+    },
+    {
+      "name": "CustomerAddresses",
+      "group": "CRM",
+      "purpose": "Nhiều địa chỉ giao hàng của khách; không dùng làm địa chỉ động cho đơn cũ.",
+      "columns": [
+        {
+          "name": "AddressID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "CustomerID",
+          "type": "int",
+          "why": "Liên kết tới Customers; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Customers.CustomerID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Label",
+          "type": "nvarchar(50)",
+          "why": "Tên gợi nhớ địa chỉ.",
+          "example": "Nhà",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "RecipientName",
+          "type": "nvarchar(120)",
+          "why": "Người nhận có thể khác chủ tài khoản.",
+          "example": "Nguyễn Lan",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Phone",
+          "type": "varchar(20)",
+          "why": "Số điện thoại người nhận.",
+          "example": "0901234567",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "AddressText",
+          "type": "nvarchar(500)",
+          "why": "Địa chỉ đầy đủ phục vụ giao thủ công.",
+          "example": "12 đường A, phường B, TP.HCM",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Note",
+          "type": "nvarchar(300)",
+          "why": "Hướng dẫn giao đến địa chỉ này.",
+          "example": "Gọi trước khi đến",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsDefault",
+          "type": "bit",
+          "why": "Địa chỉ chọn sẵn; tối đa một địa chỉ mặc định.",
+          "example": "0",
+          "nullable": false,
+          "default": "0",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsActive",
+          "type": "bit",
+          "why": "Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        }
+      ],
+      "pk": [
+        "AddressID"
+      ],
+      "checks": [
+        "IsDefault = 0 OR IsActive = 1"
+      ],
+      "uniques": [],
+      "original": false
+    },
+    {
+      "name": "Categories",
+      "group": "Thực đơn",
+      "purpose": "Nhóm món để duyệt menu và phân tích sở thích.",
+      "columns": [
+        {
+          "name": "CategoryID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "Name",
+          "type": "nvarchar(100)",
+          "why": "Tên danh mục.",
+          "example": "Cà phê",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsActive",
+          "type": "bit",
+          "why": "Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "CategoryID"
+      ],
+      "checks": [],
+      "uniques": [
+        [
+          "Name"
+        ]
+      ],
+      "original": true
+    },
+    {
+      "name": "Products",
+      "group": "Thực đơn",
+      "purpose": "Thông tin món dùng toàn chuỗi; giá nằm ở phiên bản.",
+      "columns": [
+        {
+          "name": "ProductID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "CategoryID",
+          "type": "int",
+          "why": "Liên kết tới Categories; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Categories.CategoryID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Name",
+          "type": "nvarchar(150)",
+          "why": "Tên món trên menu.",
+          "example": "Cà phê sữa",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Description",
+          "type": "nvarchar(2000)",
+          "why": "Mô tả thành phần/hương vị.",
+          "example": "Cà phê và sữa đặc",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ImageURL",
+          "type": "nvarchar(1000)",
+          "why": "Đường dẫn ảnh; không lưu ảnh nhị phân trong bảng.",
+          "example": "/images/coffee.jpg",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsActive",
+          "type": "bit",
+          "why": "Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Version",
+          "type": "rowversion",
+          "why": "Dấu phiên bản để phát hiện ghi đè dữ liệu khi hai người cùng sửa; không phải thời gian.",
+          "example": "0x00000000000007D1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server tự cập nhật mỗi lần ghi."
+        }
+      ],
+      "pk": [
+        "ProductID"
+      ],
+      "checks": [],
+      "uniques": [],
+      "original": true
+    },
+    {
+      "name": "ProductVariants",
+      "group": "Thực đơn",
+      "purpose": "Mỗi size là một phiên bản có giá cơ sở; món không size có phiên bản Standard.",
+      "columns": [
+        {
+          "name": "VariantID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "ProductID",
+          "type": "int",
+          "why": "Liên kết tới Products; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Products.ProductID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Name",
+          "type": "nvarchar(50)",
+          "why": "Tên size/phiên bản.",
+          "example": "M",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "BasePrice",
+          "type": "decimal(18,2)",
+          "why": "Giá dùng khi chi nhánh chưa ghi đè. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DisplayOrder",
+          "type": "int",
+          "why": "Thứ tự hiển thị size.",
+          "example": "1",
+          "nullable": false,
+          "default": "0",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsActive",
+          "type": "bit",
+          "why": "Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "VariantID"
+      ],
+      "checks": [
+        "BasePrice >= 0",
+        "DisplayOrder >= 0"
+      ],
+      "uniques": [
+        [
+          "ProductID",
+          "Name"
+        ],
+        [
+          "VariantID",
+          "ProductID"
+        ]
+      ],
+      "original": false
+    },
+    {
+      "name": "BranchProducts",
+      "group": "Thực đơn",
+      "purpose": "Chỉ các món được phân phối tới chi nhánh mới xuất hiện trên menu.",
+      "columns": [
+        {
+          "name": "BranchID",
+          "type": "int",
+          "why": "Liên kết tới Branches; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Branches.BranchID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ProductID",
+          "type": "int",
+          "why": "Liên kết tới Products; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Products.ProductID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsAvailable",
+          "type": "bit",
+          "why": "Quán bật/tắt món mà không xóa phân phối.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "BranchID",
+        "ProductID"
+      ],
+      "checks": [],
+      "uniques": [],
+      "original": true
+    },
+    {
+      "name": "BranchProductVariants",
+      "group": "Thực đơn",
+      "purpose": "Ghi đè giá và tình trạng bán size tại chi nhánh.",
+      "columns": [
+        {
+          "name": "BranchID",
+          "type": "int",
+          "why": "Liên kết tới Branches; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Branches.BranchID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "VariantID",
+          "type": "int",
+          "why": "Liên kết tới ProductVariants; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "ProductVariants.VariantID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ProductID",
+          "type": "int",
+          "why": "Liên kết tới Products; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Products.ProductID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "SellingPrice",
+          "type": "decimal(18,2)",
+          "why": "Giá riêng tại quán. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsAvailable",
+          "type": "bit",
+          "why": "Tắt riêng một size.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "BranchID",
+        "VariantID"
+      ],
+      "checks": [
+        "SellingPrice >= 0"
+      ],
+      "uniques": [],
+      "original": false
+    },
+    {
+      "name": "ModifierGroups",
+      "group": "Thực đơn",
+      "purpose": "Định nghĩa nhóm lựa chọn đường, đá, topping.",
+      "columns": [
+        {
+          "name": "ModifierGroupID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "Name",
+          "type": "nvarchar(100)",
+          "why": "Tên nhóm tùy chọn.",
+          "example": "Mức đường",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Kind",
+          "type": "varchar(20)",
+          "why": "Phân biệt Sugar/Ice chỉ chọn một; Topping có thể nhiều.",
+          "example": "Sugar",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsActive",
+          "type": "bit",
+          "why": "Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "ModifierGroupID"
+      ],
+      "checks": [
+        "Kind IN ('Sugar','Ice','Topping')"
+      ],
+      "uniques": [],
+      "original": false
+    },
+    {
+      "name": "ModifierOptions",
+      "group": "Thực đơn",
+      "purpose": "Các lựa chọn có phụ phí trong từng nhóm.",
+      "columns": [
+        {
+          "name": "ModifierOptionID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "ModifierGroupID",
+          "type": "int",
+          "why": "Liên kết tới ModifierGroups; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "ModifierGroups.ModifierGroupID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Name",
+          "type": "nvarchar(100)",
+          "why": "Nhãn lựa chọn.",
+          "example": "50% đường",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ExtraPrice",
+          "type": "decimal(18,2)",
+          "why": "Phụ phí trên một ly; đường/đá thường bằng 0. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DisplayOrder",
+          "type": "int",
+          "why": "Thứ tự trên giao diện.",
+          "example": "1",
+          "nullable": false,
+          "default": "0",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsActive",
+          "type": "bit",
+          "why": "Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "ModifierOptionID"
+      ],
+      "checks": [
+        "ExtraPrice >= 0",
+        "DisplayOrder >= 0"
+      ],
+      "uniques": [
+        [
+          "ModifierGroupID",
+          "Name"
+        ],
+        [
+          "ModifierOptionID",
+          "ModifierGroupID"
+        ]
+      ],
+      "original": false
+    },
+    {
+      "name": "ProductModifierGroups",
+      "group": "Thực đơn",
+      "purpose": "Giới hạn số lựa chọn theo từng món; không gắn topping vô điều kiện cho mọi món.",
+      "columns": [
+        {
+          "name": "ProductID",
+          "type": "int",
+          "why": "Liên kết tới Products; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Products.ProductID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ModifierGroupID",
+          "type": "int",
+          "why": "Liên kết tới ModifierGroups; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "ModifierGroups.ModifierGroupID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "MinSelections",
+          "type": "int",
+          "why": "Số lựa chọn bắt buộc; 0 nghĩa là tùy chọn.",
+          "example": "1",
+          "nullable": false,
+          "default": "0",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "MaxSelections",
+          "type": "int",
+          "why": "Số lựa chọn khác nhau tối đa; mỗi topping một phần trên mỗi ly.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "ProductID",
+        "ModifierGroupID"
+      ],
+      "checks": [
+        "MinSelections >= 0 AND MaxSelections >= MinSelections AND MaxSelections > 0"
+      ],
+      "uniques": [],
+      "original": false
+    },
+    {
+      "name": "BranchModifierOptions",
+      "group": "Thực đơn",
+      "purpose": "Ghi đè phụ phí hoặc tạm hết topping/tùy chọn tại chi nhánh.",
+      "columns": [
+        {
+          "name": "BranchID",
+          "type": "int",
+          "why": "Liên kết tới Branches; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Branches.BranchID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ModifierOptionID",
+          "type": "int",
+          "why": "Liên kết tới ModifierOptions; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "ModifierOptions.ModifierOptionID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ExtraPrice",
+          "type": "decimal(18,2)",
+          "why": "Phụ phí riêng tại quán. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsAvailable",
+          "type": "bit",
+          "why": "Tạm ngừng lựa chọn tại chi nhánh.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "BranchID",
+        "ModifierOptionID"
+      ],
+      "checks": [
+        "ExtraPrice >= 0"
+      ],
+      "uniques": [],
+      "original": false
+    },
+    {
+      "name": "CustomerPreferences",
+      "group": "CRM",
+      "purpose": "Danh sách món yêu thích của khách dùng cho app và phân nhóm.",
+      "columns": [
+        {
+          "name": "CustomerID",
+          "type": "int",
+          "why": "Liên kết tới Customers; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Customers.CustomerID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ProductID",
+          "type": "int",
+          "why": "Liên kết tới Products; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Products.ProductID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        }
+      ],
+      "pk": [
+        "CustomerID",
+        "ProductID"
+      ],
+      "checks": [],
+      "uniques": [],
+      "original": true
+    },
+    {
+      "name": "LoyaltyPolicies",
+      "group": "Điểm và ưu đãi",
+      "purpose": "Quy tắc tính điểm có thời gian hiệu lực; chọn quy tắc tại lúc tạo đơn.",
+      "columns": [
+        {
+          "name": "PolicyID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "Name",
+          "type": "nvarchar(120)",
+          "why": "Tên quy tắc để giải thích điểm.",
+          "example": "Mỗi 10.000 đồng được 1 điểm",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "AmountPerPoint",
+          "type": "decimal(18,2)",
+          "why": "Tiền hàng thực trả tương ứng một điểm. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "EffectiveFrom",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "EffectiveTo",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        }
+      ],
+      "pk": [
+        "PolicyID"
+      ],
+      "checks": [
+        "AmountPerPoint > 0",
+        "EffectiveTo IS NULL OR EffectiveTo > EffectiveFrom"
+      ],
+      "uniques": [],
+      "original": false
+    },
+    {
+      "name": "Promotions",
+      "group": "Điểm và ưu đãi",
+      "purpose": "Chương trình phát hành voucher; không đồng nghĩa với voucher đã cấp.",
+      "columns": [
+        {
+          "name": "PromotionID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "Name",
+          "type": "nvarchar(150)",
+          "why": "Tên chương trình.",
+          "example": "Giảm 10.000 đồng",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Description",
+          "type": "nvarchar(2000)",
+          "why": "Điều kiện trình bày cho khách.",
+          "example": "Áp dụng từ 50.000 đồng",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Scope",
+          "type": "varchar(10)",
+          "why": "Chain/Area/Branch xác định vùng được dùng voucher.",
+          "example": "Chain",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "AreaID",
+          "type": "int",
+          "why": "Liên kết tới Areas; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Areas.AreaID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "BranchID",
+          "type": "int",
+          "why": "Liên kết tới Branches; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Branches.BranchID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedBy",
+          "type": "int",
+          "why": "Người tạo để truy vết và kiểm soát phạm vi.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Users.UserID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DiscountType",
+          "type": "varchar(10)",
+          "why": "Amount giảm tiền cố định; Percent giảm phần trăm.",
+          "example": "Amount",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DiscountValue",
+          "type": "decimal(18,2)",
+          "why": "Giá trị giảm hoặc phần trăm. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "MaxDiscount",
+          "type": "decimal(18,2)",
+          "why": "Trần giảm cho voucher phần trăm.",
+          "example": "20000",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "MinSubtotal",
+          "type": "decimal(18,2)",
+          "why": "Tiền hàng tối thiểu trước giảm, không gồm phí giao. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": "0",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "StartsAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "EndsAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC kết thúc chương trình/khảo sát; phải sau thời điểm bắt đầu.",
+          "example": "2027-09-17T03:00:00Z",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Quản lý thiết lập trước khi công bố/phát hành."
+        },
+        {
+          "name": "PointsCost",
+          "type": "int",
+          "why": "Điểm cần đổi; NULL là voucher tặng, 0 là tự nhận miễn phí.",
+          "example": "50",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "TotalLimit",
+          "type": "int",
+          "why": "Tổng số voucher tối đa được cấp.",
+          "example": "1000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "PerCustomerLimit",
+          "type": "int",
+          "why": "Số lần cấp tối đa cho một khách, kể cả đã dùng/hủy.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsActive",
+          "type": "bit",
+          "why": "Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Version",
+          "type": "rowversion",
+          "why": "Dấu phiên bản để phát hiện ghi đè dữ liệu khi hai người cùng sửa; không phải thời gian.",
+          "example": "0x00000000000007D1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server tự cập nhật mỗi lần ghi."
+        }
+      ],
+      "pk": [
+        "PromotionID"
+      ],
+      "checks": [
+        "Scope IN ('Chain','Area','Branch')",
+        "(Scope='Chain' AND AreaID IS NULL AND BranchID IS NULL) OR (Scope='Area' AND AreaID IS NOT NULL AND BranchID IS NULL) OR (Scope='Branch' AND AreaID IS NULL AND BranchID IS NOT NULL)",
+        "DiscountType IN ('Amount','Percent')",
+        "DiscountValue > 0 AND (DiscountType <> 'Percent' OR (DiscountValue <= 100 AND MaxDiscount IS NOT NULL))",
+        "MaxDiscount IS NULL OR MaxDiscount > 0",
+        "MinSubtotal >= 0",
+        "EndsAt IS NOT NULL AND EndsAt > StartsAt",
+        "PointsCost IS NULL OR PointsCost >= 0",
+        "TotalLimit > 0 AND PerCustomerLimit > 0 AND PerCustomerLimit <= TotalLimit"
+      ],
+      "uniques": [],
+      "original": true
+    },
+    {
+      "name": "CustomerPromotions",
+      "group": "Điểm và ưu đãi",
+      "purpose": "Một voucher đã cấp; giữ riêng hạn và điều kiện để không thay đổi quyền lợi sau khi cấp.",
+      "columns": [
+        {
+          "name": "CustomerPromotionID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "CustomerID",
+          "type": "int",
+          "why": "Liên kết tới Customers; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Customers.CustomerID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "PromotionID",
+          "type": "int",
+          "why": "Liên kết tới Promotions; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Promotions.PromotionID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Code",
+          "type": "varchar(40)",
+          "why": "Mã voucher duy nhất để nhập/quét trên POS.",
+          "example": "MB-ABC123",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "RequestKey",
+          "type": "uniqueidentifier",
+          "why": "Khóa chống cấp trùng khi app gửi lại yêu cầu.",
+          "example": "UUID",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Status",
+          "type": "varchar(12)",
+          "why": "Available/Reserved/Used; hết hạn được suy ra từ ExpiresAt.",
+          "example": "Available",
+          "nullable": false,
+          "default": "'Available'",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IssuedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "ExpiresAt",
+          "type": "datetime2(3)",
+          "why": "Hạn sử dụng UTC bắt buộc; ngăn phiên hoặc voucher tồn tại vô thời hạn.",
+          "example": "2027-09-17T03:00:00Z",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend ghi khi cấp phiên/voucher; voucher lấy hạn của chương trình."
+        },
+        {
+          "name": "PointsSpent",
+          "type": "int",
+          "why": "Số điểm đã trả tại lần cấp, bảo toàn lịch sử khi chương trình đổi giá.",
+          "example": "50",
+          "nullable": false,
+          "default": "0",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DiscountType",
+          "type": "varchar(10)",
+          "why": "Chụp điều kiện voucher tại lúc cấp.",
+          "example": "Amount",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DiscountValue",
+          "type": "decimal(18,2)",
+          "why": "Giá trị giảm tại lúc cấp. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "MaxDiscount",
+          "type": "decimal(18,2)",
+          "why": "Trần giảm tại lúc cấp.",
+          "example": "20000",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "MinSubtotal",
+          "type": "decimal(18,2)",
+          "why": "Đơn tối thiểu tại lúc cấp. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ReservedOrderID",
+          "type": "int",
+          "why": "Đơn đang giữ voucher; NULL khi chưa giữ.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Orders.OrderID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "UsedOrderID",
+          "type": "int",
+          "why": "Đơn tiêu thụ voucher thành công.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Orders.OrderID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "UsedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "Version",
+          "type": "rowversion",
+          "why": "Dấu phiên bản để phát hiện ghi đè dữ liệu khi hai người cùng sửa; không phải thời gian.",
+          "example": "0x00000000000007D1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server tự cập nhật mỗi lần ghi."
+        }
+      ],
+      "pk": [
+        "CustomerPromotionID"
+      ],
+      "checks": [
+        "Status IN ('Available','Reserved','Used')",
+        "(Status='Available' AND ReservedOrderID IS NULL AND UsedOrderID IS NULL AND UsedAt IS NULL) OR (Status='Reserved' AND ReservedOrderID IS NOT NULL AND UsedOrderID IS NULL AND UsedAt IS NULL) OR (Status='Used' AND ReservedOrderID IS NULL AND UsedOrderID IS NOT NULL AND UsedAt IS NOT NULL)",
+        "ExpiresAt IS NOT NULL AND ExpiresAt > IssuedAt",
+        "PointsSpent >= 0",
+        "DiscountType IN ('Amount','Percent')",
+        "DiscountValue > 0 AND (DiscountType <> 'Percent' OR (DiscountValue <= 100 AND MaxDiscount IS NOT NULL))",
+        "MaxDiscount IS NULL OR MaxDiscount > 0",
+        "MinSubtotal >= 0"
+      ],
+      "uniques": [
+        [
+          "Code"
+        ],
+        [
+          "RequestKey"
+        ],
+        [
+          "CustomerPromotionID",
+          "CustomerID"
+        ]
+      ],
+      "original": true
+    },
+    {
+      "name": "Orders",
+      "group": "Bán hàng",
+      "purpose": "Đơn thuộc một chi nhánh; trạng thái vận hành độc lập với thanh toán.",
+      "columns": [
+        {
+          "name": "OrderID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "OrderCode",
+          "type": "varchar(40)",
+          "why": "Mã công khai trên hóa đơn; không dùng để thay kiểm tra chủ sở hữu.",
+          "example": "MB-12345",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "RequestKey",
+          "type": "uniqueidentifier",
+          "why": "Khóa yêu cầu đặt hàng để gửi lại không tạo đơn trùng.",
+          "example": "UUID",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "RequestHash",
+          "type": "binary(32)",
+          "why": "SHA-256 của đầu vào đặt đơn để ngăn dùng lại cùng khóa với nội dung khác.",
+          "example": "32 bytes",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "CreateOrder tính từ payload đầu vào trước khi tạo đơn."
+        },
+        {
+          "name": "BranchID",
+          "type": "int",
+          "why": "Liên kết tới Branches; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Branches.BranchID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CustomerID",
+          "type": "int",
+          "why": "Liên kết tới Customers; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Customers.CustomerID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedBy",
+          "type": "int",
+          "why": "Tài khoản khách đặt app hoặc nhân viên lập POS.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Users.UserID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Source",
+          "type": "varchar(5)",
+          "why": "App hoặc POS để phân tích kênh bán.",
+          "example": "App",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Fulfillment",
+          "type": "varchar(10)",
+          "why": "Pickup hoặc Delivery; đơn tại quầy dùng Pickup.",
+          "example": "Pickup",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "PaymentMode",
+          "type": "varchar(10)",
+          "why": "Prepaid hoặc COD; COD pickup nghĩa là trả tại quầy.",
+          "example": "Prepaid",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Status",
+          "type": "varchar(20)",
+          "why": "Trạng thái xử lý trong luồng đơn.",
+          "example": "AwaitingPayment",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ContactName",
+          "type": "nvarchar(120)",
+          "why": "Tên người nhận/chủ đơn chốt tại lúc đặt.",
+          "example": "Nguyễn Lan",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ContactPhone",
+          "type": "varchar(20)",
+          "why": "Liên hệ tại thời điểm đặt; khách vãng lai pickup có thể bỏ trống.",
+          "example": "0901234567",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Note",
+          "type": "nvarchar(500)",
+          "why": "Ghi chú chung của đơn.",
+          "example": "Mang đi",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Subtotal",
+          "type": "decimal(18,2)",
+          "why": "Tổng tiền món và phụ phí trước giảm. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DiscountAmount",
+          "type": "decimal(18,2)",
+          "why": "Số tiền voucher thực tế đã giảm. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": "0",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DeliveryFee",
+          "type": "decimal(18,2)",
+          "why": "Phí giao đã chốt; pickup bằng 0. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": "0",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "TotalAmount",
+          "type": "decimal(18,2)",
+          "why": "Subtotal - DiscountAmount + DeliveryFee. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CustomerPromotionID",
+          "type": "int",
+          "why": "Liên kết tới CustomerPromotions; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "CustomerPromotions.CustomerPromotionID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "PolicyID",
+          "type": "int",
+          "why": "Liên kết tới LoyaltyPolicies; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "LoyaltyPolicies.PolicyID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "AmountPerPoint",
+          "type": "decimal(18,2)",
+          "why": "Chụp tỷ lệ tích điểm để quy tắc tương lai không đổi điểm đơn cũ. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "PaymentDueAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "CompletedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "CancelledAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "Version",
+          "type": "rowversion",
+          "why": "Dấu phiên bản để phát hiện ghi đè dữ liệu khi hai người cùng sửa; không phải thời gian.",
+          "example": "0x00000000000007D1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server tự cập nhật mỗi lần ghi."
+        }
+      ],
+      "pk": [
+        "OrderID"
+      ],
+      "checks": [
+        "Source IN ('App','POS')",
+        "Fulfillment IN ('Pickup','Delivery')",
+        "PaymentMode IN ('Prepaid','COD')",
+        "Status IN ('AwaitingPayment','Pending','Confirmed','Preparing','Ready','Delivering','Completed','Cancelled')",
+        "Source <> 'App' OR CustomerID IS NOT NULL",
+        "Fulfillment <> 'Delivery' OR ContactPhone IS NOT NULL",
+        "Subtotal >= 0 AND DiscountAmount >= 0 AND DiscountAmount <= Subtotal AND DeliveryFee >= 0",
+        "TotalAmount = Subtotal - DiscountAmount + DeliveryFee",
+        "AmountPerPoint > 0",
+        "Fulfillment <> 'Pickup' OR DeliveryFee = 0",
+        "CustomerPromotionID IS NULL OR CustomerID IS NOT NULL"
+      ],
+      "uniques": [
+        [
+          "OrderCode"
+        ],
+        [
+          "RequestKey"
+        ],
+        [
+          "OrderID",
+          "CustomerID"
+        ]
+      ],
+      "original": true
+    },
+    {
+      "name": "OrderDetails",
+      "group": "Bán hàng",
+      "purpose": "Một dòng tương ứng món, size và một bộ tùy chọn giống nhau.",
+      "columns": [
+        {
+          "name": "OrderDetailID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "OrderID",
+          "type": "int",
+          "why": "Liên kết tới Orders; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Orders.OrderID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ProductID",
+          "type": "int",
+          "why": "Liên kết tới Products; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Products.ProductID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "VariantID",
+          "type": "int",
+          "why": "Liên kết tới ProductVariants; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "ProductVariants.VariantID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ProductName",
+          "type": "nvarchar(150)",
+          "why": "Tên món chụp lúc mua.",
+          "example": "Cà phê sữa",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "VariantName",
+          "type": "nvarchar(50)",
+          "why": "Tên size chụp lúc mua.",
+          "example": "M",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Quantity",
+          "type": "int",
+          "why": "Số ly cùng size và bộ tùy chọn.",
+          "example": "2",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "UnitPrice",
+          "type": "decimal(18,2)",
+          "why": "Giá một ly chưa tính topping tại lúc mua. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ModifierTotal",
+          "type": "decimal(18,2)",
+          "why": "Tổng phụ phí tùy chọn trên một ly. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": "0",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "LineTotal",
+          "type": "decimal(18,2)",
+          "why": "(UnitPrice + ModifierTotal) × Quantity. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Note",
+          "type": "nvarchar(300)",
+          "why": "Ghi chú riêng cho dòng món.",
+          "example": "Ít ngọt",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "OrderDetailID"
+      ],
+      "checks": [
+        "Quantity BETWEEN 1 AND 100",
+        "UnitPrice >= 0 AND ModifierTotal >= 0",
+        "LineTotal = (UnitPrice + ModifierTotal) * Quantity"
+      ],
+      "uniques": [],
+      "original": true
+    },
+    {
+      "name": "OrderItemModifiers",
+      "group": "Bán hàng",
+      "purpose": "Lưu những tùy chọn đã đặt và giá chốt, không đọc giá hiện tại cho đơn cũ.",
+      "columns": [
+        {
+          "name": "OrderDetailID",
+          "type": "int",
+          "why": "Liên kết tới OrderDetails; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "OrderDetails.OrderDetailID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ModifierOptionID",
+          "type": "int",
+          "why": "Liên kết tới ModifierOptions; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "ModifierOptions.ModifierOptionID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "GroupName",
+          "type": "nvarchar(100)",
+          "why": "Tên nhóm chụp tại lúc đặt.",
+          "example": "Topping",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "OptionName",
+          "type": "nvarchar(100)",
+          "why": "Tên lựa chọn tại lúc đặt.",
+          "example": "Trân châu",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ExtraPrice",
+          "type": "decimal(18,2)",
+          "why": "Phụ phí một lựa chọn trên một ly tại lúc đặt. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "OrderDetailID",
+        "ModifierOptionID"
+      ],
+      "checks": [
+        "ExtraPrice >= 0"
+      ],
+      "uniques": [],
+      "original": false
+    },
+    {
+      "name": "OrderStatusHistory",
+      "group": "Bán hàng",
+      "purpose": "Dòng thời gian đơn và người chịu trách nhiệm cho mỗi chuyển trạng thái.",
+      "columns": [
+        {
+          "name": "HistoryID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "OrderID",
+          "type": "int",
+          "why": "Liên kết tới Orders; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Orders.OrderID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "FromStatus",
+          "type": "varchar(20)",
+          "why": "Trạng thái trước; NULL cho sự kiện tạo đơn.",
+          "example": "Pending",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ToStatus",
+          "type": "varchar(20)",
+          "why": "Trạng thái sau thao tác.",
+          "example": "Confirmed",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ChangedBy",
+          "type": "int",
+          "why": "Người thao tác; NULL cho job hệ thống.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Users.UserID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Reason",
+          "type": "nvarchar(500)",
+          "why": "Lý do hủy hoặc ghi chú chuyển trạng thái.",
+          "example": "Khách đổi nhu cầu",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        }
+      ],
+      "pk": [
+        "HistoryID"
+      ],
+      "checks": [],
+      "uniques": [],
+      "original": false
+    },
+    {
+      "name": "Deliveries",
+      "group": "Bán hàng",
+      "purpose": "Một đơn giao hàng có một hồ sơ giao; lưu địa chỉ bất biến và cập nhật giao thủ công.",
+      "columns": [
+        {
+          "name": "OrderID",
+          "type": "int",
+          "why": "Liên kết tới Orders; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Orders.OrderID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "RecipientName",
+          "type": "nvarchar(120)",
+          "why": "Người nhận chốt lúc đặt.",
+          "example": "Nguyễn Lan",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Phone",
+          "type": "varchar(20)",
+          "why": "Số người nhận chốt lúc đặt.",
+          "example": "0901234567",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "AddressText",
+          "type": "nvarchar(500)",
+          "why": "Bản sao địa chỉ; sửa sổ địa chỉ không đổi đơn cũ.",
+          "example": "12 đường A, TP.HCM",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Note",
+          "type": "nvarchar(300)",
+          "why": "Chỉ dẫn giao hàng chốt lúc đặt.",
+          "example": "Gọi trước",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Status",
+          "type": "varchar(12)",
+          "why": "Pending/Delivering/Failed/Delivered/Cancelled.",
+          "example": "Pending",
+          "nullable": false,
+          "default": "'Pending'",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CourierName",
+          "type": "nvarchar(120)",
+          "why": "Tên người giao được POS nhập; không cần tài khoản tài xế.",
+          "example": "Anh Bình",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CourierPhone",
+          "type": "varchar(20)",
+          "why": "Điện thoại người giao.",
+          "example": "0907654321",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "FailureReason",
+          "type": "nvarchar(500)",
+          "why": "Lý do giao thất bại để quyết định giao lại/hủy.",
+          "example": "Không liên hệ được",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "AttemptCount",
+          "type": "int",
+          "why": "Số lần bắt đầu giao, gồm giao lại.",
+          "example": "0",
+          "nullable": false,
+          "default": "0",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DispatchedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "DeliveredAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "Version",
+          "type": "rowversion",
+          "why": "Dấu phiên bản để phát hiện ghi đè dữ liệu khi hai người cùng sửa; không phải thời gian.",
+          "example": "0x00000000000007D1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server tự cập nhật mỗi lần ghi."
+        }
+      ],
+      "pk": [
+        "OrderID"
+      ],
+      "checks": [
+        "Status IN ('Pending','Delivering','Failed','Delivered','Cancelled')",
+        "AttemptCount >= 0"
+      ],
+      "uniques": [],
+      "original": false
+    },
+    {
+      "name": "PaymentAttempts",
+      "group": "Thanh toán",
+      "purpose": "Một dòng cho mỗi lần thanh toán; hỗ trợ thử lại, COD và đối soát sau này.",
+      "columns": [
+        {
+          "name": "PaymentID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "OrderID",
+          "type": "int",
+          "why": "Liên kết tới Orders; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Orders.OrderID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "RequestKey",
+          "type": "uniqueidentifier",
+          "why": "Khóa chống lặp một yêu cầu thanh toán.",
+          "example": "UUID",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Method",
+          "type": "varchar(15)",
+          "why": "Simulator hoặc Cash trong bản thử nghiệm.",
+          "example": "Simulator",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Provider",
+          "type": "varchar(40)",
+          "why": "Nhà cung cấp; bản đầu Simulator/Manual.",
+          "example": "Simulator",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ProviderReference",
+          "type": "varchar(120)",
+          "why": "Mã giao dịch duy nhất trong nhà cung cấp.",
+          "example": "SIM-123",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Amount",
+          "type": "decimal(18,2)",
+          "why": "Toàn bộ số tiền phải trả của đơn. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Status",
+          "type": "varchar(12)",
+          "why": "Pending/Succeeded/Failed.",
+          "example": "Pending",
+          "nullable": false,
+          "default": "'Pending'",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "FailureReason",
+          "type": "nvarchar(500)",
+          "why": "Chi tiết thất bại phục vụ hiển thị và kiểm tra.",
+          "example": "Người dùng hủy",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "SettledAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        }
+      ],
+      "pk": [
+        "PaymentID"
+      ],
+      "checks": [
+        "Method IN ('Simulator','Cash')",
+        "Status IN ('Pending','Succeeded','Failed')",
+        "Amount >= 0"
+      ],
+      "uniques": [
+        [
+          "RequestKey"
+        ],
+        [
+          "PaymentID",
+          "OrderID"
+        ]
+      ],
+      "original": false
+    },
+    {
+      "name": "Refunds",
+      "group": "Thanh toán",
+      "purpose": "Yêu cầu hoàn toàn bộ một giao dịch; trạng thái độc lập việc hủy đơn.",
+      "columns": [
+        {
+          "name": "RefundID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "PaymentID",
+          "type": "int",
+          "why": "Liên kết tới PaymentAttempts; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "PaymentAttempts.PaymentID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "OrderID",
+          "type": "int",
+          "why": "Liên kết tới Orders; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Orders.OrderID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "RequestKey",
+          "type": "uniqueidentifier",
+          "why": "Khóa hoàn tiền ổn định; thử lại cập nhật cùng yêu cầu.",
+          "example": "UUID",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Amount",
+          "type": "decimal(18,2)",
+          "why": "Toàn bộ tiền đã thu, chưa hỗ trợ hoàn một phần. Số thập phân chính xác tránh sai số cộng tiền.",
+          "example": "35000",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Status",
+          "type": "varchar(12)",
+          "why": "Pending/Succeeded/Failed.",
+          "example": "Pending",
+          "nullable": false,
+          "default": "'Pending'",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Reason",
+          "type": "nvarchar(500)",
+          "why": "Căn cứ hoàn tiền.",
+          "example": "Đơn hủy sau thanh toán",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "RequestedBy",
+          "type": "int",
+          "why": "Quản lý hoặc khách hủy sớm.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Users.UserID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ProviderReference",
+          "type": "varchar(120)",
+          "why": "Mã hoàn tiền bên nhà cung cấp.",
+          "example": "REF-123",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "AttemptCount",
+          "type": "int",
+          "why": "Số lần gửi xử lý hoàn tiền.",
+          "example": "0",
+          "nullable": false,
+          "default": "0",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "FailureReason",
+          "type": "nvarchar(500)",
+          "why": "Lỗi gần nhất nếu hoàn thất bại.",
+          "example": "Lỗi thử nghiệm",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "CompletedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        }
+      ],
+      "pk": [
+        "RefundID"
+      ],
+      "checks": [
+        "Status IN ('Pending','Succeeded','Failed')",
+        "Amount >= 0 AND AttemptCount >= 0"
+      ],
+      "uniques": [
+        [
+          "PaymentID"
+        ],
+        [
+          "RequestKey"
+        ]
+      ],
+      "original": false
+    },
+    {
+      "name": "LoyaltyTransactions",
+      "group": "Điểm và ưu đãi",
+      "purpose": "Sổ điểm bất biến: cộng, đổi voucher, điều chỉnh, thu hồi; dùng để đối chiếu số dư.",
+      "columns": [
+        {
+          "name": "LoyaltyTransactionID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "CustomerID",
+          "type": "int",
+          "why": "Liên kết tới Customers; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Customers.CustomerID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "OrderID",
+          "type": "int",
+          "why": "Liên kết tới Orders; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Orders.OrderID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CustomerPromotionID",
+          "type": "int",
+          "why": "Liên kết tới CustomerPromotions; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "CustomerPromotions.CustomerPromotionID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Kind",
+          "type": "varchar(12)",
+          "why": "Earn/Redeem/Reverse/Adjust giải thích nguyên nhân biến động.",
+          "example": "Earn",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Points",
+          "type": "int",
+          "why": "Số điểm có dấu; Redeem/Reverse âm, Earn dương.",
+          "example": "5",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "RequestKey",
+          "type": "uniqueidentifier",
+          "why": "Khóa sự kiện tránh ghi hai lần.",
+          "example": "UUID",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Note",
+          "type": "nvarchar(300)",
+          "why": "Diễn giải cho lịch sử điểm trong app.",
+          "example": "Tích điểm đơn MB-123",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        }
+      ],
+      "pk": [
+        "LoyaltyTransactionID"
+      ],
+      "checks": [
+        "Kind IN ('Earn','Redeem','Reverse','Adjust')",
+        "(Kind='Earn' AND Points>0 AND OrderID IS NOT NULL) OR (Kind='Redeem' AND Points<0 AND CustomerPromotionID IS NOT NULL) OR (Kind='Reverse' AND Points<0 AND OrderID IS NOT NULL) OR (Kind='Adjust' AND Points<>0)"
+      ],
+      "uniques": [
+        [
+          "RequestKey"
+        ]
+      ],
+      "original": true
+    },
+    {
+      "name": "Feedbacks",
+      "group": "CRM",
+      "purpose": "Phản hồi của khách, có thể liên quan đơn/món/quán; quản lý trả lời chính thức.",
+      "columns": [
+        {
+          "name": "FeedbackID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "CustomerID",
+          "type": "int",
+          "why": "Liên kết tới Customers; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Customers.CustomerID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "OrderID",
+          "type": "int",
+          "why": "Liên kết tới Orders; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Orders.OrderID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "BranchID",
+          "type": "int",
+          "why": "Liên kết tới Branches; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Branches.BranchID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ProductID",
+          "type": "int",
+          "why": "Liên kết tới Products; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Products.ProductID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Type",
+          "type": "varchar(15)",
+          "why": "Nhóm vấn đề để tổng hợp chất lượng.",
+          "example": "Service",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Content",
+          "type": "nvarchar(4000)",
+          "why": "Nội dung khách gửi.",
+          "example": "Nhân viên phục vụ tốt",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Rating",
+          "type": "tinyint",
+          "why": "Đánh giá 1–5; có thể chỉ gửi nội dung.",
+          "example": "5",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Status",
+          "type": "varchar(12)",
+          "why": "New/Processing/Resolved.",
+          "example": "New",
+          "nullable": false,
+          "default": "'New'",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "HandledBy",
+          "type": "int",
+          "why": "Người phụ trách/trả lời trong phạm vi được phép.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Users.UserID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "ResponseContent",
+          "type": "nvarchar(4000)",
+          "why": "Phản hồi chính thức của quán cho khách.",
+          "example": "Cảm ơn bạn",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "HandledAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        }
+      ],
+      "pk": [
+        "FeedbackID"
+      ],
+      "checks": [
+        "Type IN ('Product','Service','Space','Other')",
+        "Rating IS NULL OR Rating BETWEEN 1 AND 5",
+        "Status IN ('New','Processing','Resolved')"
+      ],
+      "uniques": [],
+      "original": true
+    },
+    {
+      "name": "Surveys",
+      "group": "Khảo sát",
+      "purpose": "Đợt khảo sát có phạm vi quản trị, thời gian mở và người tạo.",
+      "columns": [
+        {
+          "name": "SurveyID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "Title",
+          "type": "nvarchar(250)",
+          "why": "Tiêu đề khách nhìn thấy.",
+          "example": "Bạn thích món mới nào?",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Description",
+          "type": "nvarchar(2000)",
+          "why": "Giải thích mục đích khảo sát.",
+          "example": "Khảo sát tháng 9",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedBy",
+          "type": "int",
+          "why": "Người tạo có quyền quản lý khảo sát.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Users.UserID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Scope",
+          "type": "varchar(10)",
+          "why": "Phạm vi Chain/Area/Branch.",
+          "example": "Chain",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "AreaID",
+          "type": "int",
+          "why": "Liên kết tới Areas; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Areas.AreaID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "BranchID",
+          "type": "int",
+          "why": "Liên kết tới Branches; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Branches.BranchID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "StartsAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "EndsAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC kết thúc chương trình/khảo sát; phải sau thời điểm bắt đầu.",
+          "example": "2027-09-17T03:00:00Z",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Quản lý thiết lập trước khi công bố/phát hành."
+        },
+        {
+          "name": "Status",
+          "type": "varchar(10)",
+          "why": "Draft/Open/Closed; không mở lại khảo sát đã đóng.",
+          "example": "Draft",
+          "nullable": false,
+          "default": "'Draft'",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "SurveyID"
+      ],
+      "checks": [
+        "Scope IN ('Chain','Area','Branch')",
+        "(Scope='Chain' AND AreaID IS NULL AND BranchID IS NULL) OR (Scope='Area' AND AreaID IS NOT NULL AND BranchID IS NULL) OR (Scope='Branch' AND AreaID IS NULL AND BranchID IS NOT NULL)",
+        "EndsAt IS NOT NULL AND EndsAt > StartsAt",
+        "Status IN ('Draft','Open','Closed')"
+      ],
+      "uniques": [],
+      "original": true
+    },
+    {
+      "name": "SurveyQuestions",
+      "group": "Khảo sát",
+      "purpose": "Câu hỏi có kiểu trả lời, thứ tự và tính bắt buộc.",
+      "columns": [
+        {
+          "name": "QuestionID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "SurveyID",
+          "type": "int",
+          "why": "Liên kết tới Surveys; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Surveys.SurveyID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Text",
+          "type": "nvarchar(2000)",
+          "why": "Nội dung câu hỏi.",
+          "example": "Bạn thích hương vị nào?",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Type",
+          "type": "varchar(15)",
+          "why": "SingleChoice/MultipleChoice/Rating/Text.",
+          "example": "MultipleChoice",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "IsRequired",
+          "type": "bit",
+          "why": "Bắt buộc trả lời để hoàn tất.",
+          "example": "1",
+          "nullable": false,
+          "default": "1",
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DisplayOrder",
+          "type": "int",
+          "why": "Thứ tự duy nhất trong khảo sát.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "RatingMin",
+          "type": "int",
+          "why": "Điểm nhỏ nhất cho câu Rating.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "RatingMax",
+          "type": "int",
+          "why": "Điểm lớn nhất cho câu Rating.",
+          "example": "5",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "QuestionID"
+      ],
+      "checks": [
+        "Type IN ('SingleChoice','MultipleChoice','Rating','Text')",
+        "DisplayOrder >= 0",
+        "(Type='Rating' AND RatingMin IS NOT NULL AND RatingMax IS NOT NULL AND RatingMin < RatingMax) OR (Type<>'Rating' AND RatingMin IS NULL AND RatingMax IS NULL)"
+      ],
+      "uniques": [
+        [
+          "SurveyID",
+          "DisplayOrder"
+        ],
+        [
+          "QuestionID",
+          "SurveyID"
+        ]
+      ],
+      "original": true
+    },
+    {
+      "name": "SurveyQuestionOptions",
+      "group": "Khảo sát",
+      "purpose": "Đáp án có định danh để kiểm tra và thống kê chính xác.",
+      "columns": [
+        {
+          "name": "OptionID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "QuestionID",
+          "type": "int",
+          "why": "Liên kết tới SurveyQuestions; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "SurveyQuestions.QuestionID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Text",
+          "type": "nvarchar(500)",
+          "why": "Nội dung lựa chọn.",
+          "example": "Vị socola",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "DisplayOrder",
+          "type": "int",
+          "why": "Thứ tự đáp án trong câu hỏi.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "OptionID"
+      ],
+      "checks": [
+        "DisplayOrder >= 0"
+      ],
+      "uniques": [
+        [
+          "QuestionID",
+          "DisplayOrder"
+        ],
+        [
+          "OptionID",
+          "QuestionID"
+        ]
+      ],
+      "original": false
+    },
+    {
+      "name": "SurveyRecipients",
+      "group": "Khảo sát",
+      "purpose": "Khách thực sự được mời và tình trạng hoàn thành; không phụ thuộc bộ lọc thay đổi sau đó.",
+      "columns": [
+        {
+          "name": "SurveyID",
+          "type": "int",
+          "why": "Liên kết tới Surveys; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Surveys.SurveyID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CustomerID",
+          "type": "int",
+          "why": "Liên kết tới Customers; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Customers.CustomerID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "SentAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "CompletedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        }
+      ],
+      "pk": [
+        "SurveyID",
+        "CustomerID"
+      ],
+      "checks": [],
+      "uniques": [],
+      "original": true
+    },
+    {
+      "name": "SurveyResponses",
+      "group": "Khảo sát",
+      "purpose": "Một câu trả lời cho mỗi câu hỏi/khách; lựa chọn lưu ở bảng con.",
+      "columns": [
+        {
+          "name": "ResponseID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "SurveyID",
+          "type": "int",
+          "why": "Liên kết tới Surveys; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Surveys.SurveyID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "QuestionID",
+          "type": "int",
+          "why": "Liên kết tới SurveyQuestions; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "SurveyQuestions.QuestionID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CustomerID",
+          "type": "int",
+          "why": "Liên kết tới Customers; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Customers.CustomerID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "TextValue",
+          "type": "nvarchar(4000)",
+          "why": "Nội dung cho câu tự luận; NULL cho kiểu khác.",
+          "example": "Dịch vụ tốt",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "RatingValue",
+          "type": "int",
+          "why": "Điểm cho câu Rating; NULL cho kiểu khác.",
+          "example": "5",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "SubmittedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        }
+      ],
+      "pk": [
+        "ResponseID"
+      ],
+      "checks": [],
+      "uniques": [
+        [
+          "QuestionID",
+          "CustomerID"
+        ],
+        [
+          "ResponseID",
+          "QuestionID"
+        ]
+      ],
+      "original": true
+    },
+    {
+      "name": "SurveyAnswerOptions",
+      "group": "Khảo sát",
+      "purpose": "Các đáp án được chọn; khóa ghép ngăn chọn lặp một đáp án.",
+      "columns": [
+        {
+          "name": "ResponseID",
+          "type": "int",
+          "why": "Liên kết tới SurveyResponses; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "SurveyResponses.ResponseID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "OptionID",
+          "type": "int",
+          "why": "Liên kết tới SurveyQuestionOptions; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "SurveyQuestionOptions.OptionID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "QuestionID",
+          "type": "int",
+          "why": "Liên kết tới SurveyQuestions; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "SurveyQuestions.QuestionID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        }
+      ],
+      "pk": [
+        "ResponseID",
+        "OptionID"
+      ],
+      "checks": [],
+      "uniques": [],
+      "original": false
+    },
+    {
+      "name": "Notifications",
+      "group": "CRM",
+      "purpose": "Hộp thông báo trong app; chưa tích hợp push/SMS/email.",
+      "columns": [
+        {
+          "name": "NotificationID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "UserID",
+          "type": "int",
+          "why": "Liên kết tới Users; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": "Users.UserID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Title",
+          "type": "nvarchar(200)",
+          "why": "Tiêu đề thông báo.",
+          "example": "Đơn hàng đã sẵn sàng",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Body",
+          "type": "nvarchar(2000)",
+          "why": "Nội dung tại thời điểm gửi.",
+          "example": "Mời bạn đến nhận đơn",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "OrderID",
+          "type": "int",
+          "why": "Liên kết trực tiếp đơn nếu có.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Orders.OrderID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CustomerPromotionID",
+          "type": "int",
+          "why": "Liên kết voucher nếu có.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "CustomerPromotions.CustomerPromotionID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "SurveyID",
+          "type": "int",
+          "why": "Liên kết khảo sát nếu có.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Surveys.SurveyID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        },
+        {
+          "name": "ReadAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        }
+      ],
+      "pk": [
+        "NotificationID"
+      ],
+      "checks": [],
+      "uniques": [],
+      "original": false
+    },
+    {
+      "name": "AuditLogs",
+      "group": "Tài khoản",
+      "purpose": "Nhật ký ai làm gì; không ghi mật khẩu, refresh token hoặc bí mật thanh toán.",
+      "columns": [
+        {
+          "name": "AuditID",
+          "type": "int IDENTITY(1,1)",
+          "why": "Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.",
+          "example": "1",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "SQL Server sinh khi tạo bản ghi."
+        },
+        {
+          "name": "ActorID",
+          "type": "int",
+          "why": "Tài khoản thao tác; NULL cho hệ thống.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Users.UserID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "BranchID",
+          "type": "int",
+          "why": "Liên kết tới Branches; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": "Branches.BranchID",
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Action",
+          "type": "varchar(80)",
+          "why": "Tên hành động để tìm kiếm sự cố.",
+          "example": "Order.Cancel",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "EntityType",
+          "type": "varchar(60)",
+          "why": "Loại đối tượng bị tác động.",
+          "example": "Orders",
+          "nullable": false,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "EntityID",
+          "type": "int",
+          "why": "Mã đối tượng; kết hợp EntityType, không phải FK đa hình.",
+          "example": "1",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "Details",
+          "type": "nvarchar(4000)",
+          "why": "Thông tin nghiệp vụ đã loại bỏ dữ liệu bí mật.",
+          "example": "Khách yêu cầu hủy",
+          "nullable": true,
+          "default": null,
+          "ref": null,
+          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
+        },
+        {
+          "name": "CreatedAt",
+          "type": "datetime2(3)",
+          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
+          "example": "2026-09-17T03:00:00Z",
+          "nullable": false,
+          "default": "SYSUTCDATETIME()",
+          "ref": null,
+          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
+        }
+      ],
+      "pk": [
+        "AuditID"
+      ],
+      "checks": [],
+      "uniques": [],
+      "original": false
+    }
+  ],
+  "extra_foreign_keys": [
+    [
+      "BranchProductVariants",
+      "BranchID,ProductID",
+      "BranchProducts",
+      "BranchID,ProductID"
+    ],
+    [
+      "BranchProductVariants",
+      "VariantID,ProductID",
+      "ProductVariants",
+      "VariantID,ProductID"
+    ],
+    [
+      "OrderDetails",
+      "VariantID,ProductID",
+      "ProductVariants",
+      "VariantID,ProductID"
+    ],
+    [
+      "Orders",
+      "CustomerPromotionID,CustomerID",
+      "CustomerPromotions",
+      "CustomerPromotionID,CustomerID"
+    ],
+    [
+      "Refunds",
+      "PaymentID,OrderID",
+      "PaymentAttempts",
+      "PaymentID,OrderID"
+    ],
+    [
+      "Feedbacks",
+      "OrderID,CustomerID",
+      "Orders",
+      "OrderID,CustomerID"
+    ],
+    [
+      "SurveyResponses",
+      "QuestionID,SurveyID",
+      "SurveyQuestions",
+      "QuestionID,SurveyID"
+    ],
+    [
+      "SurveyResponses",
+      "SurveyID,CustomerID",
+      "SurveyRecipients",
+      "SurveyID,CustomerID"
+    ],
+    [
+      "SurveyAnswerOptions",
+      "ResponseID,QuestionID",
+      "SurveyResponses",
+      "ResponseID,QuestionID"
+    ],
+    [
+      "SurveyAnswerOptions",
+      "OptionID,QuestionID",
+      "SurveyQuestionOptions",
+      "OptionID,QuestionID"
+    ]
+  ],
+  "indexes": [
+    [
+      "CustomerAddresses",
+      "CustomerID",
+      "UNIQUE",
+      "IsDefault=1"
+    ],
+    [
+      "CustomerPromotions",
+      "CustomerID,Status,ExpiresAt",
+      "",
+      ""
+    ],
+    [
+      "PaymentAttempts",
+      "OrderID",
+      "UNIQUE",
+      "Status='Succeeded'"
+    ],
+    [
+      "PaymentAttempts",
+      "OrderID",
+      "UNIQUE",
+      "Status='Pending'"
+    ],
+    [
+      "PaymentAttempts",
+      "Provider,ProviderReference",
+      "UNIQUE",
+      "ProviderReference IS NOT NULL"
+    ],
+    [
+      "LoyaltyTransactions",
+      "OrderID",
+      "UNIQUE",
+      "Kind='Earn'"
+    ],
+    [
+      "LoyaltyTransactions",
+      "OrderID",
+      "UNIQUE",
+      "Kind='Reverse'"
+    ],
+    [
+      "LoyaltyTransactions",
+      "CustomerPromotionID",
+      "UNIQUE",
+      "Kind='Redeem'"
+    ],
+    [
+      "LoyaltyTransactions",
+      "CustomerID,CreatedAt",
+      "",
+      ""
+    ],
+    [
+      "Orders",
+      "BranchID,Status,CreatedAt",
+      "",
+      ""
+    ],
+    [
+      "Orders",
+      "CustomerID,CreatedAt",
+      "",
+      ""
+    ],
+    [
+      "OrderDetails",
+      "OrderID",
+      "",
+      ""
+    ],
+    [
+      "OrderStatusHistory",
+      "OrderID,CreatedAt",
+      "",
+      ""
+    ],
+    [
+      "Feedbacks",
+      "BranchID,Status,CreatedAt",
+      "",
+      ""
+    ],
+    [
+      "SurveyRecipients",
+      "CustomerID,CompletedAt",
+      "",
+      ""
+    ],
+    [
+      "Notifications",
+      "UserID,ReadAt,CreatedAt",
+      "",
+      ""
+    ],
+    [
+      "AuditLogs",
+      "BranchID,CreatedAt",
+      "",
+      ""
+    ],
+    [
+      "UserSessions",
+      "UserID,ExpiresAt",
+      "",
+      ""
+    ],
+    [
+      "Customers",
+      "DateOfBirth,Gender",
+      "",
+      ""
+    ]
+  ]
+}

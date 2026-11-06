@@ -21,7 +21,12 @@
     </div>
 </header>
 
-<div class="page-body">
+<div class="page-body menu-body">
+    <div class="menu-intro">
+        <span class="menu-kicker">MORNING BREW</span>
+        <h1>Chọn món bạn thích.</h1>
+        <p>Cà phê, trà &amp; bánh cho một ngày thật ngon.</p>
+    </div>
     @if (menu?.IsDemo == true)
     {
         <div class="demo-note"><Icon Name="info" Size="16" /> Dữ liệu mẫu — máy chủ chưa có API thực đơn cho khách.</div>
@@ -29,28 +34,34 @@
     <StateView Loading="loading" Error="@error" OnRetry="Load" Empty="Visible.Count == 0" EmptyText="Không tìm thấy món phù hợp." EmptyIcon="cup">
         @foreach (var group in Visible.GroupBy(x => x.Category))
         {
-            <h2 class="group-title">@group.Key</h2>
-            @foreach (var product in group.GroupBy(x => x.ProductId))
-            {
-                var first = product.First();
-                var available = product.Any(x => x.IsAvailable);
-                <div class="product-row @(available ? "" : "sold-out")">
-                    <ProductThumb Category="@first.Category" />
-                    <button class="product-info" @onclick="() => Open(product.ToList())" disabled="@(!available)">
-                        <b>@first.Name</b>
-                        <small>@first.Description</small>
-                        <span class="price">@(available ? Fmt.Money(product.Where(x => x.IsAvailable).Min(x => x.Price)) : "Tạm hết")</span>
-                    </button>
-                    <div class="product-actions">
+            <div class="menu-section-heading"><h2 class="group-title">@group.Key</h2><span>@group.Select(x => x.ProductId).Distinct().Count() món</span></div>
+            <div class="product-grid">
+                @foreach (var product in group.GroupBy(x => x.ProductId))
+                {
+                    var first = product.First();
+                    var available = product.Any(x => x.IsAvailable);
+                    <article @key="first.ProductId" class="menu-product @(available ? "" : "sold-out")">
+                        <button class="product-photo-button" @onclick="() => Open(product.ToList())" disabled="@(!available)" aria-label="@($"Xem {first.Name}")">
+                            <ProductThumb Category="@first.Category" ProductName="@first.Name" ImageUrl="@first.ImageUrl" Large="true" />
+                        </button>
                         <button class="icon-btn fav @(favorites.Contains(first.ProductId) ? "on" : "")" @onclick="() => ToggleFavorite(first)"
-                                aria-label="Yêu thích"><Icon Name="heart" Size="20" Filled="favorites.Contains(first.ProductId)" /></button>
+                                aria-label="@($"Yêu thích {first.Name}")" aria-pressed="@favorites.Contains(first.ProductId)"><Icon Name="heart" Size="18" Filled="favorites.Contains(first.ProductId)" /></button>
+                        <button class="product-info" @onclick="() => Open(product.ToList())" disabled="@(!available)">
+                            <b>@first.Name</b>
+                            <small>@first.Description</small>
+                            <span class="price">@(available ? Fmt.Money(product.Where(x => x.IsAvailable).Min(x => x.Price)) : "Tạm hết")</span>
+                        </button>
                         @if (available)
                         {
-                            <button class="add-btn" @onclick="() => Open(product.ToList())" aria-label="Thêm vào giỏ"><Icon Name="plus" Size="18" /></button>
+                            <button class="add-btn" @onclick="() => Open(product.ToList())" aria-label="@($"Thêm {first.Name} vào giỏ")"><Icon Name="plus" Size="18" /></button>
                         }
-                    </div>
-                </div>
-            }
+                        else
+                        {
+                            <span class="unavailable-label">Tạm hết</span>
+                        }
+                    </article>
+                }
+            </div>
         }
     </StateView>
 </div>
@@ -61,7 +72,7 @@
     <div class="sheet" role="dialog" aria-label="@sheet[0].Name">
         <div class="sheet-handle"></div>
         <div class="sheet-head">
-            <ProductThumb Category="@sheet[0].Category" Large="true" />
+            <ProductThumb Category="@sheet[0].Category" ProductName="@sheet[0].Name" ImageUrl="@sheet[0].ImageUrl" Large="true" />
             <div><h2>@sheet[0].Name</h2><p class="muted">@sheet[0].Description</p></div>
         </div>
         <h3>Kích cỡ</h3>

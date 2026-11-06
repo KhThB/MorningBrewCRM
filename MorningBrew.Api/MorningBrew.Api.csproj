@@ -8,6 +8,13 @@
   <ItemGroup>
     <Compile Include="../Shared/ApiJson.cs" Link="Contracts/ApiJson.cs" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.6" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.21" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+  </ItemGroup>
+  <!-- The active backend uses SqlStore and /v1 routes. Keep the previous EF/JWT
+       implementation as reference only; its services are not registered in Program.cs. -->
+  <ItemGroup>
+    <Compile Remove="Common/**/*.cs;Data/**/*.cs;Domain/**/*.cs;DTOs/**/*.cs;Services/**/*.cs;Middleware/**/*.cs" />
+    <Compile Remove="Controllers/AdminFeedbacksController.cs;Controllers/AdminPromotionsController.cs;Controllers/AdminSurveysController.cs;Controllers/FeedbacksController.cs;Controllers/LoyaltyController.cs;Controllers/PromotionsController.cs;Controllers/StatsCrmController.cs;Controllers/SurveysController.cs" />
   </ItemGroup>
 </Project>

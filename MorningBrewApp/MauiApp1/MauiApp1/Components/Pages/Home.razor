@@ -82,7 +82,7 @@
         @foreach (var item in suggestions)
         {
             <a class="product-tile" href="/menu">
-                <ProductThumb Category="@item.Category" Large="true" />
+                <ProductThumb Category="@item.Category" ProductName="@item.Name" ImageUrl="@item.ImageUrl" Large="true" />
                 <b>@item.Name</b>
                 <span class="price">@Fmt.Money(item.Price)</span>
             </a>

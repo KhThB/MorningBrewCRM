@@ -378,3 +378,52 @@ textarea.input { resize: vertical; }
 /* ---------- Lỗi Blazor ---------- */
 #blazor-error-ui { display: none; position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1000; padding: .6rem 1.25rem; background: #fef3c7; box-shadow: 0 -1px 2px rgba(0, 0, 0, .2); }
 #blazor-error-ui .dismiss { cursor: pointer; position: absolute; right: .75rem; top: .5rem; }
+
+/* Product photography: square frames, warm paper tones, clear glassware. */
+.thumb { position: relative; overflow: hidden; background: #fff; border: 1px solid #f1ece5; }
+.thumb img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; padding: 5%; }
+.thumb-lg { height: auto; aspect-ratio: 1; }
+.thumb[data-photo="cold-brew"] img { object-fit: contain; object-position: center; }
+.thumb[data-photo="lotus"] img { object-fit: cover; object-position: center 45%; padding: 5%; }
+.thumb[data-photo="lychee"] img { padding: 0; }
+.menu-header { background: #faf7f2; color: #392a21; border-bottom: 1px solid #e8e0d5; padding-top: 16px; }
+.menu-header .branch-picker, .menu-header .branch-picker .store-name { color: #6b5543; font-size: 13px; }
+.menu-header .search { background: #fff; border: 1px solid #e6ddd1; color: #8b7765; height: 44px; }
+.menu-header .search input { color: #392a21; min-width: 0; }
+.menu-header .search input::placeholder { color: #958778; }
+.menu-header .chip-btn { color: #79624f; border-color: #e6ddd1; background: transparent; padding: 8px 16px; }
+.menu-header .chip-btn.active { color: #fff7ec; background: #493326; border-color: #493326; }
+.menu-body { background: #f6f2eb; gap: 16px; }
+.menu-intro { padding: 8px 2px 2px; }
+.menu-kicker { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #95734f; }
+.menu-intro h1 { font-size: 26px; line-height: 1.25; letter-spacing: -.7px; color: #3c2c22; margin: 8px 0; }
+.menu-intro p { color: #887867; font-size: 13px; margin: 0; }
+.menu-section-heading { display: flex; align-items: baseline; justify-content: space-between; padding: 6px 2px 0; }
+.menu-section-heading .group-title { margin: 0; font-size: 18px; color: #493326; }
+.menu-section-heading > span { color: #958574; font-size: 12px; }
+.product-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.menu-product { position: relative; min-width: 0; background: #fffdf9; border: 1px solid #ebe3d8; border-radius: 18px; overflow: hidden; box-shadow: 0 3px 12px #442b1610; }
+.product-photo-button { display: block; width: 100%; padding: 8px 8px 0; }
+.menu-product .thumb { width: 100%; height: auto; aspect-ratio: 1; border: 0; border-radius: 12px; background: white; }
+.menu-product .product-info { width: 100%; padding: 12px 12px 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; text-align: left; color: #402d22; }
+.menu-product .product-info b { font-size: 14px; line-height: 1.4; min-height: 2.8em; }
+.menu-product .product-info small { display: block; width: 100%; color: #8a7b6b; font-size: 11px; line-height: 1.5; }
+.menu-product .price { display: block; margin-top: 8px; padding-right: 32px; color: #68472f; font-size: 14px; }
+.menu-product .fav { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; background: #ffffffeb; border: 1px solid #eee6da; color: #8a7766; }
+.menu-product .fav.on { color: #b15c43; background: #fff0e7; }
+.menu-product .add-btn { position: absolute; bottom: 12px; right: 12px; background: #493326; color: #fff7ec; }
+.menu-product.sold-out { opacity: 1; }
+.menu-product.sold-out .thumb { filter: saturate(.5); opacity: .65; }
+.menu-product.sold-out .product-info { color: #8a7b6b; }
+.unavailable-label { position: absolute; top: 18px; left: 14px; color: #6a5746; background: #f4ede1f0; border-radius: 6px; padding: 4px 7px; font-size: 10px; font-weight: 600; }
+.product-tile { border: 1px solid #ebe3d8; background: #fffdf9; box-shadow: 0 3px 12px #442b1610; padding: 9px; gap: 9px; }
+.product-tile > b, .product-tile > .price { padding: 0 4px; color: #493326; }
+.product-tile > b { font-size: 14px; }
+.sheet-head .thumb { width: 110px; height: 110px; }
+@media (max-width: 359px) {
+    .product-grid { gap: 9px; }
+    .menu-product .product-info { padding: 9px; }
+    .menu-product .product-info b { font-size: 13px; }
+    .menu-product .add-btn { right: 8px; bottom: 10px; width: 28px; height: 28px; }
+    .menu-product .price { font-size: 13px; }
+}

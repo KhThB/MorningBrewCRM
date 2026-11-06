@@ -52,7 +52,7 @@ public record Branch(int BranchId, string Name, string? Address);
 
 public record MenuProduct(
     int ProductId, string Name, string? Description, int CategoryId, string Category,
-    int VariantId, string VariantName, decimal Price, bool IsAvailable = true, bool IsDemo = false);
+    int VariantId, string VariantName, decimal Price, bool IsAvailable = true, bool IsDemo = false, string? ImageUrl = null);
 
 public record MenuData(Branch Branch, List<MenuProduct> Items, bool IsDemo);
 

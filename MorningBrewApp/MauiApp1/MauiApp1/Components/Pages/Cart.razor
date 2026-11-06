@@ -19,7 +19,7 @@
                 @foreach (var line in Shop.Cart)
                 {
                     <div class="cart-line">
-                        <ProductThumb Category="@line.Item.Category" />
+                        <ProductThumb Category="@line.Item.Category" ProductName="@line.Item.Name" ImageUrl="@line.Item.ImageUrl" />
                         <div class="grow"><b>@line.Item.Name</b><small class="muted">Size @line.Item.VariantName</small><span class="price">@Fmt.Money(line.Total)</span></div>
                         <div class="stepper sm">
                             <button @onclick="() => Shop.ChangeQuantity(line.Item.VariantId, -1)" aria-label="Giảm"><Icon Name="minus" Size="16" /></button>

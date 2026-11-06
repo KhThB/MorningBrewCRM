@@ -13,7 +13,7 @@
             {
                 var on = selected.Contains(p.ProductId);
                 <button class="pick-row @(on ? "on" : "")" @onclick="() => Toggle(p)" aria-pressed="@on">
-                    <ProductThumb Category="@p.Category" />
+                    <ProductThumb Category="@p.Category" ProductName="@p.Name" ImageUrl="@p.ImageUrl" />
                     <span class="grow"><b>@p.Name</b><small class="muted">@p.Category@(p.IsDemo ? " · minh họa" : "")</small></span>
                     <span class="heart @(on ? "on" : "")"><Icon Name="heart" Filled="on" /></span>
                 </button>

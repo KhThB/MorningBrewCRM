@@ -1,6 +1,10 @@
-@* Ảnh minh họa món (vẽ bằng SVG, không dùng ảnh thương hiệu khác). Màu theo danh mục. *@
-<div class="thumb thumb-@Kind @(Large ? "thumb-lg" : "")" aria-hidden="true">
-    @if (Kind == "cake")
+@* Bundled photos work offline. Unknown products and failed images retain a category illustration. *@
+<div class="thumb thumb-@Kind @(Large ? "thumb-lg" : "")" data-photo="@PhotoKind">
+    @if (source is not null)
+    {
+        <img @key="source" src="@source" alt="@ProductName" loading="lazy" decoding="async" @onerror="ImageFailed" />
+    }
+    else if (Kind == "cake")
     {
         <svg viewBox="0 0 64 64"><path d="M14 40h36v12H14z" fill="var(--thumb-a)" /><path d="M14 30h36v10H14z" fill="var(--thumb-b)" />
             <path d="M14 30c4-6 32-6 36 0" fill="var(--thumb-c)" /><circle cx="32" cy="22" r="4" fill="#c2410c" /></svg>
@@ -16,6 +20,31 @@
 @code {
     [Parameter] public string? Category { get; set; }
     [Parameter] public bool Large { get; set; }
+    [Parameter] public string? ProductName { get; set; }
+    [Parameter] public string? ImageUrl { get; set; }
+    private string? source;
+    private string? previousSource;
+    private string? previousName;
+    private string? LocalSource => ProductPhotos.ForName(ProductName);
+    private string PhotoKind => ProductName?.Trim().ToLowerInvariant() switch
+    {
+        "trà sen vàng" => "lotus",
+        "cold brew cam sả" => "cold-brew",
+        "cà phê đen đá" => "black-coffee",
+        "trà vải lài" => "lychee",
+        _ => "default"
+    };
+    protected override void OnParametersSet()
+    {
+        var candidate = string.IsNullOrWhiteSpace(ImageUrl) ? LocalSource : ImageUrl;
+        if (candidate != previousSource || ProductName != previousName)
+        {
+            source = candidate;
+            previousSource = candidate;
+            previousName = ProductName;
+        }
+    }
+    private void ImageFailed() => source = source != LocalSource ? LocalSource : null;
 
     private string Kind => Category switch
     {

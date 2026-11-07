@@ -78,7 +78,7 @@ public class WorkspaceModel(CrmApi api):PageModel
                 case "survey":
                     var questions=Text("questions").Split('\n',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries)
                         .Select(q=>new {text=q,type="Rating",isRequired=true,ratingMin=1,ratingMax=5}).ToArray();
-                    await api.Send(HttpMethod.Post,"v1/surveys",new {title=Text("title"),description=Text("description"),scope=Text("scope"),areaId=Optional("areaId"),branchId=Optional("branchId"),startsAt=Date("startsAt"),endsAt=Date("endsAt"),questions});break;
+                    await api.Send(HttpMethod.Post,"v1/surveys",new {title=Text("title"),description=Text("description"),startsAt=Date("startsAt"),endsAt=Date("endsAt"),questions});break;
                 case "publish":
                 case "close":
                     await api.Send(HttpMethod.Post,$"v1/surveys/{Number("id")}:{operation}");break;
@@ -87,7 +87,7 @@ public class WorkspaceModel(CrmApi api):PageModel
                 case "results":
                     return RedirectToPage(new {section="surveys",surveyId=Number("id")});
                 case "promotion":
-                    await api.Send(HttpMethod.Post,"v1/promotions",new {name=Text("name"),description=Text("description"),scope=Text("scope"),areaId=Optional("areaId"),branchId=Optional("branchId"),discountType=Text("discountType"),discountValue=Money("discountValue"),maxDiscount=string.IsNullOrWhiteSpace(Text("maxDiscount"))?(decimal?)null:Money("maxDiscount"),minSubtotal=Money("minSubtotal"),startsAt=Date("startsAt"),endsAt=Date("endsAt"),pointsCost=Optional("pointsCost"),totalLimit=Number("totalLimit"),perCustomerLimit=Number("perCustomerLimit")});break;
+                    await api.Send(HttpMethod.Post,"v1/promotions",new {name=Text("name"),description=Text("description"),discountType=Text("discountType"),discountValue=Money("discountValue"),maxDiscount=string.IsNullOrWhiteSpace(Text("maxDiscount"))?(decimal?)null:Money("maxDiscount"),minSubtotal=Money("minSubtotal"),startsAt=Date("startsAt"),endsAt=Date("endsAt"),pointsCost=Optional("pointsCost"),totalLimit=Number("totalLimit"),perCustomerLimit=Number("perCustomerLimit")});break;
                 case "issue":
                     await api.Send(HttpMethod.Post,$"v1/promotions/{Number("id")}:issue",new {customerId=Number("customerId"),requestKey=Key()});break;
                 case "promotion-active":

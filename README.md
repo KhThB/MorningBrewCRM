@@ -12,7 +12,7 @@ Tại thư mục gốc repo, tạo database khớp cấu hình Development:
 ./database/tools/Apply.ps1 -Database MorningBrewCRM_Crm
 ```
 
-Installer chạy scripts 01–10 và tạo dữ liệu mẫu. Nếu database đã tồn tại, installer dừng để bảo vệ dữ liệu; không chạy lại để ghi đè. Nếu dùng database/server khác, cấu hình `ConnectionStrings:MorningBrew` bằng user secrets hoặc biến môi trường; xem [hướng dẫn database](database/README.md).
+Installer chạy scripts 01–11 và tạo dữ liệu mẫu. Nếu database đã tồn tại, installer dừng để bảo vệ dữ liệu; không chạy lại để ghi đè. Nếu dùng database/server khác, cấu hình `ConnectionStrings:MorningBrew` bằng user secrets hoặc biến môi trường; xem [hướng dẫn database](database/README.md).
 
 Build solution:
 
@@ -56,6 +56,11 @@ Tài khoản **dữ liệu mẫu local**: `owner@morningbrew.test`, `manager.1@m
 - [Database và scripts cài đặt](database/README.md).
 - [API v1](docs/api-v1.md) và [ghi chú tích hợp](docs/integration.md): đối chiếu với controller/seed hiện tại vì một số nội dung mô tả phạm vi cũ.
 - `tests/integration.py` và `tests/api_contract.py` còn giả định dữ liệu nhiều chi nhánh/quản lý khu vực của bản trước; chưa phù hợp hoàn toàn với seed CRM rút gọn hiện tại. Chỉ chạy trên database kiểm thử riêng.
-- [Tài liệu backend cũ](docs/legacy-backend.md) giữ lại để tham khảo. Mã EF/JWT cũ đã được loại khỏi compilation trong project API.
+- [Tài liệu backend cũ](docs/legacy-backend.md) chỉ còn để tham khảo lịch sử; mã EF/JWT cũ đã được xóa khỏi repo (xem tag `backup-20261107` nếu cần đối chiếu).
+- Chế độ **một cửa hàng**: `database/sql/11_single_store.sql` (quản lý thấy toàn bộ khách/phản hồi/khảo sát, nhiều quản lý, quyền `Customers.Manage`, bỏ vai trò AreaManager). Database đã có chỉ cần chạy riêng script này:
+
+  ```powershell
+  sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\11_single_store.sql
+  ```
 
 Không đưa `bin/`, `obj/`, `.vs/`, file `*.user`, database MDF/LDF, bản backup hoặc cấu hình chứa mật khẩu riêng lên GitHub; các loại file này đã được `.gitignore` loại trừ.

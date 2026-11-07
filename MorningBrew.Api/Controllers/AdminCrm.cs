@@ -9,11 +9,12 @@ public sealed partial class AdminController
     public record QuestionInput([Required,MaxLength(2000)] string Text,[Required] string Type,
         bool IsRequired=true,int? RatingMin=null,int? RatingMax=null,string[]? Options=null);
     public record SurveyInput([Required,MaxLength(250)] string Title,[MaxLength(2000)] string? Description,
-        [Required] string Scope,int? AreaId,int? BranchId,DateTimeOffset StartsAt,DateTimeOffset EndsAt,
+        string? Scope,int? AreaId,int? BranchId,DateTimeOffset StartsAt,DateTimeOffset EndsAt,
         [Required,MinLength(1),MaxLength(40)] QuestionInput[] Questions);
 
-    // Chuẩn hóa phạm vi trước khi kiểm tra quyền: bỏ ID thừa, báo lỗi rõ khi thiếu khu vực/chi nhánh.
-    private static (int? Area, int? Branch) NormalizeScope(string scope, int? areaId, int? branchId) => scope switch
+    // Một cửa hàng: mặc định phạm vi chung (Chain) để chủ cửa hàng và quản lý cùng thấy, cùng quản lý.
+    // Scope/AreaId/BranchId được giữ để tương thích client cũ; không cần gửi.
+    private static (int? Area, int? Branch) NormalizeScope(string? scope, int? areaId, int? branchId) => (scope ?? "Chain") switch
     {
         "Chain" => (null, null),
         "Area" => throw new ApiException(400, "Hệ thống chỉ có 1 cửa hàng, không dùng phạm vi khu vực."),
@@ -92,7 +93,7 @@ public sealed partial class AdminController
         return result;
     }
     public record PromotionInput([Required,MaxLength(150)] string Name,[MaxLength(2000)] string? Description,
-        [Required] string Scope,int? AreaId,int? BranchId,[Required] string DiscountType,decimal DiscountValue,
+        string? Scope,int? AreaId,int? BranchId,[Required] string DiscountType,decimal DiscountValue,
         decimal? MaxDiscount,decimal MinSubtotal,DateTimeOffset StartsAt,DateTimeOffset EndsAt,int? PointsCost,int TotalLimit,int PerCustomerLimit);
     [HttpPost("promotions")]
     public async Task<IActionResult> CreatePromotion(PromotionInput input)

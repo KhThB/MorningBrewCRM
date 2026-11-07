@@ -17,12 +17,30 @@ public sealed partial class AdminController
     [HttpDelete("customers/{id:int}")]
     public async Task<IActionResult> DeleteCustomer(int id)
     {
-        await RequireOwner();
+        await RequirePermission("Customers.Manage");
         var user = (await db.Query("""
             SELECT c.UserID FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID
             WHERE c.CustomerID=@id AND u.DeletedAt IS NULL
             """, ("@id", id))).SingleOrDefault() ?? throw new ApiException(404, "Không tìm thấy khách hàng.");
         await db.Procedure("dbo.SoftDeleteUser", ("@ActorID", Actor), ("@UserID", user["UserID"]));
+        return NoContent();
+    }
+
+    // Yêu cầu CRM 4.1.3: khóa/mở khóa tài khoản khách hàng (quản lý làm được, không cần quyền quản trị).
+    [HttpPut("customers/{id:int}/active")]
+    public async Task<IActionResult> CustomerActive(int id, ActiveInput input)
+    {
+        await RequirePermission("Customers.Manage");
+        await db.Query("""
+            SET XACT_ABORT ON; BEGIN TRAN;
+            DECLARE @user int=(SELECT c.UserID FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID
+                WHERE c.CustomerID=@id AND u.DeletedAt IS NULL);
+            IF @user IS NULL THROW 51104,'Customer not found.',1;
+            UPDATE dbo.Users SET IsActive=@active WHERE UserID=@user;
+            IF @active=0 UPDATE dbo.UserSessions SET RevokedAt=SYSUTCDATETIME() WHERE UserID=@user AND RevokedAt IS NULL;
+            INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID) VALUES(@actor,'Customer.Status','Users',@user);
+            COMMIT;
+            """, ("@id", id), ("@active", input.IsActive), ("@actor", Actor));
         return NoContent();
     }
 

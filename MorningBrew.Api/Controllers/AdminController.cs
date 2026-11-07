@@ -23,6 +23,12 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
         var allowed = await db.Query("SELECT 1 AS OK WHERE dbo.CanScope(@actor,'Chain',NULL,NULL,'Security.Manage')=1", ("@actor", Actor));
         if (allowed.Count == 0) throw new ApiException(403, "Không có quyền quản trị.");
     }
+    // Quyền nghiệp vụ trên phạm vi chung (một cửa hàng: chủ cửa hàng và quản lý được cấp quyền).
+    private async Task RequirePermission(string code)
+    {
+        var allowed = await db.Query("SELECT 1 AS OK WHERE dbo.CanScope(@actor,'Chain',NULL,NULL,@code)=1", ("@actor", Actor), ("@code", code));
+        if (allowed.Count == 0) throw new ApiException(403, "Bạn không có quyền thực hiện thao tác này.");
+    }
 
     [HttpGet("customers")]
     public Task<ApiPage> ListCustomers([FromQuery] PageRequest page, string? q = null) => List("customers", page, q);
@@ -150,10 +156,11 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
     [HttpPost("accounts")]
     public async Task<IActionResult> CreateAccount(AccountInput input)
     {
-        await RequireOwner();
         // Hệ thống chỉ có 1 cửa hàng: quản lý và thu ngân được gán tự động vào cửa hàng đó.
         if (input.Role is not ("Owner" or "BranchManager" or "Staff" or "Customer"))
             throw new ApiException(400, "Vai trò không hợp lệ.");
+        // Tài khoản khách: người có quyền Customers.Manage (quản lý). Tài khoản nội bộ: chỉ chủ cửa hàng.
+        if (input.Role == "Customer") await RequirePermission("Customers.Manage"); else await RequireOwner();
         var created = await db.Query("""
             SET XACT_ABORT ON; BEGIN TRAN;
             DECLARE @role int=(SELECT RoleID FROM dbo.Roles WHERE Code=@code);
@@ -164,8 +171,10 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
             VALUES(@role,@email,UPPER(LTRIM(RTRIM(@email))),@name,@phone,@hash);
             DECLARE @id int=SCOPE_IDENTITY();
             IF @code='Customer' INSERT dbo.Customers(UserID) VALUES(@id);
-            IF @code='Staff' INSERT dbo.StaffBranches(UserID,BranchID) VALUES(@id,@branch);
-            IF @code='BranchManager' UPDATE dbo.Branches SET ManagerID=@id WHERE BranchID=@branch;
+            -- Quản lý và thu ngân đều gán qua StaffBranches, nên có thể có nhiều quản lý;
+            -- ManagerID chỉ ghi khi cửa hàng chưa có quản lý chính (không thay thế người cũ).
+            IF @code IN ('Staff','BranchManager') INSERT dbo.StaffBranches(UserID,BranchID) VALUES(@id,@branch);
+            IF @code='BranchManager' UPDATE dbo.Branches SET ManagerID=@id WHERE BranchID=@branch AND ManagerID IS NULL;
             INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID) VALUES(@actor,'Account.Create','Users',@id);
             COMMIT; SELECT @id AS UserID;
             """, ("@code", input.Role), ("@email", input.Email.Trim()), ("@name", input.FullName.Trim()), ("@phone", input.Phone),

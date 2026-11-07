@@ -1,0 +1,22 @@
+@page
+@model SurveysModel
+@{ViewData["Title"]=Model.Title;}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+@if(Model.SurveyId.HasValue)
+{
+    @if(Model.Summary is not null){<partial name="_SurveySummary" model="Model.Summary" />}
+    <section class="panel"><h2>Câu trả lời chi tiết</h2><partial name="_Rows" model="Model.Rows" />
+    <div class="flow">@if(!string.IsNullOrEmpty(Model.NextPageToken)){<a asp-route-surveyId="@Model.SurveyId" asp-route-pageToken="@Model.NextPageToken">Trang tiếp →</a>}</div></section>
+    <a asp-page="/Manager/Surveys" asp-route-surveyId="">Về danh sách khảo sát</a>
+}
+else
+{
+<section class="panel"><h2>Danh sách</h2><partial name="_Rows" model="Model.Rows" /><partial name="_Pager" model="Model" /></section>
+<div class="grid-2"><section class="panel"><h2>Tạo khảo sát</h2><form method="post"><input type="hidden" name="operation" value="survey">
+<label>Tiêu đề</label><input name="title" maxlength="250" required><label>Mô tả</label><textarea name="description" maxlength="2000"></textarea>
+<label>Câu hỏi đánh giá 1–5 (mỗi dòng một câu)</label><textarea name="questions" required></textarea><partial name="_Scope" model="Model" /><button class="primary">Tạo bản nháp</button></form></section>
+<section class="panel"><h2>Quản lý khảo sát</h2><form method="post"><label>Khảo sát</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["survey_id"]">@x["title"] · @RowDisplay.Value("status",x["status"])</option>}</select>
+<button class="primary" name="operation" value="publish">Phát hành</button> <button class="secondary" name="operation" value="close">Đóng</button> <button class="secondary" name="operation" value="results">Xem kết quả</button></form>
+<h3>Mời khách hàng</h3><form method="post"><input type="hidden" name="operation" value="invite"><label>Khảo sát đang mở</label><select name="id">@foreach(var x in Model.Rows.Where(x=>x["status"].ToString()=="Open")){<option value="@x["survey_id"]">@x["title"]</option>}</select>
+<label>Khách hàng</label><select name="customerId">@foreach(var x in Model.Choices("customers")){<option value="@x["id"]">@x["display_name"]</option>}</select><button class="primary">Gửi lời mời</button></form></section></div>
+}

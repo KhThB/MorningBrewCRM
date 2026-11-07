@@ -1,0 +1,26 @@
+@page
+@model CustomersModel
+@{ViewData["Title"]=Model.Title;}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel"><form method="get"><label>Tìm khách hàng</label><input name="q" value="@Model.Q" placeholder="Họ tên, email, số điện thoại"><button class="primary">Tìm kiếm</button></form></section>
+<section class="panel"><h2>Danh sách</h2><partial name="_Rows" model="Model.Rows" /><partial name="_Pager" model="Model" /></section>
+<div class="grid-2"><section class="panel"><h2>Thêm khách hàng</h2>
+<form method="post"><input type="hidden" name="operation" value="customer"><label>Họ tên</label><input name="fullName" maxlength="120" required>
+<label>Email</label><input name="email" type="email" required><label>Điện thoại</label><input name="phone" maxlength="20">
+<label>Mật khẩu ban đầu (ít nhất 10 ký tự)</label><input name="password" type="password" minlength="10" required autocomplete="new-password">
+<button class="primary">Thêm khách hàng</button></form></section>
+<section class="panel"><h2>Khóa tài khoản khách hàng</h2><form method="post"><input type="hidden" name="operation" value="customer-active">
+<label>Khách hàng</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["customer_id"]">@x["full_name"] · @x["email"] · @(x["is_active"].ValueKind==JsonValueKind.True?"đang hoạt động":"đang khóa")</option>}</select>
+<label>Trạng thái mới</label><select name="active"><option value="false">Khóa</option><option value="true">Mở khóa</option></select><button class="primary">Cập nhật</button></form>
+<p class="muted">Khách bị khóa không đăng nhập được; các phiên đang mở bị thu hồi. Dữ liệu vẫn giữ nguyên.</p>
+@if(Model.IsOwner){
+<h3>Điều chỉnh điểm</h3><form method="post"><input type="hidden" name="operation" value="points"><input type="hidden" name="requestKey" value="@Guid.NewGuid()">
+<label>Khách hàng</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["customer_id"]">@x["full_name"]</option>}</select>
+<label>Số điểm cộng hoặc trừ</label><input name="delta" type="number" required><label>Lý do</label><input name="note" minlength="3" maxlength="300" required><button class="primary">Ghi điều chỉnh</button></form>}
+</section></div>
+<section class="panel danger-zone"><h2>Xóa khách hàng</h2>
+<p class="muted">Xóa mềm: khách không đăng nhập được nữa và thông tin cá nhân (họ tên, email, điện thoại) được ẩn danh. Đơn hàng, điểm, phản hồi và câu trả lời khảo sát vẫn được giữ để báo cáo không bị sai lệch.</p>
+<form method="post" class="inline-delete" onsubmit="return confirm('Xóa khách hàng đã chọn? Thao tác này không hoàn tác được.')">
+<input type="hidden" name="operation" value="customer-delete"><label>Khách hàng</label>
+<select name="id" required>@foreach(var x in Model.Rows){<option value="@x["customer_id"]">@x["full_name"] · @x["email"]</option>}</select>
+<button class="danger">Xóa khách hàng</button></form></section>

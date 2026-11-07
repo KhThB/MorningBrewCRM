@@ -1,0 +1,9 @@
+@page
+@model FeedbacksModel
+@{ViewData["Title"]=Model.Title;}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel"><h2>Danh sách</h2><partial name="_Rows" model="Model.Rows" /><partial name="_Pager" model="Model" /></section>
+<section class="panel"><h2>Trả lời phản hồi</h2><form method="post"><input type="hidden" name="operation" value="feedback">
+<label>Phản hồi</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["feedback_id"]">#@x["feedback_id"] · @x["full_name"] · @x["content"]</option>}</select>
+<label>Trạng thái</label><select name="status"><option value="Processing">Đang xử lý</option><option value="Resolved">Đã giải quyết</option></select>
+<label>Nội dung trả lời</label><textarea name="response" maxlength="4000" required></textarea><button class="primary">Gửi trả lời</button></form></section>

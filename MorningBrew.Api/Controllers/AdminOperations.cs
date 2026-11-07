@@ -43,4 +43,22 @@ public sealed partial class AdminController
             """,("@actor",Actor),("@roleCode",role),("@code",code),("@allowed",input.Allowed));
         return NoContent();
     }
+    // Trang tổng quan của giao diện Quản trị: số tài khoản theo vai trò và nhật ký thao tác gần nhất.
+    [HttpGet("admin/overview")]
+    public async Task<object> AdminOverview()
+    {
+        await RequireOwner();
+        var roles = await db.Query("""
+            SELECT r.Code AS Role,COUNT(u.UserID) AS Accounts,
+            SUM(CASE WHEN u.IsActive=1 THEN 1 ELSE 0 END) AS ActiveAccounts,
+            SUM(CASE WHEN u.UserID IS NOT NULL AND u.IsActive=0 THEN 1 ELSE 0 END) AS LockedAccounts
+            FROM dbo.Roles r LEFT JOIN dbo.Users u ON u.RoleID=r.RoleID AND u.DeletedAt IS NULL
+            GROUP BY r.RoleID,r.Code ORDER BY r.RoleID
+            """);
+        var activity = await db.Query("""
+            SELECT TOP(15) a.CreatedAt,COALESCE(u.FullName,N'Hệ thống') AS Actor,a.Action,a.EntityType,a.EntityID,a.Details
+            FROM dbo.AuditLogs a LEFT JOIN dbo.Users u ON u.UserID=a.ActorID ORDER BY a.AuditID DESC
+            """);
+        return new { roles, activity };
+    }
 }

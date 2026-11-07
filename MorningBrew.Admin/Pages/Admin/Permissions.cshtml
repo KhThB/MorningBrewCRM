@@ -1,0 +1,8 @@
+@page
+@model PermissionsModel
+@{ViewData["Title"]=Model.Title;}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel"><h2>Thay đổi quyền vận hành</h2><form method="post"><input type="hidden" name="operation" value="permission"><input type="hidden" name="role" value="BranchManager">
+<p class="muted">Vai trò áp dụng: Quản lý cửa hàng. Các quyền quản trị (tài khoản, tổ chức, danh mục) luôn chỉ thuộc chủ cửa hàng.</p>
+<label>Quyền</label><select name="code">@foreach(var code in PermissionsModel.Codes){<option>@code</option>}</select><label>Áp dụng</label><select name="allowed"><option value="true">Cho phép</option><option value="false">Thu hồi</option></select><button class="primary">Lưu quyền</button></form></section>
+<section class="panel"><h2>Quyền hiện tại</h2><partial name="_Rows" model="Model.Rows" /><partial name="_Pager" model="Model" /></section>

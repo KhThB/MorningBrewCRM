@@ -1,0 +1,15 @@
+@page
+@model ProductsModel
+@{ViewData["Title"]=Model.Title;var products=Model.Rows.GroupBy(x=>x["product_id"].ToString()).Select(g=>g.First()).ToList();}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel"><h2>Danh sách</h2><partial name="_Rows" model="Model.Rows" /><partial name="_Pager" model="Model" /></section>
+<div class="grid-2">
+<section class="panel"><h2>Thêm sản phẩm</h2><form method="post"><input type="hidden" name="operation" value="product">
+<label>Tên sản phẩm</label><input name="name" maxlength="150" required><label>Mô tả</label><textarea name="description" maxlength="2000"></textarea>
+<label>Danh mục</label><select name="categoryId">@foreach(var x in Model.Choices("categories")){<option value="@x["id"]">@x["display_name"]</option>}</select>
+<label>Kích cỡ</label><input name="size" value="M" maxlength="60" required><label>Giá cơ bản (VND)</label><input name="price" type="number" min="0" required><button class="primary">Tạo sản phẩm</button></form>
+<h3>Trạng thái sản phẩm</h3><form method="post"><input type="hidden" name="operation" value="product-active"><select name="id" aria-label="Sản phẩm">@foreach(var x in products){<option value="@x["product_id"]">@x["display_name"]</option>}</select><select name="active" aria-label="Trạng thái"><option value="false">Ngừng bán</option><option value="true">Đang bán</option></select><button class="secondary">Cập nhật</button></form></section>
+<section class="panel"><h2>Giá bán</h2><form method="post"><input type="hidden" name="operation" value="price">
+<label>Sản phẩm / kích cỡ</label><select name="variantId">@foreach(var x in Model.Rows){<option value="@x["variant_id"]">@x["display_name"] · @x["size"]</option>}</select>
+<label>Giá bán (VND)</label><input name="price" type="number" min="0" required><button class="primary">Lưu giá</button></form></section>
+</div>

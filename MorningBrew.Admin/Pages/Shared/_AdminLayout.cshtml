@@ -1,0 +1,39 @@
+@* Giao diện QUẢN TRỊ HỆ THỐNG (yêu cầu II.2): tách biệt với giao diện quản lý nghiệp vụ CRM. *@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · Quản trị Morning Brew</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="theme-admin">
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">A</div><div><strong>MORNING BREW</strong><small>Quản trị hệ thống</small></div></div>
+        <div class="user-box"><div class="avatar">@(User.Identity?.Name?.FirstOrDefault())</div><div class="user-info"><b>@User.Identity?.Name</b><small>Quản trị viên · @RowDisplay.Value("role",JsonSerializer.SerializeToElement(User.FindFirstValue(ClaimTypes.Role)))</small></div></div>
+        <div class="nav-label">HỆ THỐNG</div>
+        <nav>
+            <a asp-page="/Admin/Index">Tổng quan hệ thống</a>
+            <a asp-page="/Admin/Accounts">Tài khoản</a>
+            <a asp-page="/Admin/Permissions">Phân quyền</a>
+        </nav>
+        <div class="nav-label">DỮ LIỆU DÙNG CHUNG</div>
+        <nav>
+            <a asp-page="/Admin/Products">Sản phẩm &amp; giá</a>
+            <a asp-page="/Admin/Suppliers">Nhà cung cấp</a>
+        </nav>
+        <a class="area-switch" asp-page="/Manager/Index">Mở giao diện Quản lý CRM →</a>
+        <form method="post" asp-page="/Logout" class="logout-form"><button>Đăng xuất</button></form>
+    </aside>
+    <main class="content">
+        <div class="area-banner">Khu vực quản trị · chỉ chủ cửa hàng truy cập</div>
+        @if(TempData["Error"] is string error){ <div class="alert" role="alert">@error</div> }
+        @if(TempData["Success"] is string success){ <div class="success" role="status">@success</div> }
+        @RenderBody()
+        <footer class="footer">Morning Brew · Admin server</footer>
+    </main>
+</div>
+<script src="~/js/ui.js" asp-append-version="true" defer></script>
+</body>
+</html>

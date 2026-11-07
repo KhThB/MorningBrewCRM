@@ -1,0 +1,8 @@
+@model WorkspaceBase
+@if(!string.IsNullOrEmpty(Model.PageToken) || !string.IsNullOrEmpty(Model.NextPageToken))
+{
+<div class="flow">
+@if(!string.IsNullOrEmpty(Model.PageToken)){<a asp-route-q="@Model.Q">Về trang đầu</a>}
+@if(!string.IsNullOrEmpty(Model.NextPageToken)){<a asp-route-pageToken="@Model.NextPageToken" asp-route-q="@Model.Q">Trang tiếp →</a>}
+</div>
+}

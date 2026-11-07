@@ -1,0 +1,35 @@
+@* Giao diện QUẢN LÝ CRM (yêu cầu 4.1): nghiệp vụ khách hàng, phản hồi, khảo sát, ưu đãi, báo cáo. *@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · Quản lý Morning Brew</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="theme-manager">
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">M</div><div><strong>MORNING BREW</strong><small>Quản lý khách hàng (CRM)</small></div></div>
+        <div class="user-box"><div class="avatar">@(User.Identity?.Name?.FirstOrDefault())</div><div class="user-info"><b>@User.Identity?.Name</b><small>@RowDisplay.Value("role",JsonSerializer.SerializeToElement(User.FindFirstValue(ClaimTypes.Role)))</small></div></div>
+        <nav>
+            <a asp-page="/Manager/Index">Tổng quan</a>
+            <a asp-page="/Manager/Customers">Khách hàng</a>
+            <a asp-page="/Manager/Feedbacks">Phản hồi</a>
+            <a asp-page="/Manager/Surveys">Khảo sát</a>
+            <a asp-page="/Manager/Promotions">Ưu đãi</a>
+            <a asp-page="/Manager/Reports">Báo cáo</a>
+        </nav>
+        @if(User.IsInRole("Owner")){<a class="area-switch" asp-page="/Admin/Index">← Về giao diện Quản trị</a>}
+        <form method="post" asp-page="/Logout" class="logout-form"><button>Đăng xuất</button></form>
+    </aside>
+    <main class="content">
+        @if(TempData["Error"] is string error){ <div class="alert" role="alert">@error</div> }
+        @if(TempData["Success"] is string success){ <div class="success" role="status">@success</div> }
+        @RenderBody()
+        <footer class="footer">Morning Brew CRM</footer>
+    </main>
+</div>
+<script src="~/js/ui.js" asp-append-version="true" defer></script>
+</body>
+</html>

@@ -21,15 +21,8 @@
             }
             else
             {
-                <a asp-page="/Index">⌂ Tổng quan</a>
-                @foreach(var entry in new[]{("customers","Khách hàng"),("feedbacks","Phản hồi"),("surveys","Khảo sát"),("promotions","Ưu đãi"),("products","Sản phẩm"),("reports","Báo cáo")})
-                { <a asp-page="/Workspace" asp-route-section="@entry.Item1">@entry.Item2</a> }
-                @if(User.IsInRole("Owner"))
-                {
-                    <a asp-page="/Workspace" asp-route-section="suppliers">Nhà cung cấp</a>
-                    <a asp-page="/Workspace" asp-route-section="accounts">Tài khoản</a>
-                    <a asp-page="/Workspace" asp-route-section="permissions">Phân quyền theo vai trò</a>
-                }
+                @if(User.IsInRole("Owner")){<a asp-page="/Admin/Index">Giao diện Quản trị</a>}
+                <a asp-page="/Manager/Index">Giao diện Quản lý CRM</a>
             }
             </nav>
             <form method="post" asp-page="/Logout" class="logout-form"><button>Đăng xuất</button></form>

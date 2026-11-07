@@ -1,0 +1,8 @@
+@page
+@model SuppliersModel
+@{ViewData["Title"]=Model.Title;}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel"><h2>Danh sách</h2><partial name="_Rows" model="Model.Rows" /><partial name="_Pager" model="Model" /></section>
+<div class="grid-2"><section class="panel"><h2>Thêm nhà cung cấp</h2><form method="post"><input type="hidden" name="operation" value="supplier">
+<label>Mã nhà cung cấp</label><input name="code" maxlength="30" required><label>Tên</label><input name="name" maxlength="150" required><label>Điện thoại</label><input name="phone" maxlength="20"><label>Email</label><input name="email" type="email"><label>Nhóm sản phẩm</label><input name="productGroup" maxlength="150"><button class="primary">Lưu nhà cung cấp</button></form></section>
+<section class="panel"><h2>Trạng thái hợp tác</h2><form method="post"><input type="hidden" name="operation" value="supplier-active"><label>Nhà cung cấp</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["supplier_id"]">@x["display_name"]</option>}</select><label>Trạng thái</label><select name="active"><option value="false">Tạm ngưng</option><option value="true">Đang hợp tác</option></select><button class="primary">Cập nhật</button></form></section></div>

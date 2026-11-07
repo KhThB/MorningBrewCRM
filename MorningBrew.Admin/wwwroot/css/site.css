@@ -40,3 +40,16 @@ input,select,textarea{width:100%;padding:11px 13px;border:1px solid #ddd5ca;back
 .sidebar .brand strong span{color:var(--accent)}
 .validation-summary-valid{display:none}
 @media(max-width:800px){.stat-bar{grid-template-columns:1fr auto}.stat-bar-track{grid-column:1/-1;order:3}.inline-delete{grid-template-columns:1fr}}
+
+/* ===== Tách giao diện: Quản trị (xanh đá) và Quản lý CRM (nâu cà phê) ===== */
+.theme-admin{--bg:#f1f5f9;--border:#e2e8f0;--primary:#0f172a;--primary-dark:#1e293b;--accent:#38bdf8;--accent-soft:#e0f2fe;--accent-ink:#0369a1}
+.theme-admin .sidebar{background:linear-gradient(180deg,#0f172a,#1e293b);color:#e2e8f0}
+.theme-admin .brand-mark{background:linear-gradient(135deg,#38bdf8,#0284c7);box-shadow:0 8px 20px rgba(2,132,199,.35)}
+.theme-admin .sidebar nav a{color:#cbd5e1}.theme-admin .sidebar nav a:hover{background:rgba(56,189,248,.14)}
+.theme-admin .sidebar nav a.current{background:#38bdf8;color:#0f172a}
+.theme-admin th{background:#f8fafc;color:#64748b}.theme-admin tr:hover td{background:#f8fafc}
+.theme-admin input:focus,.theme-admin select:focus,.theme-admin textarea:focus{border-color:#38bdf8;box-shadow:0 0 0 3px rgba(56,189,248,.15)}
+.area-banner{display:inline-block;margin-bottom:16px;padding:6px 12px;border-radius:99px;background:var(--accent-soft);color:var(--accent-ink);font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
+.area-switch{display:block;margin:18px 4px 0;padding:10px 12px;border-radius:11px;border:1px dashed rgba(255,255,255,.25);color:#e7e5e4;text-decoration:none;font-size:12px;font-weight:700}
+.area-switch:hover{background:rgba(255,255,255,.08)}
+.sidebar .nav-label{margin-top:8px}

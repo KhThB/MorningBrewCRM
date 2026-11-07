@@ -1,0 +1,6 @@
+@page
+@model ReportsModel
+@{ViewData["Title"]=Model.Title;}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+@if(Model.Report is not null){<partial name="_CustomerReport" model="Model.Report" />}
+<section class="panel"><h2>Doanh thu 30 ngày gần nhất</h2><p class="muted">Đã trừ khoản hoàn tiền trong kỳ. Mốc thời gian tính theo UTC.</p><partial name="_Rows" model="Model.Rows" /></section>

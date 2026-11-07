@@ -1,0 +1,24 @@
+@page
+@model AccountsModel
+@{ViewData["Title"]=Model.Title;var me=User.FindFirstValue(ClaimTypes.NameIdentifier);var others=Model.Rows.Where(x=>x["user_id"].ToString()!=me).ToList();}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel"><h2>Danh sách tài khoản</h2><partial name="_Rows" model="Model.Rows" /><partial name="_Pager" model="Model" /></section>
+<div class="grid-2">
+<section class="panel"><h2>Thêm tài khoản</h2>
+<form method="post"><input type="hidden" name="operation" value="account"><label>Họ tên</label><input name="fullName" maxlength="120" required>
+<label>Email</label><input name="email" type="email" required><label>Điện thoại</label><input name="phone" maxlength="20">
+<label>Mật khẩu ban đầu (ít nhất 10 ký tự)</label><input name="password" type="password" minlength="10" required autocomplete="new-password">
+<label>Vai trò</label><select name="role"><option value="BranchManager">Quản lý cửa hàng</option><option value="Staff">Thu ngân</option><option value="Customer">Khách hàng</option><option value="Owner">Chủ cửa hàng</option></select>
+<p class="muted">Quản lý và thu ngân được gán vào cửa hàng duy nhất của hệ thống. Có thể có nhiều quản lý.</p>
+<button class="primary">Tạo tài khoản</button></form></section>
+<section class="panel"><h2>Khóa / mở khóa</h2><form method="post"><input type="hidden" name="operation" value="account-active">
+<label>Tài khoản</label><select name="id">@foreach(var x in others){<option value="@x["user_id"]">@x["full_name"] · @x["email"] · @RowDisplay.Value("role",x["role"])</option>}</select>
+<label>Trạng thái mới</label><select name="active"><option value="false">Khóa</option><option value="true">Mở khóa</option></select><button class="primary">Cập nhật</button></form>
+<p class="muted">Khóa tài khoản giữ lại lịch sử giao dịch và thu hồi các phiên đăng nhập.</p></section>
+</div>
+<section class="panel danger-zone"><h2>Xóa tài khoản</h2>
+<p class="muted">Xóa mềm: tài khoản không đăng nhập được nữa và thông tin cá nhân được ẩn danh. Đơn hàng, điểm, phản hồi và câu trả lời khảo sát vẫn được giữ để báo cáo không bị sai lệch. Khác với <b>Khóa</b>, thao tác này không mở lại được.</p>
+<form method="post" class="inline-delete" onsubmit="return confirm('Xóa tài khoản đã chọn? Thao tác này không hoàn tác được.')">
+<input type="hidden" name="operation" value="account-delete"><label>Tài khoản</label>
+<select name="id" required>@foreach(var x in others){<option value="@x["user_id"]">@x["full_name"] · @x["email"] · @RowDisplay.Value("role",x["role"])</option>}</select>
+<button class="danger">Xóa tài khoản</button></form></section>

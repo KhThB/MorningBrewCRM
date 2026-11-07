@@ -1,0 +1,9 @@
+@page
+@model IndexModel
+@{ViewData["Title"]="Tổng quan CRM";}
+<div class="topbar"><div><h1>Tổng quan CRM</h1><p class="muted">Khách hàng, phản hồi và khảo sát của cửa hàng.</p></div><span class="role-badge">@RowDisplay.Value("role",JsonSerializer.SerializeToElement(User.FindFirstValue(ClaimTypes.Role)))</span></div>
+<div class="cards">
+@foreach(var item in new[]{("customers","Khách hàng"),("pending_feedbacks","Phản hồi cần xử lý"),("open_surveys","Khảo sát đang mở")})
+{<div class="stat"><span>@item.Item2</span><b>@Model.Stats.GetValueOrDefault(item.Item1)</b></div>}
+</div>
+<section class="panel"><h2>Công việc hôm nay</h2><div class="flow"><a class="primary" asp-page="/Manager/Feedbacks">Xử lý phản hồi</a><a class="secondary" asp-page="/Manager/Customers">Chăm sóc khách hàng</a><a class="secondary" asp-page="/Manager/Surveys">Theo dõi khảo sát</a><a class="secondary" asp-page="/Manager/Reports">Xem báo cáo</a></div></section>

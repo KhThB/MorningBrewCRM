@@ -1,4 +1,4 @@
-@model WorkspaceModel
+@model WorkspaceBase
 @* Hệ thống chỉ có 1 cửa hàng: khảo sát/ưu đãi luôn áp dụng cho toàn cửa hàng (phạm vi do API tự đặt). *@
 <p class="muted">Áp dụng cho: @(Model.Choices("branches").FirstOrDefault()?["display_name"].ToString() ?? "cửa hàng")</p>
 <label>Bắt đầu (giờ máy hiện tại)</label><input name="startsAt" type="datetime-local" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required>

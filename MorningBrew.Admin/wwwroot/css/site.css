@@ -53,3 +53,6 @@ input,select,textarea{width:100%;padding:11px 13px;border:1px solid #ddd5ca;back
 .area-switch{display:block;margin:18px 4px 0;padding:10px 12px;border-radius:11px;border:1px dashed rgba(255,255,255,.25);color:#e7e5e4;text-decoration:none;font-size:12px;font-weight:700}
 .area-switch:hover{background:rgba(255,255,255,.08)}
 .sidebar .nav-label{margin-top:8px}
+.matrix td.center,.matrix th.center{text-align:center}.matrix input[type=checkbox]{width:18px;height:18px;margin:0;accent-color:var(--accent-ink)}.matrix code{font-size:12px}
+.filter-grid{grid-template-columns:2fr 1fr 1fr auto}.filter-grid label{margin-top:0}
+@media(max-width:800px){.filter-grid{grid-template-columns:1fr}}

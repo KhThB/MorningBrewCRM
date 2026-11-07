@@ -1,8 +1,17 @@
 @model WorkspaceBase
+@* Giữ nguyên các bộ lọc trên URL (q, role, active, surveyId…) khi chuyển trang; pageToken gắn với bộ lọc. *@
+@{
+    string Link(string? token)
+    {
+        var query=Context.Request.Query.Where(x=>x.Key!="pageToken").ToDictionary(x=>x.Key,x=>(string?)x.Value.ToString());
+        if(token is not null) query["pageToken"]=token;
+        return Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(Context.Request.Path,query);
+    }
+}
 @if(!string.IsNullOrEmpty(Model.PageToken) || !string.IsNullOrEmpty(Model.NextPageToken))
 {
 <div class="flow">
-@if(!string.IsNullOrEmpty(Model.PageToken)){<a asp-route-q="@Model.Q">Về trang đầu</a>}
-@if(!string.IsNullOrEmpty(Model.NextPageToken)){<a asp-route-pageToken="@Model.NextPageToken" asp-route-q="@Model.Q">Trang tiếp →</a>}
+@if(!string.IsNullOrEmpty(Model.PageToken)){<a href="@Link(null)">Về trang đầu</a>}
+@if(!string.IsNullOrEmpty(Model.NextPageToken)){<a href="@Link(Model.NextPageToken)">Trang tiếp →</a>}
 </div>
 }

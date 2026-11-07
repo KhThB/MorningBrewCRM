@@ -27,9 +27,8 @@ public sealed partial class AdminController
     public async Task<IActionResult> Permission(string role, string code, PermissionInput input)
     {
         await RequireOwner();
-        if(role is not "BranchManager" ||
-           code is "Security.Manage" or "Organization.Manage" or "Catalog.Manage")
-            throw new ApiException(400,"Chỉ sửa quyền vận hành của vai trò quản lý cửa hàng.");
+        if(role is not ("BranchManager" or "Staff") || ProtectedPermissions.Contains(code))
+            throw new ApiException(400,"Chỉ sửa quyền vận hành của vai trò quản lý cửa hàng hoặc thu ngân.");
         await db.Query("""
             SET XACT_ABORT ON; BEGIN TRAN;
             DECLARE @role int=(SELECT RoleID FROM dbo.Roles WHERE Code=@roleCode),@permission int=(SELECT PermissionID FROM dbo.Permissions WHERE Code=@code);

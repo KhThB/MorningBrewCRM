@@ -22,7 +22,7 @@ public static class RowDisplay
         ["loyalty_transaction_id"]="Mã giao dịch điểm",["kind"]="Loại giao dịch",["points"]="Số điểm",
         ["note"]="Ghi chú",["customer_promotion_id"]="Mã voucher",["points_spent"]="Điểm đã dùng",
         ["expire_time"]="Hết hạn",["complete_time"]="Hoàn thành",["max_discount"]="Giảm tối đa",["min_subtotal"]="Đơn tối thiểu",
-        ["actor"]="Người thực hiện",["action"]="Thao tác",["entity_type"]="Đối tượng",["entity_id"]="Mã đối tượng",["details"]="Chi tiết",["email"]="Email"
+        ["audit_id"]="Mã nhật ký",["actor"]="Người thực hiện",["action"]="Thao tác",["entity_type"]="Đối tượng",["entity_id"]="Mã đối tượng",["details"]="Chi tiết",["email"]="Email"
     };
     private static readonly Dictionary<string,string> Values=new()
     {

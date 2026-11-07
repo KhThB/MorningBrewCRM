@@ -40,7 +40,7 @@ dotnet run --project MorningBrew.Admin --launch-profile http
 
 - API: http://localhost:5029 — kiểm tra `/health`, Swagger tại `/swagger`.
 - Admin: http://localhost:5191 — cấu hình Development gọi API ở cổng 5029.
-  - `/Admin/*` — **giao diện Quản trị** (chỉ chủ cửa hàng): tổng quan hệ thống + nhật ký, tài khoản, phân quyền, sản phẩm & giá, nhà cung cấp.
+  - `/Admin/*` — **giao diện Quản trị** (chỉ chủ cửa hàng): tổng quan hệ thống, tài khoản (lọc, thêm, đổi vai trò, khóa, xóa), ma trận phân quyền, nhật ký hệ thống, sản phẩm & giá, nhà cung cấp.
   - `/Manager/*` — **giao diện Quản lý CRM** (quản lý và chủ cửa hàng): khách hàng, phản hồi, khảo sát, ưu đãi, báo cáo.
   - `/Portal` — cổng khách hàng. Sau khi đăng nhập, hệ thống tự chuyển tới đúng giao diện theo vai trò.
 - App MAUI: chọn project `MorningBrewwApp` và **Windows Machine** trong Visual Studio rồi chạy. Android emulator gọi API qua `10.0.2.2:5029`; thiết bị thật cần địa chỉ LAN và cấu hình kết nối phù hợp.

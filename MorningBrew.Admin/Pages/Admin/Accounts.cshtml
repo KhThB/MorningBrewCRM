@@ -2,6 +2,11 @@
 @model AccountsModel
 @{ViewData["Title"]=Model.Title;var me=User.FindFirstValue(ClaimTypes.NameIdentifier);var others=Model.Rows.Where(x=>x["user_id"].ToString()!=me).ToList();}
 <div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel"><form method="get" class="form-grid filter-grid">
+<div><label>Tìm kiếm</label><input name="q" value="@Model.Q" placeholder="Họ tên, email, điện thoại"></div>
+<div><label>Vai trò</label><select name="role"><option value="">Tất cả</option>@foreach(var r in AccountsModel.Roles){<option value="@r.Code" selected="@(Model.Role==r.Code)">@r.Name</option>}</select></div>
+<div><label>Trạng thái</label><select name="active"><option value="">Tất cả</option><option value="true" selected="@(Model.Active=="true")">Đang hoạt động</option><option value="false" selected="@(Model.Active=="false")">Đang khóa</option></select></div>
+<div><button class="primary">Lọc</button> <a class="secondary" asp-page="/Admin/Accounts">Xóa lọc</a></div></form></section>
 <section class="panel"><h2>Danh sách tài khoản</h2><partial name="_Rows" model="Model.Rows" /><partial name="_Pager" model="Model" /></section>
 <div class="grid-2">
 <section class="panel"><h2>Thêm tài khoản</h2>
@@ -11,7 +16,12 @@
 <label>Vai trò</label><select name="role"><option value="BranchManager">Quản lý cửa hàng</option><option value="Staff">Thu ngân</option><option value="Customer">Khách hàng</option><option value="Owner">Chủ cửa hàng</option></select>
 <p class="muted">Quản lý và thu ngân được gán vào cửa hàng duy nhất của hệ thống. Có thể có nhiều quản lý.</p>
 <button class="primary">Tạo tài khoản</button></form></section>
-<section class="panel"><h2>Khóa / mở khóa</h2><form method="post"><input type="hidden" name="operation" value="account-active">
+<section class="panel"><h2>Đổi vai trò</h2><form method="post"><input type="hidden" name="operation" value="account-role">
+<label>Tài khoản nội bộ</label><select name="id">@foreach(var x in others.Where(x=>x["role"].ToString()!="Customer")){<option value="@x["user_id"]">@x["full_name"] · @x["email"] · @RowDisplay.Value("role",x["role"])</option>}</select>
+<label>Vai trò mới</label><select name="role"><option value="BranchManager">Quản lý cửa hàng</option><option value="Staff">Thu ngân</option><option value="Owner">Chủ cửa hàng</option></select>
+<button class="primary">Đổi vai trò</button></form>
+<p class="muted">Ví dụ: thu ngân lên quản lý thì nhận thêm quyền khách hàng, khảo sát, báo cáo… theo bảng Phân quyền. Tài khoản khách hàng không đổi sang vai trò nội bộ. Người được đổi phải đăng nhập lại.</p>
+<h3>Khóa / mở khóa</h3><form method="post"><input type="hidden" name="operation" value="account-active">
 <label>Tài khoản</label><select name="id">@foreach(var x in others){<option value="@x["user_id"]">@x["full_name"] · @x["email"] · @RowDisplay.Value("role",x["role"])</option>}</select>
 <label>Trạng thái mới</label><select name="active"><option value="false">Khóa</option><option value="true">Mở khóa</option></select><button class="primary">Cập nhật</button></form>
 <p class="muted">Khóa tài khoản giữ lại lịch sử giao dịch và thu hồi các phiên đăng nhập.</p></section>

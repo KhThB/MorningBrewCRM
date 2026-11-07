@@ -44,8 +44,6 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
         ["ProductID"],true,page,$"{Actor}:productResources",[],"products","ProductID");
     [HttpGet("variants")]
     public Task<ApiPage> ListVariants([FromQuery] PageRequest page) => List("products", page);
-    [HttpGet("accounts")]
-    public Task<ApiPage> ListAccounts([FromQuery] PageRequest page) => List("accounts", page);
     [HttpGet("permissions")]
     public Task<ApiPage> ListPermissions([FromQuery] PageRequest page) => List("permissions", page);
     [HttpGet("suppliers")]

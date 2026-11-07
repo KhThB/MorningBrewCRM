@@ -67,7 +67,7 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
     }
 
     // Toàn bộ thao tác ghi của hai giao diện; trang nào được dùng thao tác nào do Operations quyết định.
-    private async Task<IActionResult?> ExecuteAsync(string operation)
+    protected virtual async Task<IActionResult?> ExecuteAsync(string operation)
     {
         switch(operation)
         {
@@ -75,6 +75,9 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
             case "account":
                 await Api.Send(HttpMethod.Post,"v1/accounts",new {email=Text("email"),fullName=Text("fullName"),password=Text("password"),phone=Text("phone"),role=Text("role")});
                 TempData["Success"]="Đã tạo tài khoản."; break;
+            case "account-role":
+                await Api.Send(HttpMethod.Put,$"v1/accounts/{Number("id")}/role",new {role=Text("role")});
+                TempData["Success"]="Đã đổi vai trò. Tài khoản này phải đăng nhập lại để nhận quyền mới."; break;
             case "account-active":
                 await Api.Send(HttpMethod.Put,$"v1/accounts/{Number("id")}/active",new {isActive=Text("active")=="true"}); break;
             case "account-delete":

@@ -1,0 +1,6 @@
+@page
+@model AuditLogsModel
+@{ViewData["Title"]=Model.Title;}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel"><form method="get"><label>Tìm theo thao tác, đối tượng, người thực hiện</label><input name="q" value="@Model.Q" placeholder="Ví dụ: Account.Role, Permission.Change"><button class="primary">Tìm</button></form></section>
+<section class="panel"><h2>Nhật ký</h2><partial name="_Rows" model="Model.Rows" /><partial name="_Pager" model="Model" /></section>

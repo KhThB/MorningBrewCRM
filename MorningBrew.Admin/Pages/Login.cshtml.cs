@@ -16,7 +16,13 @@ public class LoginModel(CrmApi api):PageModel
         try
         {
             var login=await api.Login(Email,Password);
-            if(login.User.Role=="Staff") { await api.Revoke(login.Token); ModelState.AddModelError("","Nhân viên sử dụng ứng dụng POS."); return Page(); }
+            // Web Admin chỉ dành cho nội bộ (chủ cửa hàng, quản lý). Khách hàng dùng app Morning Brew; thu ngân dùng POS.
+            if(login.User.Role is "Staff" or "Customer")
+            {
+                await api.Revoke(login.Token);
+                ModelState.AddModelError("",login.User.Role=="Customer"?"Khách hàng vui lòng sử dụng ứng dụng Morning Brew.":"Nhân viên sử dụng ứng dụng POS.");
+                return Page();
+            }
             var claims=new[]{new Claim(ClaimTypes.NameIdentifier,login.User.Id.ToString()),new Claim(ClaimTypes.Name,login.User.FullName),new Claim(ClaimTypes.Email,login.User.Email),new Claim(ClaimTypes.Role,login.User.Role)};
             var properties=new AuthenticationProperties { IsPersistent=false,ExpiresUtc=DateTime.SpecifyKind(login.ExpiresAt,DateTimeKind.Utc) };
             properties.StoreTokens([new AuthenticationToken { Name="access_token",Value=login.Token }]);

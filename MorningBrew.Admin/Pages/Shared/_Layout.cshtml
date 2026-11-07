@@ -14,16 +14,8 @@
         {
             <div class="user-box"><div class="avatar">@(User.Identity.Name?.FirstOrDefault())</div><div class="user-info"><b>@User.Identity.Name</b><small>@User.FindFirstValue(ClaimTypes.Role)</small></div></div>
             <nav>
-            @if(User.IsInRole("Customer"))
-            {
-                @foreach(var entry in new[]{("profile","Hồ sơ"),("loyalty","Điểm tích lũy"),("wallet","Ví voucher"),("promotions","Ưu đãi"),("feedbacks","Phản hồi"),("surveys","Khảo sát")})
-                { <a asp-page="/Portal" asp-route-section="@entry.Item1">@entry.Item2</a> }
-            }
-            else
-            {
-                @if(User.IsInRole("Owner")){<a asp-page="/Admin/Index">Giao diện Quản trị</a>}
-                <a asp-page="/Manager/Index">Giao diện Quản lý CRM</a>
-            }
+            @if(User.IsInRole("Owner")){<a asp-page="/Admin/Index">Giao diện Quản trị</a>}
+            @if(User.IsInRole("Owner") || User.IsInRole("BranchManager")){<a asp-page="/Manager/Index">Giao diện Quản lý CRM</a>}
             </nav>
             <form method="post" asp-page="/Logout" class="logout-form"><button>Đăng xuất</button></form>
         }

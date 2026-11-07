@@ -40,7 +40,6 @@ builder.Services.AddAuthorization(options =>
     // Hai giao diện tách biệt: /Admin (quản trị hệ thống, chỉ chủ cửa hàng) và /Manager (nghiệp vụ CRM).
     options.AddPolicy("Admin", policy => policy.RequireRole("Owner"));
     options.AddPolicy("Management", policy => policy.RequireRole("Owner","BranchManager"));
-    options.AddPolicy("Customer", policy => policy.RequireRole("Customer"));
 });
 builder.Services.AddRazorPages(options =>
 {
@@ -49,8 +48,6 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AllowAnonymousToPage("/Error");
     options.Conventions.AuthorizeFolder("/Admin","Admin");
     options.Conventions.AuthorizeFolder("/Manager","Management");
-    options.Conventions.AuthorizePage("/Portal","Customer");
-    options.Conventions.AuthorizePage("/Answer","Customer");
 });
 var app = builder.Build();
 app.UseExceptionHandler("/Error");

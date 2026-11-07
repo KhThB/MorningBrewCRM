@@ -164,6 +164,9 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
             DECLARE @branch int=(SELECT TOP(1) BranchID FROM dbo.Branches WHERE IsActive=1 ORDER BY BranchID);
             IF @role IS NULL THROW 51100,'Role not found.',1;
             IF @code IN ('Staff','BranchManager') AND @branch IS NULL THROW 51100,'Store not found.',1;
+            -- Kiểm tra trước để báo lỗi rõ ràng thay vì để vi phạm UNIQUE (UQ_Users_0) bật lên thành SqlException.
+            IF EXISTS(SELECT 1 FROM dbo.Users WITH(UPDLOCK,HOLDLOCK) WHERE NormalizedEmail=UPPER(LTRIM(RTRIM(@email))))
+                THROW 51120,N'Email đã được sử dụng cho một tài khoản khác.',1;
             INSERT dbo.Users(RoleID,Email,NormalizedEmail,FullName,Phone,PasswordHash)
             VALUES(@role,@email,UPPER(LTRIM(RTRIM(@email))),@name,@phone,@hash);
             DECLARE @id int=SCOPE_IDENTITY();

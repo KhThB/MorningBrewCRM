@@ -42,8 +42,11 @@ public static class RowDisplay
         var text=value.ToString();
         if(key=="date_of_birth"&&DateTime.TryParse(text,CultureInfo.InvariantCulture,DateTimeStyles.None,out var birthday))
             return birthday.ToString("dd/MM/yyyy");
-        if(key.EndsWith("_time")&&DateTime.TryParse(text,CultureInfo.InvariantCulture,DateTimeStyles.None,out var time))
-            return DateTime.SpecifyKind(time,DateTimeKind.Utc).ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+        // API luôn trả thời gian UTC dạng ISO có hậu tố "Z". Đọc bằng DateTimeOffset (giữ đúng mốc UTC) rồi
+        // đổi sang giờ của máy chạy web. Trước đây DateTime.TryParse đã tự đổi sang giờ máy, sau đó lại cộng
+        // múi giờ thêm một lần nên lệch +7 giờ.
+        if((key.EndsWith("_time")||key.EndsWith("_at"))&&DateTimeOffset.TryParse(text,CultureInfo.InvariantCulture,DateTimeStyles.AssumeUniversal,out var time))
+            return time.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss");
         if(key is "status" or "scope" or "role" or "gender" or "kind" or "type")return Values.GetValueOrDefault(text,text);
         return text;
     }

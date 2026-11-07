@@ -4,7 +4,7 @@
 SET NOCOUNT ON; SET XACT_ABORT ON;
 IF EXISTS(SELECT 1 FROM dbo.Roles) THROW 51000,N'Seed requires empty tables.',1;
 BEGIN TRAN;
--- Vai trò AreaManager vẫn có trong schema nhưng không dùng khi chỉ có 1 cửa hàng.
+-- Vai trò AreaManager đã bị bỏ trong 11_single_store.sql (chỉ có 1 cửa hàng).
 INSERT dbo.Roles(Code,Name) VALUES('Owner',N'Chủ cửa hàng'),('BranchManager',N'Quản lý cửa hàng'),('Staff',N'Nhân viên thu ngân'),('Customer',N'Khách hàng');
 INSERT dbo.Permissions(Code,Description) VALUES
 ('Orders.Create',N'Tạo đơn tại POS'),('Orders.Manage',N'Cập nhật xử lý đơn'),('Orders.Cancel',N'Hủy đơn sau xác nhận'),('Orders.Read',N'Xem lịch sử đơn'),

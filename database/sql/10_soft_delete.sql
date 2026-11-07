@@ -1,3 +1,4 @@
+-- LƯU Ý: dbo.SoftDeleteUser được 11_single_store.sql định nghĩa lại (cho quản lý xóa khách). Nếu chạy lại file này, hãy chạy lại 11 sau đó.
 -- Xóa mềm tài khoản / khách hàng (yêu cầu 4.1 "Xóa khách hàng", II.2 "Thêm, xóa account").
 -- Chạy lặp lại được. Không xóa dòng nào: chỉ đánh dấu DeletedAt, khóa đăng nhập và ẩn danh dữ liệu cá nhân,
 -- để đơn hàng, điểm, phản hồi, khảo sát (khóa ngoại tới Users/Customers) và các báo cáo vẫn đúng.

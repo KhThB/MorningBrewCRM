@@ -60,7 +60,7 @@ Tài khoản **dữ liệu mẫu local**: `owner@morningbrew.test`, `manager.1@m
 - [API v1](docs/api-v1.md) và [ghi chú tích hợp](docs/integration.md): đối chiếu với controller/seed hiện tại vì một số nội dung mô tả phạm vi cũ.
 - `tests/integration.py` và `tests/api_contract.py` còn giả định dữ liệu nhiều chi nhánh/quản lý khu vực của bản trước; chưa phù hợp hoàn toàn với seed CRM rút gọn hiện tại. Chỉ chạy trên database kiểm thử riêng.
 - [Tài liệu backend cũ](docs/legacy-backend.md) chỉ còn để tham khảo lịch sử; mã EF/JWT cũ đã được xóa khỏi repo (xem tag `backup-20261107` nếu cần đối chiếu).
-- Chế độ **một cửa hàng**: `database/sql/11_single_store.sql` (quản lý thấy toàn bộ khách/phản hồi/khảo sát, nhiều quản lý, quyền `Customers.Manage`, bỏ vai trò AreaManager). Database đã có chỉ cần chạy riêng script này:
+- Chế độ **một cửa hàng**: `database/sql/11_single_store.sql` (quản lý thấy toàn bộ khách/phản hồi/khảo sát, nhiều quản lý, quyền `Customers.Manage`, bỏ vai trò AreaManager). **Database đã có phải chạy script này trước khi chạy API mới** (nếu không, tạo quản lý / xóa khách sẽ báo lỗi quyền):
 
   ```powershell
   sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\11_single_store.sql

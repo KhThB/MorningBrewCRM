@@ -32,8 +32,6 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
 
     [HttpGet("customers")]
     public Task<ApiPage> ListCustomers([FromQuery] PageRequest page, string? q = null) => List("customers", page, q);
-    [HttpGet("feedbacks")]
-    public Task<ApiPage> ListFeedbacks([FromQuery] PageRequest page) => List("feedbacks", page);
     [HttpGet("surveys")]
     public Task<ApiPage> ListSurveys([FromQuery] PageRequest page) => List("surveys", page);
     [HttpGet("promotions")]
@@ -143,6 +141,7 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
     {
         branches = await db.Query("SELECT BranchID AS Id,Name FROM dbo.Branches WHERE dbo.CanBranch(@actor,BranchID,'Orders.Read')=1 ORDER BY BranchID", ("@actor", Actor)),
         categories = await db.Query("SELECT CategoryID AS Id,Name FROM dbo.Categories WHERE IsActive=1 ORDER BY CategoryID"),
+        products = await db.Query("SELECT ProductID AS Id,Name FROM dbo.Products WHERE IsActive=1 ORDER BY Name"),
         customers = await db.Query($"SELECT TOP(200) c.CustomerID AS Id,u.FullName AS Name FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID WHERE u.IsActive=1 AND {CustomerScope} ORDER BY c.CustomerID DESC", ("@actor", Actor))
     };
 

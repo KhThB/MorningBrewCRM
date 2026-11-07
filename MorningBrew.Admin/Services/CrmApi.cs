@@ -20,6 +20,7 @@ public sealed class CrmApi(HttpClient client,IHttpContextAccessor accessor)
     public Task<LoginResponse> Login(string email,string password)=>Request<LoginResponse>(HttpMethod.Post,"v1/auth/login",new {username=email,password},null,false);
     public Task<T> Get<T>(string path)=>Request<T>(HttpMethod.Get,path);
     public async Task Revoke(string token)=>_ = await Request<JsonElement>(HttpMethod.Post,"v1/auth/logout",null,token,false);
+    public Task<T> Post<T>(string path,object body)=>Request<T>(HttpMethod.Post,path,body);
     public async Task Send(HttpMethod method,string path,object? body=null,string? etag=null)=>_ = await Request<JsonElement>(method,path,body,etag:etag);
     private async Task<T> Request<T>(HttpMethod method,string path,object? body=null,string? token=null,bool useCookie=true,string? etag=null)
     {

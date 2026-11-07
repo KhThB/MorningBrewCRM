@@ -1,0 +1,15 @@
+@page
+@model BackupModel
+@{ViewData["Title"]=Model.Title;}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<div class="grid-2">
+<section class="panel"><h2>Sao lưu ngay</h2>
+<p class="muted">Tạo bản sao lưu FULL (COPY_ONLY, có CHECKSUM) rồi kiểm tra lại bằng <code>RESTORE VERIFYONLY</code>. Bản sao lưu không ảnh hưởng tới lịch sao lưu định kỳ.</p>
+<form method="post"><input type="hidden" name="operation" value="backup"><button class="primary">Sao lưu database</button></form></section>
+<section class="panel"><h2>Phục hồi</h2>
+<p class="muted">Phục hồi cần quyền độc quyền trên database nên thực hiện bằng script trên máy chủ, không qua web:</p>
+<ol class="answers"><li>Phục hồi thử sang database mới để kiểm tra:<br><code>./database/tools/Restore.ps1 -BackupFile &lt;file.bak&gt; -Database MorningBrewCRM_Restore</code></li>
+<li>Khi cần thay thế database đang chạy: dừng API, chạy lại lệnh trên với <code>-Database MorningBrewCRM_Crm -Replace</code>, rồi khởi động API.</li>
+<li>Sao lưu định kỳ: <code>./database/tools/Backup.ps1 -Database MorningBrewCRM_Crm -Keep 14</code> (lên lịch bằng Task Scheduler).</li></ol></section>
+</div>
+<section class="panel"><h2>Các bản sao lưu gần nhất</h2><partial name="_Rows" model="Model.Rows" /></section>

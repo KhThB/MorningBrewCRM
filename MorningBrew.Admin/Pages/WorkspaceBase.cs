@@ -66,6 +66,31 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
         return RedirectToPage(new {q=Q,pageToken=PageToken});
     }
 
+    // Bộ tạo khảo sát: mỗi câu hỏi gồm nội dung, loại (Rating/SingleChoice/MultipleChoice/Text),
+    // các lựa chọn (mỗi dòng một lựa chọn) và bắt buộc hay không. Dòng trống bị bỏ qua.
+    private object[] SurveyQuestions()
+    {
+        var f=Request.Form;
+        var texts=f["q_text"];var types=f["q_type"];var options=f["q_options"];var required=f["q_required"];
+        var list=new List<object>();
+        for(var i=0;i<texts.Count;i++)
+        {
+            var text=(texts[i]??"").Trim();
+            if(text.Length==0) continue;
+            var type=i<types.Count?types[i]??"Rating":"Rating";
+            var isRequired=i<required.Count && required[i]=="true";
+            var opts=(i<options.Count?options[i]??"":"").Split('\n',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries);
+            list.Add(type switch
+            {
+                "Rating"=>new {text,type,isRequired,ratingMin=(int?)1,ratingMax=(int?)5,options=(string[]?)null},
+                "SingleChoice" or "MultipleChoice"=>new {text,type,isRequired,ratingMin=(int?)null,ratingMax=(int?)null,options=(string[]?)opts},
+                _=>new {text,type="Text",isRequired,ratingMin=(int?)null,ratingMax=(int?)null,options=(string[]?)null}
+            });
+        }
+        if(list.Count==0) throw new FormatException();
+        return list.ToArray();
+    }
+
     // Toàn bộ thao tác ghi của hai giao diện; trang nào được dùng thao tác nào do Operations quyết định.
     protected virtual async Task<IActionResult?> ExecuteAsync(string operation)
     {
@@ -109,14 +134,24 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
             case "feedback":
                 await Api.Send(HttpMethod.Post,$"v1/feedbacks/{Number("id")}:reply",new {status=Text("status"),responseContent=Text("response")}); break;
             case "survey":
-                var questions=Text("questions").Split('\n',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries)
-                    .Select(q=>new {text=q,type="Rating",isRequired=true,ratingMin=1,ratingMax=5}).ToArray();
+                var questions=SurveyQuestions();
                 await Api.Send(HttpMethod.Post,"v1/surveys",new {title=Text("title"),description=Text("description"),startsAt=Date("startsAt"),endsAt=Date("endsAt"),questions}); break;
             case "publish":
             case "close":
                 await Api.Send(HttpMethod.Post,$"v1/surveys/{Number("id")}:{operation}"); break;
             case "invite":
                 await Api.Send(HttpMethod.Post,$"v1/surveys/{Number("id")}:invite",new {customerId=Number("customerId")}); break;
+            case "invite-bulk":
+                var form=Request.Form;
+                var ids=form["customerIds"].Select(x=>int.Parse(x!,CultureInfo.InvariantCulture)).ToArray();
+                var mode=Text("mode");
+                object body=mode=="list"
+                    ? new {customerIds=ids}
+                    : new {all=mode=="all",ageGroup=Optional("ageGroup"),gender=string.IsNullOrEmpty(Text("gender"))?null:Text("gender"),productId=Optional("productId")};
+                if(mode=="list" && ids.Length==0) throw new FormatException();
+                var result=await Api.Post<JsonElement>($"v1/surveys/{Number("id")}:inviteBulk",body);
+                TempData["Success"]=$"Khớp {result.GetProperty("matched")} khách · mời mới {result.GetProperty("invited")} · đã mời trước đó {result.GetProperty("already_invited")}.";
+                break;
             case "results":
                 return RedirectToPage(new {surveyId=Number("id")});
             case "promotion":

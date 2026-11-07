@@ -56,3 +56,8 @@ input,select,textarea{width:100%;padding:11px 13px;border:1px solid #ddd5ca;back
 .matrix td.center,.matrix th.center{text-align:center}.matrix input[type=checkbox]{width:18px;height:18px;margin:0;accent-color:var(--accent-ink)}.matrix code{font-size:12px}
 .filter-grid{grid-template-columns:2fr 1fr 1fr auto}.filter-grid label{margin-top:0}
 @media(max-width:800px){.filter-grid{grid-template-columns:1fr}}
+.question-row{display:grid;grid-template-columns:minmax(0,3fr) 150px 110px auto;gap:10px;align-items:end;padding:12px;border:1px solid var(--border);border-radius:12px;margin-bottom:10px;background:#fcfbf9}
+.question-row .q-options{grid-column:1/-2}.question-row label{margin-top:0}.question-row input,.question-row select,.question-row textarea{margin-bottom:0}
+.check-list{max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin:6px 0 12px}.check-list label{display:flex;gap:8px;align-items:center;font-weight:500}.check-list input{width:auto;margin:0}
+.filter-row{display:grid;grid-template-columns:2fr 1fr auto;gap:10px;align-items:end}.filter-row label{margin-top:0}
+@media(max-width:800px){.question-row,.filter-row{grid-template-columns:1fr}}

@@ -40,8 +40,8 @@ dotnet run --project MorningBrew.Admin --launch-profile http
 
 - API: http://localhost:5029 — kiểm tra `/health`, Swagger tại `/swagger`.
 - Admin: http://localhost:5191 — cấu hình Development gọi API ở cổng 5029.
-  - `/Admin/*` — **giao diện Quản trị** (chỉ chủ cửa hàng): tổng quan hệ thống, tài khoản (lọc, thêm, đổi vai trò, khóa, xóa), ma trận phân quyền, nhật ký hệ thống, sản phẩm & giá, nhà cung cấp.
-  - `/Manager/*` — **giao diện Quản lý CRM** (quản lý và chủ cửa hàng): khách hàng, phản hồi, khảo sát, ưu đãi, báo cáo.
+  - `/Admin/*` — **giao diện Quản trị** (chỉ chủ cửa hàng): tổng quan hệ thống, tài khoản (lọc, thêm, đổi vai trò, khóa, xóa), ma trận phân quyền, nhật ký hệ thống, sao lưu & phục hồi, sản phẩm & giá, nhà cung cấp.
+  - `/Manager/*` — **giao diện Quản lý CRM** (quản lý và chủ cửa hàng): khách hàng (thêm/khóa/xóa), phản hồi (lọc theo trạng thái), khảo sát (câu hỏi đánh giá/chọn một/chọn nhiều/tự luận, mời hàng loạt theo nhóm), ưu đãi, báo cáo.
   - `/Portal` — cổng khách hàng. Sau khi đăng nhập, hệ thống tự chuyển tới đúng giao diện theo vai trò.
 - App MAUI: chọn project `MorningBrewwApp` và **Windows Machine** trong Visual Studio rồi chạy. Android emulator gọi API qua `10.0.2.2:5029`; thiết bị thật cần địa chỉ LAN và cấu hình kết nối phù hợp.
 
@@ -57,6 +57,7 @@ Tài khoản **dữ liệu mẫu local**: `owner@morningbrew.test`, `manager.1@m
 ## Tài liệu và kiểm thử
 
 - [Database và scripts cài đặt](database/README.md).
+- [Sao lưu và phục hồi CSDL](docs/backup-restore.md): `database/tools/Backup.ps1`, `Restore.ps1` và trang Admin → Sao lưu & phục hồi.
 - [API v1](docs/api-v1.md) và [ghi chú tích hợp](docs/integration.md): đối chiếu với controller/seed hiện tại vì một số nội dung mô tả phạm vi cũ.
 - `tests/integration.py` và `tests/api_contract.py` còn giả định dữ liệu nhiều chi nhánh/quản lý khu vực của bản trước; chưa phù hợp hoàn toàn với seed CRM rút gọn hiện tại. Chỉ chạy trên database kiểm thử riêng.
 - [Tài liệu backend cũ](docs/legacy-backend.md) chỉ còn để tham khảo lịch sử; mã EF/JWT cũ đã được xóa khỏi repo (xem tag `backup-20261107` nếu cần đối chiếu).

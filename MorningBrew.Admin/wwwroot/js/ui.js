@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 // Nút <button data-open="id" data-fill='{"id":5,"full_name":"Lan"}'> mở <dialog id="id">, điền input[name] và [data-text].
 function mbOpenModal(id,fill){
  const d=document.getElementById(id); if(!d||typeof d.showModal!=='function') return;
- d.querySelectorAll('form').forEach(f=>f.reset());
+ d.querySelectorAll('form').forEach(f=>f.reset()); d.querySelectorAll('.modal-error').forEach(e=>e.remove());
  if(fill) for(const [k,v] of Object.entries(fill)){
   d.querySelectorAll('[name="'+k+'"]').forEach(el=>{
    if(el.type==='checkbox'||el.type==='radio') el.checked=Array.isArray(v)?v.includes(el.value):String(v)===el.value||v===true;
@@ -37,7 +37,9 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('DOMContentLoaded',()=>{
  const st=document.getElementById('modal-state');
- if(st){try{const m=JSON.parse(st.textContent);mbOpenModal(m.id,m.form);}catch(_){}}
+ if(st){try{const m=JSON.parse(st.textContent);mbOpenModal(m.id,m.form);
+  if(m.error){const b=document.querySelector('#'+m.id+' .modal-body');if(b){const e=document.createElement('div');e.className='modal-error';e.setAttribute('role','alert');e.textContent=m.error;b.prepend(e);}}
+ }catch(_){}}
 });
 
 // ===== [UI-04] Thông báo nổi: thành công tự ẩn sau 4 giây, lỗi giữ tới khi bấm × (hoặc 10 giây) =====

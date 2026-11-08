@@ -77,7 +77,7 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
         var fields=Request.Form.Where(x=>x.Key is not ("__RequestVerificationToken" or "requestKey" or "modal")
                 && !x.Key.Contains("password",StringComparison.OrdinalIgnoreCase) && x.Key!="confirm")
             .ToDictionary(x=>x.Key,x=>x.Value.Count>1?(object)x.Value.ToArray():x.Value.ToString());
-        TempData["ModalState"]=JsonSerializer.Serialize(new {id=modal,form=fields});
+        TempData["ModalState"]=JsonSerializer.Serialize(new {id=modal,form=fields,error=TempData.Peek("Error")}); // error: hiện ngay trong modal vì toast nằm dưới lớp mờ
     }
 
     // Bộ tạo khảo sát: mỗi câu hỏi gồm nội dung, loại (Rating/SingleChoice/MultipleChoice/Text),

@@ -61,6 +61,8 @@ public sealed class ApiErrors(RequestDelegate next, ILogger<ApiErrors> logger)
                 ApiException e => (e.Status, e.Message),
                 SqlException { Number: 51103 } => (403, "Thao tác nằm ngoài quyền hoặc phạm vi của bạn."),
                 SqlException { Number: 51104 } => (404, "Không tìm thấy tài nguyên."),
+                // [BUG-06] Thao tác không hợp lệ với trạng thái hiện tại: trả 409 kèm thông báo tiếng Việt từ SQL.
+                SqlException { Number: 51124 } e => (409, e.Message),
                 SqlException { Number: 51112 } => (412, "Dữ liệu đã thay đổi. Hãy tải lại trước khi lưu."),
                 SqlException { Number: 51109 } => (409, "Yêu cầu xung đột với trạng thái hoặc yêu cầu trước đó."),
                 BadHttpRequestException e => (e.StatusCode, "Yêu cầu HTTP không hợp lệ."),

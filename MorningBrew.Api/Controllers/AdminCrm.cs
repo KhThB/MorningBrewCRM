@@ -67,10 +67,17 @@ public sealed partial class AdminController
     [HttpPost("surveys/{id:int}:close")]
     public async Task<IActionResult> Close(int id)
     {
+        // [BUG-06] Tách "không có quyền" (51103 → 403) khỏi "sai trạng thái" (51124 → 409, thông báo tiếng Việt).
         await db.Query("""
-            UPDATE dbo.Surveys SET Status='Closed' WHERE SurveyID=@id AND Status='Open'
-            AND dbo.CanScope(@actor,Scope,AreaID,BranchID,'Surveys.Manage')=1;
-            IF @@ROWCOUNT=0 THROW 51103,'Survey not open or outside scope.',1;
+            SET XACT_ABORT ON; BEGIN TRAN;
+            DECLARE @status varchar(10),@scope varchar(10),@area int,@branch int;
+            SELECT @status=Status,@scope=Scope,@area=AreaID,@branch=BranchID FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@id;
+            IF @status IS NULL THROW 51104,N'Không tìm thấy khảo sát.',1;
+            IF dbo.CanScope(@actor,@scope,@area,@branch,'Surveys.Manage')=0 THROW 51103,'Survey outside scope.',1;
+            IF @status<>'Open' THROW 51124,N'Chỉ đóng được khảo sát đang mở.',1;
+            UPDATE dbo.Surveys SET Status='Closed' WHERE SurveyID=@id;
+            INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID) VALUES(@actor,@branch,'Survey.Close','Surveys',@id);
+            COMMIT;
             """,("@id",id),("@actor",Actor)); return NoContent();
     }
     public record CustomerInput([Range(1,int.MaxValue)] int CustomerId);

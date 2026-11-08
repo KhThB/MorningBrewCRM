@@ -15,8 +15,8 @@
                         <b>@o.OrderCode</b>
                         <span class="chip @Fmt.OrderCss(o.Status)">@Fmt.OrderStatus(o.Status)</span>
                     </div>
-                    <p class="muted">@o.BranchName</p>
-                    <p>@string.Join(", ", o.Lines.Select(l => $"{l.Quantity}× {l.Name}"))</p>
+                    <p class="muted">@o.BranchName · @(o.Fulfillment == "Delivery" ? "Giao hàng" : "Nhận tại quầy")</p>
+                    <p>@o.Summary</p> @* [BUG-02] danh sách món từ API *@
                     <div class="row-between">
                         <span class="muted small">@Fmt.When(o.CreatedAt)</span>
                         <b>@Fmt.Money(o.Total)</b>
@@ -25,7 +25,6 @@
                     {
                         <div class="order-cta"><Icon Name="star" Size="16" /> Đánh giá để giúp quán phục vụ tốt hơn</div>
                     }
-                    @if (o.IsDemo) { <span class="demo-tag">Dữ liệu mẫu</span> }
                 </a>
             }
         </ChildContent>

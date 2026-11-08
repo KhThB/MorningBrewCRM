@@ -84,14 +84,28 @@
                 </button>
             }
         </div>
+        @* [BUG-02] Tùy chọn của món (đường, đá, topping); nhóm có dấu * là bắt buộc *@
+        @foreach (var g in Groups)
+        {
+            var first = g.First();
+            <h3>@first.GroupName @(first.MinSelections > 0 ? "*" : "") <small class="muted">@RuleText(first)</small></h3>
+            <div class="chips wrap">
+                @foreach (var o in g)
+                {
+                    <button class="chip-btn @(picked.Contains(o.OptionId) ? "active" : "")" @onclick="() => Toggle(g.ToList(), o)">
+                        @(o.OptionName + (o.ExtraPrice > 0 ? $" +{Fmt.Money(o.ExtraPrice)}" : ""))
+                    </button>
+                }
+            </div>
+        }
         <div class="row-between sheet-footer">
             <div class="stepper">
                 <button @onclick="() => quantity = Math.Max(1, quantity - 1)" aria-label="Giảm"><Icon Name="minus" Size="18" /></button>
                 <b>@quantity</b>
                 <button @onclick="() => quantity++" aria-label="Tăng"><Icon Name="plus" Size="18" /></button>
             </div>
-            <button class="btn btn-primary" @onclick="AddToCart" disabled="@(variant is null)">
-                Thêm · @Fmt.Money((variant?.Price ?? 0) * quantity)
+            <button class="btn btn-primary" @onclick="AddToCart" disabled="@(variant is null || !OptionsValid)">
+                Thêm · @Fmt.Money(((variant?.Price ?? 0) + PickedOptions.Sum(o => o.ExtraPrice)) * quantity)
             </button>
         </div>
     </div>
@@ -108,6 +122,23 @@
     private List<MenuProduct>? sheet;
     private MenuProduct? variant;
     private int quantity = 1;
+    private HashSet<int> picked = []; // [BUG-02] tùy chọn đang chọn
+
+    // [BUG-02] Nhóm tùy chọn của món đang mở, lấy từ GET v1/me/menu.
+    private List<IGrouping<int, MenuModifier>> Groups => sheet is null || menu?.Modifiers is null ? []
+        : menu.Modifiers.Where(m => m.ProductId == sheet[0].ProductId).GroupBy(m => m.GroupId).ToList();
+    private List<MenuModifier> PickedOptions => Groups.SelectMany(g => g).Where(o => picked.Contains(o.OptionId)).ToList();
+    private bool OptionsValid => Groups.All(g => { var n = g.Count(o => picked.Contains(o.OptionId)); return n >= g.First().MinSelections && n <= g.First().MaxSelections; });
+    private static string RuleText(MenuModifier m) => m.MinSelections == m.MaxSelections ? $"(chọn {m.MaxSelections})"
+        : m.MinSelections == 0 ? $"(tùy chọn, tối đa {m.MaxSelections})" : $"(chọn {m.MinSelections}–{m.MaxSelections})";
+    private void Toggle(List<MenuModifier> group, MenuModifier option)
+    {
+        var max = group[0].MaxSelections;
+        if (picked.Remove(option.OptionId)) return;
+        if (max == 1) foreach (var o in group) picked.Remove(o.OptionId);
+        else if (group.Count(o => picked.Contains(o.OptionId)) >= max) { Toasts.Show($"Chọn tối đa {max} {group[0].GroupName.ToLower()}.", true); return; }
+        picked.Add(option.OptionId);
+    }
 
     private List<MenuProduct> Visible => menu is null ? [] : menu.Items
         .Where(x => category is null || x.Category == category)
@@ -134,12 +165,14 @@
         sheet = variants;
         variant = variants.FirstOrDefault(x => x.IsAvailable);
         quantity = 1;
+        picked = []; // [BUG-02]
     }
 
     private void AddToCart()
     {
         if (variant is null) return;
-        Shop.Add(variant, quantity);
+        if (!OptionsValid) { Toasts.Show("Vui lòng chọn đủ các tùy chọn bắt buộc (*).", true); return; } // [BUG-02]
+        Shop.Add(variant, quantity, PickedOptions);
         Toasts.Show($"Đã thêm {quantity} {variant.Name} vào giỏ");
         sheet = null;
     }

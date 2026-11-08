@@ -46,7 +46,14 @@ public static class Fmt
         "Earn" => "Tích điểm đơn hàng", "Redeem" => "Đổi ưu đãi", "Reverse" => "Hoàn tác điểm", "Adjust" => "Điều chỉnh", _ => code
     };
 
-    public static readonly string[] OrderSteps = ["Confirmed", "Preparing", "Ready", "Completed"];
+    public static readonly string[] OrderSteps = ["Pending", "Confirmed", "Preparing", "Ready", "Completed"];
+    // [BUG-02] Đơn giao hàng có thêm bước "Đang giao".
+    public static string[] StepsFor(string fulfillment) => fulfillment == "Delivery"
+        ? ["Pending", "Confirmed", "Preparing", "Ready", "Delivering", "Completed"] : OrderSteps;
+    public static string RefundStatus(string code) => code switch
+    {
+        "Pending" => "Đang hoàn tiền", "Succeeded" => "Đã hoàn tiền", "Failed" => "Hoàn tiền chưa thành công – cửa hàng sẽ xử lý lại", _ => code
+    };
 
     public static string OrderStatus(string code) => code switch
     {

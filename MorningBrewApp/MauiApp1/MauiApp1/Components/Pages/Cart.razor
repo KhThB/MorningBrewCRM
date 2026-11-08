@@ -1,4 +1,6 @@
 @page "/cart"
+@* [BUG-02] Giỏ hàng + thanh toán: nhận tại quầy / giao hàng, trả trước (cổng mô phỏng) / tiền mặt khi nhận.
+   Trước đây chỉ tạo đơn mô phỏng trong bộ nhớ app. *@
 @inject ShopService Shop
 @inject CrmService Crm
 @inject ToastService Toasts
@@ -10,24 +12,49 @@
     <StateView Empty="Shop.Cart.Count == 0" EmptyText="Giỏ hàng đang trống." EmptyIcon="bag">
         <EmptyAction><a class="btn btn-primary" href="/menu">Xem thực đơn</a></EmptyAction>
         <ChildContent>
-            <div class="card">
-                <div class="row-start"><Icon Name="store" Size="18" /><b>@Shop.CurrentBranch.Name</b></div>
-                <p class="muted small">@Shop.CurrentBranch.Address · Nhận tại quán</p>
-            </div>
-
             <div class="card list">
                 @foreach (var line in Shop.Cart)
                 {
                     <div class="cart-line">
                         <ProductThumb Category="@line.Item.Category" ProductName="@line.Item.Name" ImageUrl="@line.Item.ImageUrl" />
-                        <div class="grow"><b>@line.Item.Name</b><small class="muted">Size @line.Item.VariantName</small><span class="price">@Fmt.Money(line.Total)</span></div>
+                        <div class="grow"><b>@line.Item.Name</b><small class="muted">@("Size " + line.Item.VariantName + (line.Picked.Count > 0 ? " · " + line.OptionText : ""))</small><span class="price">@Fmt.Money(line.Total)</span></div>
                         <div class="stepper sm">
-                            <button @onclick="() => Shop.ChangeQuantity(line.Item.VariantId, -1)" aria-label="Giảm"><Icon Name="minus" Size="16" /></button>
+                            <button @onclick="() => Shop.ChangeQuantity(line.Key, -1)" aria-label="Giảm"><Icon Name="minus" Size="16" /></button>
                             <b>@line.Quantity</b>
-                            <button @onclick="() => Shop.ChangeQuantity(line.Item.VariantId, 1)" aria-label="Tăng"><Icon Name="plus" Size="16" /></button>
+                            <button @onclick="() => Shop.ChangeQuantity(line.Key, 1)" aria-label="Tăng"><Icon Name="plus" Size="16" /></button>
                         </div>
                     </div>
                 }
+            </div>
+
+            <div class="card form">
+                <label>Hình thức nhận hàng</label>
+                <div class="chips wrap">
+                    @if (Shop.CurrentBranch.PickupEnabled) { <button type="button" class="chip-btn @(fulfillment == "Pickup" ? "active" : "")" @onclick='() => fulfillment = "Pickup"'>Nhận tại quầy</button> }
+                    @if (Shop.CurrentBranch.DeliveryEnabled) { <button type="button" class="chip-btn @(fulfillment == "Delivery" ? "active" : "")" @onclick='() => fulfillment = "Delivery"'>Giao hàng (+@Fmt.Money(Shop.CurrentBranch.DeliveryFee))</button> }
+                </div>
+                @if (fulfillment == "Pickup")
+                {
+                    <p class="muted small"><Icon Name="store" Size="16" /> @Shop.CurrentBranch.Name · @Shop.CurrentBranch.Address</p>
+                }
+                else
+                {
+                    <label for="name">Người nhận *</label>
+                    <input id="name" class="input" @bind="contactName" maxlength="120" />
+                    <label for="phone">Số điện thoại *</label>
+                    <input id="phone" class="input" type="tel" @bind="contactPhone" maxlength="20" />
+                    <label for="address">Địa chỉ giao *</label>
+                    <textarea id="address" class="input" rows="2" @bind="address" maxlength="500"></textarea>
+                    <label for="dnote">Ghi chú cho người giao</label>
+                    <input id="dnote" class="input" @bind="deliveryNote" maxlength="300" />
+                }
+                <label>Thanh toán</label>
+                <div class="chips wrap">
+                    <button type="button" class="chip-btn @(paymentMode == "Prepaid" ? "active" : "")" @onclick='() => paymentMode = "Prepaid"'>Trả trước (ví / thẻ – mô phỏng)</button>
+                    <button type="button" class="chip-btn @(paymentMode == "COD" ? "active" : "")" @onclick='() => paymentMode = "COD"'>Tiền mặt khi nhận</button>
+                </div>
+                <label for="note">Ghi chú cho quán</label>
+                <input id="note" class="input" @bind="note" maxlength="500" placeholder="Ví dụ: ít ngọt, lấy lúc 9h" />
             </div>
 
             <div class="card">
@@ -49,8 +76,9 @@
             <div class="card summary">
                 <div class="row-between"><span>Tạm tính</span><span>@Fmt.Money(Shop.CartSubtotal)</span></div>
                 <div class="row-between"><span>Giảm giá</span><span>-@Fmt.Money(Discount)</span></div>
-                <div class="row-between total"><b>Tổng cộng</b><b>@Fmt.Money(Shop.CartSubtotal - Discount)</b></div>
-                <p class="muted small">Thanh toán mô phỏng — không trừ tiền thật. Hoàn tất đơn được tích điểm.</p>
+                @if (fulfillment == "Delivery") { <div class="row-between"><span>Phí giao hàng</span><span>@Fmt.Money(Fee)</span></div> }
+                <div class="row-between total"><b>Tổng cộng</b><b>@Fmt.Money(Total)</b></div>
+                <p class="muted small">Số tiền cuối cùng do cửa hàng tính khi tạo đơn. Hoàn tất đơn được tích điểm.</p>
             </div>
         </ChildContent>
     </StateView>
@@ -60,7 +88,7 @@
 {
     <div class="footer-bar">
         <button class="btn btn-primary block" @onclick="Place" disabled="@busy">
-            @(busy ? "Đang đặt hàng..." : $"Đặt hàng · {Fmt.Money(Shop.CartSubtotal - Discount)}")
+            @(busy ? "Đang đặt hàng..." : $"Đặt hàng · {Fmt.Money(Total)}")
         </button>
     </div>
 }
@@ -69,14 +97,26 @@
     private List<Voucher> vouchers = [];
     private bool busy;
     // Mỗi lần mở giỏ tạo 1 khóa yêu cầu: bấm 2 lần không tạo 2 đơn.
-    private readonly Guid requestKey = Guid.NewGuid();
+    private Guid requestKey = Guid.NewGuid();
+    private string fulfillment = "Pickup", paymentMode = "Prepaid";
+    private string? contactName, contactPhone, address, deliveryNote, note;
 
     private decimal Discount => Math.Min(Shop.VoucherDiscount, Shop.CartSubtotal);
+    private decimal Fee => fulfillment == "Delivery" ? Shop.CurrentBranch.DeliveryFee : 0;
+    private decimal Total => Shop.CartSubtotal - Discount + Fee;
 
     protected override async Task OnInitializedAsync()
     {
         try { vouchers = (await Crm.GetWalletAsync()).Where(v => v.Status == "Available").ToList(); }
         catch (ApiException) { }
+        try
+        {
+            await Shop.GetMenuAsync(); // để có thông tin cửa hàng (phí giao, hình thức nhận)
+            var p = Crm.CachedProfile ?? await Crm.GetProfileAsync();
+            contactName = p.FullName; contactPhone = p.Phone;
+        }
+        catch (ApiException) { }
+        if (!Shop.CurrentBranch.PickupEnabled && Shop.CurrentBranch.DeliveryEnabled) fulfillment = "Delivery";
     }
 
     private void PickVoucher(ChangeEventArgs e)
@@ -90,11 +130,21 @@
 
     private async Task Place()
     {
+        if (fulfillment == "Delivery")
+        {
+            if (string.IsNullOrWhiteSpace(contactName) || string.IsNullOrWhiteSpace(address)) { Toasts.Show("Vui lòng nhập người nhận và địa chỉ giao.", true); return; }
+            if (string.IsNullOrWhiteSpace(contactPhone) || !PhoneRule.IsValid(contactPhone)) { Toasts.Show(PhoneRule.Message, true); return; }
+        }
         busy = true;
         try
         {
-            var order = await Shop.PlaceOrderAsync(requestKey);
-            Toasts.Show("Đặt hàng thành công!");
+            var info = new Checkout(fulfillment, paymentMode,
+                fulfillment == "Delivery" ? contactName : null, fulfillment == "Delivery" ? contactPhone : null,
+                fulfillment == "Delivery" ? address : null, fulfillment == "Delivery" ? deliveryNote : null,
+                string.IsNullOrWhiteSpace(note) ? null : note.Trim());
+            var order = await Shop.PlaceOrderAsync(info, requestKey);
+            requestKey = Guid.NewGuid();
+            Toasts.Show(order.PaymentMode == "Prepaid" ? "Đã tạo đơn. Vui lòng thanh toán trong 15 phút." : "Đặt hàng thành công!");
             Nav.NavigateTo($"/orders/{order.OrderId}", replace: true);
         }
         catch (ApiException e) { Toasts.Error(e); }

@@ -50,7 +50,7 @@
                 <b>@lastOrder.OrderCode</b>
                 <span class="chip @Fmt.OrderCss(lastOrder.Status)">@Fmt.OrderStatus(lastOrder.Status)</span>
             </div>
-            <p class="muted">@string.Join(", ", lastOrder.Lines.Select(l => $"{l.Quantity}× {l.Name}"))</p>
+            <p class="muted">@lastOrder.Summary</p> @* [BUG-02] *@
             <div class="row-between">
                 <span class="muted">@Fmt.When(lastOrder.CreatedAt)</span>
                 @if (lastOrder.Status == "Completed" && !lastOrder.FeedbackSent)

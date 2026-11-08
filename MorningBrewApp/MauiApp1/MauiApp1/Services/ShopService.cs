@@ -16,7 +16,6 @@ public sealed class ShopService(ApiClient api)
     public decimal VoucherDiscount { get; set; }
     public event Action? Changed;
 
-    private readonly List<Order> demoOrders = [];
     private MenuData? menuCache;
     private DateTime menuLoadedAt; // [BUG-01] tự tải lại sau 1 phút để thấy giá / món mới từ Admin
 
@@ -43,17 +42,19 @@ public sealed class ShopService(ApiClient api)
     }
 
     // ----- Giỏ hàng -----
-    public void Add(MenuProduct item, int quantity = 1)
+    // [BUG-02] Thêm tùy chọn món; dòng được nhận diện bằng CartLine.Key (món + tùy chọn).
+    public void Add(MenuProduct item, int quantity = 1, IReadOnlyList<MenuModifier>? options = null)
     {
-        var index = Cart.FindIndex(x => x.Item.VariantId == item.VariantId);
+        var line = new CartLine(item, quantity, options ?? []);
+        var index = Cart.FindIndex(x => x.Key == line.Key);
         if (index >= 0) Cart[index] = Cart[index] with { Quantity = Cart[index].Quantity + quantity };
-        else Cart.Add(new CartLine(item, quantity));
+        else Cart.Add(line);
         Changed?.Invoke();
     }
 
-    public void ChangeQuantity(int variantId, int delta)
+    public void ChangeQuantity(string key, int delta)
     {
-        var index = Cart.FindIndex(x => x.Item.VariantId == variantId);
+        var index = Cart.FindIndex(x => x.Key == key);
         if (index < 0) return;
         var quantity = Cart[index].Quantity + delta;
         if (quantity <= 0) Cart.RemoveAt(index);
@@ -63,26 +64,25 @@ public sealed class ShopService(ApiClient api)
     }
 
     // ----- Đơn hàng -----
-    public async Task<Order> PlaceOrderAsync(Guid requestKey)
+    // [BUG-02] Đặt đơn thật qua POST v1/me/orders. Đơn trả trước ở trạng thái "Chờ thanh toán" 15 phút;
+    // khách thanh toán (mô phỏng) ở trang chi tiết đơn. Không còn đơn mô phỏng trong bộ nhớ.
+    public async Task<Order> PlaceOrderAsync(Checkout info, Guid requestKey)
     {
         if (Cart.Count == 0) throw new ApiException(400, "Giỏ hàng đang trống.");
-        Order order;
-        try
+        if (menuCache is { IsDemo: true }) throw new ApiException(503, "Chưa kết nối được máy chủ nên chưa đặt hàng được.");
+        var order = await api.Send<Order>(HttpMethod.Post, "v1/me/orders", new
         {
-            order = await api.Send<Order>(HttpMethod.Post, "v1/me/orders", new
-            {
-                BranchId = CurrentBranch.BranchId,
-                Fulfillment = "Pickup",
-                Items = Cart.Select(x => new { VariantId = x.Item.VariantId, Quantity = x.Quantity }).ToArray(),
-                CustomerPromotionId = VoucherId,
-                RequestKey = requestKey
-            });
-            await api.Send(HttpMethod.Post, $"v1/me/orders/{order.OrderId}:pay", new { RequestKey = Guid.NewGuid() });
-        }
-        catch (ApiException e) when (e.IsMissingEndpoint)
-        {
-            order = CreateDemoOrder();
-        }
+            info.Fulfillment,
+            info.PaymentMode,
+            Items = Cart.Select(x => new { x.Item.VariantId, x.Quantity, x.OptionIds, Note = (string?)null }).ToArray(),
+            RequestKey = requestKey,
+            CustomerPromotionId = VoucherId,
+            info.ContactName,
+            info.ContactPhone,
+            info.DeliveryAddress,
+            info.DeliveryNote,
+            info.Note
+        });
         Cart.Clear();
         VoucherId = null;
         VoucherDiscount = 0;
@@ -90,65 +90,33 @@ public sealed class ShopService(ApiClient api)
         return order;
     }
 
-    public async Task<List<Order>> GetOrdersAsync()
-    {
-        try
-        {
-            var real = (await api.Page<Order>("v1/me/orders")).Items;
-            return real.Concat(demoOrders).OrderByDescending(x => x.CreatedAt).ToList();
-        }
-        catch (ApiException e) when (e.IsMissingEndpoint)
-        {
-            return demoOrders.OrderByDescending(x => x.CreatedAt).ToList();
-        }
-    }
+    public async Task<List<Order>> GetOrdersAsync() => (await api.Page<Order>("v1/me/orders")).Items;
 
     public async Task<Order?> GetOrderAsync(int id)
     {
-        var demo = demoOrders.FirstOrDefault(x => x.OrderId == id);
-        if (demo is not null) return demo;
         try { return await api.Get<Order>($"v1/me/orders/{id}"); }
-        catch (ApiException e) when (e.IsMissingEndpoint) { return null; }
+        catch (ApiException e) when (e.Status == 404) { return null; }
     }
 
-    public void MarkFeedbackSent(int orderId)
+    /// <summary>[BUG-02] Cổng thanh toán mô phỏng: Succeeded hoặc Failed.</summary>
+    public async Task<Order> PayAsync(int id, string outcome)
     {
-        var demo = demoOrders.FirstOrDefault(x => x.OrderId == orderId);
-        if (demo is not null) demo.FeedbackSent = true;
-    }
-
-    // ===== Dữ liệu mẫu =====
-    private Order CreateDemoOrder()
-    {
-        var order = new Order
-        {
-            OrderId = 900000 + demoOrders.Count + 1,
-            OrderCode = $"MB-DEMO-{DateTime.Now:HHmmss}",
-            BranchId = CurrentBranch.BranchId,
-            BranchName = CurrentBranch.Name,
-            Status = "Confirmed",
-            Subtotal = CartSubtotal,
-            Discount = Math.Min(VoucherDiscount, CartSubtotal),
-            IsDemo = true,
-            Lines = Cart.Select(x => new OrderLine(x.Item.ProductId, x.Item.VariantId, x.Item.Name,
-                x.Item.VariantName, x.Quantity, x.Item.Price)).ToList()
-        };
-        demoOrders.Add(order);
-        _ = SimulateProgress(order);
+        var order = await api.Send<Order>(HttpMethod.Post, $"v1/me/orders/{id}:pay", new { Outcome = outcome });
+        Changed?.Invoke();
         return order;
     }
 
-    // Mô phỏng quán xử lý đơn: Confirmed → Preparing → Ready → Completed (mỗi bước ~6 giây).
-    private async Task SimulateProgress(Order order)
+    /// <summary>[BUG-02] Khách hủy khi cửa hàng chưa xác nhận.</summary>
+    public async Task<Order> CancelAsync(int id, string reason)
     {
-        foreach (var next in new[] { "Preparing", "Ready", "Completed" })
-        {
-            await Task.Delay(TimeSpan.FromSeconds(6));
-            order.Status = next;
-            Changed?.Invoke();
-        }
+        var order = await api.Send<Order>(HttpMethod.Post, $"v1/me/orders/{id}:cancel", new { Reason = reason });
+        Changed?.Invoke();
+        return order;
     }
 
+    public void MarkFeedbackSent(int orderId) { } // [BUG-02] đơn thật: API tự biết đơn đã có phản hồi (FeedbackSent)
+
+    // ===== Dữ liệu mẫu (chỉ khi không kết nối được máy chủ) =====
     private static List<MenuProduct> DemoMenu() => DemoItems.Select(x => x with { IsDemo = true }).ToList(); // [BUG-01]
     private static readonly List<MenuProduct> DemoItems =
     [

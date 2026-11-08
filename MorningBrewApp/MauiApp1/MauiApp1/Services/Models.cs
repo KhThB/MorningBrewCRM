@@ -65,13 +65,26 @@ public record MenuProduct(
 
 public record MenuData(Branch Branch, List<MenuProduct> Items, bool IsDemo, List<MenuModifier>? Modifiers = null); // [BUG-01] thêm Modifiers
 
-public record CartLine(MenuProduct Item, int Quantity)
+// [BUG-02] Dòng giỏ hàng có tùy chọn (đường, đá, topping); cùng món + cùng tùy chọn thì gộp số lượng.
+public record CartLine(MenuProduct Item, int Quantity, IReadOnlyList<MenuModifier>? Options = null)
 {
-    public decimal Total => Item.Price * Quantity;
+    public IReadOnlyList<MenuModifier> Picked => Options ?? [];
+    public string Key => $"{Item.VariantId}:{string.Join(',', Picked.Select(o => o.OptionId).Order())}";
+    public int[] OptionIds => Picked.Select(o => o.OptionId).ToArray();
+    public string OptionText => string.Join(", ", Picked.Select(o => o.OptionName));
+    public decimal Total => (Item.Price + Picked.Sum(o => o.ExtraPrice)) * Quantity;
 }
 
-public record OrderLine(int ProductId, int VariantId, string Name, string VariantName, int Quantity, decimal UnitPrice);
+public record OrderLine(int ProductId, int VariantId, string Name, string VariantName, int Quantity, decimal UnitPrice,
+    string? Options = null, decimal LineTotal = 0); // [BUG-02] thêm tùy chọn và thành tiền
 
+public record OrderHistoryItem(string? FromStatus, string ToStatus, string? Reason, DateTimeOffset CreatedAt, string? ChangedByName); // [BUG-02]
+
+/// <summary>[BUG-02] Thông tin khi đặt hàng: nhận tại quầy / giao hàng, trả trước / tiền mặt.</summary>
+public record Checkout(string Fulfillment, string PaymentMode, string? ContactName, string? ContactPhone,
+    string? DeliveryAddress, string? DeliveryNote, string? Note);
+
+// [BUG-02] Đơn hàng thật từ GET v1/me/orders (trước đây chỉ là đơn mô phỏng trong bộ nhớ app).
 public class Order
 {
     public int OrderId { get; set; }
@@ -79,11 +92,31 @@ public class Order
     public int BranchId { get; set; }
     public string BranchName { get; set; } = "";
     public string Status { get; set; } = "Pending";
+    public string Fulfillment { get; set; } = "Pickup";
+    public string PaymentMode { get; set; } = "Prepaid";
+    public string? PaymentStatus { get; set; }
+    public string? RefundStatus { get; set; }
     public decimal Subtotal { get; set; }
     public decimal Discount { get; set; }
-    public decimal Total => Math.Max(0, Subtotal - Discount);
+    public decimal DeliveryFee { get; set; }
+    public decimal TotalAmount { get; set; }
+    public decimal Total => TotalAmount;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? PaymentDueAt { get; set; }
+    public string? ContactName { get; set; }
+    public string? ContactPhone { get; set; }
+    public string? DeliveryAddress { get; set; }
+    public string? DeliveryStatus { get; set; }
+    public string? CourierName { get; set; }
+    public string? CourierPhone { get; set; }
+    public string? Note { get; set; }
+    public string? ItemsText { get; set; }
     public List<OrderLine> Lines { get; set; } = [];
+    public List<OrderHistoryItem> History { get; set; } = [];
     public bool IsDemo { get; set; }
     public bool FeedbackSent { get; set; }
+    public bool IsPaid => PaymentStatus == "Succeeded";
+    public bool CanPay => Status == "AwaitingPayment" && PaymentMode == "Prepaid" && PaymentStatus != "Pending";
+    public bool CanCancel => Status is "AwaitingPayment" or "Pending";
+    public string Summary => Lines.Count > 0 ? string.Join(", ", Lines.Select(l => $"{l.Quantity}× {l.Name}")) : ItemsText ?? "";
 }

@@ -23,7 +23,7 @@ public sealed record ProfilePatch(bool HasFullName, string? FullName, bool HasPh
             return value.GetString();
         }
         var name = Text("full_name", 120, true);
-        var phone = Text("phone", 20);
+        var phone = PhoneRule.Normalize(Text("phone", 20)); // [BUG-04] trước đây nhận chuỗi bất kỳ ≤ 20 ký tự
         var gender = Text("gender", 15);
         if (gender is not (null or "Male" or "Female" or "Other" or "Undisclosed"))
             throw new ApiException(400, "Giới tính không hợp lệ.", [new("FIELD_INVALID", "gender")]);

@@ -177,7 +177,7 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
             IF @code='BranchManager' UPDATE dbo.Branches SET ManagerID=@id WHERE BranchID=@branch AND ManagerID IS NULL;
             INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID) VALUES(@actor,'Account.Create','Users',@id);
             COMMIT; SELECT @id AS UserID;
-            """, ("@code", input.Role), ("@email", input.Email.Trim()), ("@name", input.FullName.Trim()), ("@phone", input.Phone),
+            """, ("@code", input.Role), ("@email", input.Email.Trim()), ("@name", input.FullName.Trim()), ("@phone", PhoneRule.Normalize(input.Phone)), // [BUG-04] chuẩn hóa + kiểm tra SĐT
             ("@hash", new PasswordHasher<string>().HashPassword(input.Email, input.Password)), ("@actor", Actor));
         var id = (int)created.Single()["UserID"]!;
         return Created($"/v1/accounts/{id}", await ReadResource("accounts", id));

@@ -75,6 +75,8 @@
     {
         if (string.IsNullOrWhiteSpace(fullName) || fullName.Trim().Length < 2)
         { Toasts.Show("Họ tên cần ít nhất 2 ký tự.", true); return; }
+        // [BUG-04] trước đây không kiểm tra SĐT khi sửa hồ sơ
+        if (!PhoneRule.IsValid(phone)) { Toasts.Show(PhoneRule.Message, true); return; }
         if (birthday > DateOnly.FromDateTime(DateTime.Today))
         { Toasts.Show("Ngày sinh không được ở tương lai.", true); return; }
         busy = true;

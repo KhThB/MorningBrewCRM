@@ -38,7 +38,7 @@ public sealed class AuthController(SqlStore db) : ControllerBase
     public record RegisterRequest(
         [Required, EmailAddress, MaxLength(254)] string Email,
         [Required, StringLength(120, MinimumLength = 2)] string FullName,
-        [MaxLength(20), RegularExpression(@"^0\d{9,10}$", ErrorMessage = "Số điện thoại gồm 10–11 số, bắt đầu bằng 0.")] string? Phone,
+        [MaxLength(20)] string? Phone, // [BUG-04] kiểm tra bằng PhoneRule (cho phép khoảng trắng/dấu chấm, chuẩn hóa trước khi lưu)
         [Required, StringLength(200, MinimumLength = 10)] string Password,
         DateOnly? DateOfBirth = null,
         [RegularExpression("^(Male|Female|Other|Undisclosed)$")] string? Gender = null);
@@ -46,6 +46,7 @@ public sealed class AuthController(SqlStore db) : ControllerBase
     public async Task<IActionResult> Register(RegisterRequest input)
     {
         var email = input.Email.Trim();
+        var phone = PhoneRule.Normalize(input.Phone); // [BUG-04]
         if (input.DateOfBirth is { } birth && (birth > DateOnly.FromDateTime(DateTime.UtcNow) || birth.Year < 1900))
             throw new ApiException(400, "Ngày sinh không hợp lệ.", [new("FIELD_INVALID", "date_of_birth")]);
         var created = await db.Query("""
@@ -60,7 +61,7 @@ public sealed class AuthController(SqlStore db) : ControllerBase
             INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID) VALUES(@id,'Customer.Register','Users',@id);
             COMMIT; SELECT @id AS UserID;
             """, ("@email", email), ("@name", input.FullName.Trim()),
-            ("@phone", string.IsNullOrWhiteSpace(input.Phone) ? null : input.Phone.Trim()),
+            ("@phone", phone), // [BUG-04] số đã chuẩn hóa
             ("@hash", new PasswordHasher<string>().HashPassword(email, input.Password)),
             ("@birth", input.DateOfBirth?.ToDateTime(TimeOnly.MinValue)), ("@gender", input.Gender));
         var id = (int)created.Single()["UserID"]!;

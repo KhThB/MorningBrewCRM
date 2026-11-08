@@ -61,7 +61,7 @@
     {
         if (fullName.Trim().Length < 2) return "Họ tên cần ít nhất 2 ký tự.";
         if (!Regex.IsMatch(email.Trim(), @"^[^@\s]+@[^@\s]+\.[^@\s]+$")) return "Email không hợp lệ.";
-        if (!string.IsNullOrWhiteSpace(phone) && !Regex.IsMatch(phone.Trim(), @"^0\d{9,10}$")) return "Số điện thoại gồm 10–11 số, bắt đầu bằng 0.";
+        if (!PhoneRule.IsValid(phone)) return PhoneRule.Message; // [BUG-04] dùng chung quy tắc với API
         if (password.Length < 10) return "Mật khẩu cần ít nhất 10 ký tự.";
         if (password != confirm) return "Mật khẩu nhập lại không khớp.";
         if (!agree) return "Vui lòng đồng ý điều khoản lưu thông tin.";

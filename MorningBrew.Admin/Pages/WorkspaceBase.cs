@@ -122,7 +122,9 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
                 await Api.Send(HttpMethod.Put,$"v1/variants/{Number("variantId")}/price",new {price=Money("price")}); break;
             // ----- Quản lý CRM -----
             case "customer":
-                await Api.Send(HttpMethod.Post,"v1/accounts",new {email=Text("email"),fullName=Text("fullName"),password=Text("password"),phone=Text("phone"),role="Customer"});
+                // [BUG-03] gửi thêm ngày sinh, giới tính (để trống = null)
+                await Api.Send(HttpMethod.Post,"v1/accounts",new {email=Text("email"),fullName=Text("fullName"),password=Text("password"),phone=Text("phone"),role="Customer",
+                    dateOfBirth=string.IsNullOrEmpty(Text("dateOfBirth"))?null:Text("dateOfBirth"),gender=string.IsNullOrEmpty(Text("gender"))?null:Text("gender")});
                 TempData["Success"]="Đã thêm khách hàng."; break;
             case "customer-active":
                 await Api.Send(HttpMethod.Put,$"v1/customers/{Number("id")}/active",new {isActive=Text("active")=="true"}); break;

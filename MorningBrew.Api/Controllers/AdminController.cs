@@ -148,7 +148,8 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
     public record AccountInput([Required, EmailAddress, MaxLength(254)] string Email,
         [Required, StringLength(120, MinimumLength=2)] string FullName,
         [Required, StringLength(200, MinimumLength=10)] string Password, [MaxLength(20)] string? Phone,
-        [Required] string Role = "Customer");
+        [Required] string Role = "Customer",
+        DateOnly? DateOfBirth = null, string? Gender = null); // [BUG-03] ngày sinh, giới tính (không bắt buộc) khi tạo khách
 
     [HttpPost("accounts")]
     public async Task<IActionResult> CreateAccount(AccountInput input)
@@ -158,6 +159,11 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
             throw new ApiException(400, "Vai trò không hợp lệ.");
         // Tài khoản khách: người có quyền Customers.Manage (quản lý). Tài khoản nội bộ: chỉ chủ cửa hàng.
         if (input.Role == "Customer") await RequirePermission("Customers.Manage"); else await RequireOwner();
+        // [BUG-03] Kiểm tra ngày sinh / giới tính giống đăng ký (AuthController.Register).
+        if (input.DateOfBirth is { } birth && (birth > DateOnly.FromDateTime(DateTime.UtcNow) || birth.Year < 1900))
+            throw new ApiException(400, "Ngày sinh không hợp lệ.", [new("FIELD_INVALID", "date_of_birth")]);
+        if (input.Gender is not (null or "" or "Male" or "Female" or "Other" or "Undisclosed"))
+            throw new ApiException(400, "Giới tính không hợp lệ.", [new("FIELD_INVALID", "gender")]);
         var created = await db.Query("""
             SET XACT_ABORT ON; BEGIN TRAN;
             DECLARE @role int=(SELECT RoleID FROM dbo.Roles WHERE Code=@code);
@@ -170,7 +176,7 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
             INSERT dbo.Users(RoleID,Email,NormalizedEmail,FullName,Phone,PasswordHash)
             VALUES(@role,@email,UPPER(LTRIM(RTRIM(@email))),@name,@phone,@hash);
             DECLARE @id int=SCOPE_IDENTITY();
-            IF @code='Customer' INSERT dbo.Customers(UserID) VALUES(@id);
+            IF @code='Customer' INSERT dbo.Customers(UserID,DateOfBirth,Gender) VALUES(@id,@birth,@gender); -- [BUG-03]
             -- Quản lý và thu ngân đều gán qua StaffBranches, nên có thể có nhiều quản lý;
             -- ManagerID chỉ ghi khi cửa hàng chưa có quản lý chính (không thay thế người cũ).
             IF @code IN ('Staff','BranchManager') INSERT dbo.StaffBranches(UserID,BranchID) VALUES(@id,@branch);
@@ -178,6 +184,7 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
             INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID) VALUES(@actor,'Account.Create','Users',@id);
             COMMIT; SELECT @id AS UserID;
             """, ("@code", input.Role), ("@email", input.Email.Trim()), ("@name", input.FullName.Trim()), ("@phone", PhoneRule.Normalize(input.Phone)), // [BUG-04] chuẩn hóa + kiểm tra SĐT
+            ("@birth", input.DateOfBirth?.ToDateTime(TimeOnly.MinValue)), ("@gender", string.IsNullOrEmpty(input.Gender) ? null : input.Gender), // [BUG-03]
             ("@hash", new PasswordHasher<string>().HashPassword(input.Email, input.Password)), ("@actor", Actor));
         var id = (int)created.Single()["UserID"]!;
         return Created($"/v1/accounts/{id}", await ReadResource("accounts", id));

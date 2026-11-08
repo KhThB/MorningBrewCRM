@@ -8,6 +8,9 @@
 <form method="post"><input type="hidden" name="operation" value="customer"><label>Họ tên</label><input name="fullName" maxlength="120" required>
 <label>Email</label><input name="email" type="email" required><label>Điện thoại</label>@* [BUG-04] kiểm tra trên trình duyệt; API kiểm tra lại bằng PhoneRule *@<input name="phone" maxlength="20" pattern="^0[0-9 .\-]{9,14}$" title="10–11 số, bắt đầu bằng 0">
 <label>Mật khẩu ban đầu (ít nhất 10 ký tự)</label><input name="password" type="password" minlength="10" required autocomplete="new-password">
+@* [BUG-03] ngày sinh, giới tính để khách mới vào đúng nhóm trong báo cáo độ tuổi / giới tính *@
+<label>Ngày sinh (không bắt buộc)</label><input name="dateOfBirth" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")">
+<label>Giới tính</label><select name="gender"><option value="">Chưa cung cấp</option><option value="Female">Nữ</option><option value="Male">Nam</option><option value="Other">Khác</option></select>
 <button class="primary">Thêm khách hàng</button></form></section>
 <section class="panel"><h2>Khóa tài khoản khách hàng</h2><form method="post"><input type="hidden" name="operation" value="customer-active">
 <label>Khách hàng</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["customer_id"]">@x["full_name"] · @x["email"] · @(x["is_active"].ValueKind==JsonValueKind.True?"đang hoạt động":"đang khóa")</option>}</select>

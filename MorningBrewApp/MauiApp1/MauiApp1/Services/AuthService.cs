@@ -66,12 +66,14 @@ public sealed class AuthService
     /// <summary>
     /// Đăng ký khách hàng (yêu cầu 4.3.1). Cần API POST /v1/auth/register — xem API_CAN_BO_SUNG.md.
     /// </summary>
-    public async Task RegisterAsync(string fullName, string email, string? phone, string password)
+    // [BUG-03] gửi thêm ngày sinh, giới tính (API register đã hỗ trợ, trước đây app không gửi)
+    public async Task RegisterAsync(string fullName, string email, string? phone, string password, DateOnly? birthday = null, string? gender = null)
     {
         try
         {
             await api.Send(HttpMethod.Post, "v1/auth/register",
-                new { FullName = fullName.Trim(), Email = email.Trim(), Phone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim(), Password = password });
+                new { FullName = fullName.Trim(), Email = email.Trim(), Phone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim(), Password = password,
+                      DateOfBirth = birthday?.ToString("yyyy-MM-dd"), Gender = gender is null or "Undisclosed" ? null : gender });
         }
         catch (ApiException e) when (e.IsMissingEndpoint)
         {

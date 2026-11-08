@@ -103,6 +103,10 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
             case "account-role":
                 await Api.Send(HttpMethod.Put,$"v1/accounts/{Number("id")}/role",new {role=Text("role")});
                 TempData["Success"]="Đã đổi vai trò. Tài khoản này phải đăng nhập lại để nhận quyền mới."; break;
+            case "account-password": // [BUG-05] chủ cửa hàng đặt lại mật khẩu
+                if(Text("password")!=Text("confirm")) { TempData["Error"]="Mật khẩu nhập lại không khớp."; return RedirectToPage(); }
+                await Api.Send(HttpMethod.Post,$"v1/accounts/{Number("id")}:resetPassword",new {newPassword=Text("password")});
+                TempData["Success"]="Đã đặt lại mật khẩu. Tài khoản đó bị đăng xuất khỏi mọi thiết bị."; break;
             case "account-active":
                 await Api.Send(HttpMethod.Put,$"v1/accounts/{Number("id")}/active",new {isActive=Text("active")=="true"}); break;
             case "account-delete":

@@ -82,6 +82,10 @@ public sealed class AuthService
         await LoginAsync(email, password);
     }
 
+    /// <summary>[BUG-05] Đổi mật khẩu của chính mình; các thiết bị khác bị đăng xuất.</summary>
+    public Task ChangePasswordAsync(string currentPassword, string newPassword) =>
+        api.Send(HttpMethod.Post, "v1/auth/password", new { CurrentPassword = currentPassword, NewPassword = newPassword });
+
     public async Task LogoutAsync()
     {
         try { if (api.Token is not null) await api.Send(HttpMethod.Post, "v1/auth/logout"); }

@@ -26,6 +26,12 @@
 <label>Trạng thái mới</label><select name="active"><option value="false">Khóa</option><option value="true">Mở khóa</option></select><button class="primary">Cập nhật</button></form>
 <p class="muted">Khóa tài khoản giữ lại lịch sử giao dịch và thu hồi các phiên đăng nhập.</p></section>
 </div>
+@* [BUG-05] Đặt lại mật khẩu cho tài khoản khác (khách quên mật khẩu, nhân viên mới) *@
+<section class="panel"><h2>Đặt lại mật khẩu</h2><form method="post"><input type="hidden" name="operation" value="account-password">
+<label>Tài khoản</label><select name="id">@foreach(var x in others){<option value="@x["user_id"]">@x["full_name"] · @x["email"] · @RowDisplay.Value("role",x["role"])</option>}</select>
+<div class="grid-2"><div><label>Mật khẩu mới (ít nhất 10 ký tự)</label><input name="password" type="password" minlength="10" required autocomplete="new-password"></div>
+<div><label>Nhập lại</label><input name="confirm" type="password" minlength="10" required autocomplete="new-password"></div></div>
+<button class="primary">Đặt lại mật khẩu</button></form><p class="muted">Tài khoản đó bị đăng xuất khỏi mọi thiết bị và phải đăng nhập bằng mật khẩu mới.</p></section>
 <section class="panel danger-zone"><h2>Xóa tài khoản</h2>
 <p class="muted">Xóa mềm: tài khoản không đăng nhập được nữa và thông tin cá nhân được ẩn danh. Đơn hàng, điểm, phản hồi và câu trả lời khảo sát vẫn được giữ để báo cáo không bị sai lệch. Khác với <b>Khóa</b>, thao tác này không mở lại được.</p>
 <form method="post" class="inline-delete" onsubmit="return confirm('Xóa tài khoản đã chọn? Thao tác này không hoàn tác được.')">

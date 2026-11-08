@@ -74,6 +74,26 @@ public sealed partial class AdminController
         return Ok(await ReadResource("accounts", id));
     }
 
+    // [BUG-05] Chủ cửa hàng đặt lại mật khẩu cho tài khoản khác (khách quên mật khẩu, nhân viên mới…).
+    // Thu hồi mọi phiên của tài khoản đó; tự đổi mật khẩu của mình dùng POST v1/auth/password.
+    public record ResetPasswordInput([Required, StringLength(200, MinimumLength = 10)] string NewPassword);
+    [HttpPost("accounts/{id:int}:resetPassword")]
+    public async Task<IActionResult> ResetPassword(int id, ResetPasswordInput input)
+    {
+        await RequireOwner();
+        if (id == Actor) throw new ApiException(400, "Tự đổi mật khẩu của mình ở mục Đổi mật khẩu, không dùng đặt lại.");
+        var email = (await db.Query("SELECT Email FROM dbo.Users WHERE UserID=@id AND DeletedAt IS NULL", ("@id", id))).SingleOrDefault()?["Email"] as string
+            ?? throw new ApiException(404, "Không tìm thấy tài khoản.");
+        await db.Query("""
+            SET XACT_ABORT ON; BEGIN TRAN;
+            UPDATE dbo.Users SET PasswordHash=@hash WHERE UserID=@id;
+            UPDATE dbo.UserSessions SET RevokedAt=SYSUTCDATETIME() WHERE UserID=@id AND RevokedAt IS NULL;
+            INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID) VALUES(@actor,'Account.ResetPassword','Users',@id);
+            COMMIT;
+            """, ("@id", id), ("@hash", new Microsoft.AspNetCore.Identity.PasswordHasher<string>().HashPassword(email, input.NewPassword)), ("@actor", Actor));
+        return NoContent();
+    }
+
     // Ma trận vai trò × quyền: mỗi quyền một dòng, mỗi vai trò nội bộ một cột true/false.
     [HttpGet("permissions/matrix")]
     public async Task<object> PermissionMatrix()

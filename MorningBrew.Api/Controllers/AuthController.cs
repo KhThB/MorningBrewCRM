@@ -72,6 +72,29 @@ public sealed class AuthController(SqlStore db) : ControllerBase
         id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!), fullName = User.Identity!.Name,
         email = User.FindFirstValue(ClaimTypes.Email), role = User.FindFirstValue(ClaimTypes.Role),
         branches = await db.Query("SELECT BranchID,Name,AreaID FROM dbo.Branches WHERE dbo.CanBranch(@actor,BranchID,'Orders.Read')=1 ORDER BY BranchID", ("@actor", User.FindFirstValue(ClaimTypes.NameIdentifier))) };
+    // [BUG-05] Người dùng đang đăng nhập tự đổi mật khẩu (app khách, sau này POS). Phải nhập đúng mật khẩu cũ;
+    // các phiên đăng nhập khác của tài khoản bị thu hồi, phiên hiện tại giữ nguyên.
+    public record ChangePasswordRequest([Required, MaxLength(200)] string CurrentPassword, [Required, StringLength(200, MinimumLength = 10)] string NewPassword);
+    [Authorize, HttpPost("password"), EnableRateLimiting("login")]
+    public async Task<IActionResult> ChangePassword(ChangePasswordRequest input)
+    {
+        var id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var row = (await db.Query("SELECT Email,PasswordHash FROM dbo.Users WHERE UserID=@id AND IsActive=1 AND DeletedAt IS NULL", ("@id", id))).SingleOrDefault()
+            ?? throw new ApiException(401, "Phiên đăng nhập không còn hiệu lực.");
+        var hasher = new PasswordHasher<string>();
+        if (hasher.VerifyHashedPassword((string)row["Email"]!, (string)row["PasswordHash"]!, input.CurrentPassword) == PasswordVerificationResult.Failed)
+            throw new ApiException(400, "Mật khẩu hiện tại không đúng.", [new("FIELD_INVALID", "current_password")]);
+        if (input.NewPassword == input.CurrentPassword)
+            throw new ApiException(400, "Mật khẩu mới phải khác mật khẩu hiện tại.", [new("FIELD_INVALID", "new_password")]);
+        await db.Query("""
+            SET XACT_ABORT ON; BEGIN TRAN;
+            UPDATE dbo.Users SET PasswordHash=@hash WHERE UserID=@id;
+            UPDATE dbo.UserSessions SET RevokedAt=SYSUTCDATETIME() WHERE UserID=@id AND RevokedAt IS NULL AND SessionID<>@session;
+            INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID) VALUES(@id,'Account.ChangePassword','Users',@id);
+            COMMIT;
+            """, ("@id", id), ("@hash", hasher.HashPassword((string)row["Email"]!, input.NewPassword)), ("@session", User.FindFirstValue("SessionID")));
+        return NoContent();
+    }
     [Authorize, HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {

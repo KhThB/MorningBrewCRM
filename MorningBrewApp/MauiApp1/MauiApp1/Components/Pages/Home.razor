@@ -23,10 +23,11 @@
             <span class="quick-icon"><Icon Name="bag" Size="26" /></span>
             <span><b>Nhận tại quán</b><small>Đặt trước, đến lấy ngay</small></span>
         </a>
-        <button class="quick disabled" @onclick='() => Toasts.Show("Giao hàng sẽ có trong phiên bản sau.")'>
+        @* [BUG-02] Giao hàng đã có (chọn ở giỏ hàng) – bỏ nhãn "Sắp ra mắt" *@
+        <a class="quick" href="/menu">
             <span class="quick-icon"><Icon Name="truck" Size="26" /></span>
-            <span><b>Giao hàng</b><small>Sắp ra mắt</small></span>
-        </button>
+            <span><b>Giao hàng</b><small>Giao tận nơi, chọn ở giỏ hàng</small></span>
+        </a>
     </div>
 
     <a class="store-line" href="/menu">

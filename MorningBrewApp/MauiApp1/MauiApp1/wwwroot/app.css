@@ -427,3 +427,10 @@ textarea.input { resize: vertical; }
     .menu-product .add-btn { right: 8px; bottom: 10px; width: 28px; height: 28px; }
     .menu-product .price { font-size: 13px; }
 }
+
+/* [BUG-02] Chi tiết đơn: mã đơn dài xuống dòng, thanh tiến trình 5–6 bước, dòng giá không tràn khung */
+.order-code { word-break: break-all; font-size: 16px; }
+.steps { grid-template-columns: repeat(auto-fit, minmax(52px, 1fr)); font-size: 11px; }
+.row-between { min-width: 0; flex-wrap: wrap; }
+.row-between > span { min-width: 0; overflow-wrap: anywhere; }
+.card .row-between .btn { flex: 1 1 140px; }

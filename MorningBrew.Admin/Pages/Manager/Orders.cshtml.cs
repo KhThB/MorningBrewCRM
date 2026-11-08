@@ -35,11 +35,13 @@ public class OrdersModel(CrmApi api):WorkspaceBase(api)
             case "order-cancel":
                 await Api.Send(HttpMethod.Post,$"v1/orders/{id}:cancel",new {reason=Text("reason")}); TempData["Success"]="Đã hủy đơn. Nếu đơn đã thanh toán, một yêu cầu hoàn tiền được tạo."; break;
             case "order-delivery":
-                await Api.Send(HttpMethod.Post,$"v1/orders/{id}:delivery",new {status=Text("deliveryStatus"),reason=NullIfEmpty("reason")}); break;
+                await Api.Send(HttpMethod.Post,$"v1/orders/{id}:delivery",new {status=Text("deliveryStatus"),reason=NullIfEmpty("reason")});
+                TempData["Success"]=Text("deliveryStatus")=="Failed"?"Đã ghi nhận giao thất bại.":"Đã chuyển sang giao lại."; break; // (kiểm thử: thiếu thông báo)
             case "order-refund":
                 await Api.Send(HttpMethod.Post,$"v1/orders/{id}:refund",new {reason=Text("reason")}); TempData["Success"]="Đã tạo yêu cầu hoàn tiền. Chốt kết quả ở mục Hoàn tiền."; break;
             case "refund-complete":
-                await Api.Send(HttpMethod.Post,$"v1/refunds/{Number("refundId")}:complete",new {outcome=Text("outcome"),failureReason=NullIfEmpty("reason")}); break;
+                await Api.Send(HttpMethod.Post,$"v1/refunds/{Number("refundId")}:complete",new {outcome=Text("outcome"),failureReason=NullIfEmpty("reason")});
+                TempData["Success"]=Text("outcome")=="Succeeded"?"Hoàn tiền thành công: đã thu hồi điểm và trả lại voucher (nếu có).":"Đã ghi nhận hoàn tiền thất bại."; break; // (kiểm thử: thiếu thông báo)
         }
         return RedirectToPage(new {id});
     }

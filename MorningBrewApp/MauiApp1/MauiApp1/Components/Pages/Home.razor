@@ -19,12 +19,13 @@
 
 <div class="page-body overlap">
     <div class="quick-actions">
-        <a class="quick" href="/menu">
+        @* [BUG-17] Ghi nhớ hình thức nhận đã chọn để giỏ hàng mở đúng lựa chọn *@
+        <a class="quick" href="/menu" @onclick='() => Shop.PreferredFulfillment = "Pickup"'>
             <span class="quick-icon"><Icon Name="bag" Size="26" /></span>
             <span><b>Nhận tại quán</b><small>Đặt trước, đến lấy ngay</small></span>
         </a>
         @* [BUG-02] Giao hàng đã có (chọn ở giỏ hàng) – bỏ nhãn "Sắp ra mắt" *@
-        <a class="quick" href="/menu">
+        <a class="quick" href="/menu" @onclick='() => Shop.PreferredFulfillment = "Delivery"'>
             <span class="quick-icon"><Icon Name="truck" Size="26" /></span>
             <span><b>Giao hàng</b><small>Giao tận nơi, chọn ở giỏ hàng</small></span>
         </a>

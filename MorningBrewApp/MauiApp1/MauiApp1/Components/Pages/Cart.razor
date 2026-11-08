@@ -30,8 +30,8 @@
             <div class="card form">
                 <label>Hình thức nhận hàng</label>
                 <div class="chips wrap">
-                    @if (Shop.CurrentBranch.PickupEnabled) { <button type="button" class="chip-btn @(fulfillment == "Pickup" ? "active" : "")" @onclick='() => fulfillment = "Pickup"'>Nhận tại quầy</button> }
-                    @if (Shop.CurrentBranch.DeliveryEnabled) { <button type="button" class="chip-btn @(fulfillment == "Delivery" ? "active" : "")" @onclick='() => fulfillment = "Delivery"'>Giao hàng (+@Fmt.Money(Shop.CurrentBranch.DeliveryFee))</button> }
+                    @if (Shop.CurrentBranch.PickupEnabled) { <button type="button" class="chip-btn @(fulfillment == "Pickup" ? "active" : "")" @onclick='() => SetFulfillment("Pickup")'>Nhận tại quầy</button> }
+                    @if (Shop.CurrentBranch.DeliveryEnabled) { <button type="button" class="chip-btn @(fulfillment == "Delivery" ? "active" : "")" @onclick='() => SetFulfillment("Delivery")'>Giao hàng (+@Fmt.Money(Shop.CurrentBranch.DeliveryFee))</button> }
                 </div>
                 @if (fulfillment == "Pickup")
                 {
@@ -116,7 +116,18 @@
             contactName = p.FullName; contactPhone = p.Phone;
         }
         catch (ApiException) { }
-        if (!Shop.CurrentBranch.PickupEnabled && Shop.CurrentBranch.DeliveryEnabled) fulfillment = "Delivery";
+        // [BUG-17] Mở giỏ với hình thức khách đã chọn ở trang chủ ("Giao hàng" / "Nhận tại quán"); nếu cửa hàng
+        // không hỗ trợ hình thức đó thì dùng hình thức còn lại. Trước đây luôn mặc định "Nhận tại quầy".
+        fulfillment = Shop.PreferredFulfillment;
+        if (fulfillment == "Delivery" && !Shop.CurrentBranch.DeliveryEnabled) fulfillment = "Pickup";
+        if (fulfillment == "Pickup" && !Shop.CurrentBranch.PickupEnabled && Shop.CurrentBranch.DeliveryEnabled) fulfillment = "Delivery";
+    }
+
+    // [BUG-17] Đổi hình thức trong giỏ cũng được ghi nhớ (rời giỏ để thêm món rồi quay lại vẫn giữ).
+    private void SetFulfillment(string value)
+    {
+        fulfillment = value;
+        Shop.PreferredFulfillment = value;
     }
 
     private void PickVoucher(ChangeEventArgs e)

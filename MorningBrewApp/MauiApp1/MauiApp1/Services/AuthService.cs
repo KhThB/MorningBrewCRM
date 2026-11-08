@@ -6,10 +6,14 @@ namespace MauiApp1.Services;
 public sealed class AuthService
 {
     private readonly ApiClient api;
+    private readonly ShopService shop; // [BUG-16]
+    private readonly CrmService crm;   // [BUG-16]
 
-    public AuthService(ApiClient api)
+    public AuthService(ApiClient api, ShopService shop, CrmService crm)
     {
         this.api = api;
+        this.shop = shop;
+        this.crm = crm;
         // Phiên bị thu hồi (ví dụ quản lý khóa tài khoản) → xóa phiên, MainLayout chuyển về /login.
         api.Unauthorized += () => _ = ClearAsync();
     }
@@ -99,6 +103,10 @@ public sealed class AuthService
         User = null;
         Remove(TokenKey);
         Remove(UserKey);
+        // [BUG-16] Giỏ hàng, voucher, hình thức nhận, hồ sơ lưu tạm là dữ liệu của tài khoản vừa thoát → xóa,
+        // để tài khoản đăng nhập sau không thấy giỏ / thông tin người nhận của tài khoản trước.
+        shop.ResetForSignOut();
+        crm.Reset();
         await Task.CompletedTask;
         Changed?.Invoke();
     }

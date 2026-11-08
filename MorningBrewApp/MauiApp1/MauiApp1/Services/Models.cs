@@ -38,7 +38,7 @@ public record SurveyItem(
     // [BUG-08] Khảo sát chưa tới ngày bắt đầu là "Sắp mở", không còn bị tính là hết hạn.
     public bool IsUpcoming => Status == "Open" && StartsAt is not null && StartsAt > DateTimeOffset.UtcNow;
     public bool IsExpired => !IsUpcoming && (Status != "Open" || (EndsAt is not null && EndsAt <= DateTimeOffset.UtcNow));
-    public bool CanAnswer => !IsDone && !IsExpired;
+    public bool CanAnswer => !IsDone && !IsExpired && !IsUpcoming; // [BUG-08] chưa tới ngày bắt đầu thì chưa cho trả lời
 }
 
 public record SurveyQuestion(int QuestionId, string Text, string Type, bool IsRequired, int? RatingMin, int? RatingMax);

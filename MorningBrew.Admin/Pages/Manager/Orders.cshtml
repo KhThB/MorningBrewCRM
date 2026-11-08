@@ -1,0 +1,60 @@
+@page
+@model OrdersModel
+@* [BUG-02] Trang Đơn hàng của quản lý *@
+@{ViewData["Title"]=Model.Title;}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+@if(Model.Order is { } o)
+{
+    var status=OrderView.Text(o,"status");var fulfil=OrderView.Text(o,"fulfillment");var mode=OrderView.Text(o,"payment_mode");
+    var paid=OrderView.Text(o,"payment_status")=="Succeeded";var refunds=OrderView.List(o,"refunds");
+    var openRefund=refunds.LastOrDefault(r=>OrderView.Text(r,"status")!="Succeeded");
+    var active=status is not ("Completed" or "Cancelled");
+    var next=status switch{"Pending"=>"Confirmed","Confirmed"=>"Preparing","Preparing"=>"Ready",_=>null};
+    <a asp-page="/Manager/Orders">← Về danh sách đơn</a>
+    <div class="grid-2">
+    <section class="panel"><h2>@OrderView.Text(o,"order_code") <span class="badge @OrderView.Css(status)">@OrderView.Status(status)</span></h2>
+        <p><b>Khách:</b> @OrderView.Text(o,"customer_name") · @OrderView.Text(o,"contact_phone")</p>
+        <p><b>Nguồn:</b> @(OrderView.Text(o,"source")=="POS"?"Tại quầy (POS)":"App khách") · <b>Nhận hàng:</b> @OrderView.Fulfillment(fulfil) · <b>Đặt lúc:</b> @OrderView.Time(o,"create_time")</p>
+        <p><b>Thanh toán:</b> @OrderView.Payment(mode,OrderView.Text(o,"payment_status")) @if(status=="AwaitingPayment"){<span class="muted">(hạn @OrderView.Time(o,"payment_due_at"))</span>}</p>
+        @if(fulfil=="Delivery"){<p><b>Giao tới:</b> @OrderView.Text(o,"delivery_address") @OrderView.Text(o,"delivery_note") · <b>Giao hàng:</b> @OrderView.Text(o,"delivery_status") @OrderView.Text(o,"courier_name") @OrderView.Text(o,"courier_phone") @OrderView.Text(o,"delivery_failure")</p>}
+        @if(!string.IsNullOrEmpty(OrderView.Text(o,"note"))){<p><b>Ghi chú:</b> @OrderView.Text(o,"note")</p>}
+        <div class="table-wrap"><table><thead><tr><th>Món</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead><tbody>
+        @foreach(var l in OrderView.List(o,"lines")){<tr><td>@OrderView.Text(l,"display_name") (@OrderView.Text(l,"variant_name"))<br><small class="muted">@OrderView.Text(l,"options") @OrderView.Text(l,"note")</small></td><td>@OrderView.Text(l,"quantity")</td><td>@OrderView.Money(l,"unit_price")</td><td>@OrderView.Money(l,"line_total")</td></tr>}
+        </tbody></table></div>
+        <p>Tạm tính @OrderView.Money(o,"subtotal") · Giảm @OrderView.Money(o,"discount") · Phí giao @OrderView.Money(o,"delivery_fee") · <b>Tổng @OrderView.Money(o,"total_amount")</b></p>
+        <h3>Lịch sử trạng thái</h3>
+        <ul class="answers">@foreach(var h in OrderView.List(o,"history")){<li>@OrderView.Time(h,"create_time") · @OrderView.Status(OrderView.Text(h,"to_status")) · @OrderView.Text(h,"changed_by_name") @OrderView.Text(h,"reason")</li>}</ul>
+    </section>
+    <section class="panel"><h2>Xử lý đơn</h2>
+        @if(next is not null){<form method="post"><input type="hidden" name="operation" value="order-advance"><input type="hidden" name="id" value="@Model.Id"><input type="hidden" name="next" value="@next"><button class="primary">Chuyển sang: @OrderView.Status(next)</button></form>}
+        @if(status=="Ready" && fulfil=="Delivery"){<form method="post"><input type="hidden" name="operation" value="order-advance"><input type="hidden" name="id" value="@Model.Id"><input type="hidden" name="next" value="Delivering">
+            <label>Tên người giao</label><input name="courierName" maxlength="120" required><label>SĐT người giao</label><input name="courierPhone" maxlength="20" required><button class="primary">Giao cho shipper</button></form>}
+        @if((status=="Ready" && fulfil=="Pickup") || status=="Delivering"){<form method="post"><input type="hidden" name="operation" value="order-advance"><input type="hidden" name="id" value="@Model.Id"><input type="hidden" name="next" value="Completed">
+            <button class="primary" disabled="@(!paid)">Hoàn tất đơn</button>@if(!paid){<p class="muted">Cần xác nhận đã thu tiền trước khi hoàn tất.</p>}</form>}
+        @if(status=="Delivering"){
+            @if(OrderView.Text(o,"delivery_status")=="Failed"){<form method="post"><input type="hidden" name="operation" value="order-delivery"><input type="hidden" name="id" value="@Model.Id"><input type="hidden" name="deliveryStatus" value="Delivering"><button class="secondary">Giao lại</button></form>}
+            else{<form method="post"><input type="hidden" name="operation" value="order-delivery"><input type="hidden" name="id" value="@Model.Id"><input type="hidden" name="deliveryStatus" value="Failed"><label>Lý do giao thất bại</label><input name="reason" required maxlength="500"><button class="secondary">Báo giao thất bại</button></form>}}
+        @if(active && mode=="COD" && !paid){<form method="post"><input type="hidden" name="operation" value="order-collect"><input type="hidden" name="id" value="@Model.Id"><button class="secondary">Xác nhận đã thu tiền mặt</button></form>}
+        @if(active){<form method="post" onsubmit="return confirm('Hủy đơn này?')"><input type="hidden" name="operation" value="order-cancel"><input type="hidden" name="id" value="@Model.Id"><label>Lý do hủy</label><input name="reason" minlength="3" maxlength="500" required><button class="danger">Hủy đơn</button></form>}
+        @if(status=="Completed" && paid && refunds.Count==0){<form method="post"><input type="hidden" name="operation" value="order-refund"><input type="hidden" name="id" value="@Model.Id"><label>Lý do hoàn tiền</label><input name="reason" minlength="3" maxlength="500" required><button class="danger">Yêu cầu hoàn tiền</button></form>}
+        @if(refunds.Count>0){<h3>Hoàn tiền</h3><ul class="answers">@foreach(var r in refunds){<li>@OrderView.Money(r,"amount") · @OrderView.Refund(OrderView.Text(r,"status")) · @OrderView.Text(r,"reason") @OrderView.Text(r,"failure_reason")</li>}</ul>}
+        @if(openRefund is not null){<form method="post"><input type="hidden" name="operation" value="refund-complete"><input type="hidden" name="id" value="@Model.Id"><input type="hidden" name="refundId" value="@OrderView.Text(openRefund,"refund_id")">
+            <label>Ghi chú nếu thất bại</label><input name="reason" maxlength="500"><button class="primary" name="outcome" value="Succeeded">Hoàn tiền thành công</button> <button class="secondary" name="outcome" value="Failed">Hoàn tiền thất bại</button></form>
+            <p class="muted">Hoàn tiền thành công sẽ thu hồi điểm đã tích và trả lại voucher (nếu có).</p>}
+        @if(!active && openRefund is null && !(status=="Completed" && paid && refunds.Count==0)){<p class="muted">Đơn đã kết thúc, không còn thao tác.</p>}
+    </section>
+    </div>
+}
+else
+{
+<section class="panel"><form method="get" class="filter-row">
+<div><label>Tìm theo mã đơn, tên hoặc SĐT khách</label><input name="q" value="@Model.Q"></div>
+<div><label>Trạng thái</label><select name="status">@foreach(var f in OrdersModel.Filters){<option value="@f" selected="@(Model.Status==f)">@OrderView.Status(f)</option>}<option value="" selected="@(string.IsNullOrEmpty(Model.Status))">Tất cả</option></select></div>
+<div><button class="primary">Lọc</button></div></form></section>
+<section class="panel"><h2>Danh sách</h2>
+@if(Model.Rows.Count==0){<div class="empty-state">Không có đơn phù hợp.</div>}
+else{<div class="table-wrap"><table><thead><tr><th>Mã đơn</th><th>Đặt lúc</th><th>Khách</th><th>Món</th><th>Nhận hàng</th><th>Thanh toán</th><th>Trạng thái</th><th>Tổng</th><th></th></tr></thead><tbody>
+@foreach(var r in Model.Rows){<tr><td>@OrderView.Text(r,"order_code")</td><td>@OrderView.Time(r,"create_time")</td><td>@OrderView.Text(r,"customer_name")</td><td>@OrderView.Text(r,"items_text")</td><td>@OrderView.Fulfillment(OrderView.Text(r,"fulfillment"))</td><td>@OrderView.Payment(OrderView.Text(r,"payment_mode"),OrderView.Text(r,"payment_status"))</td><td><span class="badge @OrderView.Css(OrderView.Text(r,"status"))">@OrderView.Status(OrderView.Text(r,"status"))</span> @OrderView.Refund(OrderView.Text(r,"refund_status"))</td><td>@OrderView.Money(r,"total_amount")</td><td><a class="secondary" asp-page="/Manager/Orders" asp-route-id="@OrderView.Text(r,"order_id")">Xử lý</a></td></tr>}
+</tbody></table></div>}
+<partial name="_Pager" model="Model" /></section>
+}

@@ -64,11 +64,12 @@ public sealed class ApiErrors(RequestDelegate next, ILogger<ApiErrors> logger)
                 // [BUG-06] Thao tác không hợp lệ với trạng thái hiện tại: trả 409 kèm thông báo tiếng Việt từ SQL.
                 SqlException { Number: 51124 } e => (409, e.Message),
                 SqlException { Number: 51112 } => (412, "Dữ liệu đã thay đổi. Hãy tải lại trước khi lưu."),
-                SqlException { Number: 51109 } => (409, "Yêu cầu xung đột với trạng thái hoặc yêu cầu trước đó."),
+                // [BUG-02] dịch thông báo đơn hàng sang tiếng Việt (OrderQueries.Translate)
+                SqlException { Number: 51109 } e => (409, OrderQueries.Translate(e.Message, "Yêu cầu xung đột với trạng thái hoặc yêu cầu trước đó.")),
                 BadHttpRequestException e => (e.StatusCode, "Yêu cầu HTTP không hợp lệ."),
                 SqlException e when e.Number is 2601 or 2627 => (409, "Dữ liệu đã tồn tại hoặc yêu cầu đã được xử lý."),
                 SqlException e when e.Number is 547 or 515 or 2628 => (400, "Dữ liệu không hợp lệ hoặc đang được sử dụng."),
-                SqlException e when e.Number >= 51000 && e.Number < 52000 => (400, e.Message),
+                SqlException e when e.Number >= 51000 && e.Number < 52000 => (400, OrderQueries.Translate(e.Message)), // [BUG-02]
                 SqlException => (503, "Không thể truy cập SQL Server. Kiểm tra cấu hình và database."),
                 _ => (500, "Không thể xử lý yêu cầu. Vui lòng thử lại.")
             };

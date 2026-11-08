@@ -14,6 +14,7 @@
         <div class="user-box"><div class="avatar">@(User.Identity?.Name?.FirstOrDefault())</div><div class="user-info"><b>@User.Identity?.Name</b><small>@RowDisplay.Value("role",JsonSerializer.SerializeToElement(User.FindFirstValue(ClaimTypes.Role)))</small></div></div>
         <nav>
             <a asp-page="/Manager/Index">Tổng quan</a>
+            <a asp-page="/Manager/Orders">Đơn hàng</a> @* [BUG-02] *@
             <a asp-page="/Manager/Customers">Khách hàng</a>
             <a asp-page="/Manager/Feedbacks">Phản hồi</a>
             <a asp-page="/Manager/Surveys">Khảo sát</a>

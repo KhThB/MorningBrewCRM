@@ -12,6 +12,7 @@ builder.Services.AddAuthentication("Session")
 builder.Services.AddAuthorization();
 builder.Services.AddDataProtection();
 builder.Services.AddSingleton<PageReader>();
+builder.Services.AddHostedService<UnpaidOrderExpiry>(); // [BUG-02] tự hủy đơn trả trước quá hạn thanh toán mỗi phút
 builder.Services.AddControllers(options => options.Filters.Add<ApiStatusFilter>())
     .AddJsonOptions(options => ApiJson.Configure(options.JsonSerializerOptions))
     .ConfigureApiBehaviorOptions(options => options.InvalidModelStateResponseFactory = ApiContract.Validation);

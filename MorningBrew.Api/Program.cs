@@ -20,6 +20,9 @@ builder.Services.ConfigureHttpJsonOptions(options => ApiJson.Configure(options.S
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    // [SWAGGER] Hai controller có class lồng cùng tên (AdminController.AdvanceInput, PosController.AdvanceInput)
+    // → đặt schemaId kèm tên lớp chứa để Swagger không báo trùng.
+    options.CustomSchemaIds(SwaggerSchemaId);
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "MorningBrew CRM API", Version = "v1",
         Description = "JSON snake_case; query pageSize/pageToken; UTC timestamps; opaque bearer sessions. Prices are shared across the chain." });
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -75,3 +78,9 @@ app.MapGet("/health", async (SqlStore db) =>
     return Results.Ok(new { status = "ready", database = "SqlServer" });
 });
 app.Run();
+
+// [SWAGGER] Tên schema: lớp lồng → "Lớp chứa.Tên", generic → "ApiPageOfOrder".
+static string SwaggerSchemaId(Type t) =>
+    t.IsGenericType ? t.Name.Split('`')[0] + "Of" + string.Join("And", t.GetGenericArguments().Select(SwaggerSchemaId))
+    : t.IsNested ? SwaggerSchemaId(t.DeclaringType!) + "." + t.Name
+    : t.Name;

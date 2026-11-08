@@ -60,12 +60,43 @@ async function mbOpenDrawer(url,title){
  try{const r=await fetch(url,{headers:{'X-Requested-With':'fetch'}});body.innerHTML=r.ok?await r.text():'<div class="empty-state">Không tải được chi tiết ('+r.status+').</div>';}
  catch(_){body.innerHTML='<div class="empty-state">Không kết nối được máy chủ.</div>';}
 }
+// [UI-05] Ngăn chi tiết dựng từ chính dữ liệu của dòng (không gọi máy chủ) + chép các nút thao tác của dòng.
+function mbShowDrawer(title,pairs,actions){
+ const d=document.getElementById('drawer'); if(!d) return;
+ d.querySelector('#drawer-title').textContent=title||'Chi tiết';
+ const body=d.querySelector('.drawer-body'); body.innerHTML='';
+ const dl=document.createElement('dl'); dl.className='detail-list';
+ for(const [k,v] of pairs){const dt=document.createElement('dt');dt.textContent=k;const dd=document.createElement('dd');dd.textContent=v;dd.style.whiteSpace='pre-wrap';dl.append(dt,dd);}
+ body.append(dl);
+ if(actions){const a=actions.cloneNode(true);a.className='detail-actions';body.append(a);}
+ d.classList.add('open');d.setAttribute('aria-hidden','false');document.querySelector('.drawer-backdrop').hidden=false;
+}
 function mbCloseDrawer(){const d=document.getElementById('drawer');if(!d)return;d.classList.remove('open');d.setAttribute('aria-hidden','true');document.querySelector('.drawer-backdrop').hidden=true;}
 document.addEventListener('click',e=>{
  if(e.target.closest('[data-drawer-close]')){mbCloseDrawer();return;}
  const btn=e.target.closest('[data-detail]');
  if(btn){e.preventDefault();mbOpenDrawer(btn.dataset.detail,btn.dataset.detailTitle);return;}
- const row=e.target.closest('tr[data-detail-url]');
- if(row&&row.dataset.detailUrl&&!e.target.closest('a,button,input,select,textarea,form,label'))mbOpenDrawer(row.dataset.detailUrl,row.dataset.detailTitle);
+ const row=e.target.closest('tr[data-detail-url],tr[data-detail-rows]');
+ if(!row||e.target.closest('a,button,input,select,textarea,form,label'))return;
+ if(row.dataset.detailUrl)mbOpenDrawer(row.dataset.detailUrl,row.dataset.detailTitle);
+ else if(row.dataset.detailRows)mbShowDrawer(row.dataset.detailTitle,JSON.parse(row.dataset.detailRows),row.querySelector('.row-actions'));
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.querySelector('dialog[open]'))mbCloseDrawer();});
+
+// ===== [UI-01] Ô "Tìm khách" nằm trong modal: tải lại trang với ?cq=… rồi mở lại đúng modal và giữ mã đang chọn =====
+document.addEventListener('submit',e=>{
+ const f=e.target; if(!f.matches('form[data-keep-modal]'))return;
+ const d=f.closest('dialog'); if(!d)return;
+ const post=d.querySelector('form[method=post]'); const fill={};
+ if(post)for(const el of post.elements){if(el.name&&el.type!=='hidden'&&el.type!=='checkbox'&&el.type!=='password'&&el.value)fill[el.name]=el.value; if(el.name==='id')fill.id=el.value;}
+ d.querySelectorAll('[data-text]').forEach(el=>{if(el.textContent)fill[el.dataset.text]=el.textContent});
+ f.querySelector('[name=open]').value=d.id; f.querySelector('[name=openfill]').value=JSON.stringify(fill);
+},true);
+document.addEventListener('DOMContentLoaded',()=>{
+ const q=new URLSearchParams(location.search); const id=q.get('open');
+ if(id&&!document.getElementById('modal-state')){let fill=null;try{fill=JSON.parse(q.get('openfill')||'null')}catch(_){} mbOpenModal(id,fill);
+  const u=new URL(location.href);u.searchParams.delete('open');u.searchParams.delete('openfill');history.replaceState(null,'',u);}
+});
+
+// [UI-02] Dòng có data-href: bấm vào dòng (không phải nút) thì mở trang chi tiết.
+document.addEventListener('click',e=>{const r=e.target.closest('tr[data-href]');if(r&&!e.target.closest('a,button,input,select,textarea,form,label'))location.href=r.dataset.href;});

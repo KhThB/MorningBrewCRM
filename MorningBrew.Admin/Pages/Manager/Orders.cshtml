@@ -47,14 +47,26 @@
 }
 else
 {
-<section class="panel"><form method="get" class="filter-row">
-<div><label>Tìm theo mã đơn, tên hoặc SĐT khách</label><input name="q" value="@Model.Q"></div>
-<div><label>Trạng thái</label><select name="status">@foreach(var f in OrdersModel.Filters){<option value="@f" selected="@(Model.Status==f)">@OrderView.Status(f)</option>}<option value="" selected="@(string.IsNullOrEmpty(Model.Status))">Tất cả</option></select></div>
-<div><button class="primary">Lọc</button></div></form></section>
-<section class="panel"><h2>Danh sách</h2>
+<section class="panel">
+    @* [UI-03] Bộ lọc dạng tab theo trạng thái + ô tìm kiếm *@
+    <div class="tabs-filter">
+        @foreach(var f in OrdersModel.Filters.Append("")){<a href="?status=@f&q=@Uri.EscapeDataString(Model.Q??"")" class="@((Model.Status??"")==f?"current":null)">@(f==""?"Tất cả":OrderView.Status(f))</a>}
+    </div>
+    <div class="list-toolbar"><form method="get"><input type="hidden" name="status" value="@Model.Status"><input name="q" type="search" value="@Model.Q" placeholder="Tìm theo mã đơn, tên hoặc SĐT khách" aria-label="Tìm đơn"><button class="secondary">Tìm</button>@if(!string.IsNullOrEmpty(Model.Q)){<a class="btn-sm" href="?status=@Model.Status">Bỏ lọc</a>}</form></div>
+    <p class="list-count">@Model.Rows.Count đơn · bấm vào một dòng để mở chi tiết và xử lý</p>
 @if(Model.Rows.Count==0){<div class="empty-state">Không có đơn phù hợp.</div>}
-else{<div class="table-wrap"><table><thead><tr><th>Mã đơn</th><th>Đặt lúc</th><th>Khách</th><th>Món</th><th>Nhận hàng</th><th>Thanh toán</th><th>Trạng thái</th><th>Tổng</th><th></th></tr></thead><tbody>
-@foreach(var r in Model.Rows){<tr><td>@OrderView.Text(r,"order_code")</td><td>@OrderView.Time(r,"create_time")</td><td>@OrderView.Text(r,"customer_name")</td><td>@OrderView.Text(r,"items_text")</td><td>@OrderView.Fulfillment(OrderView.Text(r,"fulfillment"))</td><td>@OrderView.Payment(OrderView.Text(r,"payment_mode"),OrderView.Text(r,"payment_status"))</td><td><span class="badge @OrderView.Css(OrderView.Text(r,"status"))">@OrderView.Status(OrderView.Text(r,"status"))</span> @OrderView.Refund(OrderView.Text(r,"refund_status"))</td><td>@OrderView.Money(r,"total_amount")</td><td><a class="secondary" asp-page="/Manager/Orders" asp-route-id="@OrderView.Text(r,"order_id")">Xử lý</a></td></tr>}
+else{<div class="table-wrap"><table><thead><tr><th>Mã đơn</th><th>Đặt lúc</th><th>Khách</th><th>Món</th><th>Nhận hàng</th><th>Thanh toán</th><th>Trạng thái</th><th>Tổng</th><th class="actions-col">Thao tác</th></tr></thead><tbody>
+@foreach(var r in Model.Rows)
+{
+    var st=OrderView.Text(r,"status"); var oid=OrderView.Text(r,"order_id");
+    @* [UI-02] Bước kế tiếp làm được ngay trên danh sách (các bước cần nhập thêm vẫn vào trang chi tiết) *@
+    (string Next,string Label)? quick=st switch{"Pending"=>("Confirmed","Xác nhận"),"Confirmed"=>("Preparing","Pha chế"),"Preparing"=>("Ready","Sẵn sàng"),_=>null};
+    <tr class="clickable" data-href="?id=@oid"><td><b>@OrderView.Text(r,"order_code")</b></td><td>@OrderView.Time(r,"create_time")</td><td>@OrderView.Text(r,"customer_name")</td><td>@OrderView.Text(r,"items_text")</td><td>@OrderView.Fulfillment(OrderView.Text(r,"fulfillment"))</td><td>@OrderView.Payment(OrderView.Text(r,"payment_mode"),OrderView.Text(r,"payment_status"))</td><td><span class="badge @OrderView.Css(st)">@OrderView.Status(st)</span> @OrderView.Refund(OrderView.Text(r,"refund_status"))</td><td>@OrderView.Money(r,"total_amount")</td>
+    <td class="actions-col"><div class="row-actions">
+        @if(quick is { } q){<form method="post" class="inline-form"><input type="hidden" name="operation" value="order-advance"><input type="hidden" name="id" value="@oid"><input type="hidden" name="next" value="@q.Next"><input type="hidden" name="back" value="list"><input type="hidden" name="listStatus" value="@Model.Status"><button class="btn-sm">@q.Label</button></form>}
+        <a class="btn-sm" asp-page="/Manager/Orders" asp-route-id="@oid">Xử lý</a>
+    </div></td></tr>
+}
 </tbody></table></div>}
 <partial name="_Pager" model="Model" /></section>
 }

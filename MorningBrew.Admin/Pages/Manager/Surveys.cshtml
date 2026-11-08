@@ -1,6 +1,15 @@
 @page
 @model SurveysModel
-@{ViewData["Title"]=Model.Title;}
+@{
+    ViewData["Title"]=Model.Title;
+    // [UI-02] Nút theo trạng thái: Nháp → Phát hành; Đang mở → Mời khách, Đóng; mọi khảo sát → Kết quả.
+    Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
+        @{var id=item["survey_id"].ToString(); var title=item["title"].ToString(); var st=item["status"].ToString(); var fill=JsonSerializer.Serialize(new{id,title});}
+        @if(st=="Draft"){<button type="button" class="btn-sm" data-open="m-publish" data-fill="@fill">Phát hành</button>}
+        @if(st=="Open"){<button type="button" class="btn-sm" data-open="m-invite" data-fill="@fill">Mời khách</button><button type="button" class="btn-sm danger-text" data-open="m-close" data-fill="@fill">Đóng</button>}
+        <a class="btn-sm" href="?surveyId=@id">Kết quả</a>
+    </div>;
+}
 <div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
 @if(Model.SurveyId.HasValue)
 {
@@ -11,36 +20,68 @@
 }
 else
 {
-<section class="panel"><h2>Danh sách</h2><partial name="_Rows" model="Model.Rows" /><partial name="_Pager" model="Model" /></section>
-<section class="panel"><h2>Tạo khảo sát</h2><form method="post" id="survey-form"><input type="hidden" name="operation" value="survey">
-<div class="grid-2"><div><label>Tiêu đề</label><input name="title" maxlength="250" required></div><div><label>Mô tả</label><input name="description" maxlength="2000"></div></div>
-<h3>Câu hỏi</h3><p class="muted">Loại <b>Đánh giá</b> cho điểm 1–5. Loại <b>Chọn một / Chọn nhiều</b> cần ít nhất 2 lựa chọn, mỗi dòng một lựa chọn (dùng để thăm dò khi ra mắt sản phẩm mới). Câu để trống nội dung sẽ bị bỏ qua.</p>
-<div id="questions">
-<div class="question-row">
-<div><label>Nội dung câu hỏi</label><input name="q_text" maxlength="2000"></div>
-<div><label>Loại</label><select name="q_type" class="q-type"><option value="Rating">Đánh giá 1–5</option><option value="SingleChoice">Chọn một</option><option value="MultipleChoice">Chọn nhiều</option><option value="Text">Tự luận</option></select></div>
-<div><label>Bắt buộc</label><select name="q_required"><option value="true">Có</option><option value="false">Không</option></select></div>
-<div class="q-options hidden"><label>Lựa chọn (mỗi dòng một lựa chọn)</label><textarea name="q_options" rows="3"></textarea></div>
-<button type="button" class="secondary q-remove" aria-label="Xóa câu hỏi">Xóa</button>
-</div>
-</div>
-<button type="button" class="secondary" id="add-question">+ Thêm câu hỏi</button>
-<partial name="_Scope" model="Model" /><button class="primary">Tạo bản nháp</button></form></section>
-<section class="panel"><partial name="_CustomerSearch" model="Model" /></section>
-<div class="grid-2">
-<section class="panel"><h2>Quản lý khảo sát</h2><form method="post"><label>Khảo sát</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["survey_id"]">@x["title"] · @RowDisplay.Value("status",x["status"])</option>}</select>
-<button class="primary" name="operation" value="publish">Phát hành</button> <button class="secondary" name="operation" value="close">Đóng</button> <button class="secondary" name="operation" value="results">Xem kết quả</button></form>
-<h3>Mời một khách hàng</h3><form method="post"><input type="hidden" name="operation" value="invite"><label>Khảo sát đang mở</label><select name="id">@foreach(var x in Model.Rows.Where(x=>x["status"].ToString()=="Open")){<option value="@x["survey_id"]">@x["title"]</option>}</select>
-<label>Khách hàng</label><select name="customerId">@foreach(var x in Model.Choices("customers")){<option value="@x["id"]">@x["display_name"]</option>}</select><button class="primary">Gửi lời mời</button></form></section>
-<section class="panel"><h2>Mời hàng loạt</h2><form method="post" id="bulk-form"><input type="hidden" name="operation" value="invite-bulk">
-<label>Khảo sát đang mở</label><select name="id" required>@foreach(var x in Model.Rows.Where(x=>x["status"].ToString()=="Open")){<option value="@x["survey_id"]">@x["title"]</option>}</select>
-<label>Cách chọn khách</label><select name="mode" id="bulk-mode"><option value="segment">Theo nhóm khách</option><option value="all">Tất cả khách đang hoạt động</option><option value="list">Chọn từng khách</option></select>
-<div class="bulk-segment"><label>Nhóm tuổi</label><select name="ageGroup"><option value="">Mọi nhóm tuổi</option>@foreach(var a in SurveysModel.AgeGroups){<option value="@a.Id">@a.Name</option>}</select>
-<label>Giới tính</label><select name="gender"><option value="">Mọi giới tính</option><option value="Male">Nam</option><option value="Female">Nữ</option><option value="Other">Khác</option><option value="Undisclosed">Chưa cung cấp</option></select>
-<label>Thích sản phẩm</label><select name="productId"><option value="">Không lọc theo sở thích</option>@foreach(var p in Model.Choices("products")){<option value="@p["id"]">@p["display_name"]</option>}</select></div>
-<div class="bulk-list hidden"><label>Khách hàng (200 khách mới nhất hoặc kết quả tìm ở trên)</label><div class="check-list">@foreach(var x in Model.Choices("customers")){<label><input type="checkbox" name="customerIds" value="@x["id"]"> @x["display_name"]</label>}</div></div>
-<button class="primary">Gửi lời mời</button></form><p class="muted">Khách đã được mời trước đó sẽ được bỏ qua, không gửi trùng.</p></section>
-</div>
+<section class="panel">
+    <div class="list-toolbar"><div></div><button type="button" class="primary add-btn" data-open="m-add">+ Tạo khảo sát</button></div>
+    <p class="list-count">@Model.Rows.Count khảo sát · bấm vào một dòng để xem chi tiết</p>
+    @* [UI-03] bỏ các cột Phạm vi / Khu vực / Chi nhánh (hệ thống một cửa hàng) *@
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,RowDetail=true,DetailTitle="Chi tiết khảo sát",Hide=new HashSet<string>{"scope","area_id","branch_id"}})" />
+    <partial name="_Pager" model="Model" />
+</section>
+
+@* [UI-01] Tạo khảo sát (giữ bộ thêm câu hỏi) *@
+<dialog class="modal wide" id="m-add"><form method="post" id="survey-form">
+    <input type="hidden" name="operation" value="survey"><input type="hidden" name="modal" value="m-add">
+    <header><h2>Tạo khảo sát (bản nháp)</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <div class="two"><div><label>Tiêu đề *</label><input name="title" maxlength="250" required></div><div><label>Mô tả</label><input name="description" maxlength="2000"></div></div>
+        <h3>Câu hỏi</h3><p class="muted">Loại <b>Đánh giá</b> cho điểm 1–5. Loại <b>Chọn một / Chọn nhiều</b> cần ít nhất 2 lựa chọn, mỗi dòng một lựa chọn. Câu để trống nội dung sẽ bị bỏ qua.</p>
+        <div id="questions">
+        <div class="question-row">
+        <div><label>Nội dung câu hỏi</label><input name="q_text" maxlength="2000"></div>
+        <div><label>Loại</label><select name="q_type" class="q-type"><option value="Rating">Đánh giá 1–5</option><option value="SingleChoice">Chọn một</option><option value="MultipleChoice">Chọn nhiều</option><option value="Text">Tự luận</option></select></div>
+        <div><label>Bắt buộc</label><select name="q_required"><option value="true">Có</option><option value="false">Không</option></select></div>
+        <div class="q-options hidden"><label>Lựa chọn (mỗi dòng một lựa chọn)</label><textarea name="q_options" rows="3"></textarea></div>
+        <button type="button" class="secondary q-remove" aria-label="Xóa câu hỏi">Xóa</button>
+        </div>
+        </div>
+        <button type="button" class="secondary" id="add-question">+ Thêm câu hỏi</button>
+        <partial name="_Scope" model="Model" />
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Tạo bản nháp</button></footer>
+</form></dialog>
+
+@* [UI-01] Phát hành / Đóng *@
+<dialog class="modal" id="m-publish"><form method="post">
+    <input type="hidden" name="operation" value="publish"><input type="hidden" name="modal" value="m-publish"><input type="hidden" name="id">
+    <header><h2>Phát hành khảo sát</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Phát hành <b data-text="title"></b>? Sau khi phát hành không sửa được câu hỏi; khách được mời sẽ trả lời trong khoảng thời gian đã đặt.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Phát hành</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-close"><form method="post">
+    <input type="hidden" name="operation" value="close"><input type="hidden" name="modal" value="m-close"><input type="hidden" name="id">
+    <header><h2>Đóng khảo sát</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Đóng <b data-text="title"></b>? Khách sẽ không gửi câu trả lời được nữa; kết quả đã có vẫn được giữ.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Đóng khảo sát</button></footer>
+</form></dialog>
+
+@* [UI-01] Mời khách: một khách / theo nhóm / tất cả / chọn nhiều (gộp 2 form "Mời một khách" và "Mời hàng loạt") *@
+<dialog class="modal wide" id="m-invite"><div class="modal-shell">
+    <header><h2>Mời khách trả lời khảo sát</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <p>Khảo sát: <b data-text="title"></b></p>
+        <partial name="_ModalCustomerSearch" model="Model" />
+        <form method="post" id="bulk-form"><input type="hidden" name="operation" value="invite-bulk" id="invite-op"><input type="hidden" name="modal" value="m-invite"><input type="hidden" name="id">
+        <label>Cách chọn khách</label><select name="mode" id="bulk-mode"><option value="one">Một khách hàng</option><option value="segment">Theo nhóm khách</option><option value="all">Tất cả khách đang hoạt động</option><option value="list">Chọn nhiều khách</option></select>
+        <div class="bulk-one"><label>Khách hàng</label><select name="customerId">@foreach(var x in Model.Choices("customers")){<option value="@x["id"]">@x["display_name"]</option>}</select></div>
+        <div class="bulk-segment hidden"><div class="two"><div><label>Nhóm tuổi</label><select name="ageGroup"><option value="">Mọi nhóm tuổi</option>@foreach(var a in SurveysModel.AgeGroups){<option value="@a.Id">@a.Name</option>}</select></div>
+        <div><label>Giới tính</label><select name="gender"><option value="">Mọi giới tính</option><option value="Male">Nam</option><option value="Female">Nữ</option><option value="Other">Khác</option><option value="Undisclosed">Chưa cung cấp</option></select></div></div>
+        <label>Thích sản phẩm</label><select name="productId"><option value="">Không lọc theo sở thích</option>@foreach(var p in Model.Choices("products")){<option value="@p["id"]">@p["display_name"]</option>}</select></div>
+        <div class="bulk-list hidden"><label>Khách hàng (200 khách mới nhất hoặc kết quả tìm ở trên)</label><div class="check-list">@foreach(var x in Model.Choices("customers")){<label><input type="checkbox" name="customerIds" value="@x["id"]"> @x["display_name"]</label>}</div></div>
+        <p class="muted">Khách đã được mời trước đó sẽ được bỏ qua, không gửi trùng.</p>
+        </form>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary" form="bulk-form">Gửi lời mời</button></footer>
+</div></dialog>
 <script>
 (()=>{const box=document.getElementById('questions'),tpl=box.firstElementChild.cloneNode(true);
  const sync=row=>row.querySelector('.q-options').classList.toggle('hidden',!/Choice/.test(row.querySelector('.q-type').value));
@@ -50,7 +91,16 @@ else
  document.getElementById('survey-form').addEventListener('submit',e=>{for(const r of box.children){const t=r.querySelector('[name=q_text]').value.trim();
   if(t&&/Choice/.test(r.querySelector('.q-type').value)&&r.querySelector('textarea').value.split('\n').filter(x=>x.trim()).length<2){e.preventDefault();alert('Câu "'+t+'" cần ít nhất 2 lựa chọn.');return}}
   if(![...box.querySelectorAll('[name=q_text]')].some(x=>x.value.trim())){e.preventDefault();alert('Cần ít nhất một câu hỏi.')}});
- const mode=document.getElementById('bulk-mode'),seg=document.querySelector('.bulk-segment'),list=document.querySelector('.bulk-list');
- mode.onchange=()=>{seg.classList.toggle('hidden',mode.value!=='segment');list.classList.toggle('hidden',mode.value!=='list')};})();
+ // [UI-01] Mời một khách dùng thao tác "invite", các cách còn lại dùng "invite-bulk"
+ const mode=document.getElementById('bulk-mode'),op=document.getElementById('invite-op'),one=document.querySelector('.bulk-one'),seg=document.querySelector('.bulk-segment'),list=document.querySelector('.bulk-list');
+ const syncMode=()=>{op.value=mode.value==='one'?'invite':'invite-bulk';one.classList.toggle('hidden',mode.value!=='one');seg.classList.toggle('hidden',mode.value!=='segment');list.classList.toggle('hidden',mode.value!=='list')};
+ mode.onchange=syncMode; document.getElementById('m-invite').addEventListener('toggle',syncMode); document.addEventListener('DOMContentLoaded',()=>setTimeout(syncMode,0));
+ // Mở lại modal Tạo khảo sát sau lỗi: dựng lại đủ số dòng câu hỏi theo dữ liệu đã nhập
+ const st=document.getElementById('modal-state');
+ if(st){try{const m=JSON.parse(st.textContent);if(m.id==='m-add'){const f=m.form,arr=k=>[].concat(f[k]??[]);const texts=arr('q_text');
+   box.innerHTML='';texts.forEach((t,i)=>{const r=tpl.cloneNode(true);r.querySelector('[name=q_text]').value=t;r.querySelector('.q-type').value=arr('q_type')[i]??'Rating';r.querySelector('[name=q_required]').value=arr('q_required')[i]??'true';r.querySelector('textarea').value=arr('q_options')[i]??'';box.append(r);sync(r)});
+   if(!box.children.length)box.append(tpl.cloneNode(true));
+   window.addEventListener('load',()=>{['title','description','startsAt','endsAt'].forEach(k=>{if(f[k]){const el=document.querySelector('#survey-form [name='+k+']');if(el)el.value=f[k]}});box.querySelectorAll('.question-row').forEach((r,i)=>{r.querySelector('[name=q_text]').value=texts[i]??'';r.querySelector('.q-type').value=arr('q_type')[i]??'Rating';r.querySelector('[name=q_required]').value=arr('q_required')[i]??'true';r.querySelector('textarea').value=arr('q_options')[i]??'';sync(r)})});}}catch(_){}}
+})();
 </script>
 }

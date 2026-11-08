@@ -12,4 +12,4 @@
 <li>Khi cần thay thế database đang chạy: dừng API, chạy lại lệnh trên với <code>-Database MorningBrewCRM_Crm -Replace</code>, rồi khởi động API.</li>
 <li>Sao lưu định kỳ: <code>./database/tools/Backup.ps1 -Database MorningBrewCRM_Crm -Keep 14</code> (lên lịch bằng Task Scheduler).</li></ol></section>
 </div>
-<section class="panel"><h2>Các bản sao lưu gần nhất</h2><partial name="_Rows" model="Model.Rows" /></section>
+<section class="panel"><h2>Các bản sao lưu gần nhất</h2><partial name="_Table" model="@(new TableView{Rows=Model.Rows,EmptyText="Chưa có bản sao lưu nào."})" /> @* [UI-03] *@</section>

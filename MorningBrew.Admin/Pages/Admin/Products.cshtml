@@ -1,15 +1,50 @@
 @page
 @model ProductsModel
-@{ViewData["Title"]=Model.Title;var products=Model.Rows.GroupBy(x=>x["product_id"].ToString()).Select(g=>g.First()).ToList();}
+@{
+    ViewData["Title"]=Model.Title;
+    // [UI-02] Mỗi dòng là một kích cỡ: sửa giá kích cỡ đó; ngừng / mở bán áp dụng cho cả sản phẩm.
+    Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
+        @{var active=item["is_active"].ValueKind==JsonValueKind.True;
+          var fill=JsonSerializer.Serialize(new{id=item["product_id"].ToString(),variantId=item["variant_id"].ToString(),display_name=item["display_name"].ToString(),size=item["size"].ToString(),current=OrderView.Money(item,"base_price"),price=ReportView.Number(ReportView.Decimal(item,"base_price"))});}
+        <button type="button" class="btn-sm" data-open="m-price" data-fill="@fill">Sửa giá</button>
+        <button type="button" class="btn-sm @(active?"danger-text":null)" data-open="@(active?"m-stop":"m-start")" data-fill="@fill">@(active?"Ngừng bán":"Mở bán")</button>
+    </div>;
+}
 <div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
-<section class="panel"><h2>Danh sách</h2><partial name="_Rows" model="Model.Rows" /><partial name="_Pager" model="Model" /></section>
-<div class="grid-2">
-<section class="panel"><h2>Thêm sản phẩm</h2><form method="post"><input type="hidden" name="operation" value="product">
-<label>Tên sản phẩm</label><input name="name" maxlength="150" required><label>Mô tả</label><textarea name="description" maxlength="2000"></textarea>
-<label>Danh mục</label><select name="categoryId">@foreach(var x in Model.Choices("categories")){<option value="@x["id"]">@x["display_name"]</option>}</select>
-<label>Kích cỡ</label><input name="size" value="M" maxlength="60" required><label>Giá cơ bản (VND)</label><input name="price" type="number" min="0" required><button class="primary">Tạo sản phẩm</button></form>
-<h3>Trạng thái sản phẩm</h3><form method="post"><input type="hidden" name="operation" value="product-active"><select name="id" aria-label="Sản phẩm">@foreach(var x in products){<option value="@x["product_id"]">@x["display_name"]</option>}</select><select name="active" aria-label="Trạng thái"><option value="false">Ngừng bán</option><option value="true">Đang bán</option></select><button class="secondary">Cập nhật</button></form></section>
-<section class="panel"><h2>Giá bán</h2><form method="post"><input type="hidden" name="operation" value="price">
-<label>Sản phẩm / kích cỡ</label><select name="variantId">@foreach(var x in Model.Rows){<option value="@x["variant_id"]">@x["display_name"] · @x["size"]</option>}</select>
-<label>Giá bán (VND)</label><input name="price" type="number" min="0" required><button class="primary">Lưu giá</button></form></section>
-</div>
+<section class="panel">
+    <div class="list-toolbar"><div></div><button type="button" class="primary add-btn" data-open="m-add">+ Thêm sản phẩm</button></div>
+    <p class="list-count">@Model.Rows.Count dòng (mỗi kích cỡ một dòng)</p>
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,Hide=new HashSet<string>{"variant_id"},ActiveLabels=("Đang bán","Ngừng bán"),Format=(k,r)=>k=="base_price"?OrderView.Money(r,k):null})" />
+    <partial name="_Pager" model="Model" />
+</section>
+
+<dialog class="modal" id="m-add"><form method="post">
+    <input type="hidden" name="operation" value="product"><input type="hidden" name="modal" value="m-add">
+    <header><h2>Thêm sản phẩm</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <label>Tên sản phẩm *</label><input name="name" maxlength="150" required>
+        <label>Mô tả</label><textarea name="description" maxlength="2000" rows="2"></textarea>
+        <label>Danh mục</label><select name="categoryId">@foreach(var x in Model.Choices("categories")){<option value="@x["id"]">@x["display_name"]</option>}</select>
+        <div class="two"><div><label>Kích cỡ *</label><input name="size" value="M" maxlength="60" required></div><div><label>Giá cơ bản (VND) *</label><input name="price" type="number" min="0" required></div></div>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Tạo sản phẩm</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-price"><form method="post">
+    <input type="hidden" name="operation" value="price"><input type="hidden" name="modal" value="m-price"><input type="hidden" name="variantId">
+    <header><h2>Sửa giá bán</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p><b data-text="display_name"></b> · cỡ <b data-text="size"></b> · giá hiện tại <b data-text="current"></b></p>
+        <label>Giá bán mới (VND) *</label><input name="price" type="number" min="0" required></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Lưu giá</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-stop"><form method="post">
+    <input type="hidden" name="operation" value="product-active"><input type="hidden" name="modal" value="m-stop"><input type="hidden" name="id"><input type="hidden" name="active" value="false">
+    <header><h2>Ngừng bán</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Ngừng bán <b data-text="display_name"></b> (mọi kích cỡ)? Món sẽ ẩn khỏi thực đơn app và POS.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Ngừng bán</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-start"><form method="post">
+    <input type="hidden" name="operation" value="product-active"><input type="hidden" name="modal" value="m-start"><input type="hidden" name="id"><input type="hidden" name="active" value="true">
+    <header><h2>Mở bán lại</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Mở bán lại <b data-text="display_name"></b>?</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Mở bán</button></footer>
+</form></dialog>

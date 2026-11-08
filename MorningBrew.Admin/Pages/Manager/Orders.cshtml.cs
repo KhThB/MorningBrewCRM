@@ -43,6 +43,8 @@ public class OrdersModel(CrmApi api):WorkspaceBase(api)
                 await Api.Send(HttpMethod.Post,$"v1/refunds/{Number("refundId")}:complete",new {outcome=Text("outcome"),failureReason=NullIfEmpty("reason")});
                 TempData["Success"]=Text("outcome")=="Succeeded"?"Hoàn tiền thành công: đã thu hồi điểm và trả lại voucher (nếu có).":"Đã ghi nhận hoàn tiền thất bại."; break; // (kiểm thử: thiếu thông báo)
         }
+        // [UI-02] Thao tác nhanh từ danh sách: quay lại đúng bộ lọc đang xem thay vì mở trang chi tiết.
+        if(Text("back")=="list") return RedirectToPage(new {status=Text("listStatus"),q=Q});
         return RedirectToPage(new {id});
     }
     private string? NullIfEmpty(string key)=>string.IsNullOrWhiteSpace(Text(key))?null:Text(key);

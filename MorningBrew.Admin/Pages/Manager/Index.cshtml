@@ -17,9 +17,8 @@
     var feedbacks=ReportView.Rows(todo,"new_feedbacks"); var surveys=ReportView.Rows(todo,"ending_surveys");
 }
 <div class="topbar"><div><h1>Tổng quan</h1><p class="muted">Doanh thu, sản phẩm bán chạy và việc cần xử lý của cửa hàng.</p></div>
-    <form method="get" class="dash-filter">
-        <select name="year" aria-label="Năm" onchange="this.form.submit()">@for(var i=Model.CurrentYear;i>=Model.CurrentYear-4;i--){<option value="@i" selected="@(i==y)">Năm @i</option>}</select>
-        <select name="month" aria-label="Tháng" onchange="this.form.submit()">@for(var i=1;i<=12;i++){<option value="@i" selected="@(i==m)">Tháng @i</option>}</select>
+    <form method="get" class="dash-filter"><input type="hidden" name="year" value="@y">
+        <select name="month" aria-label="Tháng" onchange="this.form.submit()">@for(var i=1;i<=12;i++){<option value="@i" selected="@(i==m)">Tháng @i/@y</option>}</select>
     </form>
 </div>
 <div class="cards">
@@ -46,8 +45,13 @@
 </div></section>
 
 @* [UI-D2] Doanh thu theo tháng *@
-<section class="panel"><h2>Doanh thu thuần theo tháng – năm @y</h2><p class="muted">Đơn hoàn tất trừ khoản đã hoàn tiền, theo giờ Việt Nam. Bấm vào một cột để xem chi tiết tháng đó.</p>
-    <div class="chart-box"><canvas id="chart-months" aria-label="Biểu đồ doanh thu theo tháng"></canvas></div></section>
+@* [UI-D2] Kiểu biểu đồ theo mẫu: đường cong có vùng tô, điểm tháng đang chọn có nhãn "T11 · 0 đ", chọn năm ở góc thẻ *@
+<section class="panel">
+    <div class="dash-head"><h2>Doanh thu theo tháng</h2>
+        <form method="get" class="year-pick"><span aria-hidden="true">📅</span><input type="hidden" name="month" value="@m">
+            <select name="year" aria-label="Năm" onchange="this.form.submit()">@for(var i=Model.CurrentYear;i>=Model.CurrentYear-4;i--){<option value="@i" selected="@(i==y)">Năm @i</option>}</select></form></div>
+    <p class="muted">Doanh thu thuần (đơn hoàn tất trừ tiền đã hoàn), theo giờ Việt Nam. Bấm vào một tháng để xem chi tiết bên dưới.</p>
+    <div class="chart-box tall"><canvas id="chart-months" aria-label="Biểu đồ doanh thu theo tháng"></canvas></div></section>
 
 <div class="dash-grid">
     @* [UI-D3] Doanh thu theo ngày *@
@@ -73,16 +77,28 @@
  const brown='#b7793c',caramel='rgba(214,167,108,.75)',caramelHi='#8a5a2b',ink='#1c1917';
  Chart.defaults.font.family='Inter,Segoe UI,Roboto,Arial,sans-serif';Chart.defaults.color='#78716c';
  const tip={callbacks:{label:c=>c.dataset.yAxisID==='y'?' '+c.dataset.label+': '+money(c.parsed.y):' '+c.dataset.label+': '+c.parsed.y}};
- new Chart(document.getElementById('chart-months'),{
-  data:{labels:data.months.map(x=>'T'+x.m),datasets:[
-   {type:'bar',label:'Doanh thu thuần',data:data.months.map(x=>x.net),yAxisID:'y',borderRadius:6,
-    backgroundColor:data.months.map(x=>x.m===data.month?caramelHi:caramel)},
-   {type:'line',label:'Số đơn hoàn tất',data:data.months.map(x=>x.orders),yAxisID:'y2',borderColor:ink,backgroundColor:ink,tension:.3,pointRadius:3}]},
-  options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{tooltip:tip,legend:{position:'bottom'}},
-   scales:{y:{beginAtZero:true,ticks:{callback:short}},y2:{beginAtZero:true,position:'right',grid:{display:false},ticks:{precision:0}}},
-   onClick:(e,els)=>{if(els.length){const mm=data.months[els[0].index].m;location.search='?year='+data.year+'&month='+mm;}},
-   onHover:(e,els)=>{e.native.target.style.cursor=els.length?'pointer':'default'}}
- });
+ // [UI-D2] Đường cong vùng tô; điểm của tháng đang chọn to hơn và có nhãn cố định phía trên.
+ const ctxM=document.getElementById('chart-months');
+ const sel=data.months.findIndex(x=>x.m===data.month);
+ const gradient=c=>{const {ctx,chartArea:a}=c.chart;if(!a)return 'rgba(214,167,108,.2)';const g=ctx.createLinearGradient(0,a.top,0,a.bottom);g.addColorStop(0,'rgba(183,121,60,.28)');g.addColorStop(1,'rgba(183,121,60,0)');return g;};
+ const selLabel={id:'selLabel',afterDatasetsDraw(c){
+   if(sel<0)return;const p=c.getDatasetMeta(0).data[sel];if(!p)return;const {ctx}=c;
+   const t1='T'+data.months[sel].m,t2=money(data.months[sel].net);
+   ctx.save();ctx.font='600 11px Inter,Segoe UI,Arial';const w1=ctx.measureText(t1).width;ctx.font='800 13px Inter,Segoe UI,Arial';const w2=ctx.measureText(t2).width;
+   const w=Math.max(w1,w2)+20,h=40;let x=p.x-w/2,y=p.y-h-14;x=Math.max(c.chartArea.left,Math.min(x,c.chartArea.right-w));if(y<c.chartArea.top-6)y=p.y+14;
+   ctx.shadowColor='rgba(0,0,0,.12)';ctx.shadowBlur=10;ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(x,y,w,h,8);ctx.fill();ctx.shadowBlur=0;
+   ctx.fillStyle='#78716c';ctx.font='600 11px Inter,Segoe UI,Arial';ctx.fillText(t1,x+10,y+15);ctx.fillStyle=ink;ctx.font='800 13px Inter,Segoe UI,Arial';ctx.fillText(t2,x+10,y+32);ctx.restore();}};
+ new Chart(ctxM,{type:'line',
+  data:{labels:data.months.map(x=>'T'+x.m),datasets:[{label:'Doanh thu thuần',data:data.months.map(x=>x.net),
+   borderColor:'#b45309',borderWidth:2.5,tension:.42,fill:true,backgroundColor:gradient,
+   pointRadius:data.months.map((x,i)=>i===sel?7:0),pointHoverRadius:6,pointBackgroundColor:'#fff',pointBorderColor:'#b45309',pointBorderWidth:3}]},
+  options:{maintainAspectRatio:false,layout:{padding:{top:24,right:8}},interaction:{mode:'index',intersect:false},
+   plugins:{legend:{display:false},tooltip:{displayColors:false,callbacks:{title:i=>'Tháng '+data.months[i[0].dataIndex].m+'/'+data.year,label:c=>money(c.parsed.y)+' · '+data.months[c.dataIndex].orders+' đơn'}}},
+   scales:{y:{beginAtZero:true,border:{display:false},grid:{color:'#f0ebe4'},ticks:{callback:short,maxTicksLimit:5}},
+    x:{grid:{display:false},border:{display:false},ticks:{color:c=>c.index===sel?'#b45309':'#78716c',font:c=>({weight:c.index===sel?'800':'500'})}}},
+   onClick:(e,els,c)=>{const pts=c.getElementsAtEventForMode(e,'index',{intersect:false},true);if(pts.length)location.search='?year='+data.year+'&month='+data.months[pts[0].index].m;},
+   onHover:(e,els)=>{e.native.target.style.cursor='pointer'}},
+  plugins:[selLabel]});
  new Chart(document.getElementById('chart-days'),{
   type:'line',data:{labels:data.days.map(x=>x.d),datasets:[{label:'Doanh thu thuần',data:data.days.map(x=>x.net),yAxisID:'y',borderColor:brown,backgroundColor:'rgba(214,167,108,.18)',fill:true,tension:.3,pointRadius:2}]},
   options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:i=>'Ngày '+i[0].label,label:c=>' '+money(c.parsed.y)+' · '+data.days[c.dataIndex].orders+' đơn'}}},

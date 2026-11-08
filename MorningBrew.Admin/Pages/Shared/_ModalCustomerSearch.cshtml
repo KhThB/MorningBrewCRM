@@ -1,0 +1,8 @@
+@model WorkspaceBase
+@* [BUG-12][UI-01] Tìm khách cho ô chọn khách bên trong modal: tải lại trang với ?cq=… và mở lại modal này. *@
+<form method="get" class="modal-search" data-keep-modal>
+    <input type="hidden" name="open"><input type="hidden" name="openfill">
+    <input name="cq" type="search" value="@Model.Cq" placeholder="Tìm khách theo tên, email, SĐT (trống: 200 khách mới nhất)" aria-label="Tìm khách">
+    <button class="secondary">Tìm</button>
+</form>
+@if(!string.IsNullOrEmpty(Model.Cq)){<p class="muted" style="margin-top:-6px">Đang lọc: @Model.Choices("customers").Count khách khớp “@Model.Cq”</p>}

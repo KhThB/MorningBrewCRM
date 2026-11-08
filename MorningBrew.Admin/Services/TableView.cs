@@ -13,6 +13,16 @@ public sealed class TableView
     /// <summary>URL trả về HTML chi tiết của dòng – bấm vào dòng sẽ mở ngăn bên phải (U5).</summary>
     public Func<Dictionary<string,JsonElement>,string?>? DetailUrl {get;init;}
     public string DetailTitle {get;init;}="Chi tiết";
+    /// <summary>[UI-05] Không có URL chi tiết: bấm dòng mở ngăn hiển thị đủ các cột của dòng (kể cả cột bị ẩn trong bảng).</summary>
+    public bool RowDetail {get;init;}
+    /// <summary>[UI-05] Cột thêm vào ngăn chi tiết dạng (nhãn, giá trị) – ví dụ nội dung phản hồi đầy đủ.</summary>
+    public Func<Dictionary<string,JsonElement>,IEnumerable<(string Label,string Value)>>? ExtraDetail {get;init;}
+    /// <summary>Định dạng riêng cho một ô (null = mặc định).</summary>
+    public Func<string,Dictionary<string,JsonElement>,string?>? Format {get;init;}
+    /// <summary>[UI-03] Chữ cho nhãn cột is_active theo ngữ cảnh (Đang bán / Ngừng bán…); null = Hoạt động / Đang khóa.</summary>
+    public (string On,string Off)? ActiveLabels {get;init;}
+    public string Badge(string key,JsonElement value)
+        => key=="is_active" && ActiveLabels is { } l && value.ValueKind is JsonValueKind.True or JsonValueKind.False ? (value.GetBoolean()?l.On:l.Off) : BadgeText(key,value);
     public string EmptyText {get;init;}="Chưa có dữ liệu phù hợp. Thử đổi bộ lọc hoặc thêm bản ghi mới.";
 
     /// <summary>[UI-03] Lớp CSS nhãn màu cho các cột trạng thái; null = hiển thị chữ thường.</summary>

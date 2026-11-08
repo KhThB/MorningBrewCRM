@@ -1,8 +1,37 @@
 @page
 @model SuppliersModel
-@{ViewData["Title"]=Model.Title;}
+@{
+    ViewData["Title"]=Model.Title;
+    Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
+        @{var active=item["is_active"].ValueKind==JsonValueKind.True; var fill=JsonSerializer.Serialize(new{id=item["supplier_id"].ToString(),display_name=item["display_name"].ToString()});}
+        <button type="button" class="btn-sm @(active?"danger-text":null)" data-open="@(active?"m-stop":"m-start")" data-fill="@fill">@(active?"Tạm ngưng":"Hợp tác lại")</button>
+    </div>;
+}
 <div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
-<section class="panel"><h2>Danh sách</h2><partial name="_Rows" model="Model.Rows" /><partial name="_Pager" model="Model" /></section>
-<div class="grid-2"><section class="panel"><h2>Thêm nhà cung cấp</h2><form method="post"><input type="hidden" name="operation" value="supplier">
-<label>Mã nhà cung cấp</label><input name="code" maxlength="30" required><label>Tên</label><input name="name" maxlength="150" required><label>Điện thoại</label><input name="phone" maxlength="20"><label>Email</label><input name="email" type="email"><label>Nhóm sản phẩm</label><input name="productGroup" maxlength="150"><button class="primary">Lưu nhà cung cấp</button></form></section>
-<section class="panel"><h2>Trạng thái hợp tác</h2><form method="post"><input type="hidden" name="operation" value="supplier-active"><label>Nhà cung cấp</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["supplier_id"]">@x["display_name"]</option>}</select><label>Trạng thái</label><select name="active"><option value="false">Tạm ngưng</option><option value="true">Đang hợp tác</option></select><button class="primary">Cập nhật</button></form></section></div>
+<section class="panel">
+    <div class="list-toolbar"><div></div><button type="button" class="primary add-btn" data-open="m-add">+ Thêm nhà cung cấp</button></div>
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,RowDetail=true,DetailTitle="Chi tiết nhà cung cấp",ActiveLabels=("Đang hợp tác","Tạm ngưng")})" />
+    <partial name="_Pager" model="Model" />
+</section>
+<dialog class="modal" id="m-add"><form method="post">
+    <input type="hidden" name="operation" value="supplier"><input type="hidden" name="modal" value="m-add">
+    <header><h2>Thêm nhà cung cấp</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <div class="two"><div><label>Mã nhà cung cấp *</label><input name="code" maxlength="30" required></div><div><label>Tên *</label><input name="name" maxlength="150" required></div>
+        <div><label>Điện thoại</label><input name="phone" maxlength="20"></div><div><label>Email</label><input name="email" type="email"></div></div>
+        <label>Nhóm sản phẩm</label><input name="productGroup" maxlength="150">
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Lưu nhà cung cấp</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-stop"><form method="post">
+    <input type="hidden" name="operation" value="supplier-active"><input type="hidden" name="modal" value="m-stop"><input type="hidden" name="id"><input type="hidden" name="active" value="false">
+    <header><h2>Tạm ngưng hợp tác</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Tạm ngưng hợp tác với <b data-text="display_name"></b>?</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Tạm ngưng</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-start"><form method="post">
+    <input type="hidden" name="operation" value="supplier-active"><input type="hidden" name="modal" value="m-start"><input type="hidden" name="id"><input type="hidden" name="active" value="true">
+    <header><h2>Hợp tác lại</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Chuyển <b data-text="display_name"></b> về trạng thái đang hợp tác?</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Hợp tác lại</button></footer>
+</form></dialog>

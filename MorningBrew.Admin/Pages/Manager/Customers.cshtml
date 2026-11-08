@@ -1,29 +1,82 @@
 @page
 @model CustomersModel
-@{ViewData["Title"]=Model.Title;}
+@{
+    ViewData["Title"]=Model.Title;
+    // [UI-02] Nút thao tác trên từng dòng (thay các ô "chọn khách" trong form cũ).
+    Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
+        @{var id=item["customer_id"].GetInt32(); var name=item["full_name"].ToString(); var active=item["is_active"].ValueKind==JsonValueKind.True;}
+        <button type="button" class="btn-sm" data-detail="?handler=Detail&id=@id" data-detail-title="Chi tiết khách hàng">Xem</button>
+        <button type="button" class="btn-sm" data-open="@(active?"m-lock":"m-unlock")" data-fill="@(JsonSerializer.Serialize(new{id,full_name=name}))">@(active?"Khóa":"Mở khóa")</button>
+        @if(Model.IsOwner){<button type="button" class="btn-sm" data-open="m-points" data-fill="@(JsonSerializer.Serialize(new{id,full_name=name,current=item["loyalty_points"].ToString()}))">Điểm</button>}
+        <button type="button" class="btn-sm danger-text" data-open="m-delete" data-fill="@(JsonSerializer.Serialize(new{id,full_name=name}))">Xóa</button>
+    </div>;
+}
 <div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
-<section class="panel"><form method="get"><label>Tìm khách hàng</label><input name="q" value="@Model.Q" placeholder="Họ tên, email, số điện thoại"><button class="primary">Tìm kiếm</button></form></section>
-<section class="panel"><h2>Danh sách</h2><p class="muted">Các ô chọn khách bên dưới lấy theo danh sách đang hiển thị (tối đa 50 khách / trang) – dùng ô tìm kiếm phía trên để tìm khách bất kỳ.</p> @* [BUG-12] *@<partial name="_Rows" model="Model.Rows" /><partial name="_Pager" model="Model" /></section>
-<div class="grid-2"><section class="panel"><h2>Thêm khách hàng</h2>
-<form method="post"><input type="hidden" name="operation" value="customer"><label>Họ tên</label><input name="fullName" maxlength="120" required>
-<label>Email</label><input name="email" type="email" required><label>Điện thoại</label>@* [BUG-04] kiểm tra trên trình duyệt; API kiểm tra lại bằng PhoneRule *@<input name="phone" maxlength="20" pattern="^0[0-9 .\-]{9,14}$" title="10–11 số, bắt đầu bằng 0">
-<label>Mật khẩu ban đầu (ít nhất 10 ký tự)</label><input name="password" type="password" minlength="10" required autocomplete="new-password">
-@* [BUG-03] ngày sinh, giới tính để khách mới vào đúng nhóm trong báo cáo độ tuổi / giới tính *@
-<label>Ngày sinh (không bắt buộc)</label><input name="dateOfBirth" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")">
-<label>Giới tính</label><select name="gender"><option value="">Chưa cung cấp</option><option value="Female">Nữ</option><option value="Male">Nam</option><option value="Other">Khác</option></select>
-<button class="primary">Thêm khách hàng</button></form></section>
-<section class="panel"><h2>Khóa tài khoản khách hàng</h2><form method="post"><input type="hidden" name="operation" value="customer-active">
-<label>Khách hàng</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["customer_id"]">@x["full_name"] · @x["email"] · @(x["is_active"].ValueKind==JsonValueKind.True?"đang hoạt động":"đang khóa")</option>}</select>
-<label>Trạng thái mới</label><select name="active"><option value="false">Khóa</option><option value="true">Mở khóa</option></select><button class="primary">Cập nhật</button></form>
-<p class="muted">Khách bị khóa không đăng nhập được; các phiên đang mở bị thu hồi. Dữ liệu vẫn giữ nguyên.</p>
+
+<section class="panel">
+    @* [UI-03] Thanh công cụ: tìm kiếm bên trái, nút Thêm bên phải *@
+    <div class="list-toolbar">
+        <form method="get"><input name="q" type="search" value="@Model.Q" placeholder="Tìm theo họ tên, email, số điện thoại" aria-label="Tìm khách hàng"><button class="secondary">Tìm</button>@if(!string.IsNullOrEmpty(Model.Q)){<a class="btn-sm" href="?">Bỏ lọc</a>}</form>
+        <button type="button" class="primary add-btn" data-open="m-add">+ Thêm khách hàng</button>
+    </div>
+    <p class="list-count">@Model.Rows.Count khách trên trang này · bấm vào một dòng để xem chi tiết</p>
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,DetailUrl=r=>$"?handler=Detail&id={r["customer_id"]}",DetailTitle="Chi tiết khách hàng"})" />
+    <partial name="_Pager" model="Model" />
+</section>
+
+@* [UI-01] Thêm khách hàng *@
+<dialog class="modal" id="m-add"><form method="post">
+    <input type="hidden" name="operation" value="customer"><input type="hidden" name="modal" value="m-add">
+    <header><h2>Thêm khách hàng</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <label>Họ tên *</label><input name="fullName" maxlength="120" required>
+        <div class="two">
+            <div><label>Email *</label><input name="email" type="email" required></div>
+            <div><label>Điện thoại</label>@* [BUG-04] kiểm tra trên trình duyệt; API kiểm tra lại bằng PhoneRule *@<input name="phone" maxlength="20" pattern="^0[0-9 .\-]{9,14}$" title="10–11 số, bắt đầu bằng 0"></div>
+        </div>
+        <label>Mật khẩu ban đầu * (ít nhất 10 ký tự)</label><input name="password" type="password" minlength="10" required autocomplete="new-password">
+        @* [BUG-03] ngày sinh, giới tính để khách mới vào đúng nhóm trong báo cáo độ tuổi / giới tính *@
+        <div class="two">
+            <div><label>Ngày sinh</label><input name="dateOfBirth" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")"></div>
+            <div><label>Giới tính</label><select name="gender"><option value="">Chưa cung cấp</option><option value="Female">Nữ</option><option value="Male">Nam</option><option value="Other">Khác</option></select></div>
+        </div>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Thêm khách hàng</button></footer>
+</form></dialog>
+
+@* [UI-01] Khóa / mở khóa *@
+<dialog class="modal" id="m-lock"><form method="post">
+    <input type="hidden" name="operation" value="customer-active"><input type="hidden" name="modal" value="m-lock"><input type="hidden" name="id"><input type="hidden" name="active" value="false">
+    <header><h2>Khóa tài khoản</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Khóa tài khoản của <b data-text="full_name"></b>?</p><p class="muted">Khách không đăng nhập được, các phiên đang mở bị thu hồi. Dữ liệu vẫn giữ nguyên và có thể mở khóa lại.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Khóa tài khoản</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-unlock"><form method="post">
+    <input type="hidden" name="operation" value="customer-active"><input type="hidden" name="modal" value="m-unlock"><input type="hidden" name="id"><input type="hidden" name="active" value="true">
+    <header><h2>Mở khóa tài khoản</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Mở khóa tài khoản của <b data-text="full_name"></b>? Khách sẽ đăng nhập lại được.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Mở khóa</button></footer>
+</form></dialog>
+
 @if(Model.IsOwner){
-<h3>Điều chỉnh điểm</h3><form method="post"><input type="hidden" name="operation" value="points"><input type="hidden" name="requestKey" value="@Guid.NewGuid()">
-<label>Khách hàng</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["customer_id"]">@x["full_name"]</option>}</select>
-<label>Số điểm cộng hoặc trừ</label><input name="delta" type="number" required><label>Lý do</label><input name="note" minlength="3" maxlength="300" required><button class="primary">Ghi điều chỉnh</button></form>}
-</section></div>
-<section class="panel danger-zone"><h2>Xóa khách hàng</h2>
-<p class="muted">Xóa mềm: khách không đăng nhập được nữa và thông tin cá nhân (họ tên, email, điện thoại) được ẩn danh. Đơn hàng, điểm, phản hồi và câu trả lời khảo sát vẫn được giữ để báo cáo không bị sai lệch.</p>
-<form method="post" class="inline-delete" onsubmit="return confirm('Xóa khách hàng đã chọn? Thao tác này không hoàn tác được.')">
-<input type="hidden" name="operation" value="customer-delete"><label>Khách hàng</label>
-<select name="id" required>@foreach(var x in Model.Rows){<option value="@x["customer_id"]">@x["full_name"] · @x["email"]</option>}</select>
-<button class="danger">Xóa khách hàng</button></form></section>
+@* [UI-01] Điều chỉnh điểm (chỉ chủ cửa hàng) *@
+<dialog class="modal" id="m-points"><form method="post">
+    <input type="hidden" name="operation" value="points"><input type="hidden" name="modal" value="m-points"><input type="hidden" name="id"><input type="hidden" name="requestKey" value="@Guid.NewGuid()">
+    <header><h2>Điều chỉnh điểm</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <p><b data-text="full_name"></b> · đang có <b data-text="current"></b> điểm</p>
+        <label>Số điểm cộng (+) hoặc trừ (−) *</label><input name="delta" type="number" required>
+        <label>Lý do *</label><input name="note" minlength="3" maxlength="300" required placeholder="Ví dụ: bù điểm đơn lỗi">
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Ghi điều chỉnh</button></footer>
+</form></dialog>
+}
+
+@* [UI-01] Xóa (xóa mềm) *@
+<dialog class="modal" id="m-delete"><form method="post">
+    <input type="hidden" name="operation" value="customer-delete"><input type="hidden" name="modal" value="m-delete"><input type="hidden" name="id">
+    <header><h2>Xóa khách hàng</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Xóa khách hàng <b data-text="full_name"></b>? Thao tác này không hoàn tác được.</p>
+        <p class="muted">Xóa mềm: khách không đăng nhập được nữa và họ tên, email, điện thoại được ẩn danh. Đơn hàng, điểm, phản hồi và câu trả lời khảo sát vẫn được giữ để báo cáo không sai lệch.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Xóa khách hàng</button></footer>
+</form></dialog>

@@ -65,3 +65,62 @@ input,select,textarea{width:100%;padding:11px 13px;border:1px solid #ddd5ca;back
 .badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:800;vertical-align:middle}
 .badge.ok{background:#dcfce7;color:#166534}.badge.bad{background:#fee2e2;color:#991b1b}.badge.warn{background:#fef3c7;color:#92400e}.badge.info{background:#e0f2fe;color:#075985}
 button[disabled]{opacity:.5;cursor:not-allowed}
+
+/* ===== [UI-01…05] Cải thiện giao diện: modal, thao tác theo dòng, thanh công cụ, toast, ngăn chi tiết ===== */
+/* [UI-03] Thanh công cụ danh sách: tìm kiếm + bộ lọc bên trái, nút Thêm bên phải */
+.list-toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.list-toolbar form{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;flex:1;min-width:260px}
+.list-toolbar input,.list-toolbar select{margin:0;width:auto;min-width:160px}.list-toolbar input[type=search],.list-toolbar input[name=q]{flex:1;max-width:380px}
+.list-toolbar .add-btn{white-space:nowrap;padding:11px 16px}
+.list-count{color:var(--muted);font-size:12px;margin:-6px 0 12px}
+.tabs-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}.tabs-filter a{padding:7px 13px;border-radius:99px;border:1px solid var(--border);background:#fff;text-decoration:none;font-size:12px;font-weight:700;color:var(--muted)}
+.tabs-filter a.current{background:var(--primary);color:var(--accent);border-color:var(--primary)}
+.badge.muted{background:#f1f5f9;color:#64748b}
+/* [UI-02] Cột thao tác theo dòng */
+.actions-col{text-align:right;white-space:nowrap;width:1%}
+.row-actions{display:inline-flex;gap:6px;justify-content:flex-end}
+.btn-sm{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);background:#fff;color:var(--text);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none}
+.btn-sm:hover{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
+.btn-sm.danger-text{color:#b91c1c}.btn-sm.danger-text:hover{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+tr.clickable{cursor:pointer}tr.clickable:hover td{background:#faf7f2}.theme-admin tr.clickable:hover td{background:#f1f5f9}
+/* [UI-01] Cửa sổ form */
+dialog.modal{border:0;padding:0;border-radius:18px;width:min(560px,94vw);max-height:90vh;box-shadow:0 30px 80px rgba(0,0,0,.28);color:var(--text)}
+dialog.modal.wide{width:min(860px,96vw)}
+dialog.modal::backdrop{background:rgba(28,25,23,.45);backdrop-filter:blur(2px)}
+dialog.modal form{display:flex;flex-direction:column;max-height:90vh;margin:0}
+dialog.modal header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border)}
+dialog.modal header h2{margin:0;font-size:18px}
+.modal-x{border:0;background:transparent;font-size:24px;line-height:1;cursor:pointer;color:var(--muted);padding:2px 6px;border-radius:8px}.modal-x:hover{background:#f5f5f4;color:var(--text)}
+.modal-body{padding:18px 22px;overflow:auto}.modal-body .two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.modal-body p{margin:0 0 12px}
+dialog.modal footer{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px;border-top:1px solid var(--border);background:#fcfbf9;border-radius:0 0 18px 18px}
+dialog.modal footer .secondary{background:#fff;border:1px solid var(--border);color:var(--text)}
+@media(max-width:600px){.modal-body .two{grid-template-columns:1fr}}
+/* [UI-04] Toast */
+.toast-stack{position:fixed;top:18px;right:18px;z-index:1000;display:grid;gap:10px;width:min(420px,92vw)}
+.toast{display:flex;align-items:flex-start;gap:10px;padding:13px 14px 13px 16px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 12px 30px rgba(0,0,0,.15);animation:toast-in .25s ease;border:1px solid transparent}
+.toast span{flex:1}.toast-ok{background:#ecfdf5;color:#047857;border-color:#a7f3d0}.toast-error{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+.toast-close{border:0;background:transparent;color:inherit;font-size:18px;line-height:1;cursor:pointer;opacity:.7}
+.toast.leaving{opacity:0;transform:translateX(20px);transition:.25s}
+@keyframes toast-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+/* [UI-05] Ngăn chi tiết */
+.drawer-backdrop{position:fixed;inset:0;background:rgba(28,25,23,.3);z-index:900}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(480px,96vw);background:var(--surface);z-index:950;box-shadow:-20px 0 50px rgba(0,0,0,.18);transform:translateX(105%);transition:transform .25s ease;display:flex;flex-direction:column}
+.drawer.open{transform:none}
+.drawer header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border)}.drawer header h2{margin:0;font-size:18px}
+.drawer-body{padding:18px 22px;overflow:auto;flex:1}.drawer-loading{color:var(--muted);padding:30px 0;text-align:center}
+.detail-list{display:grid;grid-template-columns:130px 1fr;gap:8px 12px;margin:0 0 18px;font-size:13px}.detail-list dt{color:var(--muted)}.detail-list dd{margin:0;font-weight:600}
+.detail-section{margin:18px 0 8px;font-size:14px}.detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.mini-list{list-style:none;margin:0;padding:0;font-size:13px}.mini-list li{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #f0ebe4}.mini-list li:last-child{border-bottom:0}.mini-list small{color:var(--muted);display:block}
+.kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:6px}.kpi-row div{background:var(--accent-soft);border-radius:12px;padding:10px 12px}.kpi-row b{display:block;font-size:18px}.kpi-row span{font-size:11px;color:var(--accent-ink);font-weight:700}
+/* [UI-D] Tổng quan */
+.dash-filter{display:flex;gap:8px;align-items:center}.dash-filter select{margin:0;width:auto}
+.dash-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:20px}
+.chart-box{position:relative;height:300px}.chart-box.small{height:240px}
+.todo-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.todo-card{border:1px solid var(--border);border-radius:14px;padding:14px 16px;background:#fff}
+.todo-card h3{display:flex;justify-content:space-between;align-items:center;margin:0 0 8px;font-size:14px}.todo-card h3 .badge{font-size:12px}
+.todo-card .more{display:inline-block;margin-top:8px;font-size:12px;font-weight:800;color:var(--accent-ink);text-decoration:none}
+.todo-card .none{color:var(--muted);font-size:12px;margin:6px 0}
+@media(max-width:1100px){.dash-grid{grid-template-columns:1fr}.todo-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.todo-grid{grid-template-columns:1fr}}

@@ -25,12 +25,12 @@
         <form method="post" asp-page="/Logout" class="logout-form"><button>Đăng xuất</button></form>
     </aside>
     <main class="content">
-        @if(TempData["Error"] is string error){ <div class="alert" role="alert">@error</div> }
-        @if(TempData["Success"] is string success){ <div class="success" role="status">@success</div> }
+        <partial name="_UiShell" /> @* [UI-01][UI-04][UI-05] toast, mở lại modal khi lỗi, ngăn chi tiết *@
         @RenderBody()
         <footer class="footer">Morning Brew CRM</footer>
     </main>
 </div>
+@await RenderSectionAsync("Scripts",required:false) @* [UI-D] trang Tổng quan nạp Chart.js *@
 <script src="~/js/ui.js" asp-append-version="true" defer></script>
 </body>
 </html>

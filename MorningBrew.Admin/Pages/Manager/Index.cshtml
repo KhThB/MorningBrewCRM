@@ -1,9 +1,96 @@
 @page
 @model IndexModel
-@{ViewData["Title"]="Tổng quan CRM";}
-<div class="topbar"><div><h1>Tổng quan CRM</h1><p class="muted">Khách hàng, phản hồi và khảo sát của cửa hàng.</p></div><span class="role-badge">@RowDisplay.Value("role",JsonSerializer.SerializeToElement(User.FindFirstValue(ClaimTypes.Role)))</span></div>
+@{
+    ViewData["Title"]="Tổng quan";
+    var months=ReportView.Rows(Model.Dash,"months"); var days=ReportView.Rows(Model.Dash,"days"); var top=ReportView.Rows(Model.Dash,"top_products");
+    var todo=ReportView.Object(Model.Dash,"todo");
+    var y=Model.Year??Model.CurrentYear; var m=Model.Month??1;
+    var monthNet=months.FirstOrDefault(r=>ReportView.Int(r,"month")==m);
+    int Total(List<Dictionary<string,JsonElement>> rows)=>rows.Count==0?0:ReportView.Int(rows[0],"total");
+    // Dữ liệu cho Chart.js (số thô, không định dạng).
+    var chart=JsonSerializer.Serialize(new{
+        year=y, month=m,
+        months=months.Select(r=>new{m=ReportView.Int(r,"month"),net=ReportView.Decimal(r,"net_revenue")??0,orders=ReportView.Int(r,"completed_orders")}),
+        days=days.Select(r=>new{d=ReportView.Int(r,"day"),net=ReportView.Decimal(r,"net_revenue")??0,orders=ReportView.Int(r,"completed_orders")}),
+        top=top.Select(r=>new{name=ReportView.Text(r,"product_name"),qty=ReportView.Int(r,"quantity"),revenue=ReportView.Decimal(r,"revenue")??0})});
+    var pendingOrders=ReportView.Rows(todo,"pending_orders"); var refunds=ReportView.Rows(todo,"pending_refunds");
+    var feedbacks=ReportView.Rows(todo,"new_feedbacks"); var surveys=ReportView.Rows(todo,"ending_surveys");
+}
+<div class="topbar"><div><h1>Tổng quan</h1><p class="muted">Doanh thu, sản phẩm bán chạy và việc cần xử lý của cửa hàng.</p></div>
+    <form method="get" class="dash-filter">
+        <select name="year" aria-label="Năm" onchange="this.form.submit()">@for(var i=Model.CurrentYear;i>=Model.CurrentYear-4;i--){<option value="@i" selected="@(i==y)">Năm @i</option>}</select>
+        <select name="month" aria-label="Tháng" onchange="this.form.submit()">@for(var i=1;i<=12;i++){<option value="@i" selected="@(i==m)">Tháng @i</option>}</select>
+    </form>
+</div>
 <div class="cards">
 @foreach(var item in new[]{("customers","Khách hàng"),("pending_feedbacks","Phản hồi cần xử lý"),("open_surveys","Khảo sát đang mở")})
 {<div class="stat"><span>@item.Item2</span><b>@Model.Stats.GetValueOrDefault(item.Item1)</b></div>}
+<div class="stat"><span>Doanh thu thuần tháng @m/@y</span><b class="stat-text">@(monthNet is null?"—":OrderView.Money(monthNet,"net_revenue"))</b></div>
 </div>
-<section class="panel"><h2>Công việc hôm nay</h2><div class="flow"><a class="primary" asp-page="/Manager/Feedbacks">Xử lý phản hồi</a><a class="secondary" asp-page="/Manager/Customers">Chăm sóc khách hàng</a><a class="secondary" asp-page="/Manager/Surveys">Theo dõi khảo sát</a><a class="secondary" asp-page="/Manager/Reports">Xem báo cáo</a></div></section>
+
+@* [UI-D8] Việc cần xử lý ngay *@
+<section class="panel"><h2>Việc cần xử lý ngay</h2>
+<div class="todo-grid">
+    <div class="todo-card"><h3>Đơn chờ xác nhận <span class="badge @(Total(pendingOrders)>0?"warn":"muted")">@Total(pendingOrders)</span></h3>
+        @if(pendingOrders.Count==0){<p class="none">Không có đơn chờ.</p>}else{<ul class="mini-list">@foreach(var o in pendingOrders){<li><div><b>@ReportView.Text(o,"order_code")</b><small>@ReportView.Text(o,"contact_name") · @OrderView.Time(o,"create_time")</small></div><div>@OrderView.Money(o,"total_amount")</div></li>}</ul>}
+        <a class="more" href="/Manager/Orders?status=Pending">Mở danh sách đơn →</a></div>
+    <div class="todo-card"><h3>Yêu cầu hoàn tiền <span class="badge @(Total(refunds)>0?"bad":"muted")">@Total(refunds)</span></h3>
+        @if(refunds.Count==0){<p class="none">Không có yêu cầu.</p>}else{<ul class="mini-list">@foreach(var r in refunds){<li><div><b>@ReportView.Text(r,"order_code")</b><small>@ReportView.Text(r,"reason")</small></div><div>@OrderView.Money(r,"amount")</div></li>}</ul>}
+        <a class="more" href="/Manager/Orders?status=">Mở đơn hàng →</a></div>
+    <div class="todo-card"><h3>Phản hồi mới <span class="badge @(Total(feedbacks)>0?"info":"muted")">@Total(feedbacks)</span></h3>
+        @if(feedbacks.Count==0){<p class="none">Không có phản hồi mới.</p>}else{<ul class="mini-list">@foreach(var f in feedbacks){var c=ReportView.Text(f,"content");<li><div><b>@ReportView.Text(f,"full_name")</b><small>@(c.Length>60?c[..60]+"…":c)</small></div></li>}</ul>}
+        <a class="more" href="/Manager/Feedbacks?status=New">Trả lời phản hồi →</a></div>
+    <div class="todo-card"><h3>Khảo sát sắp hết hạn <span class="badge @(Total(surveys)>0?"warn":"muted")">@Total(surveys)</span></h3>
+        @if(surveys.Count==0){<p class="none">Không có khảo sát hết hạn trong 3 ngày tới.</p>}else{<ul class="mini-list">@foreach(var s in surveys){<li><div><b>@ReportView.Text(s,"title")</b><small>Hết hạn @OrderView.Time(s,"end_time")</small></div><div>@ReportView.Int(s,"completed")/@ReportView.Int(s,"invited")</div></li>}</ul>}
+        <a class="more" href="/Manager/Surveys">Xem khảo sát →</a></div>
+</div></section>
+
+@* [UI-D2] Doanh thu theo tháng *@
+<section class="panel"><h2>Doanh thu thuần theo tháng – năm @y</h2><p class="muted">Đơn hoàn tất trừ khoản đã hoàn tiền, theo giờ Việt Nam. Bấm vào một cột để xem chi tiết tháng đó.</p>
+    <div class="chart-box"><canvas id="chart-months" aria-label="Biểu đồ doanh thu theo tháng"></canvas></div></section>
+
+<div class="dash-grid">
+    @* [UI-D3] Doanh thu theo ngày *@
+    <section class="panel"><h2>Doanh thu từng ngày – tháng @m/@y</h2><div class="chart-box small"><canvas id="chart-days" aria-label="Biểu đồ doanh thu theo ngày"></canvas></div></section>
+    @* [UI-D4] Top 5 sản phẩm *@
+    <section class="panel"><h2>Top 5 sản phẩm – tháng @m/@y</h2>
+        @if(top.Count==0){<div class="empty-state">Chưa có đơn hoàn tất trong tháng.</div>}
+        else{<div class="chart-box small"><canvas id="chart-top" aria-label="Top sản phẩm bán chạy"></canvas></div>
+        <ul class="mini-list">@foreach(var t in top){<li><span>@ReportView.Text(t,"product_name")</span><span><b>@ReportView.Int(t,"quantity") ly</b> · @OrderView.Money(t,"revenue")</span></li>}</ul>}
+    </section>
+</div>
+<script type="application/json" id="dash-data">@Html.Raw(chart)</script>
+
+@section Scripts{
+<script src="~/lib/chartjs/chart.umd.min.js" asp-append-version="true"></script>
+<script>
+// [UI-D2][UI-D3][UI-D4] Vẽ biểu đồ bằng Chart.js (thư viện đặt trong wwwroot/lib, không cần mạng).
+(()=>{
+ const data=JSON.parse(document.getElementById('dash-data').textContent);
+ if(typeof Chart==='undefined')return;
+ const money=v=>new Intl.NumberFormat('vi-VN').format(v)+'đ';
+ const short=v=>v>=1e6?(v/1e6).toLocaleString('vi-VN',{maximumFractionDigits:1})+' tr':v>=1e3?(v/1e3).toLocaleString('vi-VN',{maximumFractionDigits:0})+' k':v;
+ const brown='#b7793c',caramel='rgba(214,167,108,.75)',caramelHi='#8a5a2b',ink='#1c1917';
+ Chart.defaults.font.family='Inter,Segoe UI,Roboto,Arial,sans-serif';Chart.defaults.color='#78716c';
+ const tip={callbacks:{label:c=>c.dataset.yAxisID==='y'?' '+c.dataset.label+': '+money(c.parsed.y):' '+c.dataset.label+': '+c.parsed.y}};
+ new Chart(document.getElementById('chart-months'),{
+  data:{labels:data.months.map(x=>'T'+x.m),datasets:[
+   {type:'bar',label:'Doanh thu thuần',data:data.months.map(x=>x.net),yAxisID:'y',borderRadius:6,
+    backgroundColor:data.months.map(x=>x.m===data.month?caramelHi:caramel)},
+   {type:'line',label:'Số đơn hoàn tất',data:data.months.map(x=>x.orders),yAxisID:'y2',borderColor:ink,backgroundColor:ink,tension:.3,pointRadius:3}]},
+  options:{maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{tooltip:tip,legend:{position:'bottom'}},
+   scales:{y:{beginAtZero:true,ticks:{callback:short}},y2:{beginAtZero:true,position:'right',grid:{display:false},ticks:{precision:0}}},
+   onClick:(e,els)=>{if(els.length){const mm=data.months[els[0].index].m;location.search='?year='+data.year+'&month='+mm;}},
+   onHover:(e,els)=>{e.native.target.style.cursor=els.length?'pointer':'default'}}
+ });
+ new Chart(document.getElementById('chart-days'),{
+  type:'line',data:{labels:data.days.map(x=>x.d),datasets:[{label:'Doanh thu thuần',data:data.days.map(x=>x.net),yAxisID:'y',borderColor:brown,backgroundColor:'rgba(214,167,108,.18)',fill:true,tension:.3,pointRadius:2}]},
+  options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:i=>'Ngày '+i[0].label,label:c=>' '+money(c.parsed.y)+' · '+data.days[c.dataIndex].orders+' đơn'}}},
+   scales:{y:{beginAtZero:true,ticks:{callback:short}},x:{ticks:{maxTicksLimit:16}}}}
+ });
+ const top=document.getElementById('chart-top');
+ if(top)new Chart(top,{type:'bar',data:{labels:data.top.map(x=>x.name),datasets:[{label:'Số ly',data:data.top.map(x=>x.qty),backgroundColor:caramel,borderRadius:6}]},
+  options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.parsed.x+' ly · '+money(data.top[c.dataIndex].revenue)}}},scales:{x:{beginAtZero:true,ticks:{precision:0}}}}});
+})();
+</script>
+}

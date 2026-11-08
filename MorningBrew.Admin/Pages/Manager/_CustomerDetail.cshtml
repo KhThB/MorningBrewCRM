@@ -1,0 +1,30 @@
+@model Dictionary<string,JsonElement>
+@* [UI-05] Nội dung ngăn chi tiết khách hàng (tải bằng ?handler=Detail&id=…). *@
+@{
+    var p=ReportView.Object(Model,"profile");
+    var active=p.GetValueOrDefault("is_active").ValueKind==JsonValueKind.True;
+    var id=ReportView.Int(p,"customer_id"); var name=ReportView.Text(p,"full_name");
+    var orders=ReportView.Rows(Model,"orders"); var feedbacks=ReportView.Rows(Model,"feedbacks"); var loyalty=ReportView.Rows(Model,"loyalty");
+    string V(Dictionary<string,JsonElement> r,string k)=>r.TryGetValue(k,out var v)?RowDisplay.Value(k,v):"—";
+}
+<div class="profile" style="margin-bottom:14px"><div class="avatar">@(name.FirstOrDefault())</div><div><h2 style="margin:0">@name</h2><span class="badge @(active?"ok":"bad")">@(active?"Hoạt động":"Đang khóa")</span></div></div>
+<div class="kpi-row">
+    <div><span>Điểm hiện có</span><b>@ReportView.Int(p,"loyalty_points")</b></div>
+    <div><span>Đơn hoàn tất · đã chi</span><b>@ReportView.Int(p,"completed_orders") · @OrderView.Money(p,"total_spent")</b></div>
+</div>
+<dl class="detail-list">
+    <dt>Email</dt><dd>@V(p,"email")</dd><dt>Điện thoại</dt><dd>@V(p,"phone")</dd>
+    <dt>Ngày sinh</dt><dd>@V(p,"date_of_birth")</dd><dt>Giới tính</dt><dd>@V(p,"gender")</dd>
+    <dt>Ngày tham gia</dt><dd>@V(p,"create_time")</dd>
+</dl>
+<div class="detail-actions">
+    <button type="button" class="btn-sm" data-open="@(active?"m-lock":"m-unlock")" data-fill="@(JsonSerializer.Serialize(new{id,full_name=name}))">@(active?"Khóa tài khoản":"Mở khóa")</button>
+    @if(User.IsInRole("Owner")){<button type="button" class="btn-sm" data-open="m-points" data-fill="@(JsonSerializer.Serialize(new{id,full_name=name,current=ReportView.Int(p,"loyalty_points")}))">Điều chỉnh điểm</button>}
+    <button type="button" class="btn-sm danger-text" data-open="m-delete" data-fill="@(JsonSerializer.Serialize(new{id,full_name=name}))">Xóa</button>
+</div>
+<h3 class="detail-section">Đơn hàng gần đây</h3>
+@if(orders.Count==0){<p class="muted">Chưa có đơn.</p>}else{<ul class="mini-list">@foreach(var o in orders){<li><div><b>@ReportView.Text(o,"order_code")</b><small>@V(o,"create_time")</small></div><div style="text-align:right">@OrderView.Money(o,"total_amount")<small>@OrderView.Status(ReportView.Text(o,"status"))</small></div></li>}</ul>}
+<h3 class="detail-section">Phản hồi gần đây</h3>
+@if(feedbacks.Count==0){<p class="muted">Chưa có phản hồi.</p>}else{<ul class="mini-list">@foreach(var f in feedbacks){<li><div>@ReportView.Text(f,"content")<small>@V(f,"type") · @V(f,"create_time")</small></div><div><span class="badge @TableView.BadgeClass("status",f["status"])">@V(f,"status")</span></div></li>}</ul>}
+<h3 class="detail-section">Lịch sử điểm</h3>
+@if(loyalty.Count==0){<p class="muted">Chưa có giao dịch điểm.</p>}else{<ul class="mini-list">@foreach(var l in loyalty){var pt=ReportView.Int(l,"points");<li><div>@V(l,"kind")<small>@V(l,"note") · @V(l,"create_time")</small></div><b style="color:@(pt>=0?"#047857":"#b91c1c")">@(pt>=0?"+":"")@pt</b></li>}</ul>}

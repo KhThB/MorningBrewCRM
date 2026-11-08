@@ -1,0 +1,22 @@
+@model TableView
+@* [UI-02][UI-03][UI-05] Bảng danh sách dùng chung: nhãn trạng thái, cột Thao tác, bấm dòng mở ngăn chi tiết. *@
+@if(Model.Rows.Count==0)
+{<div class="empty-state">@Model.EmptyText</div>}
+else
+{
+var columns=Model.Rows[0].Keys.Where(k=>k is not ("name" or "etag") && !Model.Hide.Contains(k)).ToList();
+<div class="table-wrap"><table class="data-table"><thead><tr>@foreach(var c in columns){<th>@RowDisplay.Label(c)</th>}@if(Model.Actions is not null){<th class="actions-col">Thao tác</th>}</tr></thead><tbody>
+@foreach(var row in Model.Rows)
+{
+var detail=Model.DetailUrl?.Invoke(row);
+<tr data-detail-url="@detail" data-detail-title="@Model.DetailTitle" class="@(detail is null?null:"clickable")">
+@foreach(var c in columns)
+{
+var v=row[c]; var badge=TableView.BadgeClass(c,v);
+<td>@if(badge is not null){<span class="badge @badge">@TableView.BadgeText(c,v)</span>}else{@RowDisplay.Value(c,v)}</td>
+}
+@if(Model.Actions is not null){<td class="actions-col">@Model.Actions(row)</td>}
+</tr>
+}
+</tbody></table></div>
+}

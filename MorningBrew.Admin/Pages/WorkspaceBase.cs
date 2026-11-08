@@ -63,9 +63,21 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
             if(redirect is not null) return redirect;
             TempData["Success"]??="Đã lưu thay đổi.";
         }
-        catch(CrmApiException e) { TempData["Error"]=e.Message; }
-        catch(Exception e) when(e is FormatException or OverflowException) { TempData["Error"]="Vui lòng nhập đầy đủ các trường và kiểm tra số, ngày tháng."; }
+        catch(CrmApiException e) { TempData["Error"]=e.Message; SaveModalState(); }
+        catch(Exception e) when(e is FormatException or OverflowException) { TempData["Error"]="Vui lòng nhập đầy đủ các trường và kiểm tra số, ngày tháng."; SaveModalState(); }
         return RedirectToPage(new {q=Q,pageToken=PageToken});
+    }
+
+    // [UI-01] Form gửi từ cửa sổ (modal) có trường ẩn "modal" = id cửa sổ. Khi API báo lỗi, ghi lại id và dữ liệu
+    // đã nhập để trang mở lại đúng cửa sổ đó (ui.js đọc #modal-state). Không giữ mật khẩu, token chống giả mạo, requestKey.
+    private void SaveModalState()
+    {
+        var modal=Request.HasFormContentType ? Request.Form["modal"].ToString() : "";
+        if(string.IsNullOrEmpty(modal)) return;
+        var fields=Request.Form.Where(x=>x.Key is not ("__RequestVerificationToken" or "requestKey" or "modal")
+                && !x.Key.Contains("password",StringComparison.OrdinalIgnoreCase) && x.Key!="confirm")
+            .ToDictionary(x=>x.Key,x=>x.Value.Count>1?(object)x.Value.ToArray():x.Value.ToString());
+        TempData["ModalState"]=JsonSerializer.Serialize(new {id=modal,form=fields});
     }
 
     // Bộ tạo khảo sát: mỗi câu hỏi gồm nội dung, loại (Rating/SingleChoice/MultipleChoice/Text),

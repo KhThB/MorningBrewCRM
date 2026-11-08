@@ -14,11 +14,12 @@ public sealed partial class AdminController
 
     // Một cửa hàng: mặc định phạm vi chung (Chain) để chủ cửa hàng và quản lý cùng thấy, cùng quản lý.
     // Scope/AreaId/BranchId được giữ để tương thích client cũ; không cần gửi.
-    private static (int? Area, int? Branch) NormalizeScope(string? scope, int? areaId, int? branchId) => (scope ?? "Chain") switch
+    // Trả về cả Scope đã chuẩn hóa: client không gửi scope thì phải ghi 'Chain' (cột Scope NOT NULL).
+    private static (string Scope, int? Area, int? Branch) NormalizeScope(string? scope, int? areaId, int? branchId) => (string.IsNullOrWhiteSpace(scope) ? "Chain" : scope) switch
     {
-        "Chain" => (null, null),
+        "Chain" => ("Chain", null, null),
         "Area" => throw new ApiException(400, "Hệ thống chỉ có 1 cửa hàng, không dùng phạm vi khu vực."),
-        "Branch" => (null, branchId ?? throw new ApiException(400, "Phạm vi cửa hàng: thiếu mã cửa hàng.")),
+        "Branch" => ("Branch", null, branchId ?? throw new ApiException(400, "Phạm vi cửa hàng: thiếu mã cửa hàng.")),
         _ => throw new ApiException(400, "Phạm vi không hợp lệ.")
     };
 
@@ -26,7 +27,7 @@ public sealed partial class AdminController
     public async Task<IActionResult> CreateSurvey(SurveyInput input)
     {
         if (input.EndsAt <= input.StartsAt) throw new ApiException(400,"Ngày kết thúc phải sau ngày bắt đầu.");
-        var (area, branch) = NormalizeScope(input.Scope, input.AreaId, input.BranchId);
+        var (scope, area, branch) = NormalizeScope(input.Scope, input.AreaId, input.BranchId);
         foreach (var q in input.Questions)
         {
             if (q is null || q.Type is not ("Text" or "Rating" or "SingleChoice" or "MultipleChoice") ||
@@ -52,7 +53,7 @@ public sealed partial class AdminController
             CROSS APPLY OPENJSON(j.value,'$.options') o WHERE q.Type IN ('SingleChoice','MultipleChoice');
             INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID) VALUES(@actor,@branch,'Survey.Create','Surveys',@id);
             COMMIT; SELECT @id AS SurveyID;
-            """, ("@actor",Actor),("@scope",input.Scope),("@area",area),("@branch",branch),
+            """, ("@actor",Actor),("@scope",scope),("@area",area),("@branch",branch),
             ("@title",input.Title),("@description",input.Description),("@start",input.StartsAt.UtcDateTime),("@end",input.EndsAt.UtcDateTime),
             ("@questions",JsonSerializer.Serialize(questions)));
         var id = (int)created.Single()["SurveyID"]!;
@@ -98,7 +99,7 @@ public sealed partial class AdminController
     [HttpPost("promotions")]
     public async Task<IActionResult> CreatePromotion(PromotionInput input)
     {
-        var (area, branch) = NormalizeScope(input.Scope, input.AreaId, input.BranchId);
+        var (scope, area, branch) = NormalizeScope(input.Scope, input.AreaId, input.BranchId);
         var created = await db.Query("""
         SET XACT_ABORT ON; BEGIN TRAN;
         IF dbo.CanScope(@actor,@scope,@area,@branch,'Promotions.Manage')=0 THROW 51103,'Scope denied.',1;
@@ -107,7 +108,7 @@ public sealed partial class AdminController
         DECLARE @id int=SCOPE_IDENTITY();
         INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID) VALUES(@actor,@branch,'Promotion.Create','Promotions',@id);
         COMMIT; SELECT @id AS PromotionID;
-        """,("@actor",Actor),("@scope",input.Scope),("@area",area),("@branch",branch),
+        """,("@actor",Actor),("@scope",scope),("@area",area),("@branch",branch),
         ("@name",input.Name),("@description",input.Description),("@type",input.DiscountType),("@value",input.DiscountValue),
         ("@max",input.MaxDiscount),("@min",input.MinSubtotal),("@start",input.StartsAt.UtcDateTime),("@end",input.EndsAt.UtcDateTime),
         ("@points",input.PointsCost),("@limit",input.TotalLimit),("@per",input.PerCustomerLimit));

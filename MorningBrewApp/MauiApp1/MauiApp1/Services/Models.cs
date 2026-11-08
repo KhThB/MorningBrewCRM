@@ -46,15 +46,24 @@ public record SurveyDetail(List<SurveyQuestion> Questions, List<SurveyOption> Op
 
 public record Preference(int ProductId, string Name);
 
-// ===== Thực đơn & đơn hàng (API khách chưa có — xem API_CAN_BO_SUNG.md) =====
+// ===== Thực đơn & đơn hàng =====
 
-public record Branch(int BranchId, string Name, string? Address);
+// [BUG-01] Thêm phí giao hàng / hình thức nhận hàng của cửa hàng (đọc từ GET v1/me/menu).
+public record Branch(int BranchId, string Name, string? Address, decimal DeliveryFee = 0,
+    bool AcceptingOrders = true, bool PickupEnabled = true, bool DeliveryEnabled = true);
+
+/// <summary>[BUG-01] Tùy chọn của món (đường, đá, topping). MinSelections &gt; 0 = bắt buộc chọn.</summary>
+public record MenuModifier(int ProductId, int GroupId, string GroupName, int MinSelections, int MaxSelections,
+    int OptionId, string OptionName, decimal ExtraPrice);
+
+/// <summary>[BUG-01] Kết quả GET v1/me/menu.</summary>
+public record MenuResponse(Branch Branch, List<MenuProduct> Items, List<MenuModifier> Modifiers);
 
 public record MenuProduct(
     int ProductId, string Name, string? Description, int CategoryId, string Category,
     int VariantId, string VariantName, decimal Price, bool IsAvailable = true, bool IsDemo = false, string? ImageUrl = null);
 
-public record MenuData(Branch Branch, List<MenuProduct> Items, bool IsDemo);
+public record MenuData(Branch Branch, List<MenuProduct> Items, bool IsDemo, List<MenuModifier>? Modifiers = null); // [BUG-01] thêm Modifiers
 
 public record CartLine(MenuProduct Item, int Quantity)
 {

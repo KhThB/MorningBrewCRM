@@ -124,6 +124,9 @@ public sealed class CustomerController(SqlStore db, PageReader pages):Controller
             ("@Answers",JsonSerializer.Serialize(input.Answers,new JsonSerializerOptions(JsonSerializerDefaults.Web))));
         return NoContent();
     }
+    // [BUG-01] Thực đơn thật từ database cho app khách.
+    [HttpGet("menu")]
+    public Task<object> Menu() => MenuQueries.Read(db);
     [HttpGet("preferences")]
     public async Task<ApiPage> Preferences([FromQuery] PageRequest page)=>await Page("SELECT p.ProductID,p.Name FROM dbo.CustomerPreferences cp JOIN dbo.Products p ON p.ProductID=cp.ProductID WHERE cp.CustomerID=@id","ProductID",page,"preferences",await CustomerId());
     public record PreferencesInput([Required,MaxLength(100)] int[] ProductIds);

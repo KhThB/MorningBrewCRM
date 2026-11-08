@@ -10,7 +10,7 @@ public sealed class ShopService(ApiClient api)
     // Hệ thống chỉ có 1 cửa hàng (06_seed.sql, mã MB01).
     public static readonly Branch Store = new(1, "Morning Brew Thủ Đức", "12 Võ Văn Ngân, TP.HCM");
 
-    public Branch CurrentBranch => Store;
+    public Branch CurrentBranch => menuCache?.Branch ?? Store; // [BUG-01] cửa hàng lấy từ API, Store chỉ để dự phòng
     public List<CartLine> Cart { get; } = [];
     public int? VoucherId { get; set; }
     public decimal VoucherDiscount { get; set; }
@@ -18,22 +18,26 @@ public sealed class ShopService(ApiClient api)
 
     private readonly List<Order> demoOrders = [];
     private MenuData? menuCache;
+    private DateTime menuLoadedAt; // [BUG-01] tự tải lại sau 1 phút để thấy giá / món mới từ Admin
 
     public int CartCount => Cart.Sum(x => x.Quantity);
     public decimal CartSubtotal => Cart.Sum(x => x.Total);
 
     // ----- Thực đơn -----
-    public async Task<MenuData> GetMenuAsync()
+    // [BUG-01] Đọc thực đơn thật từ GET v1/me/menu. Dữ liệu mẫu chỉ dùng khi không kết nối được máy chủ
+    // (hoặc API cũ chưa có endpoint) và được đánh dấu IsDemo để không gửi ID món mẫu lên server.
+    public async Task<MenuData> GetMenuAsync(bool refresh = false)
     {
-        if (menuCache is not null) return menuCache;
+        if (menuCache is { IsDemo: false } && !refresh && DateTime.UtcNow - menuLoadedAt < TimeSpan.FromMinutes(1)) return menuCache;
         try
         {
-            var items = (await api.Page<MenuProduct>($"v1/me/menu?branchId={CurrentBranch.BranchId}", 100)).Items;
-            menuCache = new MenuData(CurrentBranch, items, false);
+            var menu = await api.Get<MenuResponse>("v1/me/menu");
+            menuCache = new MenuData(menu.Branch, menu.Items, false, menu.Modifiers);
+            menuLoadedAt = DateTime.UtcNow;
         }
-        catch (ApiException e) when (e.IsMissingEndpoint)
+        catch (ApiException e) when (e.IsMissingEndpoint || e.Status == 503)
         {
-            menuCache = new MenuData(CurrentBranch, DemoMenu(), true);
+            if (menuCache is not { IsDemo: false }) menuCache = new MenuData(Store, DemoMenu(), true, []);
         }
         return menuCache;
     }
@@ -145,7 +149,8 @@ public sealed class ShopService(ApiClient api)
         }
     }
 
-    private static List<MenuProduct> DemoMenu() =>
+    private static List<MenuProduct> DemoMenu() => DemoItems.Select(x => x with { IsDemo = true }).ToList(); // [BUG-01]
+    private static readonly List<MenuProduct> DemoItems =
     [
         // Trùng ProductID/VariantID với 06_seed.sql nên yêu thích và phản hồi lưu được vào database.
         new(1, "Cà phê sữa", "Cà phê phin và sữa đặc", 1, "Cà phê", 1, "M", 30000),

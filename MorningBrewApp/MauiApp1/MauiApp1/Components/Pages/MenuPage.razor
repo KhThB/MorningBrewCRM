@@ -29,7 +29,7 @@
     </div>
     @if (menu?.IsDemo == true)
     {
-        <div class="demo-note"><Icon Name="info" Size="16" /> Dữ liệu mẫu — máy chủ chưa có API thực đơn cho khách.</div>
+        <div class="demo-note"><Icon Name="info" Size="16" /> Dữ liệu mẫu — chưa kết nối được máy chủ, không đặt hàng được.</div>
     }
     <StateView Loading="loading" Error="@error" OnRetry="Load" Empty="Visible.Count == 0" EmptyText="Không tìm thấy món phù hợp." EmptyIcon="cup">
         @foreach (var group in Visible.GroupBy(x => x.Category))
@@ -121,7 +121,7 @@
         loading = true; error = null;
         try
         {
-            menu = await Shop.GetMenuAsync();
+            menu = await Shop.GetMenuAsync(refresh: true); // [BUG-01] luôn lấy thực đơn mới nhất khi mở trang
             categories = menu.Items.Select(x => x.Category).Distinct().ToList();
         }
         catch (ApiException e) { error = e.Message; }

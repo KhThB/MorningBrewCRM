@@ -25,7 +25,7 @@ public sealed class PosAuth
         if (loaded) return;
         loaded = true;
         string? token = null;
-        try { token = await SecureStorage.Default.GetAsync(TokenKey); } catch { token = Preferences.Default.Get<string?>(TokenKey, null); }
+        token = await TokenStore.Read(TokenKey); // [BUG-14]
         if (string.IsNullOrEmpty(token)) return;
         api.Token = token;
         try
@@ -48,7 +48,7 @@ public sealed class PosAuth
         }
         api.Token = result.Token;
         User = result.User;
-        try { await SecureStorage.Default.SetAsync(TokenKey, result.Token); } catch { Preferences.Default.Set(TokenKey, result.Token); }
+        await TokenStore.Write(TokenKey, result.Token); // [BUG-14] mã hóa DPAPI khi phải lưu vào Preferences
         Changed?.Invoke();
     }
 
@@ -61,8 +61,7 @@ public sealed class PosAuth
     private void Clear()
     {
         api.Token = null; User = null;
-        try { SecureStorage.Default.Remove(TokenKey); } catch { }
-        try { Preferences.Default.Remove(TokenKey); } catch { }
+        TokenStore.Remove(TokenKey);
         Changed?.Invoke();
     }
 }

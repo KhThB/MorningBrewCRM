@@ -105,6 +105,7 @@ else
         {
             info = (await Crm.GetSurveysAsync()).FirstOrDefault(s => s.SurveyId == Id);
             if (info is { IsDone: true }) { error = "Bạn đã hoàn thành khảo sát này. Cảm ơn bạn!"; }
+            else if (info is { IsUpcoming: true }) { error = $"Khảo sát chưa mở. Bạn có thể trả lời từ {Fmt.Date(info.StartsAt)}."; } // [BUG-08]
             else if (info is { IsExpired: true }) { error = "Khảo sát đã đóng hoặc hết hạn."; }
             else detail = await Crm.GetSurveyAsync(Id);
         }

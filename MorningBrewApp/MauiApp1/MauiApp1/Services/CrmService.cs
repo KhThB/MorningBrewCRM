@@ -32,13 +32,13 @@ public sealed class CrmService(ApiClient api)
 
     // ----- Điểm, ưu đãi, voucher -----
     public async Task<List<LoyaltyTransaction>> GetLoyaltyAsync() =>
-        (await api.Page<LoyaltyTransaction>("v1/me/loyalty")).Items.OrderByDescending(x => x.CreatedAt).ToList();
+        (await api.All<LoyaltyTransaction>("v1/me/loyalty")) /* [BUG-15] mọi trang */.OrderByDescending(x => x.CreatedAt).ToList();
 
     public async Task<List<Voucher>> GetWalletAsync() =>
-        (await api.Page<Voucher>("v1/me/wallet")).Items;
+        await api.All<Voucher>("v1/me/wallet") /* [BUG-15] mọi trang */;
 
     public async Task<List<Promotion>> GetPromotionsAsync() =>
-        (await api.Page<Promotion>("v1/me/promotions")).Items;
+        await api.All<Promotion>("v1/me/promotions") /* [BUG-15] mọi trang */;
 
     public async Task RedeemAsync(int promotionId, Guid requestKey)
     {
@@ -48,7 +48,7 @@ public sealed class CrmService(ApiClient api)
 
     // ----- Phản hồi -----
     public async Task<List<Feedback>> GetFeedbacksAsync() =>
-        (await api.Page<Feedback>("v1/me/feedbacks")).Items.OrderByDescending(x => x.CreatedAt).ToList();
+        (await api.All<Feedback>("v1/me/feedbacks")) /* [BUG-15] mọi trang */.OrderByDescending(x => x.CreatedAt).ToList();
 
     public Task SendFeedbackAsync(string type, int? rating, string content, int? productId, int? branchId, int? orderId) =>
         api.Send(HttpMethod.Post, "v1/me/feedbacks", new
@@ -60,7 +60,7 @@ public sealed class CrmService(ApiClient api)
     // ----- Khảo sát -----
     public async Task<List<SurveyItem>> GetSurveysAsync()
     {
-        var items = (await api.Page<SurveyItem>("v1/me/surveys")).Items;
+        var items = await api.All<SurveyItem>("v1/me/surveys") /* [BUG-15] mọi trang */;
         PendingSurveys = items.Count(x => x.CanAnswer);
         Changed?.Invoke();
         return items;
@@ -79,7 +79,7 @@ public sealed class CrmService(ApiClient api)
 
     // ----- Sở thích (món yêu thích) -----
     public async Task<HashSet<int>> GetFavoritesAsync() =>
-        (await api.Page<Preference>("v1/me/preferences", 100)).Items.Select(x => x.ProductId).ToHashSet();
+        (await api.All<Preference>("v1/me/preferences")) /* [BUG-15] mọi trang */.Select(x => x.ProductId).ToHashSet();
 
     public Task SaveFavoritesAsync(IEnumerable<int> productIds) =>
         api.Send(HttpMethod.Put, "v1/me/preferences", new { ProductIds = productIds.Distinct().ToArray() });

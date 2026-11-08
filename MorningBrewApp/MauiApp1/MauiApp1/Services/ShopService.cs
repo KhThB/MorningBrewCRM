@@ -90,7 +90,7 @@ public sealed class ShopService(ApiClient api)
         return order;
     }
 
-    public async Task<List<Order>> GetOrdersAsync() => (await api.Page<Order>("v1/me/orders")).Items;
+    public async Task<List<Order>> GetOrdersAsync() => await api.All<Order>("v1/me/orders"); // [BUG-15] tải mọi trang, không dừng ở 50 đơn
 
     public async Task<Order?> GetOrderAsync(int id)
     {

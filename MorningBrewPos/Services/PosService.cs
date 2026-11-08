@@ -50,7 +50,7 @@ public sealed class PosService(ApiClient api)
         return order;
     }
 
-    public async Task<List<Order>> QueueAsync(string status) => (await api.Page<Order>($"v1/pos/orders?status={status}", 100)).Items;
+    public async Task<List<Order>> QueueAsync(string status) => await api.All<Order>($"v1/pos/orders?status={status}"); // [BUG-15]
     public Task<Order> GetAsync(int id) => api.Get<Order>($"v1/pos/orders/{id}");
     public Task<Order> AdvanceAsync(int id, string next, string? courierName = null, string? courierPhone = null)
         => api.Send<Order>(HttpMethod.Post, $"v1/pos/orders/{id}:advance", new { NextStatus = next, CourierName = courierName, CourierPhone = courierPhone });

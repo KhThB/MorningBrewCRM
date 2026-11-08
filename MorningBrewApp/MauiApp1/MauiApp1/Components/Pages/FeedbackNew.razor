@@ -38,6 +38,7 @@
 
         <label>Mức độ hài lòng</label>
         <StarRating @bind-Value="rating" />
+        @if (rating is null) { <small class="muted block">Chưa chấm – có thể bỏ trống nếu bạn không muốn đánh giá sao.</small> } @* [BUG-10] *@
 
         <label for="content">Nội dung *</label>
         <textarea id="content" class="input" rows="5" maxlength="4000" @bind="content" @bind:event="oninput"
@@ -60,7 +61,7 @@
     private List<(int Id, string Name)> products = [];
     private string type = "Product";
     private int productId;
-    private int? rating = 5;
+    private int? rating; // [BUG-10] trước đây mặc định 5 sao → khách không chạm vẫn gửi 5 sao
     private string content = "";
     private bool busy;
     private HashSet<int> demoIds = [];

@@ -103,22 +103,8 @@ public sealed class AuthService
         Changed?.Invoke();
     }
 
-    // SecureStorage có thể không dùng được trên Windows unpackaged → dùng Preferences thay thế.
-    private static async Task<string?> Read(string key)
-    {
-        try { return await SecureStorage.Default.GetAsync(key); }
-        catch { return Preferences.Default.Get<string?>(key, null); }
-    }
-
-    private static async Task Write(string key, string value)
-    {
-        try { await SecureStorage.Default.SetAsync(key, value); }
-        catch { Preferences.Default.Set(key, value); }
-    }
-
-    private static void Remove(string key)
-    {
-        try { SecureStorage.Default.Remove(key); } catch { }
-        try { Preferences.Default.Remove(key); } catch { }
-    }
+    // [BUG-14] SecureStorage không dùng được trên Windows unpackaged → TokenStore mã hóa DPAPI trước khi lưu Preferences.
+    private static Task<string?> Read(string key) => TokenStore.Read(key);
+    private static Task Write(string key, string value) => TokenStore.Write(key, value);
+    private static void Remove(string key) => TokenStore.Remove(key);
 }

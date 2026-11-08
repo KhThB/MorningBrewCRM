@@ -35,8 +35,9 @@ public record SurveyItem(
     DateTimeOffset? StartsAt, DateTimeOffset? EndsAt, DateTimeOffset? CompletedAt)
 {
     public bool IsDone => CompletedAt is not null;
-    public bool IsExpired => Status != "Open" || (EndsAt is not null && EndsAt <= DateTimeOffset.UtcNow)
-                             || (StartsAt is not null && StartsAt > DateTimeOffset.UtcNow);
+    // [BUG-08] Khảo sát chưa tới ngày bắt đầu là "Sắp mở", không còn bị tính là hết hạn.
+    public bool IsUpcoming => Status == "Open" && StartsAt is not null && StartsAt > DateTimeOffset.UtcNow;
+    public bool IsExpired => !IsUpcoming && (Status != "Open" || (EndsAt is not null && EndsAt <= DateTimeOffset.UtcNow));
     public bool CanAnswer => !IsDone && !IsExpired;
 }
 

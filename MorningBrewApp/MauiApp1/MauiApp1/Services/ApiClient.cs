@@ -36,6 +36,22 @@ public sealed class ApiClient(HttpClient http)
     public Task<ApiPage<T>> Page<T>(string path, int pageSize = 50) =>
         Get<ApiPage<T>>($"{path}{(path.Contains('?') ? '&' : '?')}pageSize={pageSize}");
 
+    /// <summary>[BUG-15] Đọc lần lượt mọi trang (theo next_page_token) thay vì chỉ trang đầu 50 dòng; giới hạn maxItems để tránh tải vô hạn.</summary>
+    public async Task<List<T>> All<T>(string path, int pageSize = 100, int maxItems = 1000)
+    {
+        var items = new List<T>();
+        string? token = null;
+        do
+        {
+            var url = $"{path}{(path.Contains('?') ? '&' : '?')}pageSize={pageSize}"
+                      + (token is null ? "" : $"&pageToken={Uri.EscapeDataString(token)}");
+            var page = await Get<ApiPage<T>>(url);
+            items.AddRange(page.Items);
+            token = string.IsNullOrEmpty(page.NextPageToken) ? null : page.NextPageToken;
+        } while (token is not null && items.Count < maxItems);
+        return items;
+    }
+
     public async Task<T> Send<T>(HttpMethod method, string path, object? body = null, string? ifMatch = null)
     {
         using var request = new HttpRequestMessage(method, path);

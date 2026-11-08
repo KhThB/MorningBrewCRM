@@ -1,0 +1,7 @@
+@model WorkspaceBase
+@* [BUG-12] Tìm khách để chọn ở các ô bên dưới (trước đây chỉ có 200 khách mới nhất, không tìm được khách cũ hơn). *@
+<form method="get" class="filter-row customer-search">
+<div><label>Tìm khách (tên, email, SĐT) cho các ô chọn khách</label><input name="cq" value="@Model.Cq" placeholder="Để trống: 200 khách mới nhất"></div>
+<div><button class="secondary">Tìm khách</button></div>
+<div>@if(!string.IsNullOrEmpty(Model.Cq)){<span class="muted">Đang lọc: @Model.Choices("customers").Count khách khớp “@Model.Cq”</span>}</div>
+</form>

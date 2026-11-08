@@ -137,12 +137,18 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
             ("@ToUTC", toTime?.UtcDateTime ?? DateTime.UtcNow.Date.AddDays(1)), ("@BranchID", branchId)), null);
 
     [HttpGet("lookups/options")]
-    public async Task<object> Options() => new
+    // [BUG-12] customerQ: tìm khách theo tên / email / SĐT để chọn trong các ô Mời khảo sát, Cấp voucher
+    // (trước đây chỉ có 200 khách mới nhất, không tìm được khách cũ hơn).
+    public async Task<object> Options(string? customerQ = null) => new
     {
         branches = await db.Query("SELECT BranchID AS Id,Name FROM dbo.Branches WHERE dbo.CanBranch(@actor,BranchID,'Orders.Read')=1 ORDER BY BranchID", ("@actor", Actor)),
         categories = await db.Query("SELECT CategoryID AS Id,Name FROM dbo.Categories WHERE IsActive=1 ORDER BY CategoryID"),
         products = await db.Query("SELECT ProductID AS Id,Name FROM dbo.Products WHERE IsActive=1 ORDER BY Name"),
-        customers = await db.Query($"SELECT TOP(200) c.CustomerID AS Id,u.FullName AS Name FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID WHERE u.IsActive=1 AND {CustomerScope} ORDER BY c.CustomerID DESC", ("@actor", Actor))
+        customers = await db.Query($"""
+            SELECT TOP(200) c.CustomerID AS Id,CONCAT(u.FullName,N' · ',COALESCE(u.Phone,u.Email)) AS Name FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID
+            WHERE u.IsActive=1 AND u.DeletedAt IS NULL AND {CustomerScope}
+            AND (@q='' OR u.FullName LIKE @search OR u.Email LIKE @search OR u.Phone LIKE @search) ORDER BY c.CustomerID DESC
+            """, ("@actor", Actor), ("@q", customerQ ?? ""), ("@search", "%" + (customerQ ?? "") + "%"))
     };
 
     public record AccountInput([Required, EmailAddress, MaxLength(254)] string Email,

@@ -19,6 +19,8 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
 
     [BindProperty(SupportsGet=true)] public string? Q {get;set;}
     [BindProperty(SupportsGet=true)] public string? PageToken {get;set;}
+    // [BUG-12] Từ khóa tìm khách cho các ô chọn khách (Mời khảo sát, Cấp voucher); trống = 200 khách mới nhất.
+    [BindProperty(SupportsGet=true)] public string? Cq {get;set;}
     public string? NextPageToken {get;set;}
     public List<Dictionary<string,JsonElement>> Rows {get;set;}=[];
     public Dictionary<string,List<Dictionary<string,JsonElement>>> Options {get;set;}=[];
@@ -30,7 +32,7 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
         try
         {
             await LoadAsync();
-            Options=await Api.Get<Dictionary<string,List<Dictionary<string,JsonElement>>>>("v1/lookups/options");
+            Options=await Api.Get<Dictionary<string,List<Dictionary<string,JsonElement>>>>($"v1/lookups/options?customerQ={Uri.EscapeDataString(Cq??"")}"); // [BUG-12]
         }
         catch(CrmApiException e) { TempData["Error"]=e.Message; }
         return Page();

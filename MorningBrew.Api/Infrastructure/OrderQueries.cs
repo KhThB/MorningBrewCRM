@@ -78,42 +78,6 @@ public static class OrderQueries
         return order;
     }
 
-    // Thông báo tiếng Anh từ stored procedure đơn hàng → tiếng Việt cho app và Admin.
-    private static readonly Dictionary<string, string> Messages = new()
-    {
-        ["Branch is closed or does not accept this fulfillment type."] = "Cửa hàng đang đóng cửa hoặc tạm ngưng hình thức nhận hàng này.",
-        ["Delivery needs recipient phone and address."] = "Giao hàng cần số điện thoại và địa chỉ người nhận.",
-        ["Invalid order lines."] = "Danh sách món không hợp lệ.",
-        ["Invalid order mode."] = "Hình thức nhận hàng hoặc thanh toán không hợp lệ.",
-        ["An item or size is unavailable at this branch."] = "Có món hoặc kích cỡ vừa hết, vui lòng tải lại thực đơn.",
-        ["An option is unavailable or does not belong to this product."] = "Tùy chọn đã hết hoặc không thuộc món này.",
-        ["Option selection count is invalid."] = "Vui lòng chọn đủ các tùy chọn bắt buộc của món (đường, đá…).",
-        ["Voucher is invalid, reserved, expired or minimum is not met."] = "Voucher không dùng được: đang giữ cho đơn khác, đã hết hạn hoặc đơn chưa đạt giá trị tối thiểu.",
-        ["No active loyalty policy."] = "Chưa có chính sách tích điểm đang áp dụng.",
-        ["Customer is inactive or missing."] = "Tài khoản khách đã bị khóa hoặc không tồn tại.",
-        ["Order is not payable."] = "Đơn không ở trạng thái chờ thanh toán hoặc đã quá hạn thanh toán.",
-        ["Payment already pending or succeeded."] = "Đơn đang được thanh toán hoặc đã thanh toán.",
-        ["Order is cancelled or payment timed out; simulator cannot collect funds."] = "Đơn đã hủy hoặc đã quá hạn thanh toán.",
-        ["Terminal payment result cannot change."] = "Kết quả thanh toán đã chốt, không đổi được.",
-        ["Invalid order transition."] = "Không chuyển được sang trạng thái này (sai thứ tự xử lý đơn).",
-        ["Order must be fully paid and not under refund."] = "Đơn phải được thanh toán (xác nhận đã thu tiền) và không đang hoàn tiền mới hoàn tất được.",
-        ["Delivery has not resumed after failure."] = "Lần giao trước thất bại: cần giao lại trước khi hoàn tất.",
-        ["Courier name and phone are required."] = "Cần nhập tên và số điện thoại người giao hàng.",
-        ["Order is not in delivery phase."] = "Đơn chưa ở bước đang giao.",
-        ["Invalid delivery transition."] = "Không chuyển được trạng thái giao hàng này.",
-        ["Failure reason is required."] = "Cần nhập lý do giao thất bại.",
-        ["Use AdvanceOrder for handover and completion."] = "Dùng nút chuyển trạng thái đơn để giao và hoàn tất.",
-        ["Completed orders use RequestRefund; operational history remains completed."] = "Đơn đã hoàn tất: dùng chức năng hoàn tiền thay vì hủy.",
-        ["Cancellation reason is required."] = "Cần nhập lý do hủy đơn.",
-        ["Cancel the active order before refunding."] = "Chỉ hoàn tiền cho đơn đã hoàn tất hoặc đã hủy.",
-        ["Refund reason is required."] = "Cần nhập lý do hoàn tiền.",
-        ["No successful payment to refund."] = "Đơn chưa có khoản thanh toán thành công để hoàn.",
-        ["Successful refund cannot change."] = "Hoàn tiền đã thành công, không đổi được.",
-        ["Invalid refund result."] = "Kết quả hoàn tiền không hợp lệ.",
-        ["Order request is busy; retry."] = "Đơn đang được xử lý, vui lòng thử lại sau giây lát.",
-        ["Order not found."] = "Không tìm thấy đơn hàng.",
-        ["Payment not found."] = "Không tìm thấy lượt thanh toán.",
-    };
-    public static string Translate(string message, string? fallback = null)
-        => Messages.TryGetValue(message, out var vi) ? vi : fallback ?? message;
+    // [BUG-13] bảng dịch chuyển sang SqlMessages (dùng chung mọi thông báo SQL).
+    public static string Translate(string message, string? fallback = null) => SqlMessages.Translate(message, fallback);
 }

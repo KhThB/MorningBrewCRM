@@ -26,6 +26,7 @@ else
 </div>
 <button type="button" class="secondary" id="add-question">+ Thêm câu hỏi</button>
 <partial name="_Scope" model="Model" /><button class="primary">Tạo bản nháp</button></form></section>
+<section class="panel"><partial name="_CustomerSearch" model="Model" /></section>
 <div class="grid-2">
 <section class="panel"><h2>Quản lý khảo sát</h2><form method="post"><label>Khảo sát</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["survey_id"]">@x["title"] · @RowDisplay.Value("status",x["status"])</option>}</select>
 <button class="primary" name="operation" value="publish">Phát hành</button> <button class="secondary" name="operation" value="close">Đóng</button> <button class="secondary" name="operation" value="results">Xem kết quả</button></form>
@@ -37,7 +38,7 @@ else
 <div class="bulk-segment"><label>Nhóm tuổi</label><select name="ageGroup"><option value="">Mọi nhóm tuổi</option>@foreach(var a in SurveysModel.AgeGroups){<option value="@a.Id">@a.Name</option>}</select>
 <label>Giới tính</label><select name="gender"><option value="">Mọi giới tính</option><option value="Male">Nam</option><option value="Female">Nữ</option><option value="Other">Khác</option><option value="Undisclosed">Chưa cung cấp</option></select>
 <label>Thích sản phẩm</label><select name="productId"><option value="">Không lọc theo sở thích</option>@foreach(var p in Model.Choices("products")){<option value="@p["id"]">@p["display_name"]</option>}</select></div>
-<div class="bulk-list hidden"><label>Khách hàng (tối đa 200 khách gần nhất)</label><div class="check-list">@foreach(var x in Model.Choices("customers")){<label><input type="checkbox" name="customerIds" value="@x["id"]"> @x["display_name"]</label>}</div></div>
+<div class="bulk-list hidden"><label>Khách hàng (200 khách mới nhất hoặc kết quả tìm ở trên)</label><div class="check-list">@foreach(var x in Model.Choices("customers")){<label><input type="checkbox" name="customerIds" value="@x["id"]"> @x["display_name"]</label>}</div></div>
 <button class="primary">Gửi lời mời</button></form><p class="muted">Khách đã được mời trước đó sẽ được bỏ qua, không gửi trùng.</p></section>
 </div>
 <script>

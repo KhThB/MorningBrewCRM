@@ -10,7 +10,7 @@
 <label>Giá trị đơn tối thiểu</label><input name="minSubtotal" type="number" min="0" value="0" required><label>Điểm để đổi (để trống: chỉ quản lý tặng)</label><input name="pointsCost" type="number" min="0">
 <label>Số lượng toàn chương trình</label><input name="totalLimit" type="number" min="1" value="100" required><label>Số lượt mỗi khách</label><input name="perCustomerLimit" type="number" min="1" value="1" required>
 <partial name="_Scope" model="Model" /><button class="primary">Tạo ưu đãi</button></form></section>
-<section class="panel"><h2>Cấp voucher</h2><form method="post"><input type="hidden" name="operation" value="issue"><input type="hidden" name="requestKey" value="@Guid.NewGuid()">
+<section class="panel"><h2>Cấp voucher</h2><partial name="_CustomerSearch" model="Model" /><form method="post"><input type="hidden" name="operation" value="issue"><input type="hidden" name="requestKey" value="@Guid.NewGuid()">
 <label>Ưu đãi</label><select name="id">@foreach(var x in Model.Rows){<option value="@x["promotion_id"]">@x["display_name"]</option>}</select>
 <label>Khách hàng</label><select name="customerId">@foreach(var x in Model.Choices("customers")){<option value="@x["id"]">@x["display_name"]</option>}</select><button class="primary">Cấp voucher</button></form>
 <h3>Trạng thái chương trình</h3><form method="post"><input type="hidden" name="operation" value="promotion-active"><select name="id" aria-label="Ưu đãi">@foreach(var x in Model.Rows){<option value="@x["promotion_id"]">@x["display_name"]</option>}</select>

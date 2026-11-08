@@ -59,3 +59,23 @@ UPDATE dbo.Orders SET OrderCode=CONCAT('MB',FORMAT(DATEADD(hour,7,CreatedAt),'yy
   CASE WHEN OrderID>9999 THEN CONVERT(varchar(12),OrderID) ELSE RIGHT(CONCAT('0000',OrderID),4) END)
 WHERE OrderCode LIKE 'MB-%';
 GO
+-- [BUG-09] Không cho sửa phản hồi đã giải quyết (trước đây trả lời lại sẽ ghi đè câu trả lời cũ).
+CREATE OR ALTER PROCEDURE dbo.HandleFeedback @ActorID int,@FeedbackID int,@Status varchar(12),@Response nvarchar(4000)=NULL
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @branch int,@customer int,@old varchar(12);
+ SELECT @branch=BranchID,@customer=CustomerID,@old=Status FROM dbo.Feedbacks WITH(UPDLOCK,HOLDLOCK) WHERE FeedbackID=@FeedbackID;
+ IF @customer IS NULL OR (@branch IS NULL AND dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Feedbacks.Manage')=0) OR (@branch IS NOT NULL AND dbo.CanBranch(@ActorID,@branch,'Feedbacks.Manage')=0) THROW 51103,N'Feedback is outside scope.',1;
+ -- [BUG-09] Phản hồi đã giải quyết thì khóa: không đổi trạng thái, không ghi đè câu trả lời đã gửi khách.
+ IF @old='Resolved' THROW 51124,N'Phản hồi đã được giải quyết, không thể sửa trạng thái hoặc câu trả lời.',1;
+ IF @Status NOT IN ('Processing','Resolved') OR (@Status='Resolved' AND NULLIF(@Response,'') IS NULL) THROW 51100,N'Resolved feedback needs a response.',1;
+ UPDATE dbo.Feedbacks SET Status=@Status,HandledBy=@ActorID,ResponseContent=@Response,HandledAt=SYSUTCDATETIME() WHERE FeedbackID=@FeedbackID;
+ INSERT dbo.Notifications(UserID,Title,Body) SELECT UserID,N'Cập nhật phản hồi',COALESCE(@Response,N'Phản hồi đang được xử lý.') FROM dbo.Customers WHERE CustomerID=@customer;
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Feedback.Handle','Feedbacks',@FeedbackID,@Status);
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO

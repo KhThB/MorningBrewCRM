@@ -26,8 +26,11 @@ public sealed class AuthController(SqlStore db) : ControllerBase
         const string dummy = "AQAAAAIAAYagAAAAEE8G2F5hjA72TxlV9NrR092YRGzNf1+QMFGndUjRlWxuS/DMviEjHdzD5daFtHJW2w==";
         var hash = user?["PasswordHash"]?.ToString() ?? dummy;
         var valid = new PasswordHasher<string>().VerifyHashedPassword(request.Username, hash, request.Password);
-        if (user is null || !(bool)user["IsActive"]! || valid == PasswordVerificationResult.Failed)
+        if (user is null || valid == PasswordVerificationResult.Failed)
             throw new ApiException(401, "Email hoặc mật khẩu không đúng.");
+        // [BUG-11] Chỉ báo "bị khóa" khi mật khẩu đúng, để người ngoài không dò được tài khoản nào tồn tại.
+        if (!(bool)user["IsActive"]!)
+            throw new ApiException(403, "Tài khoản đã bị khóa. Vui lòng liên hệ cửa hàng để được hỗ trợ.");
         var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
         var expiresAt = DateTime.UtcNow.AddHours(8);
         await db.Query("INSERT dbo.UserSessions(UserID,TokenHash,ExpiresAt,DeviceName) VALUES(@id,@hash,@expires,'MorningBrew');",

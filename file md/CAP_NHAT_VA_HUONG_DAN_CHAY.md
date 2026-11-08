@@ -1,6 +1,6 @@
 # Morning Brew CRM – Tóm tắt cập nhật & hướng dẫn chạy
 
-> Nhánh `fix/backend-single-store`, cập nhật đến **09/11/2026**. So với bản gốc trên nhánh `lmt` (commit `9023017`): 44 commit, ~200 file thay đổi.
+> Nhánh `fix/backend-single-store`, cập nhật đến **09/11/2026**. So với bản gốc trên nhánh `lmt` (commit `9023017`): hơn 40 commit, ~200 file thay đổi.
 
 ---
 

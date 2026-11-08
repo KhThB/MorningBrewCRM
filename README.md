@@ -12,7 +12,7 @@ Tại thư mục gốc repo, tạo database khớp cấu hình Development:
 ./database/tools/Apply.ps1 -Database MorningBrewCRM_Crm
 ```
 
-Installer chạy scripts 01–11 và tạo dữ liệu mẫu. Nếu database đã tồn tại, installer dừng để bảo vệ dữ liệu; không chạy lại để ghi đè. Nếu dùng database/server khác, cấu hình `ConnectionStrings:MorningBrew` bằng user secrets hoặc biến môi trường; xem [hướng dẫn database](database/README.md).
+Installer chạy scripts 01–12 và tạo dữ liệu mẫu. Nếu database đã tồn tại, installer dừng để bảo vệ dữ liệu; không chạy lại để ghi đè. Nếu dùng database/server khác, cấu hình `ConnectionStrings:MorningBrew` bằng user secrets hoặc biến môi trường; xem [hướng dẫn database](database/README.md).
 
 Build solution:
 
@@ -43,14 +43,15 @@ dotnet run --project MorningBrew.Admin --launch-profile http
   - `/Admin/*` — **giao diện Quản trị** (chỉ chủ cửa hàng): tổng quan hệ thống, tài khoản (lọc, thêm, đổi vai trò, khóa, xóa), ma trận phân quyền, nhật ký hệ thống, sao lưu & phục hồi, sản phẩm & giá, nhà cung cấp.
   - `/Manager/*` — **giao diện Quản lý CRM** (quản lý và chủ cửa hàng): khách hàng (thêm/khóa/xóa), phản hồi (lọc theo trạng thái), khảo sát (câu hỏi đánh giá/chọn một/chọn nhiều/tự luận, mời hàng loạt theo nhóm), ưu đãi, báo cáo.
   - Web chỉ dành cho nội bộ: sau khi đăng nhập, chủ cửa hàng vào `/Admin`, quản lý vào `/Manager`. **Khách hàng chỉ dùng app MAUI** (đăng ký, đăng nhập, sửa hồ sơ, phản hồi, khảo sát); thu ngân dùng POS.
-- App MAUI: chọn project `MorningBrewwApp` và **Windows Machine** trong Visual Studio rồi chạy. Android emulator gọi API qua `10.0.2.2:5029`; thiết bị thật cần địa chỉ LAN và cấu hình kết nối phù hợp.
+- App MAUI khách hàng: chọn project `MorningBrewwApp` và **Windows Machine** trong Visual Studio rồi chạy. Android emulator gọi API qua `10.0.2.2:5029`; thiết bị thật cần địa chỉ LAN và cấu hình kết nối phù hợp.
+- App **POS** cho thu ngân: chọn project `MorningBrewPos` → **Windows Machine**. Đăng nhập bằng `staff.1@morningbrew.test` (quản lý / chủ cửa hàng cũng đăng nhập được và có thêm quyền hủy đơn).
 
-Tài khoản **dữ liệu mẫu local**: `owner@morningbrew.test`, `manager.1@morningbrew.test`, khách hàng `lan@morningbrew.test`; mật khẩu `MorningBrew!2026`.
+Tài khoản **dữ liệu mẫu local**: `owner@morningbrew.test`, `manager.1@morningbrew.test`, thu ngân `staff.1@morningbrew.test`, khách hàng `lan@morningbrew.test`; mật khẩu `MorningBrew!2026`.
 
 ## Phạm vi và ảnh sản phẩm
 
 - CRM: tài khoản, khách hàng, phản hồi, khảo sát, báo cáo; dữ liệu từ SQL Server.
-- Thực đơn/đơn hàng trong app có chế độ minh họa khi backend trả về endpoint chưa hỗ trợ. Không xem việc đặt đơn mô phỏng là kiểm thử đơn hàng thật; backend hiện chưa có `/v1/me/menu` và `/v1/me/orders`.
+- Thực đơn và đơn hàng là **dữ liệu thật**: app khách đặt đơn (nhận tại quầy / giao hàng; trả trước qua cổng thanh toán mô phỏng / tiền mặt), quản lý xử lý ở `/Manager/Orders`, thu ngân xử lý trên app POS. Đơn trả trước không thanh toán trong 15 phút được API tự hủy (chạy mỗi phút). Dữ liệu mẫu trong app chỉ hiện khi không kết nối được API.
 - 10 ảnh sản phẩm được đóng gói trong `MorningBrewApp/MauiApp1/MauiApp1/wwwroot/images/products`, ánh xạ theo tên tại `Services/ProductPhotos.cs`. Khi ảnh không tải được hoặc món chưa có ảnh, app dùng hình minh họa dự phòng.
 - Nguồn ảnh: [sources.json](MorningBrewApp/MauiApp1/MauiApp1/wwwroot/images/products/sources.json). Đây là ảnh tham khảo cho bản demo; hồ sơ nguồn không đồng nghĩa với giấy phép tái phân phối/thương mại. Cold brew có logo 1000M.
 
@@ -65,6 +66,11 @@ Tài khoản **dữ liệu mẫu local**: `owner@morningbrew.test`, `manager.1@m
 
   ```powershell
   sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\11_single_store.sql
+  ```
+- Đợt sửa lỗi theo [báo cáo lỗi](docs/BugReport_MorningBrew_App-Admin.xlsx): `database/sql/12_bugfix.sql` – chạy sau script 11 với database đã có:
+
+  ```powershell
+  sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\12_bugfix.sql
   ```
 
 Không đưa `bin/`, `obj/`, `.vs/`, file `*.user`, database MDF/LDF, bản backup hoặc cấu hình chứa mật khẩu riêng lên GitHub; các loại file này đã được `.gitignore` loại trừ.

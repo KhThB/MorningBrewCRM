@@ -60,6 +60,7 @@ Thứ tự script:
 | `09_shared_prices.sql` | Giá chung khi tạo đơn/đọc menu nội bộ; giữ giá lịch sử. |
 | `10_soft_delete.sql` | Xóa mềm tài khoản/khách hàng, ẩn danh dữ liệu cá nhân. |
 | `11_single_store.sql` | Chế độ một cửa hàng: phạm vi chung = cửa hàng, nhiều quản lý, quyền `Customers.Manage`, bỏ AreaManager. |
+| `12_bugfix.sql` | Sửa lỗi đợt 1: thông báo đúng khi thao tác khảo sát sai trạng thái (mã 51124), không phát hành khảo sát quá hạn. |
 
 Nếu chạy thủ công bằng `sqlcmd`, dùng `-I -b -f 65001`: bật quoted identifiers cho filtered index, dừng khi lỗi và đọc tiếng Việt UTF-8. Các script nghiệp vụ hỗ trợ CREATE OR ALTER; script schema/seed không dùng để chạy lặp trên database đã có dữ liệu.
 

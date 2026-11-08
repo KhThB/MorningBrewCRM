@@ -1,0 +1,13 @@
+@implements IDisposable
+@inject ToastService Toasts
+
+@if (Toasts.Message is not null)
+{
+    <div class="toast @(Toasts.IsError ? "toast-error" : "")" role="status">@Toasts.Message</div>
+}
+
+@code {
+    protected override void OnInitialized() => Toasts.Changed += Refresh;
+    private void Refresh() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Toasts.Changed -= Refresh;
+}

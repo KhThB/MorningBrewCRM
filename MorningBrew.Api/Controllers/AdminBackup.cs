@@ -32,6 +32,26 @@ public sealed partial class AdminController
         return new { fileName = info.Name, sizeMb = info.Exists ? Math.Round(info.Length / 1024m / 1024m, 2) : 0, directory = info.DirectoryName };
     }
 
+    // [UI2-BK] Tải file .bak về máy (web Admin chuyển tiếp file cho trình duyệt).
+    [HttpGet("admin/backups/{fileName}/download")]
+    public async Task<IActionResult> DownloadBackup(string fileName)
+    {
+        await RequireOwner();
+        var path = Backups.Resolve(fileName);
+        return PhysicalFile(path, "application/octet-stream", fileName);
+    }
+
+    // [UI2-BK] Xóa một file .bak khỏi thư mục sao lưu.
+    [HttpDelete("admin/backups/{fileName}")]
+    public async Task<IActionResult> DeleteBackup(string fileName)
+    {
+        await RequireOwner();
+        var path = Backups.Resolve(fileName);
+        System.IO.File.Delete(path);
+        await db.Query("INSERT dbo.AuditLogs(ActorID,Action,EntityType,Details) VALUES(@actor,'Database.BackupDelete','Database',@file)", ("@actor", Actor), ("@file", fileName));
+        return NoContent();
+    }
+
     public record RestoreInput([Required, MaxLength(260)] string FileName);
     // [UI2-W3a] Phục hồi database đang chạy từ file .bak đã chọn. Mọi phiên đăng nhập quay về thời điểm của bản sao lưu.
     [HttpPost("admin/backups:restore")]

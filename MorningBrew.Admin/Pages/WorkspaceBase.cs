@@ -133,7 +133,18 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
             case "supplier-active":
                 await Api.Send(HttpMethod.Put,$"v1/suppliers/{Number("id")}/active",new {isActive=Text("active")=="true"}); break;
             case "product":
-                await Api.Send(HttpMethod.Post,"v1/products",new {name=Text("name"),description=Text("description"),categoryId=Number("categoryId"),size=Text("size"),price=Money("price")}); break;
+                var product=await Api.Post<JsonElement>("v1/products",new {name=Text("name"),description=Text("description"),categoryId=Number("categoryId"),size=Text("size"),price=Money("price")});
+                // [UI2-IMG] Có chọn ảnh thì tải lên ngay sau khi tạo sản phẩm.
+                if(Request.Form.Files.GetFile("image") is { Length: >0 } image && product.TryGetProperty("product_id",out var pid))
+                {
+                    try { await using var s=image.OpenReadStream(); await Api.Upload($"v1/products/{pid.GetInt32()}/image",s,image.FileName,image.ContentType); }
+                    catch(CrmApiException e) { TempData["Error"]=$"Đã tạo sản phẩm nhưng chưa lưu được ảnh: {e.Message}"; return RedirectToPage(); }
+                }
+                TempData["Success"]="Đã tạo sản phẩm."; break;
+            case "product-image": // [UI2-IMG] đổi ảnh sản phẩm có sẵn
+                if(Request.Form.Files.GetFile("image") is not { Length: >0 } newImage) { TempData["Error"]="Vui lòng chọn file ảnh."; return RedirectToPage(); }
+                await using(var s=newImage.OpenReadStream()) { await Api.Upload($"v1/products/{Number("id")}/image",s,newImage.FileName,newImage.ContentType); }
+                TempData["Success"]="Đã cập nhật ảnh sản phẩm. App khách thấy ảnh mới sau khoảng 1 phút."; break;
             case "product-active":
                 await Api.Send(HttpMethod.Put,$"v1/products/{Number("id")}/active",new {isActive=Text("active")=="true"}); break;
             case "product-stock": // [UI2-A4a] còn hàng / tạm hết (khác "Ngừng bán")

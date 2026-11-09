@@ -47,4 +47,43 @@ public sealed class CrmApi(HttpClient client,IHttpContextAccessor accessor)
             return (await response.Content.ReadFromJsonAsync<T>(ResponseOptions))!;
         }
     }
+
+    // ----- [UI2-BK][UI2-IMG] Gửi file lên (multipart) / tải file về (nhị phân) -----
+    private async Task<HttpResponseMessage> SendRaw(HttpMethod method,string path,HttpContent? content)
+    {
+        var token=accessor.HttpContext is not null ? await accessor.HttpContext.GetTokenAsync("access_token") : null;
+        using var request=new HttpRequestMessage(method,path){Content=content};
+        if(token is not null) request.Headers.Authorization=new AuthenticationHeaderValue("Bearer",token);
+        HttpResponseMessage response;
+        try { response=await client.SendAsync(request,HttpCompletionOption.ResponseContentRead); }
+        catch(HttpRequestException) { throw new CrmApiException(503,"Không kết nối được API. Hãy chạy MorningBrew.Api và kiểm tra địa chỉ kết nối."); }
+        catch(TaskCanceledException) { throw new CrmApiException(503,"API phản hồi quá chậm. Vui lòng thử lại."); }
+        if(response.IsSuccessStatusCode) return response;
+        using(response)
+        {
+            var text=await response.Content.ReadAsStringAsync();
+            string? message=null;
+            try { using var json=JsonDocument.Parse(text); if(json.RootElement.TryGetProperty("error",out var error) && error.TryGetProperty("message",out var value)) message=value.GetString(); }
+            catch(JsonException) { }
+            throw new CrmApiException((int)response.StatusCode,message ?? "Yêu cầu không hợp lệ hoặc phiên đăng nhập đã hết hạn.");
+        }
+    }
+
+    /// <summary>Gửi một file (trường "file") tới API.</summary>
+    public async Task Upload(string path,Stream stream,string fileName,string contentType)
+    {
+        using var form=new MultipartFormDataContent();
+        var file=new StreamContent(stream);
+        file.Headers.ContentType=new MediaTypeHeaderValue(string.IsNullOrWhiteSpace(contentType)?"application/octet-stream":contentType);
+        form.Add(file,"file",fileName);
+        using var _=await SendRaw(HttpMethod.Post,path,form);
+    }
+
+    /// <summary>Tải nội dung file từ API (file .bak vài MB).</summary>
+    public async Task<(byte[] Data,string FileName)> Download(string path,string fallbackName)
+    {
+        using var response=await SendRaw(HttpMethod.Get,path,null);
+        var name=response.Content.Headers.ContentDisposition?.FileNameStar ?? response.Content.Headers.ContentDisposition?.FileName?.Trim('"') ?? fallbackName;
+        return (await response.Content.ReadAsByteArrayAsync(),name);
+    }
 }

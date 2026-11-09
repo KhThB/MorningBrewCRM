@@ -28,7 +28,9 @@
     private string? LocalSource => ProductPhotos.ForName(ProductName);
     protected override void OnParametersSet()
     {
-        var candidate = string.IsNullOrWhiteSpace(ImageUrl) ? LocalSource : ImageUrl;
+        // [UI2-IMG] Ảnh tải lên từ Admin nằm ở API (/uploads/products/...) → ghép địa chỉ API; ưu tiên hơn ảnh có sẵn trong app.
+        var candidate = string.IsNullOrWhiteSpace(ImageUrl) ? LocalSource
+            : ImageUrl.StartsWith("/uploads/") ? ApiSettings.BaseUrl.TrimEnd('/') + ImageUrl : ImageUrl;
         if (candidate != previousSource || ProductName != previousName)
         {
             source = candidate;

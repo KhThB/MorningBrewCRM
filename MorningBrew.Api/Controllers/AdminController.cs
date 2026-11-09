@@ -87,7 +87,7 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
                     """; break;
             case "products":
                 sql = """
-                    SELECT p.ProductID,p.Name,c.Name AS Category,v.VariantID,v.Name AS Size,v.BasePrice,p.IsActive,
+                    SELECT p.ProductID,p.Name,c.Name AS Category,v.VariantID,v.Name AS Size,v.BasePrice,p.IsActive,p.ImageURL, -- [UI2-IMG]
                     CAST(COALESCE((SELECT MIN(CONVERT(int,bp.IsAvailable)) FROM dbo.BranchProducts bp WHERE bp.ProductID=p.ProductID),0) AS bit) AS InStock -- [UI2-A4a] còn hàng / tạm hết
                     FROM dbo.Products p JOIN dbo.Categories c ON c.CategoryID=p.CategoryID JOIN dbo.ProductVariants v ON v.ProductID=p.ProductID
 
@@ -246,6 +246,42 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
         await db.Query("UPDATE dbo.Products SET IsActive=@active WHERE ProductID=@id; IF @@ROWCOUNT=0 THROW 51104,'Product not found.',1;", ("@id",id), ("@active",input.IsActive));
         return NoContent();
     }
+    // [UI2-IMG] Tải ảnh sản phẩm từ máy lên (JPG / PNG / WEBP, tối đa 2 MB). File lưu ở wwwroot/uploads/products của API,
+    // Products.ImageURL = "/uploads/products/<tên file>"; app khách ghép với địa chỉ API để hiển thị (ưu tiên hơn ảnh có sẵn trong app).
+    [HttpPost("products/{id:int}/image"), RequestSizeLimit(3_000_000)]
+    public async Task<object> UploadProductImage(int id, IFormFile file)
+    {
+        await RequireOwner();
+        if (file is null || file.Length == 0) throw new ApiException(400, "Vui lòng chọn file ảnh.");
+        if (file.Length > 2 * 1024 * 1024) throw new ApiException(400, "Ảnh tối đa 2 MB.");
+        var head = new byte[12];
+        await using (var s = file.OpenReadStream()) { _ = await s.ReadAsync(head); }
+        // Nhận dạng theo nội dung file (không tin phần đuôi tên file).
+        var ext = head[0] == 0xFF && head[1] == 0xD8 ? ".jpg"
+            : head[0] == 0x89 && head[1] == 0x50 && head[2] == 0x4E && head[3] == 0x47 ? ".png"
+            : head[0] == 'R' && head[1] == 'I' && head[2] == 'F' && head[3] == 'F' && head[8] == 'W' && head[9] == 'E' && head[10] == 'B' && head[11] == 'P' ? ".webp"
+            : throw new ApiException(400, "Chỉ nhận ảnh JPG, PNG hoặc WEBP.");
+        var old = (await db.Query("SELECT ImageURL FROM dbo.Products WHERE ProductID=@id", ("@id", id))).SingleOrDefault()
+            ?? throw new ApiException(404, "Không tìm thấy sản phẩm.");
+        var env = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
+        var folder = Path.Combine(env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot"), "uploads", "products");
+        Directory.CreateDirectory(folder);
+        var name = $"product-{id}-{DateTime.UtcNow:yyyyMMddHHmmss}{ext}";
+        await using (var target = System.IO.File.Create(Path.Combine(folder, name))) { await file.CopyToAsync(target); }
+        var url = "/uploads/products/" + name;
+        await db.Query("""
+            UPDATE dbo.Products SET ImageURL=@url WHERE ProductID=@id;
+            INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details) VALUES(@actor,'Product.Image','Products',@id,@url);
+            """, ("@id", id), ("@url", url), ("@actor", Actor));
+        // Xóa ảnh tải lên trước đó của sản phẩm này (không đụng tới ảnh mẫu).
+        if (old["ImageURL"] is string prev && prev.StartsWith("/uploads/products/"))
+        {
+            var prevPath = Path.Combine(folder, Path.GetFileName(prev));
+            if (System.IO.File.Exists(prevPath)) System.IO.File.Delete(prevPath);
+        }
+        return new { imageUrl = url };
+    }
+
     // [UI2-A4a] "Tạm hết / Còn hàng" (BranchProducts.IsAvailable) – khác với "Ngừng bán" (Products.IsActive, ẩn khỏi thực đơn).
     // App hiện nhãn "Tạm hết" và không cho đặt khi IsAvailable = 0. Trước đây Admin không chỉnh được trạng thái này.
     [HttpPut("products/{id:int}/availability")]

@@ -70,6 +70,7 @@ app.UseStatusCodePages(async status =>
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 else app.UseHttpsRedirection();
 app.UseCors();
+app.UseStaticFiles(); // [UI2-IMG] phục vụ ảnh sản phẩm tải lên: /uploads/products/...
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();

@@ -54,12 +54,19 @@ public sealed partial class DatabaseBackup(IConfiguration config, IWebHostEnviro
 
     [GeneratedRegex(@"^[A-Za-z0-9_\-\.]+\.bak$")] private static partial Regex SafeName();
 
-    /// <summary>Phục hồi database đang chạy từ một file .bak trong thư mục sao lưu. Trả về tên bản an toàn đã tạo trước khi phục hồi.</summary>
-    public async Task<string> RestoreAsync(string fileName, int actor)
+    /// <summary>[UI2-BK] Đường dẫn đầy đủ của một file .bak trong thư mục sao lưu (chặn tên file chứa đường dẫn).</summary>
+    public string Resolve(string fileName)
     {
         if (!SafeName().IsMatch(fileName)) throw new ApiException(400, "Tên file sao lưu không hợp lệ.");
         var path = Path.Combine(Folder(), fileName);
         if (!File.Exists(path)) throw new ApiException(404, "Không tìm thấy file sao lưu.");
+        return path;
+    }
+
+    /// <summary>Phục hồi database đang chạy từ một file .bak trong thư mục sao lưu. Trả về tên bản an toàn đã tạo trước khi phục hồi.</summary>
+    public async Task<string> RestoreAsync(string fileName, int actor)
+    {
+        var path = Resolve(fileName);
 
         // 1) Kiểm tra file trước khi động vào database đang chạy.
         await db.Query("""

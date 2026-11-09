@@ -17,13 +17,14 @@ document.addEventListener('DOMContentLoaded',()=>{
 // Nút <button data-open="id" data-fill='{"id":5,"full_name":"Lan"}'> mở <dialog id="id">, điền input[name] và [data-text].
 function mbOpenModal(id,fill){
  const d=document.getElementById(id); if(!d||typeof d.showModal!=='function') return;
- d.querySelectorAll('form').forEach(f=>f.reset()); d.querySelectorAll('.modal-error').forEach(e=>e.remove());
+ d.querySelectorAll('form').forEach(f=>f.reset()); d.querySelectorAll('.modal-error').forEach(e=>e.remove()); d.querySelectorAll('img.img-preview').forEach(i=>{i.hidden=true;i.removeAttribute('src')}); // [UI2-IMG]
  if(fill) for(const [k,v] of Object.entries(fill)){
   d.querySelectorAll('[name="'+k+'"]').forEach(el=>{
    if(el.type==='checkbox'||el.type==='radio') el.checked=Array.isArray(v)?v.includes(el.value):String(v)===el.value||v===true;
    else if(!(el.type==='hidden'&&k==='modal')) el.value=Array.isArray(v)?v[0]:(v??'');
   });
   d.querySelectorAll('[data-text="'+k+'"]').forEach(el=>el.textContent=v??'');
+  d.querySelectorAll('[data-src="'+k+'"]').forEach(el=>{el.src=v||'';el.hidden=!v;}); // [UI2-IMG] ảnh hiện tại
  }
  d.querySelectorAll('[data-show-if]').forEach(el=>{const [k,val]=el.dataset.showIf.split('=');el.hidden=!(fill&&String(fill[k])===val)});
  d.showModal();
@@ -100,3 +101,11 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 // [UI-02] Dòng có data-href: bấm vào dòng (không phải nút) thì mở trang chi tiết.
 document.addEventListener('click',e=>{const r=e.target.closest('tr[data-href]');if(r&&!e.target.closest('a,button,input,select,textarea,form,label'))location.href=r.dataset.href;});
+
+// [UI2-IMG] Xem trước ảnh chọn từ máy: <input type="file" data-preview="id-ảnh">
+document.addEventListener('change',e=>{
+ const input=e.target.closest('input[type=file][data-preview]'); if(!input)return;
+ const img=document.getElementById(input.dataset.preview); const f=input.files?.[0]; if(!img)return;
+ if(f&&f.size>2*1024*1024){alert('Ảnh tối đa 2 MB.');input.value='';img.hidden=true;return;}
+ if(f){img.src=URL.createObjectURL(f);img.hidden=false;}else img.hidden=true;
+});

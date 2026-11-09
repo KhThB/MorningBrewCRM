@@ -4,6 +4,9 @@
     ViewData["Title"]=Model.Title;
     // [UI2-W3a] Phục hồi ngay trên từng dòng file .bak (không còn cần Restore.ps1).
     Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
+        @{var fn=item["file_name"].ToString();}
+        <a class="btn-sm" href="?handler=Download&file=@Uri.EscapeDataString(fn)" download>Tải về</a> @* [UI2-BK] *@
+        <button type="button" class="btn-sm" data-open="m-delete" data-fill="@(JsonSerializer.Serialize(new{fileName=fn}))">Xóa</button>
         <button type="button" class="btn-sm danger-text" data-open="m-restore" data-fill="@(JsonSerializer.Serialize(new{fileName=item["file_name"].ToString(),time=RowDisplay.Value("create_time",item["create_time"])}))">Phục hồi</button>
     </div>;
 }
@@ -33,4 +36,13 @@
         <p class="muted">Trước khi ghi đè, hệ thống tự tạo bản sao lưu “Trước khi phục hồi”. Thao tác mất vài giây đến vài phút.</p>
     </div>
     <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Phục hồi</button></footer>
+</form></dialog>
+
+@* [UI2-BK] Xóa file sao lưu *@
+<dialog class="modal" id="m-delete"><form method="post">
+    <input type="hidden" name="operation" value="backup-delete"><input type="hidden" name="modal" value="m-delete"><input type="hidden" name="fileName">
+    <header><h2>Xóa file sao lưu</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Xóa file <b data-text="fileName"></b> khỏi thư mục sao lưu? File đã xóa không phục hồi lại được.</p>
+        <p class="muted">Nên bấm “Tải về” để lưu một bản ra máy trước khi xóa.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Xóa file</button></footer>
 </form></dialog>

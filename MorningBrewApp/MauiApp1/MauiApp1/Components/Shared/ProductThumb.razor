@@ -1,5 +1,5 @@
 @* Bundled photos work offline. Unknown products and failed images retain a category illustration. *@
-<div class="thumb thumb-@Kind @(Large ? "thumb-lg" : "")" data-photo="@PhotoKind">
+<div class="thumb thumb-@Kind @(Large ? "thumb-lg" : "")">
     @if (source is not null)
     {
         <img @key="source" src="@source" alt="@ProductName" loading="lazy" decoding="async" @onerror="ImageFailed" />
@@ -26,14 +26,6 @@
     private string? previousSource;
     private string? previousName;
     private string? LocalSource => ProductPhotos.ForName(ProductName);
-    private string PhotoKind => ProductName?.Trim().ToLowerInvariant() switch
-    {
-        "trà sen vàng" => "lotus",
-        "cold brew cam sả" => "cold-brew",
-        "cà phê đen đá" => "black-coffee",
-        "trà vải lài" => "lychee",
-        _ => "default"
-    };
     protected override void OnParametersSet()
     {
         var candidate = string.IsNullOrWhiteSpace(ImageUrl) ? LocalSource : ImageUrl;

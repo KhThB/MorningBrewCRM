@@ -381,11 +381,8 @@ textarea.input { resize: vertical; }
 
 /* Product photography: square frames, warm paper tones, clear glassware. */
 .thumb { position: relative; overflow: hidden; background: #fff; border: 1px solid #f1ece5; }
-.thumb img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; padding: 5%; }
+.thumb img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; object-position: center; padding: 0; }
 .thumb-lg { height: auto; aspect-ratio: 1; }
-.thumb[data-photo="cold-brew"] img { object-fit: contain; object-position: center; }
-.thumb[data-photo="lotus"] img { object-fit: cover; object-position: center 45%; padding: 5%; }
-.thumb[data-photo="lychee"] img { padding: 0; }
 .menu-header { background: #faf7f2; color: #392a21; border-bottom: 1px solid #e8e0d5; padding-top: 16px; }
 .menu-header .branch-picker, .menu-header .branch-picker .store-name { color: #6b5543; font-size: 13px; }
 .menu-header .search { background: #fff; border: 1px solid #e6ddd1; color: #8b7765; height: 44px; }

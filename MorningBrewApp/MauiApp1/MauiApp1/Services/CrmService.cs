@@ -5,6 +5,8 @@ public sealed class CrmService(ApiClient api)
 {
     public Profile? CachedProfile { get; private set; }
     public int PendingSurveys { get; private set; }
+    /// <summary>[NOTI] Số thông báo chưa đọc – chấm đỏ trên nút chuông.</summary>
+    public int UnreadNotifications { get; private set; }
     public event Action? Changed;
 
     // ----- Hồ sơ -----
@@ -84,5 +86,31 @@ public sealed class CrmService(ApiClient api)
     public Task SaveFavoritesAsync(IEnumerable<int> productIds) =>
         api.Send(HttpMethod.Put, "v1/me/preferences", new { ProductIds = productIds.Distinct().ToArray() });
 
-    public void Reset() { CachedProfile = null; PendingSurveys = 0; Changed?.Invoke(); }
+    public void Reset() { CachedProfile = null; PendingSurveys = 0; UnreadNotifications = 0; Changed?.Invoke(); } // [NOTI] xóa cả số chưa đọc
+
+    // ----- [NOTI] Thông báo -----
+    public async Task<List<NotificationItem>> GetNotificationsAsync()
+    {
+        var result = await api.Get<NotificationList>("v1/me/notifications");
+        UnreadNotifications = result.Unread; Changed?.Invoke();
+        return result.Items;
+    }
+
+    public async Task RefreshUnreadAsync()
+    {
+        UnreadNotifications = (await api.Get<UnreadCount>("v1/me/notifications/unread-count")).Unread;
+        Changed?.Invoke();
+    }
+
+    public async Task MarkNotificationReadAsync(int id)
+    {
+        UnreadNotifications = (await api.Send<UnreadCount>(HttpMethod.Post, $"v1/me/notifications/{id}:read")).Unread;
+        Changed?.Invoke();
+    }
+
+    public async Task MarkAllNotificationsReadAsync()
+    {
+        await api.Send(HttpMethod.Post, "v1/me/notifications:readAll");
+        UnreadNotifications = 0; Changed?.Invoke();
+    }
 }

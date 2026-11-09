@@ -431,3 +431,23 @@ textarea.input { resize: vertical; }
 .row-between { min-width: 0; flex-wrap: wrap; }
 .row-between > span { min-width: 0; overflow-wrap: anywhere; }
 .card .row-between .btn { flex: 1 1 140px; }
+
+/* ---------- [NOTI] Trang Thông báo ---------- */
+.text-btn { border: 0; background: transparent; color: var(--caramel-ink); font-weight: 700; font-size: 14px; padding: 8px 10px; border-radius: 10px; }
+.text-btn:disabled { opacity: .5; }
+.noti-group { margin: 14px 4px 8px; font-size: 13px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.noti-group:first-child { margin-top: 2px; }
+.noti-list { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.noti { position: relative; display: flex; gap: 12px; align-items: flex-start; width: 100%; padding: 14px 16px; border: 0; background: transparent; text-align: left; border-bottom: 1px solid var(--line); color: var(--text); font: inherit; }
+.noti:last-child { border-bottom: 0; }
+.noti.unread { background: #fffaf2; }
+.noti-icon { flex: 0 0 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--caramel-soft); color: var(--caramel-ink); }
+.noti-icon.ok { background: var(--ok-bg); color: var(--ok); } .noti-icon.bad { background: var(--bad-bg); color: var(--bad); }
+.noti-icon.warn { background: var(--warn-bg); color: var(--warn); } .noti-icon.info { background: var(--info-bg); color: var(--info); }
+.noti-icon.muted { background: #f1efec; color: var(--muted); }
+.noti-text { display: grid; gap: 2px; min-width: 0; flex: 1; padding-right: 10px; }
+.noti-text b { font-size: 14px; font-weight: 600; }
+.noti.unread .noti-text b { font-weight: 800; }
+.noti-text span { font-size: 13px; color: #44403c; overflow-wrap: anywhere; }
+.noti-text small { font-size: 12px; color: var(--muted); }
+.noti-dot { position: absolute; top: 18px; right: 14px; width: 9px; height: 9px; border-radius: 50%; background: #ef4444; }

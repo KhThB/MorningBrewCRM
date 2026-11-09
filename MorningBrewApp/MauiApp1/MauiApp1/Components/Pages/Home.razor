@@ -10,8 +10,9 @@
             <span class="muted-light">@Greeting(),</span>
             <h1>@(profile?.FullName ?? Auth.User?.FullName ?? "bạn")</h1>
         </div>
-        <a class="icon-btn light" href="/account/surveys" aria-label="Khảo sát mới">
-            <Icon Name="bell" />@if (Crm.PendingSurveys > 0){<i class="badge">@Crm.PendingSurveys</i>}
+        @* [NOTI] Nút chuông mở trang Thông báo; số đỏ = thông báo chưa đọc (trước đây dẫn sang Khảo sát) *@
+        <a class="icon-btn light" href="/notifications" aria-label="Thông báo">
+            <Icon Name="bell" />@if (Crm.UnreadNotifications > 0){<i class="badge">@(Crm.UnreadNotifications > 99 ? "99+" : Crm.UnreadNotifications.ToString())</i>}
         </a>
     </div>
     <MemberCard Name="@(profile?.FullName ?? "")" Points="@(profile?.LoyaltyPoints ?? 0)" />
@@ -112,6 +113,7 @@
             promotions = await Crm.GetPromotionsAsync();
         }
         catch (ApiException e) { error = e.Message; }
+        try { await Crm.RefreshUnreadAsync(); } catch (ApiException) { } // [NOTI] số thông báo chưa đọc trên nút chuông
         try
         {
             var menu = await Shop.GetMenuAsync();

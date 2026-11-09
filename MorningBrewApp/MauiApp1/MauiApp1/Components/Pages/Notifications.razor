@@ -1,0 +1,111 @@
+@page "/notifications"
+@inject CrmService Crm
+@inject NavigationManager Nav
+@inject ToastService Toasts
+
+@* [NOTI] Trang Thông báo: đơn hàng, voucher, khảo sát, trả lời phản hồi. Bấm vào thông báo → đánh dấu đã đọc và mở đúng trang liên quan. *@
+<PageHeader Title="Thông báo" BackTo="/">
+    <Actions>
+        @if (Crm.UnreadNotifications > 0)
+        {
+            <button class="text-btn" @onclick="ReadAll" disabled="@busy">Đọc hết</button>
+        }
+    </Actions>
+</PageHeader>
+
+<div class="page-body">
+    <StateView Loading="loading" Error="@error" OnRetry="Load" Empty="items.Count == 0" EmptyText="Chưa có thông báo nào. Cập nhật đơn hàng, voucher và khảo sát sẽ hiện ở đây." EmptyIcon="bell">
+        @foreach (var group in items.GroupBy(n => Group(n.CreatedAt)))
+        {
+            <h3 class="noti-group">@group.Key</h3>
+            <div class="noti-list">
+                @foreach (var n in group)
+                {
+                    var (icon, css) = Look(n);
+                    <button class="noti @(n.IsUnread ? "unread" : "")" @onclick="() => Open(n)">
+                        <span class="noti-icon @css"><Icon Name="@icon" Size="20" /></span>
+                        <span class="noti-text">
+                            <b>@(n.Title + (n.OrderCode is null ? "" : $" · {n.OrderCode}"))</b>
+                            <span>@n.Body</span>
+                            <small>@Ago(n.CreatedAt)</small>
+                        </span>
+                        @if (n.IsUnread) { <i class="noti-dot" aria-label="Chưa đọc"></i> }
+                    </button>
+                }
+            </div>
+        }
+    </StateView>
+</div>
+
+@code {
+    private List<NotificationItem> items = [];
+    private bool loading = true, busy;
+    private string? error;
+
+    protected override Task OnInitializedAsync() => Load();
+
+    private async Task Load()
+    {
+        loading = true; error = null;
+        try { items = await Crm.GetNotificationsAsync(); }
+        catch (ApiException e) { error = e.Message; }
+        loading = false;
+    }
+
+    private async Task Open(NotificationItem n)
+    {
+        if (n.IsUnread)
+        {
+            try { await Crm.MarkNotificationReadAsync(n.NotificationId); }
+            catch (ApiException) { } // vẫn mở trang liên quan dù đánh dấu thất bại
+            var i = items.IndexOf(n);
+            if (i >= 0) items[i] = n with { ReadAt = DateTimeOffset.UtcNow };
+        }
+        var target = Target(n);
+        if (target is not null) Nav.NavigateTo(target);
+    }
+
+    private async Task ReadAll()
+    {
+        busy = true;
+        try
+        {
+            await Crm.MarkAllNotificationsReadAsync();
+            items = items.Select(x => x.IsUnread ? x with { ReadAt = DateTimeOffset.UtcNow } : x).ToList();
+        }
+        catch (ApiException e) { Toasts.Show(e.Message, true); }
+        busy = false;
+    }
+
+    // Trang mở khi bấm vào thông báo.
+    private static string? Target(NotificationItem n) =>
+        n.OrderId is { } o ? $"/orders/{o}"
+        : n.SurveyId is { } s ? $"/surveys/{s}"
+        : n.CustomerPromotionId is not null ? "/rewards"
+        : n.Title.Contains("phản hồi", StringComparison.OrdinalIgnoreCase) ? "/account/feedbacks"
+        : null;
+
+    private static (string Icon, string Css) Look(NotificationItem n) =>
+        n.Title.Contains("Hoàn tiền") ? ("coin", "ok")
+        : n.Title.Contains("hủy") ? ("close", "bad")
+        : n.OrderId is not null ? (n.Body.Contains("Đang giao") ? "truck" : "receipt", "warn")
+        : n.CustomerPromotionId is not null ? ("ticket", "gift")
+        : n.SurveyId is not null ? ("clipboard", "info")
+        : n.Title.Contains("phản hồi", StringComparison.OrdinalIgnoreCase) ? ("chat", "info")
+        : ("bell", "muted");
+
+    private static string Group(DateTimeOffset at)
+    {
+        var day = at.ToLocalTime().Date; var today = DateTime.Today;
+        return day == today ? "Hôm nay" : day == today.AddDays(-1) ? "Hôm qua" : "Trước đó";
+    }
+
+    private static string Ago(DateTimeOffset at)
+    {
+        var span = DateTimeOffset.UtcNow - at;
+        if (span.TotalMinutes < 1) return "Vừa xong";
+        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes} phút trước";
+        if (span.TotalHours < 24) return $"{(int)span.TotalHours} giờ trước";
+        return Fmt.When(at);
+    }
+}

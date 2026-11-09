@@ -26,6 +26,16 @@ public record Promotion(
     int PromotionId, string Name, string? Description, string? Scope, string DiscountType,
     decimal DiscountValue, decimal? MaxDiscount, decimal MinSubtotal, int? PointsCost, DateTimeOffset? EndsAt);
 
+// [NOTI] Thông báo trong app (GET v1/me/notifications).
+public record NotificationItem(
+    int NotificationId, string Title, string Body, int? OrderId, string? OrderCode,
+    int? CustomerPromotionId, int? SurveyId, DateTimeOffset CreatedAt, DateTimeOffset? ReadAt)
+{
+    public bool IsUnread => ReadAt is null;
+}
+public record NotificationList(List<NotificationItem> Items, int Unread);
+public record UnreadCount(int Unread);
+
 public record Feedback(
     int FeedbackId, string Type, string Content, int? Rating, string Status,
     string? ResponseContent, DateTimeOffset CreatedAt);

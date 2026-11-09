@@ -26,7 +26,7 @@
 - Đơn hàng thật: `v1/me/menu`, `v1/me/orders`, `v1/orders` (quản lý), `v1/pos` (thu ngân). Đơn trả trước quá 15 phút chưa thanh toán thì API **tự hủy** (chạy mỗi phút).
 - Mã đơn ngắn dạng `MB261108-0031`; sửa lỗi khảo sát và phản hồi – **script 12**.
 - Mọi thông báo lỗi từ SQL hiển thị bằng tiếng Việt.
-- Sao lưu / phục hồi database (`database/tools/Backup.ps1`, `Restore.ps1`, trang Admin → Sao lưu).
+- Sao lưu / phục hồi database ngay trên web (trang Admin → Sao lưu & phục hồi), API tự sao lưu mỗi ngày và giữ 14 bản.
 - API mới cho dashboard: `GET v1/dashboard`, `GET v1/customers/{id}/overview`.
 
 ### Web Admin

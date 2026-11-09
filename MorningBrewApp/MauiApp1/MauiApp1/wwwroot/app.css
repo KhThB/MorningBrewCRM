@@ -451,3 +451,14 @@ textarea.input { resize: vertical; }
 .noti-text span { font-size: 13px; color: #44403c; overflow-wrap: anywhere; }
 .noti-text small { font-size: 12px; color: var(--muted); }
 .noti-dot { position: absolute; top: 18px; right: 14px; width: 9px; height: 9px; border-radius: 50%; background: #ef4444; }
+
+/* ---------- [UI2-A2b] Chọn hình thức nhận khi mở Thực đơn ---------- */
+.fulfil-pill { width: 100%; border: 0; background: transparent; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.fulfil-pill small { margin-left: auto; font-weight: 700; color: var(--caramel-ink); text-decoration: underline; }
+.fulfil-option { display: flex; gap: 14px; align-items: center; width: 100%; padding: 14px; border: 1.5px solid var(--line); border-radius: 16px; background: #fff; text-align: left; font: inherit; color: var(--text); }
+.fulfil-option b { display: block; font-size: 15px; }
+.fulfil-option small { color: var(--muted); font-size: 12px; }
+.fulfil-option.active { border-color: var(--espresso); background: var(--caramel-soft); }
+.fulfil-option:disabled { opacity: .45; }
+.fulfil-option .quick-icon { flex: 0 0 auto; }
+.pick-row .heart { border: 0; background: transparent; padding: 6px; cursor: pointer; } /* [UI2-A5] */

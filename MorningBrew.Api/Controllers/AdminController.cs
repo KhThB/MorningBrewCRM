@@ -87,7 +87,8 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
                     """; break;
             case "products":
                 sql = """
-                    SELECT p.ProductID,p.Name,c.Name AS Category,v.VariantID,v.Name AS Size,v.BasePrice,p.IsActive
+                    SELECT p.ProductID,p.Name,c.Name AS Category,v.VariantID,v.Name AS Size,v.BasePrice,p.IsActive,
+                    CAST(COALESCE((SELECT MIN(CONVERT(int,bp.IsAvailable)) FROM dbo.BranchProducts bp WHERE bp.ProductID=p.ProductID),0) AS bit) AS InStock -- [UI2-A4a] còn hàng / tạm hết
                     FROM dbo.Products p JOIN dbo.Categories c ON c.CategoryID=p.CategoryID JOIN dbo.ProductVariants v ON v.ProductID=p.ProductID
 
                     """; break;
@@ -245,6 +246,20 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
         await db.Query("UPDATE dbo.Products SET IsActive=@active WHERE ProductID=@id; IF @@ROWCOUNT=0 THROW 51104,'Product not found.',1;", ("@id",id), ("@active",input.IsActive));
         return NoContent();
     }
+    // [UI2-A4a] "Tạm hết / Còn hàng" (BranchProducts.IsAvailable) – khác với "Ngừng bán" (Products.IsActive, ẩn khỏi thực đơn).
+    // App hiện nhãn "Tạm hết" và không cho đặt khi IsAvailable = 0. Trước đây Admin không chỉnh được trạng thái này.
+    [HttpPut("products/{id:int}/availability")]
+    public async Task<IActionResult> ProductAvailability(int id, AvailabilityInput input)
+    {
+        await RequireOwner();
+        await db.Query("""
+            UPDATE dbo.BranchProducts SET IsAvailable=@available WHERE ProductID=@id;
+            IF @@ROWCOUNT=0 THROW 51104,'Product not found.',1;
+            INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details) VALUES(@actor,'Product.Availability','Products',@id,CASE WHEN @available=1 THEN 'InStock' ELSE 'OutOfStock' END);
+            """, ("@id", id), ("@available", input.IsAvailable), ("@actor", Actor));
+        return NoContent();
+    }
+    public record AvailabilityInput([property: System.Text.Json.Serialization.JsonRequired] bool IsAvailable);
     public record PriceInput([property: System.Text.Json.Serialization.JsonRequired] [Range(0,100000000)] decimal Price);
     [HttpGet("variants/{id:int}/price")]
     public async Task<object> Price(int id)

@@ -15,7 +15,7 @@ public sealed class ShopService(ApiClient api)
     public int? VoucherId { get; set; }
     /// <summary>[BUG-17] Hình thức nhận khách đã chọn (ô "Nhận tại quán" / "Giao hàng" ở trang chủ hoặc trong giỏ).
     /// Giỏ hàng mở ra với lựa chọn này thay vì luôn là "Nhận tại quầy".</summary>
-    public string PreferredFulfillment { get; set; } = "Pickup";
+    public string? PreferredFulfillment { get; set; } // [UI2-A2b] null = chưa chọn → Thực đơn hỏi khách khi mở
 
     /// <summary>[BUG-16] Xóa dữ liệu của phiên trước khi đăng xuất / phiên bị thu hồi: giỏ hàng, voucher đã chọn,
     /// hình thức nhận. Trước đây ShopService là singleton nên giỏ của tài khoản cũ còn nguyên khi đăng nhập tài khoản khác.</summary>
@@ -24,7 +24,7 @@ public sealed class ShopService(ApiClient api)
         Cart.Clear();
         VoucherId = null;
         VoucherDiscount = 0;
-        PreferredFulfillment = "Pickup";
+        PreferredFulfillment = null; // [UI2-A2b]
         Changed?.Invoke();
     }
     public decimal VoucherDiscount { get; set; }

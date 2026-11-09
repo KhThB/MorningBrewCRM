@@ -7,6 +7,9 @@
         @{var active=item["is_active"].ValueKind==JsonValueKind.True;
           var fill=JsonSerializer.Serialize(new{id=item["product_id"].ToString(),variantId=item["variant_id"].ToString(),display_name=item["display_name"].ToString(),size=item["size"].ToString(),current=OrderView.Money(item,"base_price"),price=ReportView.Number(ReportView.Decimal(item,"base_price"))});}
         <button type="button" class="btn-sm" data-open="m-price" data-fill="@fill">Sửa giá</button>
+        @* [UI2-A4a] Còn hàng / Tạm hết – áp dụng cho cả sản phẩm *@
+        @{var inStock=item.TryGetValue("in_stock",out var s)&&s.ValueKind==JsonValueKind.True;}
+        <form method="post" class="inline-form"><input type="hidden" name="operation" value="product-stock"><input type="hidden" name="id" value="@item["product_id"]"><input type="hidden" name="available" value="@(inStock?"false":"true")"><button class="btn-sm">@(inStock?"Báo tạm hết":"Có hàng lại")</button></form>
         <button type="button" class="btn-sm @(active?"danger-text":null)" data-open="@(active?"m-stop":"m-start")" data-fill="@fill">@(active?"Ngừng bán":"Mở bán")</button>
     </div>;
 }

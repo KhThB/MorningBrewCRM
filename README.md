@@ -58,7 +58,7 @@ Tài khoản **dữ liệu mẫu local**: `owner@morningbrew.test`, `manager.1@m
 ## Tài liệu và kiểm thử
 
 - [Database và scripts cài đặt](database/README.md).
-- [Sao lưu và phục hồi CSDL](docs/backup-restore.md): `database/tools/Backup.ps1`, `Restore.ps1` và trang Admin → Sao lưu & phục hồi.
+- [Sao lưu và phục hồi CSDL](docs/backup-restore.md): sao lưu, phục hồi và sao lưu tự động hằng ngày đều trên trang Admin → Sao lưu & phục hồi.
 - [API v1](docs/api-v1.md) và [ghi chú tích hợp](docs/integration.md): đối chiếu với controller/seed hiện tại vì một số nội dung mô tả phạm vi cũ.
 - `tests/integration.py` và `tests/api_contract.py` còn giả định dữ liệu nhiều chi nhánh/quản lý khu vực của bản trước; chưa phù hợp hoàn toàn với seed CRM rút gọn hiện tại. Chỉ chạy trên database kiểm thử riêng.
 - [Tài liệu backend cũ](docs/legacy-backend.md) chỉ còn để tham khảo lịch sử; mã EF/JWT cũ đã được xóa khỏi repo (xem tag `backup-20261107` nếu cần đối chiếu).

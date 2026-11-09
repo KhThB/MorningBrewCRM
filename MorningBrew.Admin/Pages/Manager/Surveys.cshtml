@@ -5,7 +5,7 @@
     // [UI-02] Nút theo trạng thái: Nháp → Phát hành; Đang mở → Mời khách, Đóng; mọi khảo sát → Kết quả.
     Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
         @{var id=item["survey_id"].ToString(); var title=item["title"].ToString(); var st=item["status"].ToString(); var fill=JsonSerializer.Serialize(new{id,title});}
-        @if(st=="Draft"){<button type="button" class="btn-sm" data-open="m-publish" data-fill="@fill">Phát hành</button>}
+        @if(st=="Draft"){<a class="btn-sm" href="?edit=@id">Sửa</a><button type="button" class="btn-sm" data-open="m-publish" data-fill="@fill">Phát hành</button><button type="button" class="btn-sm danger-text" data-open="m-delete-draft" data-fill="@fill">Xóa</button>} @* [UI2-W5] Sửa / Xóa nháp *@
         @if(st=="Open"){<button type="button" class="btn-sm" data-open="m-invite" data-fill="@fill">Mời khách</button><button type="button" class="btn-sm danger-text" data-open="m-close" data-fill="@fill">Đóng</button>}
         <a class="btn-sm" href="?surveyId=@id">Kết quả</a>
     </div>;
@@ -30,8 +30,8 @@ else
 
 @* [UI-01] Tạo khảo sát (giữ bộ thêm câu hỏi) *@
 <dialog class="modal wide" id="m-add"><form method="post" id="survey-form">
-    <input type="hidden" name="operation" value="survey"><input type="hidden" name="modal" value="m-add">
-    <header><h2>Tạo khảo sát (bản nháp)</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <input type="hidden" name="operation" value="survey" id="survey-op"><input type="hidden" name="modal" value="m-add"><input type="hidden" name="id" id="survey-id"> @* [UI2-W5] cùng cửa sổ dùng để sửa nháp *@
+    <header><h2 id="survey-head">Tạo khảo sát (bản nháp)</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
     <div class="modal-body">
         <div class="two"><div><label>Tiêu đề *</label><input name="title" maxlength="250" required></div><div><label>Mô tả</label><input name="description" maxlength="2000"></div></div>
         <h3>Câu hỏi</h3><p class="muted">Loại <b>Đánh giá</b> cho điểm 1–5. Loại <b>Chọn một / Chọn nhiều</b> cần ít nhất 2 lựa chọn, mỗi dòng một lựa chọn. Câu để trống nội dung sẽ bị bỏ qua.</p>
@@ -47,8 +47,17 @@ else
         <button type="button" class="secondary" id="add-question">+ Thêm câu hỏi</button>
         <partial name="_Scope" model="Model" />
     </div>
-    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Tạo bản nháp</button></footer>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary" id="survey-submit">Tạo bản nháp</button></footer>
 </form></dialog>
+
+@* [UI2-W5+] Xóa khảo sát nháp *@
+<dialog class="modal" id="m-delete-draft"><form method="post">
+    <input type="hidden" name="operation" value="survey-delete"><input type="hidden" name="modal" value="m-delete-draft"><input type="hidden" name="id">
+    <header><h2>Xóa khảo sát nháp</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Xóa <b data-text="title"></b> cùng toàn bộ câu hỏi? Khảo sát chưa phát hành nên chưa có ai được mời hay trả lời.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Xóa khảo sát</button></footer>
+</form></dialog>
+@if(Model.EditJson is not null){<script type="application/json" id="survey-edit">@Html.Raw(Model.EditJson.Replace("</","<\\/"))</script>}
 
 @* [UI-01] Phát hành / Đóng *@
 <dialog class="modal" id="m-publish"><form method="post">
@@ -95,12 +104,21 @@ else
  const mode=document.getElementById('bulk-mode'),op=document.getElementById('invite-op'),one=document.querySelector('.bulk-one'),seg=document.querySelector('.bulk-segment'),list=document.querySelector('.bulk-list');
  const syncMode=()=>{op.value=mode.value==='one'?'invite':'invite-bulk';one.classList.toggle('hidden',mode.value!=='one');seg.classList.toggle('hidden',mode.value!=='segment');list.classList.toggle('hidden',mode.value!=='list')};
  mode.onchange=syncMode; document.getElementById('m-invite').addEventListener('toggle',syncMode); document.addEventListener('DOMContentLoaded',()=>setTimeout(syncMode,0));
+ // [UI2-W5] Cùng một cửa sổ cho Tạo và Sửa nháp.
+ const op=document.getElementById('survey-op'),sid=document.getElementById('survey-id'),head=document.getElementById('survey-head'),submit=document.getElementById('survey-submit');
+ const setMode=edit=>{head.textContent=edit?'Sửa khảo sát (bản nháp)':'Tạo khảo sát (bản nháp)';submit.textContent=edit?'Lưu thay đổi':'Tạo bản nháp';};
+ const fillRows=qs=>{box.innerHTML='';(qs.length?qs:[{}]).forEach(q=>{const r=tpl.cloneNode(true);r.querySelector('[name=q_text]').value=q.text??'';r.querySelector('.q-type').value=q.type||'Rating';r.querySelector('[name=q_required]').value=q.required===false?'false':'true';r.querySelector('textarea').value=q.options??'';box.append(r);sync(r)});};
+ document.querySelector('[data-open=m-add]')?.addEventListener('click',()=>{setMode(false);fillRows([]);});
+ const ed=document.getElementById('survey-edit');
+ if(ed){const d=JSON.parse(ed.textContent);window.addEventListener('load',()=>{mbOpenModal('m-add');op.value='survey-update';sid.value=d.id;setMode(true);
+   const el=document.getElementById('survey-form').elements;el['title'].value=d.title;el['description'].value=d.description;el['startsAt'].value=d.startsAt;el['endsAt'].value=d.endsAt;fillRows(d.questions);
+   const u=new URL(location.href);u.searchParams.delete('edit');history.replaceState(null,'',u);});}
  // Mở lại modal Tạo khảo sát sau lỗi: dựng lại đủ số dòng câu hỏi theo dữ liệu đã nhập
  const st=document.getElementById('modal-state');
  if(st){try{const m=JSON.parse(st.textContent);if(m.id==='m-add'){const f=m.form,arr=k=>[].concat(f[k]??[]);const texts=arr('q_text');
    box.innerHTML='';texts.forEach((t,i)=>{const r=tpl.cloneNode(true);r.querySelector('[name=q_text]').value=t;r.querySelector('.q-type').value=arr('q_type')[i]??'Rating';r.querySelector('[name=q_required]').value=arr('q_required')[i]??'true';r.querySelector('textarea').value=arr('q_options')[i]??'';box.append(r);sync(r)});
    if(!box.children.length)box.append(tpl.cloneNode(true));
-   window.addEventListener('load',()=>{['title','description','startsAt','endsAt'].forEach(k=>{if(f[k]){const el=document.querySelector('#survey-form [name='+k+']');if(el)el.value=f[k]}});box.querySelectorAll('.question-row').forEach((r,i)=>{r.querySelector('[name=q_text]').value=texts[i]??'';r.querySelector('.q-type').value=arr('q_type')[i]??'Rating';r.querySelector('[name=q_required]').value=arr('q_required')[i]??'true';r.querySelector('textarea').value=arr('q_options')[i]??'';sync(r)})});}}catch(_){}}
+   window.addEventListener('load',()=>{setMode(f.operation==='survey-update');['title','description','startsAt','endsAt'].forEach(k=>{if(f[k]){const el=document.querySelector('#survey-form [name='+k+']');if(el)el.value=f[k]}});box.querySelectorAll('.question-row').forEach((r,i)=>{r.querySelector('[name=q_text]').value=texts[i]??'';r.querySelector('.q-type').value=arr('q_type')[i]??'Rating';r.querySelector('[name=q_required]').value=arr('q_required')[i]??'true';r.querySelector('textarea').value=arr('q_options')[i]??'';sync(r)})});}}catch(_){}}
 })();
 </script>
 }

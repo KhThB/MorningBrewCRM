@@ -4,10 +4,12 @@
 @inject ToastService Toasts
 
 <header class="menu-header">
-    <div class="branch-picker">
-        <Icon Name="pin" Size="18" />
-        <span class="store-name">@Shop.CurrentBranch.Name</span>
-    </div>
+    @* [UI2-A2b] Hình thức nhận đang chọn; bấm để đổi *@
+    <button class="branch-picker fulfil-pill" @onclick="() => chooser = true">
+        <Icon Name="@(Shop.PreferredFulfillment == "Delivery" ? "truck" : "pin")" Size="18" />
+        <span class="store-name">@(Shop.PreferredFulfillment == "Delivery" ? "Giao hàng tận nơi" : $"Nhận tại quầy · {Shop.CurrentBranch.Name}")</span>
+        <small>Đổi</small>
+    </button>
     <div class="search">
         <Icon Name="search" Size="18" />
         <input placeholder="Tìm món..." @bind="query" @bind:event="oninput" aria-label="Tìm món" />
@@ -75,16 +77,20 @@
             <ProductThumb Category="@sheet[0].Category" ProductName="@sheet[0].Name" ImageUrl="@sheet[0].ImageUrl" Large="true" />
             <div><h2>@sheet[0].Name</h2><p class="muted">@sheet[0].Description</p></div>
         </div>
-        <h3>Kích cỡ</h3>
-        <div class="chips wrap">
-            @foreach (var v in sheet.Where(x => x.IsAvailable))
-            {
-                <button class="chip-btn @(variant?.VariantId == v.VariantId ? "active" : "")" @onclick="() => variant = v">
-                    @v.VariantName · @Fmt.Money(v.Price)
-                </button>
-            }
-        </div>
-        @* [BUG-02] Tùy chọn của món (đường, đá, topping); nhóm có dấu * là bắt buộc *@
+        @* [UI2-A3] món chỉ có một cỡ (bánh) thì không hỏi kích cỡ *@
+        @if (sheet.Count > 1)
+        {
+            <h3>Kích cỡ</h3>
+            <div class="chips wrap">
+                @foreach (var v in sheet.Where(x => x.IsAvailable))
+                {
+                    <button class="chip-btn @(variant?.VariantId == v.VariantId ? "active" : "")" @onclick="() => variant = v">
+                        @v.VariantName · @Fmt.Money(v.Price)
+                    </button>
+                }
+            </div>
+        }
+        @* [BUG-02] Tùy chọn của món; [UI2-A3] từ script 13 chỉ còn nhóm "Nhiệt độ" (Đá / Nóng) cho đồ uống *@
         @foreach (var g in Groups)
         {
             var first = g.First();
@@ -111,6 +117,25 @@
     </div>
 }
 
+
+@* [UI2-A2b] Mở Thực đơn mà chưa chọn hình thức nhận → hỏi trước khi chọn món *@
+@if (chooser)
+{
+    <div class="sheet-backdrop" @onclick="CloseChooser"></div>
+    <div class="sheet" role="dialog" aria-label="Chọn hình thức nhận hàng">
+        <div class="sheet-handle"></div>
+        <h2>Bạn muốn nhận món thế nào?</h2>
+        <button class="fulfil-option @(Shop.PreferredFulfillment == "Pickup" ? "active" : "")" disabled="@(!Shop.CurrentBranch.PickupEnabled)" @onclick='() => Choose("Pickup")'>
+            <span class="quick-icon"><Icon Name="bag" Size="24" /></span>
+            <span><b>Nhận tại quầy</b><small>@Shop.CurrentBranch.Name · @Shop.CurrentBranch.Address</small></span>
+        </button>
+        <button class="fulfil-option @(Shop.PreferredFulfillment == "Delivery" ? "active" : "")" disabled="@(!Shop.CurrentBranch.DeliveryEnabled)" @onclick='() => Choose("Delivery")'>
+            <span class="quick-icon"><Icon Name="truck" Size="24" /></span>
+            <span><b>Giao hàng</b><small>@(Shop.CurrentBranch.DeliveryEnabled ? $"Phí giao {Fmt.Money(Shop.CurrentBranch.DeliveryFee)} · nhập địa chỉ ở giỏ hàng" : "Cửa hàng tạm ngưng giao hàng")</small></span>
+        </button>
+    </div>
+}
+
 @code {
     private MenuData? menu;
     private HashSet<int> favorites = [];
@@ -120,6 +145,12 @@
     private bool loading = true;
     private string? error;
     private List<MenuProduct>? sheet;
+    private bool chooser; // [UI2-A2b]
+    [SupplyParameterFromQuery] public int? Product { get; set; } // [UI2-A5] /menu?product=… mở ngay món đó (từ trang Yêu thích)
+
+    private void Choose(string value) { Shop.PreferredFulfillment = value; chooser = false; OpenRequested(); }
+    // Đóng mà chưa chọn → mặc định nhận tại quầy (giỏ hàng luôn cần một hình thức).
+    private void CloseChooser() { Shop.PreferredFulfillment ??= Shop.CurrentBranch.PickupEnabled ? "Pickup" : "Delivery"; chooser = false; }
     private MenuProduct? variant;
     private int quantity = 1;
     private HashSet<int> picked = []; // [BUG-02] tùy chọn đang chọn
@@ -158,6 +189,17 @@
         catch (ApiException e) { error = e.Message; }
         try { favorites = await Crm.GetFavoritesAsync(); } catch (ApiException) { }
         loading = false;
+        if (Shop.PreferredFulfillment is null && menu?.IsDemo != true) chooser = true; // [UI2-A2b]
+        else OpenRequested();
+    }
+
+    // [UI2-A5] Mở ngay món được chọn từ trang Yêu thích (/menu?product=…).
+    private void OpenRequested()
+    {
+        if (Product is not { } pid || menu is null) return;
+        var variants = menu.Items.Where(x => x.ProductId == pid).ToList();
+        Product = null;
+        if (variants.Count > 0) Open(variants);
     }
 
     private void Open(List<MenuProduct> variants)

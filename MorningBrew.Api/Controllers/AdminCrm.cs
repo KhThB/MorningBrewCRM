@@ -23,12 +23,9 @@ public sealed partial class AdminController
         _ => throw new ApiException(400, "Phạm vi không hợp lệ.")
     };
 
-    [HttpPost("surveys")]
-    public async Task<IActionResult> CreateSurvey(SurveyInput input)
+    private static void ValidateQuestions(QuestionInput[] questions)
     {
-        if (input.EndsAt <= input.StartsAt) throw new ApiException(400,"Ngày kết thúc phải sau ngày bắt đầu.");
-        var (scope, area, branch) = NormalizeScope(input.Scope, input.AreaId, input.BranchId);
-        foreach (var q in input.Questions)
+        foreach (var q in questions)
         {
             if (q is null || q.Type is not ("Text" or "Rating" or "SingleChoice" or "MultipleChoice") ||
                 string.IsNullOrWhiteSpace(q.Text) || q.Text.Length>2000 ||
@@ -36,6 +33,14 @@ public sealed partial class AdminController
                 (q.Type is "SingleChoice" or "MultipleChoice" && (q.Options is null || q.Options.Length<2 || q.Options.Length>30 || q.Options.Any(x=>string.IsNullOrWhiteSpace(x)||x.Length>500))))
                 throw new ApiException(400,"Câu hỏi hoặc lựa chọn không hợp lệ.");
         }
+    }
+
+    [HttpPost("surveys")]
+    public async Task<IActionResult> CreateSurvey(SurveyInput input)
+    {
+        if (input.EndsAt <= input.StartsAt) throw new ApiException(400,"Ngày kết thúc phải sau ngày bắt đầu.");
+        var (scope, area, branch) = NormalizeScope(input.Scope, input.AreaId, input.BranchId);
+        ValidateQuestions(input.Questions); // [UI2-W5] dùng chung với UpdateDraftSurvey
         var questions = input.Questions.Select((q,i)=>new { text=q.Text,type=q.Type,required=q.IsRequired,position=i,
             min=q.Type=="Rating"?q.RatingMin:null,max=q.Type=="Rating"?q.RatingMax:null,options=q.Options });
         var created = await db.Query("""
@@ -59,6 +64,60 @@ public sealed partial class AdminController
         var id = (int)created.Single()["SurveyID"]!;
         return Created($"/v1/surveys/{id}", await ReadResource("surveys", id));
     }
+    // [UI2-W5] Sửa khảo sát còn ở trạng thái Nháp: cập nhật tiêu đề, mô tả, thời gian và thay toàn bộ câu hỏi.
+    // Trigger TR_SurveyQuestions_Freeze / TR_Surveys_Publish vẫn chặn ở tầng database nếu khảo sát đã phát hành.
+    [HttpPut("surveys/{id:int}")]
+    public async Task<IActionResult> UpdateDraftSurvey(int id, SurveyInput input)
+    {
+        if (input.EndsAt <= input.StartsAt) throw new ApiException(400,"Ngày kết thúc phải sau ngày bắt đầu.");
+        ValidateQuestions(input.Questions);
+        var questions = input.Questions.Select((q,i)=>new { text=q.Text,type=q.Type,required=q.IsRequired,position=i,
+            min=q.Type=="Rating"?q.RatingMin:null,max=q.Type=="Rating"?q.RatingMax:null,options=q.Options });
+        await db.Query("""
+            SET XACT_ABORT ON; BEGIN TRAN;
+            DECLARE @status varchar(10),@scope varchar(10),@area int,@branch int;
+            SELECT @status=Status,@scope=Scope,@area=AreaID,@branch=BranchID FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@id;
+            IF @status IS NULL THROW 51104,N'Không tìm thấy khảo sát.',1;
+            IF dbo.CanScope(@actor,@scope,@area,@branch,'Surveys.Manage')=0 THROW 51103,'Scope denied.',1;
+            IF @status<>'Draft' THROW 51124,N'Chỉ sửa được khảo sát đang ở trạng thái Nháp.',1;
+            UPDATE dbo.Surveys SET Title=@title,Description=@description,StartsAt=@start,EndsAt=@end WHERE SurveyID=@id;
+            DELETE o FROM dbo.SurveyQuestionOptions o JOIN dbo.SurveyQuestions q ON q.QuestionID=o.QuestionID WHERE q.SurveyID=@id;
+            DELETE dbo.SurveyQuestions WHERE SurveyID=@id;
+            INSERT dbo.SurveyQuestions(SurveyID,Text,Type,IsRequired,DisplayOrder,RatingMin,RatingMax)
+            SELECT @id,text,type,required,position,min,max FROM OPENJSON(@questions)
+            WITH(text nvarchar(2000),type varchar(15),required bit,position int,min int,max int);
+            INSERT dbo.SurveyQuestionOptions(QuestionID,Text,DisplayOrder)
+            SELECT q.QuestionID,o.value,CONVERT(int,o.[key]) FROM OPENJSON(@questions) j
+            JOIN dbo.SurveyQuestions q ON q.SurveyID=@id AND q.DisplayOrder=CONVERT(int,JSON_VALUE(j.value,'$.position'))
+            CROSS APPLY OPENJSON(j.value,'$.options') o WHERE q.Type IN ('SingleChoice','MultipleChoice');
+            INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID) VALUES(@actor,@branch,'Survey.Update','Surveys',@id);
+            COMMIT;
+            """, ("@id",id),("@actor",Actor),("@title",input.Title),("@description",input.Description),
+            ("@start",input.StartsAt.UtcDateTime),("@end",input.EndsAt.UtcDateTime),("@questions",JsonSerializer.Serialize(questions)));
+        return Ok(await ReadResource("surveys", id));
+    }
+
+    // [UI2-W5+] Xóa khảo sát nháp (chưa phát hành nên chưa có người được mời hay câu trả lời).
+    [HttpDelete("surveys/{id:int}")]
+    public async Task<IActionResult> DeleteDraftSurvey(int id)
+    {
+        await db.Query("""
+            SET XACT_ABORT ON; BEGIN TRAN;
+            DECLARE @status varchar(10),@scope varchar(10),@area int,@branch int;
+            SELECT @status=Status,@scope=Scope,@area=AreaID,@branch=BranchID FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@id;
+            IF @status IS NULL THROW 51104,N'Không tìm thấy khảo sát.',1;
+            IF dbo.CanScope(@actor,@scope,@area,@branch,'Surveys.Manage')=0 THROW 51103,'Scope denied.',1;
+            IF @status<>'Draft' THROW 51124,N'Chỉ xóa được khảo sát đang ở trạng thái Nháp; khảo sát đã phát hành thì dùng "Đóng".',1;
+            DELETE o FROM dbo.SurveyQuestionOptions o JOIN dbo.SurveyQuestions q ON q.QuestionID=o.QuestionID WHERE q.SurveyID=@id;
+            DELETE dbo.SurveyQuestions WHERE SurveyID=@id;
+            DELETE dbo.Notifications WHERE SurveyID=@id;
+            DELETE dbo.Surveys WHERE SurveyID=@id;
+            INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID) VALUES(@actor,@branch,'Survey.Delete','Surveys',@id);
+            COMMIT;
+            """, ("@id",id),("@actor",Actor));
+        return NoContent();
+    }
+
     [HttpPost("surveys/{id:int}:publish")]
     public async Task<IActionResult> Publish(int id)
     {

@@ -47,7 +47,7 @@
 
             <div class="card">
                 <div class="row-start"><Icon Name="@(order.Fulfillment == "Delivery" ? "truck" : "store")" Size="18" /><b>@(order.Fulfillment == "Delivery" ? "Giao hàng" : "Nhận tại quầy") · @order.BranchName</b></div>
-                <p class="muted small">Đặt lúc @Fmt.When(order.CreatedAt) · @(order.PaymentMode == "COD" ? "Tiền mặt khi nhận" : "Trả trước") · @(order.IsPaid ? "đã thanh toán" : "chưa thanh toán")</p>
+                <p class="muted small">Đặt lúc @Fmt.When(order.CreatedAt) · @(order.PaymentMode == "COD" ? "Tiền mặt" : "Chuyển khoản") @* [UI2-A1] *@ · @(order.IsPaid ? "đã thanh toán" : "chưa thanh toán")</p>
                 @if (order.Fulfillment == "Delivery")
                 {
                     <p class="small">Giao tới: @order.ContactName · @order.ContactPhone · @order.DeliveryAddress</p>

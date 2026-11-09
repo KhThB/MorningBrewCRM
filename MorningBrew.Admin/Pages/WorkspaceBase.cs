@@ -136,6 +136,9 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
                 await Api.Send(HttpMethod.Post,"v1/products",new {name=Text("name"),description=Text("description"),categoryId=Number("categoryId"),size=Text("size"),price=Money("price")}); break;
             case "product-active":
                 await Api.Send(HttpMethod.Put,$"v1/products/{Number("id")}/active",new {isActive=Text("active")=="true"}); break;
+            case "product-stock": // [UI2-A4a] còn hàng / tạm hết (khác "Ngừng bán")
+                await Api.Send(HttpMethod.Put,$"v1/products/{Number("id")}/availability",new {isAvailable=Text("available")=="true"});
+                TempData["Success"]=Text("available")=="true"?"Đã chuyển sang Còn hàng.":"Đã chuyển sang Tạm hết – app hiện nhãn Tạm hết và không cho đặt món này."; break;
             case "price":
                 await Api.Send(HttpMethod.Put,$"v1/variants/{Number("variantId")}/price",new {price=Money("price")}); break;
             // ----- Quản lý CRM -----
@@ -156,6 +159,13 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
             case "survey":
                 var questions=SurveyQuestions();
                 await Api.Send(HttpMethod.Post,"v1/surveys",new {title=Text("title"),description=Text("description"),startsAt=Date("startsAt"),endsAt=Date("endsAt"),questions}); break;
+            case "survey-update": // [UI2-W5] sửa khảo sát nháp (API chỉ cho khi còn Nháp)
+                var updated=SurveyQuestions();
+                await Api.Send(HttpMethod.Put,$"v1/surveys/{Number("id")}",new {title=Text("title"),description=Text("description"),startsAt=Date("startsAt"),endsAt=Date("endsAt"),questions=updated});
+                TempData["Success"]="Đã lưu khảo sát nháp."; break;
+            case "survey-delete": // [UI2-W5+] xóa khảo sát nháp
+                await Api.Send(HttpMethod.Delete,$"v1/surveys/{Number("id")}");
+                TempData["Success"]="Đã xóa khảo sát nháp."; break;
             case "publish":
             case "close":
                 await Api.Send(HttpMethod.Post,$"v1/surveys/{Number("id")}:{operation}"); break;

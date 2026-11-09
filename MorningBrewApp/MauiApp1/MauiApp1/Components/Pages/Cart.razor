@@ -28,11 +28,9 @@
             </div>
 
             <div class="card form">
-                <label>Hình thức nhận hàng</label>
-                <div class="chips wrap">
-                    @if (Shop.CurrentBranch.PickupEnabled) { <button type="button" class="chip-btn @(fulfillment == "Pickup" ? "active" : "")" @onclick='() => SetFulfillment("Pickup")'>Nhận tại quầy</button> }
-                    @if (Shop.CurrentBranch.DeliveryEnabled) { <button type="button" class="chip-btn @(fulfillment == "Delivery" ? "active" : "")" @onclick='() => SetFulfillment("Delivery")'>Giao hàng (+@Fmt.Money(Shop.CurrentBranch.DeliveryFee))</button> }
-                </div>
+                @* [UI2-A2b] Hình thức nhận đã chọn ở trang chủ / khi mở Thực đơn → giỏ chỉ hiển thị, không hỏi lại *@
+                <div class="row-between"><label>Hình thức nhận hàng</label>
+                    <span class="chip @(fulfillment == "Delivery" ? "chip-info" : "chip-ok")"><Icon Name="@(fulfillment == "Delivery" ? "truck" : "bag")" Size="14" /> @(fulfillment == "Delivery" ? $"Giao hàng (+{Fmt.Money(Shop.CurrentBranch.DeliveryFee)})" : "Nhận tại quầy")</span></div>
                 @if (fulfillment == "Pickup")
                 {
                     <p class="muted small"><Icon Name="store" Size="16" /> @Shop.CurrentBranch.Name · @Shop.CurrentBranch.Address</p>
@@ -48,11 +46,13 @@
                     <label for="dnote">Ghi chú cho người giao</label>
                     <input id="dnote" class="input" @bind="deliveryNote" maxlength="300" />
                 }
-                <label>Thanh toán</label>
-                <div class="chips wrap">
-                    <button type="button" class="chip-btn @(paymentMode == "Prepaid" ? "active" : "")" @onclick='() => paymentMode = "Prepaid"'>Trả trước (ví / thẻ – mô phỏng)</button>
-                    <button type="button" class="chip-btn @(paymentMode == "COD" ? "active" : "")" @onclick='() => paymentMode = "COD"'>Tiền mặt khi nhận</button>
-                </div>
+                @* [UI2-A1] Một ô chọn xổ xuống: Tiền mặt / Chuyển khoản (Chuyển khoản = trả trước qua cổng thanh toán mô phỏng) *@
+                <label for="pay">Phương thức thanh toán</label>
+                <select id="pay" class="input" @bind="paymentMode">
+                    <option value="COD">Tiền mặt (trả khi nhận hàng)</option>
+                    <option value="Prepaid">Chuyển khoản (thanh toán ngay)</option>
+                </select>
+                @if (paymentMode == "Prepaid") { <p class="muted small">Sau khi đặt, bạn thanh toán trong 15 phút ở trang chi tiết đơn (cổng mô phỏng, không trừ tiền thật).</p> }
                 <label for="note">Ghi chú cho quán</label>
                 <input id="note" class="input" @bind="note" maxlength="500" placeholder="Ví dụ: ít ngọt, lấy lúc 9h" />
             </div>
@@ -98,7 +98,7 @@
     private bool busy;
     // Mỗi lần mở giỏ tạo 1 khóa yêu cầu: bấm 2 lần không tạo 2 đơn.
     private Guid requestKey = Guid.NewGuid();
-    private string fulfillment = "Pickup", paymentMode = "Prepaid";
+    private string fulfillment = "Pickup", paymentMode = "COD"; // [UI2-A1] mặc định Tiền mặt
     private string? contactName, contactPhone, address, deliveryNote, note;
 
     private decimal Discount => Math.Min(Shop.VoucherDiscount, Shop.CartSubtotal);
@@ -118,16 +118,9 @@
         catch (ApiException) { }
         // [BUG-17] Mở giỏ với hình thức khách đã chọn ở trang chủ ("Giao hàng" / "Nhận tại quán"); nếu cửa hàng
         // không hỗ trợ hình thức đó thì dùng hình thức còn lại. Trước đây luôn mặc định "Nhận tại quầy".
-        fulfillment = Shop.PreferredFulfillment;
+        fulfillment = Shop.PreferredFulfillment ?? "Pickup"; // [UI2-A2b] chưa chọn (vào giỏ không qua Thực đơn) → nhận tại quầy
         if (fulfillment == "Delivery" && !Shop.CurrentBranch.DeliveryEnabled) fulfillment = "Pickup";
         if (fulfillment == "Pickup" && !Shop.CurrentBranch.PickupEnabled && Shop.CurrentBranch.DeliveryEnabled) fulfillment = "Delivery";
-    }
-
-    // [BUG-17] Đổi hình thức trong giỏ cũng được ghi nhớ (rời giỏ để thêm món rồi quay lại vẫn giữ).
-    private void SetFulfillment(string value)
-    {
-        fulfillment = value;
-        Shop.PreferredFulfillment = value;
     }
 
     private void PickVoucher(ChangeEventArgs e)

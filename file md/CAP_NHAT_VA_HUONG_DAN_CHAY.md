@@ -57,16 +57,18 @@ BUG-01 → BUG-17, chi tiết từng lỗi (vị trí sửa, commit, test case l
 
 ### 3.2 Chuẩn bị database
 
-**Máy chưa có database** – tạo mới đủ scripts 01–12 kèm dữ liệu mẫu:
+**Máy chưa có database** – tạo mới đủ scripts 01–13 kèm dữ liệu mẫu:
 ```powershell
 ./database/tools/Apply.ps1 -Database MorningBrewCRM_Crm
 ```
 
-**Máy đã có database cũ** – chạy thêm 2 script theo đúng thứ tự (bắt buộc, nếu không API sẽ báo lỗi quyền / lỗi khảo sát):
+**Máy đã có database cũ** – chạy thêm các script theo đúng thứ tự (bắt buộc; script nào đã chạy rồi thì bỏ qua, chạy lại cũng không sao):
 ```powershell
 sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\11_single_store.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\12_bugfix.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\13_ui_review.sql
 ```
+> Script 13 (09/11): đồ uống chỉ còn Size M/L + Đá/Nóng, đặt lại 2 món "Tạm hết" mẫu thành còn hàng, thêm dữ liệu nhà cung cấp.
 
 ### 3.3 Chạy trong Visual Studio
 1. Mở **`MorningBrewCRM.slnx`**.

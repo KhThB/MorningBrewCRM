@@ -2,8 +2,8 @@
 
 ## Chạy và đăng nhập
 
-1. Chạy `MorningBrew.Api` và `MorningBrew.Admin`, profile `https`.
-2. Mở [Swagger](https://localhost:7132/swagger).
+1. Chạy `MorningBrew.Api` và `MorningBrew.Admin`, profile `http`.
+2. Mở [Swagger](http://localhost:5029/swagger).
 3. Gọi `POST /v1/auth/login` với email/mật khẩu demo:
 
    ```json
@@ -61,7 +61,7 @@ Token được mã hóa và xác thực bằng ASP.NET Data Protection, hết h�
 | Khách hàng, tài khoản | `GET /v1/customers`, `GET/POST /v1/accounts`, `GET /v1/accounts/{id}` |
 | Danh mục chung | `GET/POST /v1/products`, `GET /v1/products/{id}`, `GET /v1/variants`, `GET /v1/variants/{id}` |
 | Giá chung | `GET/PUT /v1/variants/{id}/price` |
-| Nhà cung cấp, ca làm | `GET/POST /v1/suppliers`, `/v1/shifts`; GET chi tiết theo ID |
+| Nhà cung cấp | `GET/POST /v1/suppliers`; GET chi tiết theo ID |
 | Khảo sát | `GET/POST /v1/surveys`, `GET /v1/surveys/{id}`, `POST ...:publish`, `...:close`, `...:invite` |
 | Kết quả khảo sát | `GET /v1/surveys/{id}/results?pageSize=50&pageToken=...` |
 | Khuyến mãi | `GET/POST /v1/promotions`, `GET /v1/promotions/{id}`, `POST ...:issue` |
@@ -78,7 +78,7 @@ Token được mã hóa và xác thực bằng ASP.NET Data Protection, hết h�
 | Trả lời khảo sát | `GET /v1/me/surveys/{id}`, `POST /v1/me/surveys/{id}:submit` |
 | Thay bộ sở thích | `PUT /v1/me/preferences`, body `{"product_ids":[1,2]}` |
 
-`products` trả từng sản phẩm; `variants` trả từng kích cỡ kèm giá chung. Thao tác giá chỉ dành cho Owner. Không có API menu hay bảng giá riêng cho chi nhánh. Chi nhánh vẫn có ý nghĩa khi phân quyền, nhận đơn và kiểm tra tình trạng có bán.
+`products` trả từng sản phẩm; `variants` trả từng kích cỡ kèm giá chung. Thao tác giá chỉ dành cho Owner. Menu khách hàng ở `GET /v1/me/menu`, menu thu ngân ở `GET /v1/pos/menu`. Bản CRM dùng một cửa hàng; giá dùng chung, còn quan hệ cửa hàng phục vụ phân quyền và tình trạng có bán.
 
 ## PATCH hồ sơ và chống ghi đè
 
@@ -125,30 +125,20 @@ ETag kiểm tra đồng thời phiên bản `Users` và `Customers` trong transa
 
 Lỗi validation, JSON sai, xác thực, routing và rate limit dùng cùng envelope. Không gửi SQL stack trace cho client.
 
-## Nâng cấp database đã có
+## Nghiệp vụ app và POS
 
-Sau schema `01`–`08`, chạy:
+- Đăng ký: `POST /v1/auth/register`.
+- Đơn khách hàng: `GET/POST /v1/me/orders`, `GET /v1/me/orders/{id}`; các action thanh toán/hủy xem Swagger.
+- Thu ngân: `GET /v1/pos/menu`, `GET /v1/pos/customers?phone=...`, `GET/POST /v1/pos/orders`.
+- Thông báo: `GET /v1/me/notifications`, `GET /v1/me/notifications/unread-count`.
+- Sao lưu/phục hồi: xem [hướng dẫn riêng](backup-restore.md).
 
-```powershell
-./database/tools/Upgrade-SharedPrices.ps1 -Database MorningBrewCRM
-```
+Danh sách trên tóm tắt các nhóm chức năng. Controller trong `MorningBrew.Api/Controllers` và Swagger khi chạy API là nguồn đối chiếu đầy đủ route, DTO và quyền.
 
-Script lưu định nghĩa procedure cũ vào `database/.local/shared-prices-before-.../restore-procedures.sql`, rồi áp dụng `09_shared_prices.sql` và so sánh số liệu tài chính trước/sau. Migration chỉ thay procedure: đơn mới/menu nội bộ lấy `ProductVariants.BasePrice` và `ModifierOptions.ExtraPrice`. Các hàng cũ về tình trạng có bán vẫn được giữ, nhưng giá riêng bị bỏ qua. `SetBranchPrice` cũ từ chối thay giá. **Không sửa giá snapshot trên đơn hàng đã tạo.** Script cài mới `Apply.ps1` đã chạy cả `09`.
+## Database và kiểm thử
 
-## Cấu hình và kiểm thử
+Xem [hướng dẫn cài mới/nâng cấp](../database/README.md) và [nhật ký db-test](DB_TEST_CHANGES.md). API dùng SQL Server qua `SqlStore`, bearer session; bản EF InMemory/JWT cũ không còn được sử dụng.
 
-- Browser frontend khác origin: cấu hình danh sách chính xác ở `Cors:AllowedOrigins`; mặc định không cho phép CORS. Admin hiện gọi API từ server nên không cần bật CORS.
-- Giữ Data Protection keys ổn định khi triển khai; nhiều instance phải dùng chung keys/application name. Mất keys làm token phân trang cũ hết hiệu lực.
-- Chạy test trên hai database mới riêng biệt vì bộ SQL và bộ API đều thay đổi dữ liệu demo:
+`tests/integration.py`, `tests/api_contract.py`, `database/tests/verify.py` còn giả định dữ liệu nhiều chi nhánh/quản lý khu vực. Cần cập nhật trước khi dùng làm bộ nghiệm thu bản CRM; chỉ chạy trên DB riêng vì có ghi dữ liệu. Không dùng báo cáo pass cũ để xác nhận phiên bản hiện tại.
 
-```powershell
-dotnet build MorningBrewCRM.slnx
-./database/tools/Apply.ps1 -Database MorningBrewCRM_VerifyV1
-python database/tests/verify.py --database MorningBrewCRM_VerifyV1
-./database/tools/Apply.ps1 -Database MorningBrewCRM_TestApiV1
-python tests/integration.py --database MorningBrewCRM_TestApiV1
-```
-
-Các kiểm tra gồm phân quyền, CSRF, lưu phiên, mã HTTP, JSON lỗi, phân trang có chèn mới và khóa ghép, PATCH đồng thời, giá chung, Swagger, CORS và rate limit.
-
-Đợt này chuẩn hóa các chức năng đang có. API đặt đơn/thanh toán, đăng ký, địa chỉ, thông báo và phân nhóm CRM tiếp tục thuộc giai đoạn bổ sung nghiệp vụ.
+Browser frontend khác origin cần cấu hình `Cors:AllowedOrigins`; Admin gọi API từ server. Giữ Data Protection keys ổn định khi triển khai để token phân trang còn hiệu lực.

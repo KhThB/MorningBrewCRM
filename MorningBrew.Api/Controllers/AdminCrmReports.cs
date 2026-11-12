@@ -3,7 +3,7 @@ using MorningBrew.Api.Infrastructure;
 namespace MorningBrew.Api.Controllers;
 
 // Yêu cầu CRM 4.1: xóa khách hàng, báo cáo độ tuổi/sở thích, thống kê kết quả khảo sát.
-// Yêu cầu II.2: xóa account. Xóa là xóa mềm (dbo.SoftDeleteUser, database/sql/10_soft_delete.sql).
+// Yêu cầu II.2: xóa account. Xóa là xóa mềm (dbo.SoftDeleteUser, database/sql/03_crm_updates.sql).
 public sealed partial class AdminController
 {
     [HttpDelete("accounts/{id:int}")]

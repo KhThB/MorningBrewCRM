@@ -1,10 +1,19 @@
 param(
     [string]$Server = '(localdb)\MSSQLLocalDB',
-    [ValidatePattern('^[A-Za-z][A-Za-z0-9_]{0,60}$')][string]$Database = 'MorningBrewCRM',
+    [ValidatePattern('^[A-Za-z][A-Za-z0-9_]{0,60}$')][string]$Database = 'MorningBrewCRM_Crm',
     [switch]$NoSeed
 )
 $ErrorActionPreference = 'Stop'
 $dbRoot = Split-Path $PSScriptRoot -Parent
+$files = @('01_core.sql')
+if (-not $NoSeed) { $files += '02_demo_data.sql' }
+$files += @('03_crm_updates.sql', '04_menu_updates.sql')
+Get-Command sqlcmd -ErrorAction Stop | Out-Null
+foreach ($name in $files) {
+    if (-not (Test-Path -LiteralPath (Join-Path $dbRoot "sql/$name") -PathType Leaf)) {
+        throw "Missing SQL file: $name. Database creation not started."
+    }
+}
 $dataDir = Join-Path $dbRoot '.local'
 New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
 $mdf = (Join-Path $dataDir "$Database.mdf").Replace("'", "''")
@@ -12,13 +21,10 @@ $ldf = (Join-Path $dataDir "${Database}_log.ldf").Replace("'", "''")
 $create = "IF DB_ID(N'$Database') IS NOT NULL THROW 51000, N'Database already exists. Choose a new name; this installer never overwrites data.', 1; CREATE DATABASE [$Database] ON PRIMARY (NAME=N'$Database', FILENAME=N'$mdf') LOG ON (NAME=N'${Database}_log', FILENAME=N'$ldf'); ALTER DATABASE [$Database] SET COMPATIBILITY_LEVEL=160;"
 & sqlcmd -S $Server -E -C -b -Q $create
 if ($LASTEXITCODE -ne 0) { throw 'Database creation refused or failed.' }
-$files = @('01_schema.sql','02_rules.sql','03_orders.sql','04_crm.sql','05_access.sql')
-if (-not $NoSeed) { $files += @('06_seed.sql','07_demo.sql') }
-$files += @('08_admin.sql','09_shared_prices.sql','10_soft_delete.sql','11_single_store.sql','12_bugfix.sql','13_ui_review.sql')
 foreach ($name in $files) {
     Write-Host "Applying $name"
     & sqlcmd -S $Server -d $Database -E -C -I -b -f 65001 -i (Join-Path $dbRoot "sql/$name")
-    if ($LASTEXITCODE -ne 0) { throw "Failed: $name. Existing data was not deleted. Inspect this new database before retrying." }
+    if ($LASTEXITCODE -ne 0) { throw "Failed: $name. Inspect this new database before retrying; no automatic deletion or rollback across files." }
 }
 & sqlcmd -S $Server -d $Database -E -C -b -Q 'SET NOCOUNT ON; SELECT COUNT(*) AS TableCount FROM sys.tables;'
 if ($LASTEXITCODE -ne 0) { throw 'Final connection check failed.' }

@@ -1,4 +1,4 @@
-"""Nguồn chuẩn cho schema SQL, từ điển dữ liệu và ERD. Python 3, không cần thư viện ngoài."""
+"""Mô hình thiết kế lịch sử trước migration một cửa hàng; không phải schema hiện hành. Python 3, không cần thư viện ngoài."""
 from pathlib import Path
 import json
 
@@ -154,8 +154,11 @@ def generate():
     for i,(src,cols,dest,keys) in enumerate(EXTRA_FKS): sql.append(f'ALTER TABLE dbo.[{src}] ADD CONSTRAINT FK_Composite_{i} FOREIGN KEY ({cols}) REFERENCES dbo.[{dest}]({keys});')
     for i,(tab,cols,unique,where) in enumerate(INDEXES): sql.append(f"CREATE {unique} INDEX IX_{tab}_{i} ON dbo.[{tab}]({cols})"+(f' WHERE {where}' if where else '')+';')
     sql.extend(['COMMIT;','GO'])
-    (ROOT/'sql/01_schema.sql').write_text('\n\n'.join(sql),encoding='utf-8')
+    output = ROOT/'.local/design-export'
+    output.mkdir(parents=True, exist_ok=True)
+    (output/'01_schema.sql').write_text('\n\n'.join(sql),encoding='utf-8')
     (ROOT/'docs/schema.json').write_text(json.dumps(dict(tables=TABLES,extra_foreign_keys=EXTRA_FKS,indexes=INDEXES),ensure_ascii=False,indent=2),encoding='utf-8')
+    print('Historical design export only; install using tools/Apply.ps1.')
     print(f'Generated {len(TABLES)} tables, {sum(len(t["columns"]) for t in TABLES)} columns.')
 
 if __name__=='__main__': generate()

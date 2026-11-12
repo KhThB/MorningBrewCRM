@@ -1,3 +1,5 @@
+> **Tài liệu thiết kế lịch sử trước migration một cửa hàng.** Số bảng, vai trò và phạm vi bên dưới không đại diện đầy đủ cho bản hiện hành. Dùng [hướng dẫn database](../README.md) và bộ `database/sql/01–04` để cài đặt; xem [nhật ký db-test](../../docs/DB_TEST_CHANGES.md).
+
 # Từ điển dữ liệu Morning Brew CRM
 
 41 bảng, 314 trường. Sinh từ tools/schema.py.

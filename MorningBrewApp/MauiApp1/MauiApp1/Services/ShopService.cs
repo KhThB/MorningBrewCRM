@@ -7,7 +7,7 @@ namespace MauiApp1.Services;
 /// </summary>
 public sealed class ShopService(ApiClient api)
 {
-    // Hệ thống chỉ có 1 cửa hàng (06_seed.sql, mã MB01).
+    // Hệ thống chỉ có 1 cửa hàng (02_demo_data.sql, mã MB01).
     public static readonly Branch Store = new(1, "Morning Brew Thủ Đức", "12 Võ Văn Ngân, TP.HCM");
 
     public Branch CurrentBranch => menuCache?.Branch ?? Store; // [BUG-01] cửa hàng lấy từ API, Store chỉ để dự phòng
@@ -134,7 +134,7 @@ public sealed class ShopService(ApiClient api)
     private static List<MenuProduct> DemoMenu() => DemoItems.Select(x => x with { IsDemo = true }).ToList(); // [BUG-01]
     private static readonly List<MenuProduct> DemoItems =
     [
-        // Trùng ProductID/VariantID với 06_seed.sql nên yêu thích và phản hồi lưu được vào database.
+        // Trùng ProductID/VariantID với 02_demo_data.sql nên yêu thích và phản hồi lưu được vào database.
         new(1, "Cà phê sữa", "Cà phê phin và sữa đặc", 1, "Cà phê", 1, "M", 30000),
         new(1, "Cà phê sữa", "Cà phê phin và sữa đặc", 1, "Cà phê", 2, "L", 40000),
         new(4, "Cà phê đen đá", "Đậm vị robusta", 1, "Cà phê", 5, "M", 29000),

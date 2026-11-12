@@ -3,7 +3,7 @@
     "Name": "New Profile",
     "Projects": [
       {
-        "Path": "Admin_MC\\CRMManagementWeb.csproj",
+        "Path": "MorningBrew.Admin\\MorningBrew.Admin.csproj",
         "Action": "Start"
       },
       {
@@ -11,7 +11,11 @@
         "Action": "Start"
       },
       {
-        "Path": "MorningBrew.Pos\\MorningBrew.Pos.csproj",
+        "Path": "MorningBrewApp\\MauiApp1\\MauiApp1\\MorningBrewwApp.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "MorningBrewPos\\MorningBrewPos.csproj",
         "Action": "Start"
       }
     ]

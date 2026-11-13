@@ -1,0 +1,41 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject PosAuth Auth
+@inject NavigationManager Nav
+@* [BUG-02 · giai đoạn 2] Khung app POS: thanh trên (Bán hàng / Đơn hàng / người dùng); chưa đăng nhập thì về /login. *@
+<div class="pos-frame">
+    @if (!ready)
+    {
+        <div class="splash"><div class="logo-word">Morning<span>Brew</span> POS</div><div class="spinner light"></div></div>
+    }
+    else
+    {
+        <header class="pos-top">
+            <div class="logo-word">Morning<span>Brew</span> <small>POS</small></div>
+            <nav>
+                <NavLink href="/" Match="NavLinkMatch.All" class="pos-tab"><Icon Name="cup" Size="18" /> Bán hàng</NavLink>
+                <NavLink href="/orders" class="pos-tab"><Icon Name="receipt" Size="18" /> Đơn hàng</NavLink>
+            </nav>
+            <div class="pos-user"><span>@Auth.User?.FullName · @RoleName</span><button class="btn btn-outline btn-sm" @onclick="Logout">Đăng xuất</button></div>
+        </header>
+        <main class="pos-main">@Body</main>
+    }
+    <Toast />
+</div>
+
+@code {
+    private bool ready;
+    private string RoleName => Auth.User?.Role switch { "Staff" => "Thu ngân", "BranchManager" => "Quản lý", "Owner" => "Chủ cửa hàng", _ => "" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        Auth.Changed += OnAuth;
+        await Auth.EnsureLoadedAsync();
+        if (!Auth.IsLoggedIn && !OnLogin) { Nav.NavigateTo("/login", replace: true); return; }
+        ready = true;
+    }
+    private bool OnLogin => Nav.ToBaseRelativePath(Nav.Uri).StartsWith("login");
+    private void OnAuth() => InvokeAsync(() => { if (!Auth.IsLoggedIn) Nav.NavigateTo("/login", replace: true); StateHasChanged(); });
+    private async Task Logout() { await Auth.LogoutAsync(); }
+    public void Dispose() => Auth.Changed -= OnAuth;
+}

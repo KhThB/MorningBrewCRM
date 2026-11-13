@@ -1,0 +1,151 @@
+@page "/orders/{Id:int}"
+@* [BUG-02] Chi tiết đơn thật: tiến trình theo hình thức nhận hàng, thanh toán trả trước (mô phỏng), hủy khi
+   cửa hàng chưa xác nhận, thông tin giao hàng, lịch sử. Tự tải lại mỗi 10 giây khi đơn còn đang xử lý. *@
+@implements IDisposable
+@inject ShopService Shop
+@inject ToastService Toasts
+@inject NavigationManager Nav
+
+<PageHeader Title="Chi tiết đơn" BackTo="/orders" />
+
+<div class="page-body with-footer">
+    <StateView Loading="loading" Error="@error" Empty="order is null" EmptyText="Không tìm thấy đơn hàng." EmptyIcon="receipt">
+        @if (order is not null)
+        {
+            <div class="card center">
+                <span class="muted small">Mã đơn</span>
+                <h2 class="order-code">@order.OrderCode</h2>
+                <span class="chip @Fmt.OrderCss(order.Status)">@Fmt.OrderStatus(order.Status)</span>
+                @if (order.RefundStatus is not null) { <p class="muted small">@Fmt.RefundStatus(order.RefundStatus)</p> }
+            </div>
+
+            @if (order.Status is not ("Cancelled" or "AwaitingPayment"))
+            {
+                var steps = Fmt.StepsFor(order.Fulfillment);
+                var current = Array.IndexOf(steps, order.Status);
+                <ol class="steps">
+                    @for (var i = 0; i < steps.Length; i++)
+                    {
+                        var state = i < current ? "done" : i == current ? "current" : "";
+                        <li class="@state"><i></i><span>@Fmt.OrderStatus(steps[i])</span></li>
+                    }
+                </ol>
+            }
+
+            @if (order.Status == "AwaitingPayment")
+            {
+                <div class="card">
+                    <b>Thanh toán đơn hàng</b>
+                    <p class="muted small">Cổng thanh toán mô phỏng – không trừ tiền thật. Hạn thanh toán: @Fmt.When(order.PaymentDueAt). Quá hạn đơn tự hủy.</p>
+                    @if (order.PaymentStatus == "Failed") { <p class="alert">Lần thanh toán trước thất bại, bạn có thể thử lại.</p> }
+                    <div class="row-between">
+                        <button class="btn btn-primary" disabled="@busy" @onclick='() => Pay("Succeeded")'>Thanh toán thành công</button>
+                        <button class="btn btn-outline" disabled="@busy" @onclick='() => Pay("Failed")'>Thanh toán thất bại</button>
+                    </div>
+                </div>
+            }
+
+            <div class="card">
+                <div class="row-start"><Icon Name="@(order.Fulfillment == "Delivery" ? "truck" : "store")" Size="18" /><b>@(order.Fulfillment == "Delivery" ? "Giao hàng" : "Nhận tại quầy") · @order.BranchName</b></div>
+                <p class="muted small">Đặt lúc @Fmt.When(order.CreatedAt) · @(order.PaymentMode == "COD" ? "Tiền mặt" : "Chuyển khoản") @* [UI2-A1] *@ · @(order.IsPaid ? "đã thanh toán" : "chưa thanh toán")</p>
+                @if (order.Fulfillment == "Delivery")
+                {
+                    <p class="small">Giao tới: @order.ContactName · @order.ContactPhone · @order.DeliveryAddress</p>
+                    @if (!string.IsNullOrEmpty(order.CourierName)) { <p class="small">Người giao: @order.CourierName · @order.CourierPhone</p> }
+                    @if (order.DeliveryStatus == "Failed") { <p class="alert">Giao hàng chưa thành công, cửa hàng sẽ liên hệ giao lại.</p> }
+                }
+                @if (!string.IsNullOrEmpty(order.Note)) { <p class="small">Ghi chú: @order.Note</p> }
+            </div>
+
+            <div class="card list">
+                @foreach (var l in order.Lines)
+                {
+                    <div class="row-between line"><span>@l.Quantity× @l.Name <small class="muted">@("(" + l.VariantName + (string.IsNullOrEmpty(l.Options) ? "" : " · " + l.Options) + ")")</small></span><span>@Fmt.Money(l.LineTotal)</span></div>
+                }
+                <div class="row-between line"><span>Giảm giá</span><span>-@Fmt.Money(order.Discount)</span></div>
+                @if (order.DeliveryFee > 0) { <div class="row-between line"><span>Phí giao hàng</span><span>@Fmt.Money(order.DeliveryFee)</span></div> }
+                <div class="row-between line total"><b>Tổng cộng</b><b>@Fmt.Money(order.Total)</b></div>
+            </div>
+
+            @if (order.History.Count > 0)
+            {
+                <div class="card list">
+                    <h2 class="card-title">Lịch sử</h2>
+                    @foreach (var h in order.History)
+                    {
+                        <div class="row-between line"><span>@Fmt.OrderStatus(h.ToStatus)<small class="muted">@(string.IsNullOrEmpty(h.Reason) ? "" : " · " + h.Reason)</small></span><small class="muted">@Fmt.When(h.CreatedAt)</small></div>
+                    }
+                </div>
+            }
+        }
+    </StateView>
+</div>
+
+@if (order?.Status == "Completed")
+{
+    <div class="footer-bar">
+        @if (order.FeedbackSent)
+        {
+            <a class="btn btn-outline block" href="/account/feedbacks">Xem phản hồi đã gửi</a>
+        }
+        else
+        {
+            <a class="btn btn-primary block" href="@($"/feedback/new?orderId={order.OrderId}")"><Icon Name="star" Size="18" /> Đánh giá đơn hàng</a>
+        }
+    </div>
+}
+else if (order?.CanCancel == true)
+{
+    <div class="footer-bar">
+        <button class="btn btn-outline block" disabled="@busy" @onclick="Cancel">Hủy đơn</button>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Order? order;
+    private bool loading = true, busy;
+    private string? error;
+    private System.Threading.Timer? timer;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        loading = true; error = null;
+        await Reload();
+        loading = false;
+        timer?.Dispose();
+        timer = new System.Threading.Timer(_ => InvokeAsync(async () =>
+        {
+            if (order is null || order.Status is "Completed" or "Cancelled" || busy) return;
+            await Reload(); StateHasChanged();
+        }), null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
+    }
+
+    private async Task Reload()
+    {
+        try { order = await Shop.GetOrderAsync(Id); }
+        catch (ApiException e) { error = e.Message; }
+    }
+
+    private async Task Pay(string outcome)
+    {
+        busy = true;
+        try
+        {
+            order = await Shop.PayAsync(Id, outcome);
+            Toasts.Show(outcome == "Succeeded" ? "Thanh toán thành công. Cửa hàng sẽ xác nhận đơn." : "Thanh toán thất bại (mô phỏng).", outcome != "Succeeded");
+        }
+        catch (ApiException e) { Toasts.Error(e); await Reload(); }
+        busy = false;
+    }
+
+    private async Task Cancel()
+    {
+        busy = true;
+        try { order = await Shop.CancelAsync(Id, "Khách hủy trên app"); Toasts.Show("Đã hủy đơn."); }
+        catch (ApiException e) { Toasts.Error(e); await Reload(); }
+        busy = false;
+    }
+
+    public void Dispose() => timer?.Dispose();
+}

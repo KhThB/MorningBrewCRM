@@ -1,0 +1,235 @@
+@page "/menu"
+@inject ShopService Shop
+@inject CrmService Crm
+@inject ToastService Toasts
+
+<header class="menu-header">
+    @* [UI2-A2b] Hình thức nhận đang chọn; bấm để đổi *@
+    <button class="branch-picker fulfil-pill" @onclick="() => chooser = true">
+        <Icon Name="@(Shop.PreferredFulfillment == "Delivery" ? "truck" : "pin")" Size="18" />
+        <span class="store-name">@(Shop.PreferredFulfillment == "Delivery" ? "Giao hàng tận nơi" : $"Nhận tại quầy · {Shop.CurrentBranch.Name}")</span>
+        <small>Đổi</small>
+    </button>
+    <div class="search">
+        <Icon Name="search" Size="18" />
+        <input placeholder="Tìm món..." @bind="query" @bind:event="oninput" aria-label="Tìm món" />
+    </div>
+    <div class="chips" role="tablist">
+        <button class="chip-btn @(category is null ? "active" : "")" @onclick="() => category = null">Tất cả</button>
+        @foreach (var c in categories)
+        {
+            <button class="chip-btn @(category == c ? "active" : "")" @onclick="() => category = c">@c</button>
+        }
+    </div>
+</header>
+
+<div class="page-body menu-body">
+    <div class="menu-intro">
+        <span class="menu-kicker">MORNING BREW</span>
+        <h1>Chọn món bạn thích.</h1>
+        <p>Cà phê, trà &amp; bánh cho một ngày thật ngon.</p>
+    </div>
+    @if (menu?.IsDemo == true)
+    {
+        <div class="demo-note"><Icon Name="info" Size="16" /> Dữ liệu mẫu — chưa kết nối được máy chủ, không đặt hàng được.</div>
+    }
+    <StateView Loading="loading" Error="@error" OnRetry="Load" Empty="Visible.Count == 0" EmptyText="Không tìm thấy món phù hợp." EmptyIcon="cup">
+        @foreach (var group in Visible.GroupBy(x => x.Category))
+        {
+            <div class="menu-section-heading"><h2 class="group-title">@group.Key</h2><span>@group.Select(x => x.ProductId).Distinct().Count() món</span></div>
+            <div class="product-grid">
+                @foreach (var product in group.GroupBy(x => x.ProductId))
+                {
+                    var first = product.First();
+                    var available = product.Any(x => x.IsAvailable);
+                    <article @key="first.ProductId" class="menu-product @(available ? "" : "sold-out")">
+                        <button class="product-photo-button" @onclick="() => Open(product.ToList())" disabled="@(!available)" aria-label="@($"Xem {first.Name}")">
+                            <ProductThumb Category="@first.Category" ProductName="@first.Name" ImageUrl="@first.ImageUrl" Large="true" />
+                        </button>
+                        <button class="icon-btn fav @(favorites.Contains(first.ProductId) ? "on" : "")" @onclick="() => ToggleFavorite(first)"
+                                aria-label="@($"Yêu thích {first.Name}")" aria-pressed="@favorites.Contains(first.ProductId)"><Icon Name="heart" Size="18" Filled="favorites.Contains(first.ProductId)" /></button>
+                        <button class="product-info" @onclick="() => Open(product.ToList())" disabled="@(!available)">
+                            <b>@first.Name</b>
+                            <small>@first.Description</small>
+                            <span class="price">@(available ? Fmt.Money(product.Where(x => x.IsAvailable).Min(x => x.Price)) : "Tạm hết")</span>
+                        </button>
+                        @if (available)
+                        {
+                            <button class="add-btn" @onclick="() => Open(product.ToList())" aria-label="@($"Thêm {first.Name} vào giỏ")"><Icon Name="plus" Size="18" /></button>
+                        }
+                        else
+                        {
+                            <span class="unavailable-label">Tạm hết</span>
+                        }
+                    </article>
+                }
+            </div>
+        }
+    </StateView>
+</div>
+
+@if (sheet is not null)
+{
+    <div class="sheet-backdrop" @onclick="() => sheet = null"></div>
+    <div class="sheet" role="dialog" aria-label="@sheet[0].Name">
+        <div class="sheet-handle"></div>
+        <div class="sheet-head">
+            <ProductThumb Category="@sheet[0].Category" ProductName="@sheet[0].Name" ImageUrl="@sheet[0].ImageUrl" Large="true" />
+            <div><h2>@sheet[0].Name</h2><p class="muted">@sheet[0].Description</p></div>
+        </div>
+        @* [UI2-A3] món chỉ có một cỡ (bánh) thì không hỏi kích cỡ *@
+        @if (sheet.Count > 1)
+        {
+            <h3>Kích cỡ</h3>
+            <div class="chips wrap">
+                @foreach (var v in sheet.Where(x => x.IsAvailable))
+                {
+                    <button class="chip-btn @(variant?.VariantId == v.VariantId ? "active" : "")" @onclick="() => variant = v">
+                        @v.VariantName · @Fmt.Money(v.Price)
+                    </button>
+                }
+            </div>
+        }
+        @* [BUG-02] Tùy chọn của món; [UI2-A3] từ script 13 chỉ còn nhóm "Nhiệt độ" (Đá / Nóng) cho đồ uống *@
+        @foreach (var g in Groups)
+        {
+            var first = g.First();
+            <h3>@first.GroupName @(first.MinSelections > 0 ? "*" : "") <small class="muted">@RuleText(first)</small></h3>
+            <div class="chips wrap">
+                @foreach (var o in g)
+                {
+                    <button class="chip-btn @(picked.Contains(o.OptionId) ? "active" : "")" @onclick="() => Toggle(g.ToList(), o)">
+                        @(o.OptionName + (o.ExtraPrice > 0 ? $" +{Fmt.Money(o.ExtraPrice)}" : ""))
+                    </button>
+                }
+            </div>
+        }
+        <div class="row-between sheet-footer">
+            <div class="stepper">
+                <button @onclick="() => quantity = Math.Max(1, quantity - 1)" aria-label="Giảm"><Icon Name="minus" Size="18" /></button>
+                <b>@quantity</b>
+                <button @onclick="() => quantity++" aria-label="Tăng"><Icon Name="plus" Size="18" /></button>
+            </div>
+            <button class="btn btn-primary" @onclick="AddToCart" disabled="@(variant is null || !OptionsValid)">
+                Thêm · @Fmt.Money(((variant?.Price ?? 0) + PickedOptions.Sum(o => o.ExtraPrice)) * quantity)
+            </button>
+        </div>
+    </div>
+}
+
+
+@* [UI2-A2b] Mở Thực đơn mà chưa chọn hình thức nhận → hỏi trước khi chọn món *@
+@if (chooser)
+{
+    <div class="sheet-backdrop" @onclick="CloseChooser"></div>
+    <div class="sheet" role="dialog" aria-label="Chọn hình thức nhận hàng">
+        <div class="sheet-handle"></div>
+        <h2>Bạn muốn nhận món thế nào?</h2>
+        <button class="fulfil-option @(Shop.PreferredFulfillment == "Pickup" ? "active" : "")" disabled="@(!Shop.CurrentBranch.PickupEnabled)" @onclick='() => Choose("Pickup")'>
+            <span class="quick-icon"><Icon Name="bag" Size="24" /></span>
+            <span><b>Nhận tại quầy</b><small>@Shop.CurrentBranch.Name · @Shop.CurrentBranch.Address</small></span>
+        </button>
+        <button class="fulfil-option @(Shop.PreferredFulfillment == "Delivery" ? "active" : "")" disabled="@(!Shop.CurrentBranch.DeliveryEnabled)" @onclick='() => Choose("Delivery")'>
+            <span class="quick-icon"><Icon Name="truck" Size="24" /></span>
+            <span><b>Giao hàng</b><small>@(Shop.CurrentBranch.DeliveryEnabled ? $"Phí giao {Fmt.Money(Shop.CurrentBranch.DeliveryFee)} · nhập địa chỉ ở giỏ hàng" : "Cửa hàng tạm ngưng giao hàng")</small></span>
+        </button>
+    </div>
+}
+
+@code {
+    private MenuData? menu;
+    private HashSet<int> favorites = [];
+    private List<string> categories = [];
+    private string? category;
+    private string query = "";
+    private bool loading = true;
+    private string? error;
+    private List<MenuProduct>? sheet;
+    private bool chooser; // [UI2-A2b]
+    [SupplyParameterFromQuery] public int? Product { get; set; } // [UI2-A5] /menu?product=… mở ngay món đó (từ trang Yêu thích)
+
+    private void Choose(string value) { Shop.PreferredFulfillment = value; chooser = false; OpenRequested(); }
+    // Đóng mà chưa chọn → mặc định nhận tại quầy (giỏ hàng luôn cần một hình thức).
+    private void CloseChooser() { Shop.PreferredFulfillment ??= Shop.CurrentBranch.PickupEnabled ? "Pickup" : "Delivery"; chooser = false; }
+    private MenuProduct? variant;
+    private int quantity = 1;
+    private HashSet<int> picked = []; // [BUG-02] tùy chọn đang chọn
+
+    // [BUG-02] Nhóm tùy chọn của món đang mở, lấy từ GET v1/me/menu.
+    private List<IGrouping<int, MenuModifier>> Groups => sheet is null || menu?.Modifiers is null ? []
+        : menu.Modifiers.Where(m => m.ProductId == sheet[0].ProductId).GroupBy(m => m.GroupId).ToList();
+    private List<MenuModifier> PickedOptions => Groups.SelectMany(g => g).Where(o => picked.Contains(o.OptionId)).ToList();
+    private bool OptionsValid => Groups.All(g => { var n = g.Count(o => picked.Contains(o.OptionId)); return n >= g.First().MinSelections && n <= g.First().MaxSelections; });
+    private static string RuleText(MenuModifier m) => m.MinSelections == m.MaxSelections ? $"(chọn {m.MaxSelections})"
+        : m.MinSelections == 0 ? $"(tùy chọn, tối đa {m.MaxSelections})" : $"(chọn {m.MinSelections}–{m.MaxSelections})";
+    private void Toggle(List<MenuModifier> group, MenuModifier option)
+    {
+        var max = group[0].MaxSelections;
+        if (picked.Remove(option.OptionId)) return;
+        if (max == 1) foreach (var o in group) picked.Remove(o.OptionId);
+        else if (group.Count(o => picked.Contains(o.OptionId)) >= max) { Toasts.Show($"Chọn tối đa {max} {group[0].GroupName.ToLower()}.", true); return; }
+        picked.Add(option.OptionId);
+    }
+
+    private List<MenuProduct> Visible => menu is null ? [] : menu.Items
+        .Where(x => category is null || x.Category == category)
+        .Where(x => string.IsNullOrWhiteSpace(query) || x.Name.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    protected override Task OnInitializedAsync() => Load();
+
+    private async Task Load()
+    {
+        loading = true; error = null;
+        try
+        {
+            menu = await Shop.GetMenuAsync(refresh: true); // [BUG-01] luôn lấy thực đơn mới nhất khi mở trang
+            categories = menu.Items.Select(x => x.Category).Distinct().ToList();
+        }
+        catch (ApiException e) { error = e.Message; }
+        try { favorites = await Crm.GetFavoritesAsync(); } catch (ApiException) { }
+        loading = false;
+        if (Shop.PreferredFulfillment is null && menu?.IsDemo != true) chooser = true; // [UI2-A2b]
+        else OpenRequested();
+    }
+
+    // [UI2-A5] Mở ngay món được chọn từ trang Yêu thích (/menu?product=…).
+    private void OpenRequested()
+    {
+        if (Product is not { } pid || menu is null) return;
+        var variants = menu.Items.Where(x => x.ProductId == pid).ToList();
+        Product = null;
+        if (variants.Count > 0) Open(variants);
+    }
+
+    private void Open(List<MenuProduct> variants)
+    {
+        sheet = variants;
+        variant = variants.FirstOrDefault(x => x.IsAvailable);
+        quantity = 1;
+        picked = []; // [BUG-02]
+    }
+
+    private void AddToCart()
+    {
+        if (variant is null) return;
+        if (!OptionsValid) { Toasts.Show("Vui lòng chọn đủ các tùy chọn bắt buộc (*).", true); return; } // [BUG-02]
+        Shop.Add(variant, quantity, PickedOptions);
+        Toasts.Show($"Đã thêm {quantity} {variant.Name} vào giỏ");
+        sheet = null;
+    }
+
+    private async Task ToggleFavorite(MenuProduct item)
+    {
+        if (item.IsDemo) { Toasts.Show("Món minh họa — chưa có trong cơ sở dữ liệu.", true); return; }
+        var next = new HashSet<int>(favorites);
+        if (!next.Add(item.ProductId)) next.Remove(item.ProductId);
+        try
+        {
+            await Crm.SaveFavoritesAsync(next);
+            favorites = next;
+            Toasts.Show(favorites.Contains(item.ProductId) ? "Đã thêm vào món yêu thích" : "Đã bỏ khỏi món yêu thích");
+        }
+        catch (ApiException e) { Toasts.Error(e); }
+    }
+}

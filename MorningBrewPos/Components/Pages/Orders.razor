@@ -1,0 +1,110 @@
+@page "/orders"
+@implements IDisposable
+@inject PosService Pos
+@inject PosAuth Auth
+@inject ToastService Toasts
+@* [BUG-02 · giai đoạn 2] Hàng chờ đơn tại quầy (gồm đơn từ app khách): xác nhận → pha chế → sẵn sàng → (giao) → hoàn tất,
+   xác nhận thu tiền mặt. Hủy đơn chỉ hiện với quản lý / chủ cửa hàng. Tự làm mới mỗi 15 giây. *@
+<div class="pos-orders">
+    <section>
+        <div class="chips wrap">
+            @foreach (var (code, name) in Filters)
+            {
+                <button class="chip-btn @(status == code ? "active" : "")" @onclick="() => Change(code)">@name</button>
+            }
+            <button class="btn btn-outline btn-sm" @onclick="Load">Làm mới</button>
+        </div>
+        <StateView Loading="loading" Error="@error" OnRetry="Load" Empty="orders.Count == 0" EmptyText="Không có đơn." EmptyIcon="receipt">
+            @foreach (var o in orders)
+            {
+                <button class="card order-card pos-order @(selected?.OrderId == o.OrderId ? "active" : "")" @onclick="() => Select(o.OrderId)">
+                    <div class="row-between"><b>@o.OrderCode</b><span class="chip @Fmt.OrderCss(o.Status)">@Fmt.OrderStatus(o.Status)</span></div>
+                    <p class="small">@o.Summary</p>
+                    <div class="row-between"><small class="muted">@Fmt.When(o.CreatedAt) · @(o.Fulfillment == "Delivery" ? "Giao hàng" : "Tại quầy") · @(o.IsPaid ? "đã thu tiền" : o.PaymentMode == "COD" ? "chưa thu tiền" : "chờ khách thanh toán")</small><b>@Fmt.Money(o.Total)</b></div>
+                </button>
+            }
+        </StateView>
+    </section>
+    <aside class="card">
+        @if (selected is null)
+        {
+            <p class="muted">Chọn một đơn để xử lý.</p>
+        }
+        else
+        {
+            var o = selected; var next = o.Status switch { "Pending" => "Confirmed", "Confirmed" => "Preparing", "Preparing" => "Ready", _ => null };
+            var active = o.Status is not ("Completed" or "Cancelled");
+            <h2 class="card-title">@o.OrderCode · @Fmt.OrderStatus(o.Status)</h2>
+            <p class="small">@(o.Fulfillment == "Delivery" ? $"Giao tới: {o.ContactName} · {o.ContactPhone} · {o.DeliveryAddress}" : $"Khách: {o.ContactName}")</p>
+            @foreach (var l in o.Lines)
+            {
+                <div class="row-between line"><span>@l.Quantity× @l.Name <small class="muted">@("(" + l.VariantName + (string.IsNullOrEmpty(l.Options) ? "" : " · " + l.Options) + ")")</small></span><span>@Fmt.Money(l.LineTotal)</span></div>
+            }
+            @if (!string.IsNullOrEmpty(o.Note)) { <p class="small">Ghi chú: @o.Note</p> }
+            <div class="row-between total"><b>Tổng</b><b>@Fmt.Money(o.Total)</b></div>
+            <p class="small">@(o.PaymentMode == "COD" ? "Tiền mặt" : "Trả trước") · @(o.IsPaid ? "đã thanh toán" : "chưa thanh toán")</p>
+            <div class="pos-actions">
+                @if (next is not null) { <button class="btn btn-primary" disabled="@busy" @onclick="() => Run(() => Pos.AdvanceAsync(o.OrderId, next))">@Fmt.OrderStatus(next)</button> }
+                @if (active && o.PaymentMode == "COD" && !o.IsPaid) { <button class="btn btn-outline" disabled="@busy" @onclick="() => Run(() => Pos.CollectAsync(o.OrderId))">Đã thu tiền mặt</button> }
+                @if (o.Status == "Ready" && o.Fulfillment == "Pickup") { <button class="btn btn-primary" disabled="@(busy || !o.IsPaid)" @onclick='() => Run(() => Pos.AdvanceAsync(o.OrderId, "Completed"))'>Khách đã nhận – hoàn tất</button> }
+                @if (o.Status == "Ready" && o.Fulfillment == "Delivery")
+                {
+                    <input class="input" placeholder="Tên người giao" @bind="courierName" />
+                    <input class="input" placeholder="SĐT người giao" @bind="courierPhone" />
+                    <button class="btn btn-primary" disabled="@busy" @onclick='() => Run(() => Pos.AdvanceAsync(o.OrderId, "Delivering", courierName, courierPhone))'>Giao cho shipper</button>
+                }
+                @if (o.Status == "Delivering") { <button class="btn btn-primary" disabled="@(busy || !o.IsPaid)" @onclick='() => Run(() => Pos.AdvanceAsync(o.OrderId, "Completed"))'>Đã giao – hoàn tất</button> }
+                @if (active && Auth.CanCancel) { <button class="btn btn-ghost" disabled="@busy" @onclick='() => Run(() => Pos.CancelAsync(o.OrderId, "Hủy tại quầy"))'>Hủy đơn</button> }
+            </div>
+            @if (!o.IsPaid && o.Status is "Ready" or "Delivering") { <p class="muted small">Cần xác nhận đã thu tiền trước khi hoàn tất.</p> }
+        }
+    </aside>
+</div>
+
+@code {
+    private static readonly (string, string)[] Filters = [("Active", "Cần xử lý"), ("Completed", "Hoàn tất"), ("Cancelled", "Đã hủy"), ("", "Tất cả")];
+    private string status = "Active";
+    private List<Order> orders = [];
+    private Order? selected;
+    private bool loading = true, busy;
+    private string? error, courierName, courierPhone;
+    private System.Threading.Timer? timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Load();
+        timer = new System.Threading.Timer(_ => InvokeAsync(async () => { if (!busy) { await Reload(false); StateHasChanged(); } }), null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+    }
+
+    private async Task Change(string s) { status = s; selected = null; await Load(); }
+
+    private Task Load() => Reload(true);
+    private async Task Reload(bool spinner)
+    {
+        if (spinner) loading = true;
+        error = null;
+        try
+        {
+            orders = await Pos.QueueAsync(status);
+            if (selected is not null) selected = await Pos.GetAsync(selected.OrderId);
+        }
+        catch (ApiException e) { error = e.Message; }
+        loading = false;
+    }
+
+    private async Task Select(int id)
+    {
+        try { selected = await Pos.GetAsync(id); courierName = courierPhone = null; }
+        catch (ApiException e) { Toasts.Error(e); }
+    }
+
+    private async Task Run(Func<Task<Order>> action)
+    {
+        busy = true;
+        try { selected = await action(); Toasts.Show($"Đơn {selected.OrderCode}: {Fmt.OrderStatus(selected.Status)}"); orders = await Pos.QueueAsync(status); }
+        catch (ApiException e) { Toasts.Error(e); }
+        busy = false;
+    }
+
+    public void Dispose() => timer?.Dispose();
+}

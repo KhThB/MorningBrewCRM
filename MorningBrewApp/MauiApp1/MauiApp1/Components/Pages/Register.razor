@@ -1,0 +1,85 @@
+@page "/register"
+@layout BlankLayout
+@using System.Text.RegularExpressions
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<div class="auth">
+    <div class="auth-hero small">
+        <div class="logo-word">Morning<span>Brew</span></div>
+        <p>Đăng ký thành viên — nhận ngay ưu đãi chào mừng</p>
+    </div>
+
+    <form class="auth-card" @onsubmit="Submit" @onsubmit:preventDefault>
+        <h1>Tạo tài khoản</h1>
+        @if (error is not null) { <div class="alert" role="alert">@error</div> }
+
+        <label for="fullName">Họ và tên *</label>
+        <input id="fullName" class="input" @bind="fullName" maxlength="120" autocomplete="name" required />
+
+        <label for="email">Email *</label>
+        <input id="email" class="input" type="email" @bind="email" maxlength="254" autocomplete="email" required />
+
+        <label for="phone">Số điện thoại</label>
+        <input id="phone" class="input" type="tel" @bind="phone" maxlength="20" autocomplete="tel" />
+
+        @* [BUG-03] ngày sinh, giới tính (không bắt buộc) cho báo cáo độ tuổi / giới tính *@
+        <label for="dob">Ngày sinh</label>
+        <input id="dob" class="input" type="date" @bind="birthday" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+
+        <label>Giới tính</label>
+        <div class="chips wrap">
+            @foreach (var g in new[] { "Female", "Male", "Other", "Undisclosed" })
+            {
+                <button type="button" class="chip-btn @(gender == g ? "active" : "")" @onclick="() => gender = g">@Fmt.Gender(g)</button>
+            }
+        </div>
+
+        <label for="password">Mật khẩu * <small class="muted">(ít nhất 10 ký tự)</small></label>
+        <input id="password" class="input" type="password" @bind="password" @bind:event="oninput" minlength="10" autocomplete="new-password" required />
+        <div class="strength"><i style="width:@(Math.Min(100, password.Length * 10))%" class="@(password.Length >= 10 ? "ok" : "")"></i></div>
+
+        <label for="confirm">Nhập lại mật khẩu *</label>
+        <input id="confirm" class="input" type="password" @bind="confirm" autocomplete="new-password" required />
+
+        <label class="check"><input type="checkbox" @bind="agree" /> Tôi đồng ý để Morning Brew lưu thông tin nhằm chăm sóc khách hàng.</label>
+
+        <button class="btn btn-primary block" type="submit" disabled="@busy">@(busy ? "Đang tạo tài khoản..." : "Đăng ký")</button>
+        <p class="center muted">Đã có tài khoản? <a href="/login" class="link-strong">Đăng nhập</a></p>
+    </form>
+</div>
+
+@code {
+    private string fullName = "", email = "", password = "", confirm = "";
+    private string? phone;
+    private DateOnly? birthday;          // [BUG-03]
+    private string gender = "Undisclosed"; // [BUG-03]
+    private bool agree, busy;
+    private string? error;
+
+    private async Task Submit()
+    {
+        error = Validate();
+        if (error is not null) return;
+        busy = true;
+        try
+        {
+            await Auth.RegisterAsync(fullName, email, phone, password, birthday, gender); // [BUG-03]
+            Nav.NavigateTo("/", replace: true);
+        }
+        catch (ApiException e) { error = e.Message; }
+        busy = false;
+    }
+
+    private string? Validate()
+    {
+        if (fullName.Trim().Length < 2) return "Họ tên cần ít nhất 2 ký tự.";
+        if (!Regex.IsMatch(email.Trim(), @"^[^@\s]+@[^@\s]+\.[^@\s]+$")) return "Email không hợp lệ.";
+        if (!PhoneRule.IsValid(phone)) return PhoneRule.Message; // [BUG-04] dùng chung quy tắc với API
+        if (birthday > DateOnly.FromDateTime(DateTime.Today)) return "Ngày sinh không được ở tương lai."; // [BUG-03]
+        if (password.Length < 10) return "Mật khẩu cần ít nhất 10 ký tự.";
+        if (password != confirm) return "Mật khẩu nhập lại không khớp.";
+        if (!agree) return "Vui lòng đồng ý điều khoản lưu thông tin.";
+        return null;
+    }
+}

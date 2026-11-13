@@ -1,0 +1,13 @@
+@* [UI-04] Thông báo nổi (toast) – thay khung chữ "Đã lưu thay đổi" ở đầu trang. *@
+<div class="toast-stack" aria-live="polite">
+@if(TempData["Error"] is string error){<div class="toast toast-error" role="alert"><span>@error</span><button type="button" class="toast-close" aria-label="Đóng">×</button></div>}
+@if(TempData["Success"] is string success){<div class="toast toast-ok" role="status"><span>@success</span><button type="button" class="toast-close" aria-label="Đóng">×</button></div>}
+</div>
+@* [UI-01] Thao tác bị API từ chối → mở lại đúng cửa sổ form với dữ liệu vừa nhập (trừ mật khẩu). *@
+@if(TempData["ModalState"] is string modal){<script type="application/json" id="modal-state">@Html.Raw(modal.Replace("</","<\\/"))</script>}
+@* [UI-05] Ngăn chi tiết bên phải. *@
+<div class="drawer-backdrop" data-drawer-close hidden></div>
+<aside class="drawer" id="drawer" aria-hidden="true" aria-labelledby="drawer-title">
+    <header><h2 id="drawer-title">Chi tiết</h2><button type="button" class="modal-x" data-drawer-close aria-label="Đóng">×</button></header>
+    <div class="drawer-body"></div>
+</aside>

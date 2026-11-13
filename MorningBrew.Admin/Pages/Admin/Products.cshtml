@@ -1,0 +1,75 @@
+@page
+@model ProductsModel
+@{
+    ViewData["Title"]=Model.Title;
+    // [UI-02] Mỗi dòng là một kích cỡ: sửa giá kích cỡ đó; ngừng / mở bán áp dụng cho cả sản phẩm.
+    Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
+        @{var active=item["is_active"].ValueKind==JsonValueKind.True;
+          var fill=JsonSerializer.Serialize(new{id=item["product_id"].ToString(),variantId=item["variant_id"].ToString(),display_name=item["display_name"].ToString(),size=item["size"].ToString(),current=OrderView.Money(item,"base_price"),price=ReportView.Number(ReportView.Decimal(item,"base_price"))});}
+        <button type="button" class="btn-sm" data-open="m-price" data-fill="@fill">Sửa giá</button>
+        @* [UI2-IMG] Đổi ảnh sản phẩm (ảnh từ máy) *@
+        <button type="button" class="btn-sm" data-open="m-image" data-fill="@(JsonSerializer.Serialize(new{id=item["product_id"].ToString(),display_name=item["display_name"].ToString(),current=Model.ImageSrc(ReportView.Text(item,"image_url"))}))">Ảnh</button>
+        @* [UI2-A4a] Còn hàng / Tạm hết – áp dụng cho cả sản phẩm *@
+        @{var inStock=item.TryGetValue("in_stock",out var s)&&s.ValueKind==JsonValueKind.True;}
+        <form method="post" class="inline-form"><input type="hidden" name="operation" value="product-stock"><input type="hidden" name="id" value="@item["product_id"]"><input type="hidden" name="available" value="@(inStock?"false":"true")"><button class="btn-sm">@(inStock?"Báo tạm hết":"Có hàng lại")</button></form>
+        <button type="button" class="btn-sm @(active?"danger-text":null)" data-open="@(active?"m-stop":"m-start")" data-fill="@fill">@(active?"Ngừng bán":"Mở bán")</button>
+    </div>;
+}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel">
+    <div class="list-toolbar"><div></div><button type="button" class="primary add-btn" data-open="m-add">+ Thêm sản phẩm</button></div>
+    <p class="list-count">@Model.Rows.Count dòng (mỗi kích cỡ một dòng)</p>
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,Hide=new HashSet<string>{"variant_id","image_url"},ActiveLabels=("Đang bán","Ngừng bán"),Format=(k,r)=>k=="base_price"?OrderView.Money(r,k):null})" />
+    <partial name="_Pager" model="Model" />
+</section>
+
+<dialog class="modal" id="m-add"><form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="operation" value="product"><input type="hidden" name="modal" value="m-add">
+    <header><h2>Thêm sản phẩm</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <label>Tên sản phẩm *</label><input name="name" maxlength="150" required>
+        <label>Mô tả</label><textarea name="description" maxlength="2000" rows="2"></textarea>
+        <label>Danh mục</label><select name="categoryId">@foreach(var x in Model.Choices("categories")){<option value="@x["id"]">@x["display_name"]</option>}</select>
+        <div class="two"><div><label>Kích cỡ *</label><input name="size" value="M" maxlength="60" required></div><div><label>Giá cơ bản (VND) *</label><input name="price" type="number" min="0" required></div></div>
+        @* [UI2-IMG] Ảnh sản phẩm lấy từ máy (không bắt buộc) *@
+        <label>Ảnh sản phẩm (JPG, PNG, WEBP – tối đa 2 MB)</label>
+        <input name="image" type="file" accept="image/jpeg,image/png,image/webp" data-preview="add-preview">
+        <img id="add-preview" class="img-preview" alt="Xem trước ảnh" hidden>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Tạo sản phẩm</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-price"><form method="post">
+    <input type="hidden" name="operation" value="price"><input type="hidden" name="modal" value="m-price"><input type="hidden" name="variantId">
+    <header><h2>Sửa giá bán</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p><b data-text="display_name"></b> · cỡ <b data-text="size"></b> · giá hiện tại <b data-text="current"></b></p>
+        <label>Giá bán mới (VND) *</label><input name="price" type="number" min="0" required></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Lưu giá</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-stop"><form method="post">
+    <input type="hidden" name="operation" value="product-active"><input type="hidden" name="modal" value="m-stop"><input type="hidden" name="id"><input type="hidden" name="active" value="false">
+    <header><h2>Ngừng bán</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Ngừng bán <b data-text="display_name"></b> (mọi kích cỡ)? Món sẽ ẩn khỏi thực đơn app và POS.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Ngừng bán</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-start"><form method="post">
+    <input type="hidden" name="operation" value="product-active"><input type="hidden" name="modal" value="m-start"><input type="hidden" name="id"><input type="hidden" name="active" value="true">
+    <header><h2>Mở bán lại</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Mở bán lại <b data-text="display_name"></b>?</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Mở bán</button></footer>
+</form></dialog>
+
+@* [UI2-IMG] Đổi ảnh sản phẩm *@
+<dialog class="modal" id="m-image"><form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="operation" value="product-image"><input type="hidden" name="modal" value="m-image"><input type="hidden" name="id">
+    <header><h2>Ảnh sản phẩm</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <p><b data-text="display_name"></b></p>
+        <div class="img-compare">
+            <figure><img data-src="current" class="img-current" alt="Ảnh hiện tại" hidden><figcaption>Ảnh hiện tại (trống: app dùng ảnh có sẵn hoặc hình minh họa)</figcaption></figure>
+            <figure><img id="image-preview" class="img-preview" alt="Ảnh mới" hidden><figcaption>Ảnh mới</figcaption></figure>
+        </div>
+        <label>Chọn ảnh từ máy * (JPG, PNG, WEBP – tối đa 2 MB)</label>
+        <input name="image" type="file" accept="image/jpeg,image/png,image/webp" data-preview="image-preview" required>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Lưu ảnh</button></footer>
+</form></dialog>

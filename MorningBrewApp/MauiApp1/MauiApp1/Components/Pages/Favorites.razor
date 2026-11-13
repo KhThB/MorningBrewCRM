@@ -1,0 +1,67 @@
+@page "/account/favorites"
+@inject CrmService Crm
+@inject ShopService Shop
+@inject ToastService Toasts
+@inject NavigationManager Nav
+
+@* [UI2-A5] Chỉ hiển thị các món đã thả tim (♥) trong Thực đơn. Bấm tim để bỏ thích (lưu ngay),
+   bấm "Đặt" để mở món đó trong Thực đơn. Trước đây trang liệt kê toàn bộ thực đơn để chọn rồi bấm Lưu. *@
+<PageHeader Title="Món yêu thích" BackTo="/account" />
+
+<div class="page-body">
+    <StateView Loading="loading" Error="@error" OnRetry="Load" Empty="products.Count == 0"
+               EmptyText="Chưa có món yêu thích. Thả tim ♥ cho món bạn thích trong Thực đơn nhé." EmptyIcon="heart">
+        <div class="card list">
+            @foreach (var p in products)
+            {
+                <div class="pick-row">
+                    <ProductThumb Category="@p.Category" ProductName="@p.Name" ImageUrl="@p.ImageUrl" />
+                    <span class="grow"><b>@p.Name</b><small class="muted">@p.Category@(p.IsAvailable ? "" : " · Tạm hết")</small></span>
+                    <button class="btn btn-primary btn-sm" disabled="@(!p.IsAvailable)" @onclick='() => Nav.NavigateTo($"/menu?product={p.ProductId}")'>Đặt</button>
+                    <button class="heart on" disabled="@busy" @onclick="() => Remove(p)" aria-label="@($"Bỏ thích {p.Name}")"><Icon Name="heart" Filled="true" /></button>
+                </div>
+            }
+        </div>
+    </StateView>
+    @if (!loading && products.Count == 0)
+    {
+        <a class="btn btn-primary block" href="/menu" style="margin-top:12px"><Icon Name="cup" Size="18" /> Xem thực đơn</a>
+    }
+</div>
+
+@code {
+    private List<MenuProduct> products = [];
+    private HashSet<int> favorites = [];
+    private bool loading = true, busy;
+    private string? error;
+
+    protected override Task OnInitializedAsync() => Load();
+
+    private async Task Load()
+    {
+        loading = true; error = null;
+        try
+        {
+            var menu = await Shop.GetMenuAsync();
+            favorites = await Crm.GetFavoritesAsync();
+            products = menu.Items.Where(x => favorites.Contains(x.ProductId)).GroupBy(x => x.ProductId).Select(g => g.First()).ToList();
+        }
+        catch (ApiException e) { error = e.Message; }
+        loading = false;
+    }
+
+    private async Task Remove(MenuProduct p)
+    {
+        busy = true;
+        var next = favorites.Where(id => id != p.ProductId).ToHashSet();
+        try
+        {
+            await Crm.SaveFavoritesAsync(next);
+            favorites = next;
+            products.Remove(p);
+            Toasts.Show($"Đã bỏ {p.Name} khỏi yêu thích.");
+        }
+        catch (ApiException e) { Toasts.Error(e); }
+        busy = false;
+    }
+}

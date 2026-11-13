@@ -1,0 +1,71 @@
+@page
+@model PromotionsModel
+@{
+    ViewData["Title"]=Model.Title;
+    // [UI-02] Thao tác theo dòng: cấp voucher (khi đang hoạt động), dừng / mở lại chương trình.
+    Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
+        @{var id=item["promotion_id"].ToString(); var name=item["display_name"].ToString(); var active=item["is_active"].ValueKind==JsonValueKind.True;}
+        @if(active){<button type="button" class="btn-sm" data-open="m-issue" data-fill="@(JsonSerializer.Serialize(new{id,display_name=name}))">Cấp voucher</button>}
+        <button type="button" class="btn-sm @(active?"danger-text":null)" data-open="@(active?"m-stop":"m-start")" data-fill="@(JsonSerializer.Serialize(new{id,display_name=name}))">@(active?"Dừng cấp":"Mở lại")</button>
+    </div>;
+    string? Format(string k,Dictionary<string,JsonElement> r)=>k switch{
+        "discount_type"=>r[k].ToString()=="Percent"?"Phần trăm":"Số tiền",
+        "discount_value"=>r["discount_type"].ToString()=="Percent"?$"{ReportView.Number(ReportView.Decimal(r,k))}%":OrderView.Money(r,k),
+        "points_cost"=>r[k].ValueKind==JsonValueKind.Null?"Chỉ quản lý tặng":$"{r[k]} điểm",
+        _=>null};
+}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel">
+    <div class="list-toolbar"><div></div><button type="button" class="primary add-btn" data-open="m-add">+ Tạo ưu đãi</button></div>
+    <p class="list-count">@Model.Rows.Count chương trình · bấm vào một dòng để xem chi tiết</p>
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,RowDetail=true,DetailTitle="Chi tiết ưu đãi",Hide=new HashSet<string>{"scope","area_id","branch_id"},ActiveLabels=("Đang cấp","Đã dừng"),Format=Format})" />
+    <partial name="_Pager" model="Model" />
+</section>
+
+@* [UI-01] Tạo ưu đãi *@
+<dialog class="modal wide" id="m-add"><form method="post">
+    <input type="hidden" name="operation" value="promotion"><input type="hidden" name="modal" value="m-add">
+    <header><h2>Tạo ưu đãi</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <label>Tên *</label><input name="name" required maxlength="150">
+        <label>Mô tả</label><textarea name="description" maxlength="2000" rows="2"></textarea>
+        <div class="two">
+            <div><label>Hình thức giảm</label><select name="discountType"><option value="Amount">Số tiền (VND)</option><option value="Percent">Phần trăm</option></select></div>
+            <div><label>Giá trị *</label><input name="discountValue" type="number" min="1" required></div>
+            <div><label>Giảm tối đa (bắt buộc nếu giảm theo %)</label><input name="maxDiscount" type="number" min="1"></div>
+            <div><label>Giá trị đơn tối thiểu *</label><input name="minSubtotal" type="number" min="0" value="0" required></div>
+            <div><label>Điểm để đổi (trống: chỉ quản lý tặng)</label><input name="pointsCost" type="number" min="0"></div>
+            <div><label>Số lượng toàn chương trình *</label><input name="totalLimit" type="number" min="1" value="100" required></div>
+            <div><label>Số lượt mỗi khách *</label><input name="perCustomerLimit" type="number" min="1" value="1" required></div>
+        </div>
+        <partial name="_Scope" model="Model" />
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Tạo ưu đãi</button></footer>
+</form></dialog>
+
+@* [UI-01] Cấp voucher cho một khách (có ô tìm khách – BUG-12) *@
+<dialog class="modal" id="m-issue"><div class="modal-shell">
+    <header><h2>Cấp voucher</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <p>Ưu đãi: <b data-text="display_name"></b></p>
+        <partial name="_ModalCustomerSearch" model="Model" />
+        <form method="post" id="f-issue"><input type="hidden" name="operation" value="issue"><input type="hidden" name="modal" value="m-issue"><input type="hidden" name="id"><input type="hidden" name="requestKey" value="@Guid.NewGuid()">
+            <label>Khách hàng *</label><select name="customerId" required>@foreach(var x in Model.Choices("customers")){<option value="@x["id"]">@x["display_name"]</option>}</select>
+        </form>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary" form="f-issue">Cấp voucher</button></footer>
+</div></dialog>
+
+@* [UI-01] Dừng / mở lại chương trình *@
+<dialog class="modal" id="m-stop"><form method="post">
+    <input type="hidden" name="operation" value="promotion-active"><input type="hidden" name="modal" value="m-stop"><input type="hidden" name="id"><input type="hidden" name="active" value="false">
+    <header><h2>Dừng cấp ưu đãi</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Dừng cấp mới cho <b data-text="display_name"></b>? Voucher khách đã nhận vẫn dùng được tới hạn.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Dừng cấp</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-start"><form method="post">
+    <input type="hidden" name="operation" value="promotion-active"><input type="hidden" name="modal" value="m-start"><input type="hidden" name="id"><input type="hidden" name="active" value="true">
+    <header><h2>Mở lại ưu đãi</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Cho phép cấp / đổi lại <b data-text="display_name"></b>?</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Mở lại</button></footer>
+</form></dialog>

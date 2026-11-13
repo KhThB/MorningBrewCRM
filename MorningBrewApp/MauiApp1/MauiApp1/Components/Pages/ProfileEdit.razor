@@ -1,0 +1,96 @@
+@page "/account/profile"
+@inject CrmService Crm
+@inject ToastService Toasts
+@inject NavigationManager Nav
+
+<PageHeader Title="Hồ sơ của tôi" BackTo="/account" />
+
+<div class="page-body with-footer">
+    <StateView Loading="loading" Error="@error" OnRetry="Load">
+        @if (profile is not null)
+        {
+            <form id="profile-form" class="card form" @onsubmit="Save" @onsubmit:preventDefault>
+                <label for="name">Họ và tên *</label>
+                <input id="name" class="input" @bind="fullName" maxlength="120" required />
+
+                <label for="email">Email đăng nhập</label>
+                <input id="email" class="input" value="@profile.Email" readonly />
+                <small class="muted">Email dùng để đăng nhập nên không thể thay đổi.</small>
+
+                <label for="phone">Số điện thoại</label>
+                <input id="phone" class="input" type="tel" @bind="phone" maxlength="20" placeholder="Ví dụ 0901234567" />
+
+                <label for="dob">Ngày sinh</label>
+                <input id="dob" class="input" type="date" @bind="birthday" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+
+                <label>Giới tính</label>
+                <div class="chips wrap">
+                    @foreach (var g in new[] { "Female", "Male", "Other", "Undisclosed" })
+                    {
+                        <button type="button" class="chip-btn @(gender == g ? "active" : "")" @onclick="() => gender = g">@Fmt.Gender(g)</button>
+                    }
+                </div>
+            </form>
+            <p class="muted small center">Thành viên từ @Fmt.Date(profile.CreatedAt)</p>
+        }
+    </StateView>
+</div>
+
+@if (profile is not null)
+{
+    <div class="footer-bar">
+        <button class="btn btn-primary block" type="submit" form="profile-form" disabled="@busy">@(busy ? "Đang lưu..." : "Lưu thay đổi")</button>
+    </div>
+}
+
+@code {
+    private Profile? profile;
+    private string fullName = "";
+    private string? phone;
+    private DateOnly? birthday;
+    private string gender = "Undisclosed";
+    private bool loading = true, busy;
+    private string? error;
+
+    protected override Task OnInitializedAsync() => Load();
+
+    private async Task Load()
+    {
+        loading = true; error = null;
+        try { Fill(await Crm.GetProfileAsync()); }
+        catch (ApiException e) { error = e.Message; }
+        loading = false;
+    }
+
+    private void Fill(Profile p)
+    {
+        profile = p;
+        fullName = p.FullName;
+        phone = p.Phone;
+        birthday = p.Birthday;
+        gender = p.Gender ?? "Undisclosed";
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(fullName) || fullName.Trim().Length < 2)
+        { Toasts.Show("Họ tên cần ít nhất 2 ký tự.", true); return; }
+        // [BUG-04] trước đây không kiểm tra SĐT khi sửa hồ sơ
+        if (!PhoneRule.IsValid(phone)) { Toasts.Show(PhoneRule.Message, true); return; }
+        if (birthday > DateOnly.FromDateTime(DateTime.Today))
+        { Toasts.Show("Ngày sinh không được ở tương lai.", true); return; }
+        busy = true;
+        try
+        {
+            Fill(await Crm.UpdateProfileAsync(profile!.Etag, fullName, phone, birthday, gender));
+            Toasts.Show("Đã lưu hồ sơ.");
+        }
+        catch (ApiException e) when (e.Status == 412)
+        {
+            Toasts.Show("Hồ sơ vừa được cập nhật ở nơi khác. Đã tải lại bản mới nhất.", true);
+            await Load();
+        }
+        catch (ApiException e) { Toasts.Error(e); }
+        busy = false;
+    }
+}

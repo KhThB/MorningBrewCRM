@@ -1,0 +1,56 @@
+@page "/login"
+@layout BlankLayout
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<div class="auth">
+    <div class="auth-hero">
+        <div class="logo-word">Morning<span>Brew</span></div>
+        <p>Cà phê mỗi sáng · Tích điểm mỗi ngày</p>
+    </div>
+
+    <form class="auth-card" @onsubmit="Submit" @onsubmit:preventDefault>
+        <h1>Đăng nhập</h1>
+        <p class="muted">Chào mừng bạn quay lại!</p>
+        @if (error is not null) { <div class="alert" role="alert">@error</div> }
+
+        <label for="email">Email</label>
+        <input id="email" class="input" type="email" autocomplete="username" @bind="email" required />
+
+        <label for="password">Mật khẩu</label>
+        <div class="password">
+            <input id="password" class="input" type="@(show ? "text" : "password")" autocomplete="current-password" @bind="password" required />
+            <button type="button" class="link" @onclick="() => show = !show">@(show ? "Ẩn" : "Hiện")</button>
+        </div>
+
+        <button class="btn btn-primary block" type="submit" disabled="@busy">@(busy ? "Đang đăng nhập..." : "Đăng nhập")</button>
+        <p class="center muted">Chưa có tài khoản? <a href="/register" class="link-strong">Đăng ký ngay</a></p>
+    </form>
+</div>
+
+@code {
+    private string email = "";
+    private string password = "";
+    private bool busy, show;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Auth.EnsureLoadedAsync();
+        if (Auth.IsLoggedIn) Nav.NavigateTo("/", replace: true);
+    }
+
+    private async Task Submit()
+    {
+        error = null;
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrEmpty(password)) { error = "Vui lòng nhập email và mật khẩu."; return; }
+        busy = true;
+        try
+        {
+            await Auth.LoginAsync(email, password);
+            Nav.NavigateTo("/", replace: true);
+        }
+        catch (ApiException e) { error = e.Message; }
+        busy = false;
+    }
+}

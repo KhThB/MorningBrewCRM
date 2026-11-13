@@ -1,0 +1,10 @@
+@page
+@model AuditLogsModel
+@{ViewData["Title"]=Model.Title;}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel">
+    @* [UI-03] Thanh tìm kiếm gọn; [UI-05] bấm dòng xem đầy đủ chi tiết *@
+    <div class="list-toolbar"><form method="get"><input name="q" type="search" value="@Model.Q" placeholder="Tìm theo thao tác, đối tượng, người thực hiện (vd: Account.Role)" aria-label="Tìm nhật ký"><button class="secondary">Tìm</button>@if(!string.IsNullOrEmpty(Model.Q)){<a class="btn-sm" href="?">Bỏ lọc</a>}</form></div>
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,RowDetail=true,DetailTitle="Chi tiết nhật ký"})" />
+    <partial name="_Pager" model="Model" />
+</section>

@@ -1,0 +1,135 @@
+@page "/"
+@inject CrmService Crm
+@inject ShopService Shop
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<section class="hero">
+    <div class="hero-top">
+        <div>
+            <span class="muted-light">@Greeting(),</span>
+            <h1>@(profile?.FullName ?? Auth.User?.FullName ?? "bạn")</h1>
+        </div>
+        @* [NOTI] Nút chuông mở trang Thông báo; số đỏ = thông báo chưa đọc (trước đây dẫn sang Khảo sát) *@
+        <a class="icon-btn light" href="/notifications" aria-label="Thông báo">
+            <Icon Name="bell" />@if (Crm.UnreadNotifications > 0){<i class="badge">@(Crm.UnreadNotifications > 99 ? "99+" : Crm.UnreadNotifications.ToString())</i>}
+        </a>
+    </div>
+    <MemberCard Name="@(profile?.FullName ?? "")" Points="@(profile?.LoyaltyPoints ?? 0)" />
+</section>
+
+<div class="page-body overlap">
+    <div class="quick-actions">
+        @* [BUG-17] Ghi nhớ hình thức nhận đã chọn để giỏ hàng mở đúng lựa chọn *@
+        <a class="quick" href="/menu" @onclick='() => Shop.PreferredFulfillment = "Pickup"'>
+            <span class="quick-icon"><Icon Name="bag" Size="26" /></span>
+            <span><b>Nhận tại quán</b><small>Đặt trước, đến lấy ngay</small></span>
+        </a>
+        @* [BUG-02] Giao hàng đã có (chọn ở giỏ hàng) – bỏ nhãn "Sắp ra mắt" *@
+        <a class="quick" href="/menu" @onclick='() => Shop.PreferredFulfillment = "Delivery"'>
+            <span class="quick-icon"><Icon Name="truck" Size="26" /></span>
+            <span><b>Giao hàng</b><small>Giao tận nơi, chọn ở giỏ hàng</small></span>
+        </a>
+    </div>
+
+    <a class="store-line" href="/menu">
+        <Icon Name="store" Size="18" /><span>@Shop.CurrentBranch.Name</span><Icon Name="next" Size="16" />
+    </a>
+
+    @if (Crm.PendingSurveys > 0)
+    {
+        <a class="banner" href="/account/surveys">
+            <Icon Name="clipboard" Size="28" />
+            <span><b>Bạn có @Crm.PendingSurveys khảo sát mới</b><small>Dành 1 phút chia sẻ để Morning Brew phục vụ tốt hơn</small></span>
+            <Icon Name="next" Size="18" />
+        </a>
+    }
+
+    @if (lastOrder is not null)
+    {
+        <div class="section-title"><h2>Đơn gần đây</h2><a href="/orders">Xem tất cả</a></div>
+        <a class="card order-card" href="@($"/orders/{lastOrder.OrderId}")">
+            <div class="row-between">
+                <b>@lastOrder.OrderCode</b>
+                <span class="chip @Fmt.OrderCss(lastOrder.Status)">@Fmt.OrderStatus(lastOrder.Status)</span>
+            </div>
+            <p class="muted">@lastOrder.Summary</p> @* [BUG-02] *@
+            <div class="row-between">
+                <span class="muted">@Fmt.When(lastOrder.CreatedAt)</span>
+                @if (lastOrder.Status == "Completed" && !lastOrder.FeedbackSent)
+                {
+                    <span class="link-strong">Đánh giá đơn →</span>
+                }
+            </div>
+        </a>
+    }
+
+    <div class="section-title"><h2>Ưu đãi dành cho bạn</h2><a href="/rewards">Tất cả</a></div>
+    <StateView Loading="loading" Error="@error" OnRetry="Load" Empty="promotions.Count == 0" EmptyText="Chưa có ưu đãi mới." EmptyIcon="gift">
+        <div class="h-scroll">
+            @foreach (var p in promotions.Take(6))
+            {
+                <a class="promo-card" href="/rewards">
+                    <div class="promo-art"><Icon Name="ticket" Size="30" /><b>@Fmt.Discount(p.DiscountType, p.DiscountValue)</b></div>
+                    <div class="promo-body">
+                        <b>@p.Name</b>
+                        <small>@(p.PointsCost is > 0 ? $"{p.PointsCost} điểm" : "Miễn phí")</small>
+                    </div>
+                </a>
+            }
+        </div>
+    </StateView>
+
+    <div class="section-title"><h2>Gợi ý hôm nay</h2><a href="/menu">Thực đơn</a></div>
+    <div class="grid-2">
+        @foreach (var item in suggestions)
+        {
+            <a class="product-tile" href="/menu">
+                <ProductThumb Category="@item.Category" ProductName="@item.Name" ImageUrl="@item.ImageUrl" Large="true" />
+                <b>@item.Name</b>
+                <span class="price">@Fmt.Money(item.Price)</span>
+            </a>
+        }
+    </div>
+</div>
+
+@code {
+    [Inject] private ToastService Toasts { get; set; } = default!;
+    private Profile? profile;
+    private List<Promotion> promotions = [];
+    private List<MenuProduct> suggestions = [];
+    private Order? lastOrder;
+    private bool loading = true;
+    private string? error;
+
+    protected override Task OnInitializedAsync() => Load();
+
+    private async Task Load()
+    {
+        loading = true; error = null;
+        try
+        {
+            profile = await Crm.GetProfileAsync();
+            promotions = await Crm.GetPromotionsAsync();
+        }
+        catch (ApiException e) { error = e.Message; }
+        try { await Crm.RefreshUnreadAsync(); } catch (ApiException) { } // [NOTI] số thông báo chưa đọc trên nút chuông
+        try
+        {
+            var menu = await Shop.GetMenuAsync();
+            suggestions = menu.Items.Where(x => x.IsAvailable).GroupBy(x => x.ProductId).Select(g => g.First()).Take(4).ToList();
+            lastOrder = (await Shop.GetOrdersAsync()).FirstOrDefault();
+        }
+        catch (ApiException) { }
+        loading = false;
+    }
+
+    private static string Greeting()
+    {
+        var hour = DateTime.Now.Hour;
+        if (hour >= 18) return "Chào buổi tối";
+        if (hour >= 14) return "Chào buổi chiều";
+        if (hour >= 11) return "Chào buổi trưa";
+        return "Chào buổi sáng";
+    }
+}

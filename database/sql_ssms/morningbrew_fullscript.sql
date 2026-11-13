@@ -1,0 +1,2974 @@
+﻿-- CAI_DAT_DAY_DU.sql – cài mới HOẶC nâng cấp database MorningBrew CRM lên bản mới nhất (gồm góp ý giao diện 09/11)
+-- =====================================================================================
+-- KHÔNG cần PowerShell. SSMS: kết nối (localdb)\MSSQLLocalDB → File → Open file này → Execute (F5).
+-- File tự nhận biết tình trạng database [MorningBrewCRM_Crm]:
+--   * Chưa có database / database trống  → CÀI MỚI: tạo database, chạy 01_core → 02_demo_data → 03 → 04.
+--   * Đã có database đang dùng           → NÂNG CẤP: kiểm tra, SAO LƯU (.bak có CHECKSUM + VERIFYONLY),
+--                                           rồi chạy 03_crm_updates → 04_menu_updates. KHÔNG đụng 01/02,
+--                                           không xóa dữ liệu. Nhớ ĐÓNG API, Admin, app, POS trước khi chạy.
+-- Bản 09/11: đồ uống chỉ còn Size M/L + Đá/Nóng, size L = M + 10.000đ, 2 món mẫu còn hàng lại, 6 nhà cung cấp.
+-- Kết quả: tab Messages có "=== HOÀN TẤT ..." và bảng kiểm tra (SoBang = 41). Thấy ">>> DỪNG" thì các lệnh
+-- sau không chạy; đọc lỗi đỏ đầu tiên. Nâng cấp lỗi giữa chừng: phục hồi từ file .bak đã in ra.
+-- Chạy lại nhiều lần không sao (lần sau sẽ là NÂNG CẤP, mỗi lần thêm 1 bản .bak).
+-- Lưu ý khi NÂNG CẤP: SQL Server vẫn "dịch thử" phần 01/02 bị bỏ qua nên có thể hiện vài dòng đỏ ở đoạn đó
+-- (ví dụ không tìm thấy bảng AreaManagers đã bỏ). Không lệnh nào trong 01/02 được chạy; kết quả thật là dòng
+-- "=== HOÀN TẤT" cuối cùng. Muốn không có dòng đỏ nào: chạy 2 file lẻ 03_crm_updates.sql rồi 04_menu_updates.sql.
+-- Tên database khác: Edit → Find and Replace "MorningBrewCRM_Crm" (và sửa ConnectionStrings:MorningBrew của API).
+-- Nội dung SQL các phần 01–04 giữ nguyên bản database/sql (nhánh db-test).
+-- =====================================================================================
+GO
+SET NOEXEC OFF;
+EXEC sp_set_session_context N'mb_failed', 0;
+EXEC sp_set_session_context N'mb_mode', NULL;
+GO
+USE master;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+IF DB_ID(N'MorningBrewCRM_Crm') IS NULL
+BEGIN
+    CREATE DATABASE [MorningBrewCRM_Crm];
+    PRINT N'Đã tạo database [MorningBrewCRM_Crm].';
+END
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+USE [MorningBrewCRM_Crm];
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+IF DB_NAME() <> N'MorningBrewCRM_Crm'
+BEGIN
+    RAISERROR(N'>>> DỪNG: không chuyển được sang database [MorningBrewCRM_Crm].', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+IF NOT EXISTS (SELECT 1 FROM sys.tables)
+BEGIN
+    EXEC sp_set_session_context N'mb_mode', N'install';
+    PRINT N'>>> Database trống: CÀI MỚI (01 → 02 → 03 → 04).';
+END
+ELSE IF OBJECT_ID(N'dbo.CreateOrder', N'P') IS NOT NULL AND OBJECT_ID(N'dbo.GetMenu', N'P') IS NOT NULL
+BEGIN
+    EXEC sp_set_session_context N'mb_mode', N'upgrade';
+    PRINT N'>>> Database đã có dữ liệu: NÂNG CẤP (sao lưu → 03 → 04). Bỏ qua 01, 02.';
+END
+ELSE
+BEGIN
+    RAISERROR(N'>>> DỪNG: database [MorningBrewCRM_Crm] có bảng nhưng không phải database MorningBrew CRM. Dùng database trống hoặc đổi tên database.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+IF CAST(SERVERPROPERTY('ProductMajorVersion') AS int) < 16
+BEGIN
+    RAISERROR(N'>>> DỪNG: cần SQL Server 2022 trở lên (hoặc LocalDB 2022).', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+ELSE IF SESSION_CONTEXT(N'mb_mode') = N'install'
+    ALTER DATABASE [MorningBrewCRM_Crm] SET COMPATIBILITY_LEVEL = 160;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- ===== PHẦN CÀI MỚI (01, 02): bỏ qua khi nâng cấp =====
+IF SESSION_CONTEXT(N'mb_mode') = N'upgrade'
+BEGIN
+    PRINT N'(Bỏ qua 01, 02 – dòng đỏ nếu có trong đoạn này là do SQL Server dịch thử, không phải lỗi thật.)';
+    SET NOEXEC ON;
+END
+GO
+PRINT N'--- Bắt đầu phần 01_core.sql ---';
+GO
+-- DB-TEST PACKAGE: Preserves the original SQL batch order. See database/README.md.
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 01_schema.sql (historical filename)
+-- Generated by tools/schema.py. SQL Server 2022+. Run only in a NEW empty database.
+
+SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;
+
+IF EXISTS (SELECT 1 FROM sys.tables) THROW 51000, N'Database must be empty; no objects were changed.', 1;
+
+BEGIN TRANSACTION;
+
+CREATE TABLE dbo.[Roles] (
+    [RoleID] int IDENTITY(1,1) NOT NULL,
+    [Code] varchar(30) NOT NULL,
+    [Name] nvarchar(100) NOT NULL,
+    CONSTRAINT [PK_Roles] PRIMARY KEY ([RoleID]),
+    CONSTRAINT [UQ_Roles_0] UNIQUE (Code),
+    CONSTRAINT [CK_Roles_0] CHECK (Code IN ('Owner','AreaManager','BranchManager','Staff','Customer'))
+);
+
+CREATE TABLE dbo.[Permissions] (
+    [PermissionID] int IDENTITY(1,1) NOT NULL,
+    [Code] varchar(80) NOT NULL,
+    [Description] nvarchar(250) NOT NULL,
+    CONSTRAINT [PK_Permissions] PRIMARY KEY ([PermissionID]),
+    CONSTRAINT [UQ_Permissions_0] UNIQUE (Code)
+);
+
+CREATE TABLE dbo.[RolePermissions] (
+    [RoleID] int NOT NULL,
+    [PermissionID] int NOT NULL,
+    CONSTRAINT [PK_RolePermissions] PRIMARY KEY ([RoleID],[PermissionID])
+);
+
+CREATE TABLE dbo.[Users] (
+    [UserID] int IDENTITY(1,1) NOT NULL,
+    [RoleID] int NOT NULL,
+    [Email] nvarchar(254) NOT NULL,
+    [NormalizedEmail] nvarchar(254) NOT NULL,
+    [PasswordHash] varchar(512) NOT NULL,
+    [FullName] nvarchar(120) NOT NULL,
+    [Phone] varchar(20) NULL,
+    [IsActive] bit NOT NULL CONSTRAINT [DF_Users_IsActive] DEFAULT (1),
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_Users_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    [Version] rowversion NOT NULL,
+    CONSTRAINT [PK_Users] PRIMARY KEY ([UserID]),
+    CONSTRAINT [UQ_Users_0] UNIQUE (NormalizedEmail),
+    CONSTRAINT [CK_Users_0] CHECK (NormalizedEmail = UPPER(LTRIM(RTRIM(Email))))
+);
+
+CREATE TABLE dbo.[UserSessions] (
+    [SessionID] int IDENTITY(1,1) NOT NULL,
+    [UserID] int NOT NULL,
+    [TokenHash] binary(32) NOT NULL,
+    [DeviceName] nvarchar(120) NULL,
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_UserSessions_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    [ExpiresAt] datetime2(3) NOT NULL,
+    [RevokedAt] datetime2(3) NULL,
+    CONSTRAINT [PK_UserSessions] PRIMARY KEY ([SessionID]),
+    CONSTRAINT [UQ_UserSessions_0] UNIQUE (TokenHash),
+    CONSTRAINT [CK_UserSessions_0] CHECK (ExpiresAt IS NOT NULL AND ExpiresAt > CreatedAt),
+    CONSTRAINT [CK_UserSessions_1] CHECK (RevokedAt IS NULL OR RevokedAt >= CreatedAt)
+);
+
+CREATE TABLE dbo.[Areas] (
+    [AreaID] int IDENTITY(1,1) NOT NULL,
+    [Name] nvarchar(120) NOT NULL,
+    [IsActive] bit NOT NULL CONSTRAINT [DF_Areas_IsActive] DEFAULT (1),
+    CONSTRAINT [PK_Areas] PRIMARY KEY ([AreaID]),
+    CONSTRAINT [UQ_Areas_0] UNIQUE (Name)
+);
+
+CREATE TABLE dbo.[Branches] (
+    [BranchID] int IDENTITY(1,1) NOT NULL,
+    [AreaID] int NOT NULL,
+    [ManagerID] int NULL,
+    [Code] varchar(30) NOT NULL,
+    [Name] nvarchar(150) NOT NULL,
+    [Address] nvarchar(500) NOT NULL,
+    [Phone] varchar(20) NOT NULL,
+    [OpeningTime] time(0) NOT NULL,
+    [ClosingTime] time(0) NOT NULL,
+    [IsActive] bit NOT NULL CONSTRAINT [DF_Branches_IsActive] DEFAULT (1),
+    [AcceptingOrders] bit NOT NULL CONSTRAINT [DF_Branches_AcceptingOrders] DEFAULT (1),
+    [PickupEnabled] bit NOT NULL CONSTRAINT [DF_Branches_PickupEnabled] DEFAULT (1),
+    [DeliveryEnabled] bit NOT NULL CONSTRAINT [DF_Branches_DeliveryEnabled] DEFAULT (1),
+    [DeliveryFee] decimal(18,2) NOT NULL,
+    [Version] rowversion NOT NULL,
+    CONSTRAINT [PK_Branches] PRIMARY KEY ([BranchID]),
+    CONSTRAINT [UQ_Branches_0] UNIQUE (Code),
+    CONSTRAINT [CK_Branches_0] CHECK (OpeningTime < ClosingTime),
+    CONSTRAINT [CK_Branches_1] CHECK (DeliveryFee >= 0)
+);
+
+CREATE TABLE dbo.[AreaManagers] (
+    [AreaID] int NOT NULL,
+    [UserID] int NOT NULL,
+    [AssignedAt] datetime2(3) NOT NULL CONSTRAINT [DF_AreaManagers_AssignedAt] DEFAULT (SYSUTCDATETIME()),
+    [IsActive] bit NOT NULL CONSTRAINT [DF_AreaManagers_IsActive] DEFAULT (1),
+    CONSTRAINT [PK_AreaManagers] PRIMARY KEY ([AreaID],[UserID])
+);
+
+CREATE TABLE dbo.[StaffBranches] (
+    [UserID] int NOT NULL,
+    [BranchID] int NOT NULL,
+    [AssignedAt] datetime2(3) NOT NULL CONSTRAINT [DF_StaffBranches_AssignedAt] DEFAULT (SYSUTCDATETIME()),
+    [IsActive] bit NOT NULL CONSTRAINT [DF_StaffBranches_IsActive] DEFAULT (1),
+    CONSTRAINT [PK_StaffBranches] PRIMARY KEY ([UserID],[BranchID])
+);
+
+CREATE TABLE dbo.[Customers] (
+    [CustomerID] int IDENTITY(1,1) NOT NULL,
+    [UserID] int NOT NULL,
+    [DateOfBirth] date NULL,
+    [Gender] varchar(15) NULL,
+    [LoyaltyPoints] int NOT NULL CONSTRAINT [DF_Customers_LoyaltyPoints] DEFAULT (0),
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_Customers_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    [Version] rowversion NOT NULL,
+    CONSTRAINT [PK_Customers] PRIMARY KEY ([CustomerID]),
+    CONSTRAINT [UQ_Customers_0] UNIQUE (UserID),
+    CONSTRAINT [CK_Customers_0] CHECK (Gender IS NULL OR Gender IN ('Male','Female','Other','Undisclosed'))
+);
+
+CREATE TABLE dbo.[CustomerAddresses] (
+    [AddressID] int IDENTITY(1,1) NOT NULL,
+    [CustomerID] int NOT NULL,
+    [Label] nvarchar(50) NOT NULL,
+    [RecipientName] nvarchar(120) NOT NULL,
+    [Phone] varchar(20) NOT NULL,
+    [AddressText] nvarchar(500) NOT NULL,
+    [Note] nvarchar(300) NULL,
+    [IsDefault] bit NOT NULL CONSTRAINT [DF_CustomerAddresses_IsDefault] DEFAULT (0),
+    [IsActive] bit NOT NULL CONSTRAINT [DF_CustomerAddresses_IsActive] DEFAULT (1),
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_CustomerAddresses_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT [PK_CustomerAddresses] PRIMARY KEY ([AddressID]),
+    CONSTRAINT [CK_CustomerAddresses_0] CHECK (IsDefault = 0 OR IsActive = 1)
+);
+
+CREATE TABLE dbo.[Categories] (
+    [CategoryID] int IDENTITY(1,1) NOT NULL,
+    [Name] nvarchar(100) NOT NULL,
+    [IsActive] bit NOT NULL CONSTRAINT [DF_Categories_IsActive] DEFAULT (1),
+    CONSTRAINT [PK_Categories] PRIMARY KEY ([CategoryID]),
+    CONSTRAINT [UQ_Categories_0] UNIQUE (Name)
+);
+
+CREATE TABLE dbo.[Products] (
+    [ProductID] int IDENTITY(1,1) NOT NULL,
+    [CategoryID] int NOT NULL,
+    [Name] nvarchar(150) NOT NULL,
+    [Description] nvarchar(2000) NULL,
+    [ImageURL] nvarchar(1000) NULL,
+    [IsActive] bit NOT NULL CONSTRAINT [DF_Products_IsActive] DEFAULT (1),
+    [Version] rowversion NOT NULL,
+    CONSTRAINT [PK_Products] PRIMARY KEY ([ProductID])
+);
+
+CREATE TABLE dbo.[ProductVariants] (
+    [VariantID] int IDENTITY(1,1) NOT NULL,
+    [ProductID] int NOT NULL,
+    [Name] nvarchar(50) NOT NULL,
+    [BasePrice] decimal(18,2) NOT NULL,
+    [DisplayOrder] int NOT NULL CONSTRAINT [DF_ProductVariants_DisplayOrder] DEFAULT (0),
+    [IsActive] bit NOT NULL CONSTRAINT [DF_ProductVariants_IsActive] DEFAULT (1),
+    CONSTRAINT [PK_ProductVariants] PRIMARY KEY ([VariantID]),
+    CONSTRAINT [UQ_ProductVariants_0] UNIQUE (ProductID,Name),
+    CONSTRAINT [UQ_ProductVariants_1] UNIQUE (VariantID,ProductID),
+    CONSTRAINT [CK_ProductVariants_0] CHECK (BasePrice >= 0),
+    CONSTRAINT [CK_ProductVariants_1] CHECK (DisplayOrder >= 0)
+);
+
+CREATE TABLE dbo.[BranchProducts] (
+    [BranchID] int NOT NULL,
+    [ProductID] int NOT NULL,
+    [IsAvailable] bit NOT NULL CONSTRAINT [DF_BranchProducts_IsAvailable] DEFAULT (1),
+    CONSTRAINT [PK_BranchProducts] PRIMARY KEY ([BranchID],[ProductID])
+);
+
+CREATE TABLE dbo.[BranchProductVariants] (
+    [BranchID] int NOT NULL,
+    [VariantID] int NOT NULL,
+    [ProductID] int NOT NULL,
+    [SellingPrice] decimal(18,2) NOT NULL,
+    [IsAvailable] bit NOT NULL CONSTRAINT [DF_BranchProductVariants_IsAvailable] DEFAULT (1),
+    CONSTRAINT [PK_BranchProductVariants] PRIMARY KEY ([BranchID],[VariantID]),
+    CONSTRAINT [CK_BranchProductVariants_0] CHECK (SellingPrice >= 0)
+);
+
+CREATE TABLE dbo.[ModifierGroups] (
+    [ModifierGroupID] int IDENTITY(1,1) NOT NULL,
+    [Name] nvarchar(100) NOT NULL,
+    [Kind] varchar(20) NOT NULL,
+    [IsActive] bit NOT NULL CONSTRAINT [DF_ModifierGroups_IsActive] DEFAULT (1),
+    CONSTRAINT [PK_ModifierGroups] PRIMARY KEY ([ModifierGroupID]),
+    CONSTRAINT [CK_ModifierGroups_0] CHECK (Kind IN ('Sugar','Ice','Topping'))
+);
+
+CREATE TABLE dbo.[ModifierOptions] (
+    [ModifierOptionID] int IDENTITY(1,1) NOT NULL,
+    [ModifierGroupID] int NOT NULL,
+    [Name] nvarchar(100) NOT NULL,
+    [ExtraPrice] decimal(18,2) NOT NULL,
+    [DisplayOrder] int NOT NULL CONSTRAINT [DF_ModifierOptions_DisplayOrder] DEFAULT (0),
+    [IsActive] bit NOT NULL CONSTRAINT [DF_ModifierOptions_IsActive] DEFAULT (1),
+    CONSTRAINT [PK_ModifierOptions] PRIMARY KEY ([ModifierOptionID]),
+    CONSTRAINT [UQ_ModifierOptions_0] UNIQUE (ModifierGroupID,Name),
+    CONSTRAINT [UQ_ModifierOptions_1] UNIQUE (ModifierOptionID,ModifierGroupID),
+    CONSTRAINT [CK_ModifierOptions_0] CHECK (ExtraPrice >= 0),
+    CONSTRAINT [CK_ModifierOptions_1] CHECK (DisplayOrder >= 0)
+);
+
+CREATE TABLE dbo.[ProductModifierGroups] (
+    [ProductID] int NOT NULL,
+    [ModifierGroupID] int NOT NULL,
+    [MinSelections] int NOT NULL CONSTRAINT [DF_ProductModifierGroups_MinSelections] DEFAULT (0),
+    [MaxSelections] int NOT NULL,
+    CONSTRAINT [PK_ProductModifierGroups] PRIMARY KEY ([ProductID],[ModifierGroupID]),
+    CONSTRAINT [CK_ProductModifierGroups_0] CHECK (MinSelections >= 0 AND MaxSelections >= MinSelections AND MaxSelections > 0)
+);
+
+CREATE TABLE dbo.[BranchModifierOptions] (
+    [BranchID] int NOT NULL,
+    [ModifierOptionID] int NOT NULL,
+    [ExtraPrice] decimal(18,2) NOT NULL,
+    [IsAvailable] bit NOT NULL CONSTRAINT [DF_BranchModifierOptions_IsAvailable] DEFAULT (1),
+    CONSTRAINT [PK_BranchModifierOptions] PRIMARY KEY ([BranchID],[ModifierOptionID]),
+    CONSTRAINT [CK_BranchModifierOptions_0] CHECK (ExtraPrice >= 0)
+);
+
+CREATE TABLE dbo.[CustomerPreferences] (
+    [CustomerID] int NOT NULL,
+    [ProductID] int NOT NULL,
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_CustomerPreferences_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT [PK_CustomerPreferences] PRIMARY KEY ([CustomerID],[ProductID])
+);
+
+CREATE TABLE dbo.[LoyaltyPolicies] (
+    [PolicyID] int IDENTITY(1,1) NOT NULL,
+    [Name] nvarchar(120) NOT NULL,
+    [AmountPerPoint] decimal(18,2) NOT NULL,
+    [EffectiveFrom] datetime2(3) NOT NULL CONSTRAINT [DF_LoyaltyPolicies_EffectiveFrom] DEFAULT (SYSUTCDATETIME()),
+    [EffectiveTo] datetime2(3) NULL,
+    CONSTRAINT [PK_LoyaltyPolicies] PRIMARY KEY ([PolicyID]),
+    CONSTRAINT [CK_LoyaltyPolicies_0] CHECK (AmountPerPoint > 0),
+    CONSTRAINT [CK_LoyaltyPolicies_1] CHECK (EffectiveTo IS NULL OR EffectiveTo > EffectiveFrom)
+);
+
+CREATE TABLE dbo.[Promotions] (
+    [PromotionID] int IDENTITY(1,1) NOT NULL,
+    [Name] nvarchar(150) NOT NULL,
+    [Description] nvarchar(2000) NULL,
+    [Scope] varchar(10) NOT NULL,
+    [AreaID] int NULL,
+    [BranchID] int NULL,
+    [CreatedBy] int NOT NULL,
+    [DiscountType] varchar(10) NOT NULL,
+    [DiscountValue] decimal(18,2) NOT NULL,
+    [MaxDiscount] decimal(18,2) NULL,
+    [MinSubtotal] decimal(18,2) NOT NULL CONSTRAINT [DF_Promotions_MinSubtotal] DEFAULT (0),
+    [StartsAt] datetime2(3) NOT NULL CONSTRAINT [DF_Promotions_StartsAt] DEFAULT (SYSUTCDATETIME()),
+    [EndsAt] datetime2(3) NOT NULL,
+    [PointsCost] int NULL,
+    [TotalLimit] int NOT NULL,
+    [PerCustomerLimit] int NOT NULL CONSTRAINT [DF_Promotions_PerCustomerLimit] DEFAULT (1),
+    [IsActive] bit NOT NULL CONSTRAINT [DF_Promotions_IsActive] DEFAULT (1),
+    [Version] rowversion NOT NULL,
+    CONSTRAINT [PK_Promotions] PRIMARY KEY ([PromotionID]),
+    CONSTRAINT [CK_Promotions_0] CHECK (Scope IN ('Chain','Area','Branch')),
+    CONSTRAINT [CK_Promotions_1] CHECK ((Scope='Chain' AND AreaID IS NULL AND BranchID IS NULL) OR (Scope='Area' AND AreaID IS NOT NULL AND BranchID IS NULL) OR (Scope='Branch' AND AreaID IS NULL AND BranchID IS NOT NULL)),
+    CONSTRAINT [CK_Promotions_2] CHECK (DiscountType IN ('Amount','Percent')),
+    CONSTRAINT [CK_Promotions_3] CHECK (DiscountValue > 0 AND (DiscountType <> 'Percent' OR (DiscountValue <= 100 AND MaxDiscount IS NOT NULL))),
+    CONSTRAINT [CK_Promotions_4] CHECK (MaxDiscount IS NULL OR MaxDiscount > 0),
+    CONSTRAINT [CK_Promotions_5] CHECK (MinSubtotal >= 0),
+    CONSTRAINT [CK_Promotions_6] CHECK (EndsAt IS NOT NULL AND EndsAt > StartsAt),
+    CONSTRAINT [CK_Promotions_7] CHECK (PointsCost IS NULL OR PointsCost >= 0),
+    CONSTRAINT [CK_Promotions_8] CHECK (TotalLimit > 0 AND PerCustomerLimit > 0 AND PerCustomerLimit <= TotalLimit)
+);
+
+CREATE TABLE dbo.[CustomerPromotions] (
+    [CustomerPromotionID] int IDENTITY(1,1) NOT NULL,
+    [CustomerID] int NOT NULL,
+    [PromotionID] int NOT NULL,
+    [Code] varchar(40) NOT NULL,
+    [RequestKey] uniqueidentifier NOT NULL,
+    [Status] varchar(12) NOT NULL CONSTRAINT [DF_CustomerPromotions_Status] DEFAULT ('Available'),
+    [IssuedAt] datetime2(3) NOT NULL CONSTRAINT [DF_CustomerPromotions_IssuedAt] DEFAULT (SYSUTCDATETIME()),
+    [ExpiresAt] datetime2(3) NOT NULL,
+    [PointsSpent] int NOT NULL CONSTRAINT [DF_CustomerPromotions_PointsSpent] DEFAULT (0),
+    [DiscountType] varchar(10) NOT NULL,
+    [DiscountValue] decimal(18,2) NOT NULL,
+    [MaxDiscount] decimal(18,2) NULL,
+    [MinSubtotal] decimal(18,2) NOT NULL,
+    [ReservedOrderID] int NULL,
+    [UsedOrderID] int NULL,
+    [UsedAt] datetime2(3) NULL,
+    [Version] rowversion NOT NULL,
+    CONSTRAINT [PK_CustomerPromotions] PRIMARY KEY ([CustomerPromotionID]),
+    CONSTRAINT [UQ_CustomerPromotions_0] UNIQUE (Code),
+    CONSTRAINT [UQ_CustomerPromotions_1] UNIQUE (RequestKey),
+    CONSTRAINT [UQ_CustomerPromotions_2] UNIQUE (CustomerPromotionID,CustomerID),
+    CONSTRAINT [CK_CustomerPromotions_0] CHECK (Status IN ('Available','Reserved','Used')),
+    CONSTRAINT [CK_CustomerPromotions_1] CHECK ((Status='Available' AND ReservedOrderID IS NULL AND UsedOrderID IS NULL AND UsedAt IS NULL) OR (Status='Reserved' AND ReservedOrderID IS NOT NULL AND UsedOrderID IS NULL AND UsedAt IS NULL) OR (Status='Used' AND ReservedOrderID IS NULL AND UsedOrderID IS NOT NULL AND UsedAt IS NOT NULL)),
+    CONSTRAINT [CK_CustomerPromotions_2] CHECK (ExpiresAt IS NOT NULL AND ExpiresAt > IssuedAt),
+    CONSTRAINT [CK_CustomerPromotions_3] CHECK (PointsSpent >= 0),
+    CONSTRAINT [CK_CustomerPromotions_4] CHECK (DiscountType IN ('Amount','Percent')),
+    CONSTRAINT [CK_CustomerPromotions_5] CHECK (DiscountValue > 0 AND (DiscountType <> 'Percent' OR (DiscountValue <= 100 AND MaxDiscount IS NOT NULL))),
+    CONSTRAINT [CK_CustomerPromotions_6] CHECK (MaxDiscount IS NULL OR MaxDiscount > 0),
+    CONSTRAINT [CK_CustomerPromotions_7] CHECK (MinSubtotal >= 0)
+);
+
+CREATE TABLE dbo.[Orders] (
+    [OrderID] int IDENTITY(1,1) NOT NULL,
+    [OrderCode] varchar(40) NOT NULL,
+    [RequestKey] uniqueidentifier NOT NULL,
+    [RequestHash] binary(32) NOT NULL,
+    [BranchID] int NOT NULL,
+    [CustomerID] int NULL,
+    [CreatedBy] int NOT NULL,
+    [Source] varchar(5) NOT NULL,
+    [Fulfillment] varchar(10) NOT NULL,
+    [PaymentMode] varchar(10) NOT NULL,
+    [Status] varchar(20) NOT NULL,
+    [ContactName] nvarchar(120) NOT NULL,
+    [ContactPhone] varchar(20) NULL,
+    [Note] nvarchar(500) NULL,
+    [Subtotal] decimal(18,2) NOT NULL,
+    [DiscountAmount] decimal(18,2) NOT NULL CONSTRAINT [DF_Orders_DiscountAmount] DEFAULT (0),
+    [DeliveryFee] decimal(18,2) NOT NULL CONSTRAINT [DF_Orders_DeliveryFee] DEFAULT (0),
+    [TotalAmount] decimal(18,2) NOT NULL,
+    [CustomerPromotionID] int NULL,
+    [PolicyID] int NOT NULL,
+    [AmountPerPoint] decimal(18,2) NOT NULL,
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_Orders_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    [PaymentDueAt] datetime2(3) NULL,
+    [CompletedAt] datetime2(3) NULL,
+    [CancelledAt] datetime2(3) NULL,
+    [Version] rowversion NOT NULL,
+    CONSTRAINT [PK_Orders] PRIMARY KEY ([OrderID]),
+    CONSTRAINT [UQ_Orders_0] UNIQUE (OrderCode),
+    CONSTRAINT [UQ_Orders_1] UNIQUE (RequestKey),
+    CONSTRAINT [UQ_Orders_2] UNIQUE (OrderID,CustomerID),
+    CONSTRAINT [CK_Orders_0] CHECK (Source IN ('App','POS')),
+    CONSTRAINT [CK_Orders_1] CHECK (Fulfillment IN ('Pickup','Delivery')),
+    CONSTRAINT [CK_Orders_2] CHECK (PaymentMode IN ('Prepaid','COD')),
+    CONSTRAINT [CK_Orders_3] CHECK (Status IN ('AwaitingPayment','Pending','Confirmed','Preparing','Ready','Delivering','Completed','Cancelled')),
+    CONSTRAINT [CK_Orders_4] CHECK (Source <> 'App' OR CustomerID IS NOT NULL),
+    CONSTRAINT [CK_Orders_5] CHECK (Fulfillment <> 'Delivery' OR ContactPhone IS NOT NULL),
+    CONSTRAINT [CK_Orders_6] CHECK (Subtotal >= 0 AND DiscountAmount >= 0 AND DiscountAmount <= Subtotal AND DeliveryFee >= 0),
+    CONSTRAINT [CK_Orders_7] CHECK (TotalAmount = Subtotal - DiscountAmount + DeliveryFee),
+    CONSTRAINT [CK_Orders_8] CHECK (AmountPerPoint > 0),
+    CONSTRAINT [CK_Orders_9] CHECK (Fulfillment <> 'Pickup' OR DeliveryFee = 0),
+    CONSTRAINT [CK_Orders_10] CHECK (CustomerPromotionID IS NULL OR CustomerID IS NOT NULL)
+);
+
+CREATE TABLE dbo.[OrderDetails] (
+    [OrderDetailID] int IDENTITY(1,1) NOT NULL,
+    [OrderID] int NOT NULL,
+    [ProductID] int NOT NULL,
+    [VariantID] int NOT NULL,
+    [ProductName] nvarchar(150) NOT NULL,
+    [VariantName] nvarchar(50) NOT NULL,
+    [Quantity] int NOT NULL,
+    [UnitPrice] decimal(18,2) NOT NULL,
+    [ModifierTotal] decimal(18,2) NOT NULL CONSTRAINT [DF_OrderDetails_ModifierTotal] DEFAULT (0),
+    [LineTotal] decimal(18,2) NOT NULL,
+    [Note] nvarchar(300) NULL,
+    CONSTRAINT [PK_OrderDetails] PRIMARY KEY ([OrderDetailID]),
+    CONSTRAINT [CK_OrderDetails_0] CHECK (Quantity BETWEEN 1 AND 100),
+    CONSTRAINT [CK_OrderDetails_1] CHECK (UnitPrice >= 0 AND ModifierTotal >= 0),
+    CONSTRAINT [CK_OrderDetails_2] CHECK (LineTotal = (UnitPrice + ModifierTotal) * Quantity)
+);
+
+CREATE TABLE dbo.[OrderItemModifiers] (
+    [OrderDetailID] int NOT NULL,
+    [ModifierOptionID] int NOT NULL,
+    [GroupName] nvarchar(100) NOT NULL,
+    [OptionName] nvarchar(100) NOT NULL,
+    [ExtraPrice] decimal(18,2) NOT NULL,
+    CONSTRAINT [PK_OrderItemModifiers] PRIMARY KEY ([OrderDetailID],[ModifierOptionID]),
+    CONSTRAINT [CK_OrderItemModifiers_0] CHECK (ExtraPrice >= 0)
+);
+
+CREATE TABLE dbo.[OrderStatusHistory] (
+    [HistoryID] int IDENTITY(1,1) NOT NULL,
+    [OrderID] int NOT NULL,
+    [FromStatus] varchar(20) NULL,
+    [ToStatus] varchar(20) NOT NULL,
+    [ChangedBy] int NULL,
+    [Reason] nvarchar(500) NULL,
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_OrderStatusHistory_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT [PK_OrderStatusHistory] PRIMARY KEY ([HistoryID])
+);
+
+CREATE TABLE dbo.[Deliveries] (
+    [OrderID] int NOT NULL,
+    [RecipientName] nvarchar(120) NOT NULL,
+    [Phone] varchar(20) NOT NULL,
+    [AddressText] nvarchar(500) NOT NULL,
+    [Note] nvarchar(300) NULL,
+    [Status] varchar(12) NOT NULL CONSTRAINT [DF_Deliveries_Status] DEFAULT ('Pending'),
+    [CourierName] nvarchar(120) NULL,
+    [CourierPhone] varchar(20) NULL,
+    [FailureReason] nvarchar(500) NULL,
+    [AttemptCount] int NOT NULL CONSTRAINT [DF_Deliveries_AttemptCount] DEFAULT (0),
+    [DispatchedAt] datetime2(3) NULL,
+    [DeliveredAt] datetime2(3) NULL,
+    [Version] rowversion NOT NULL,
+    CONSTRAINT [PK_Deliveries] PRIMARY KEY ([OrderID]),
+    CONSTRAINT [CK_Deliveries_0] CHECK (Status IN ('Pending','Delivering','Failed','Delivered','Cancelled')),
+    CONSTRAINT [CK_Deliveries_1] CHECK (AttemptCount >= 0)
+);
+
+CREATE TABLE dbo.[PaymentAttempts] (
+    [PaymentID] int IDENTITY(1,1) NOT NULL,
+    [OrderID] int NOT NULL,
+    [RequestKey] uniqueidentifier NOT NULL,
+    [Method] varchar(15) NOT NULL,
+    [Provider] varchar(40) NOT NULL,
+    [ProviderReference] varchar(120) NULL,
+    [Amount] decimal(18,2) NOT NULL,
+    [Status] varchar(12) NOT NULL CONSTRAINT [DF_PaymentAttempts_Status] DEFAULT ('Pending'),
+    [FailureReason] nvarchar(500) NULL,
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_PaymentAttempts_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    [SettledAt] datetime2(3) NULL,
+    CONSTRAINT [PK_PaymentAttempts] PRIMARY KEY ([PaymentID]),
+    CONSTRAINT [UQ_PaymentAttempts_0] UNIQUE (RequestKey),
+    CONSTRAINT [UQ_PaymentAttempts_1] UNIQUE (PaymentID,OrderID),
+    CONSTRAINT [CK_PaymentAttempts_0] CHECK (Method IN ('Simulator','Cash')),
+    CONSTRAINT [CK_PaymentAttempts_1] CHECK (Status IN ('Pending','Succeeded','Failed')),
+    CONSTRAINT [CK_PaymentAttempts_2] CHECK (Amount >= 0)
+);
+
+CREATE TABLE dbo.[Refunds] (
+    [RefundID] int IDENTITY(1,1) NOT NULL,
+    [PaymentID] int NOT NULL,
+    [OrderID] int NOT NULL,
+    [RequestKey] uniqueidentifier NOT NULL,
+    [Amount] decimal(18,2) NOT NULL,
+    [Status] varchar(12) NOT NULL CONSTRAINT [DF_Refunds_Status] DEFAULT ('Pending'),
+    [Reason] nvarchar(500) NOT NULL,
+    [RequestedBy] int NOT NULL,
+    [ProviderReference] varchar(120) NULL,
+    [AttemptCount] int NOT NULL CONSTRAINT [DF_Refunds_AttemptCount] DEFAULT (0),
+    [FailureReason] nvarchar(500) NULL,
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_Refunds_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    [CompletedAt] datetime2(3) NULL,
+    CONSTRAINT [PK_Refunds] PRIMARY KEY ([RefundID]),
+    CONSTRAINT [UQ_Refunds_0] UNIQUE (PaymentID),
+    CONSTRAINT [UQ_Refunds_1] UNIQUE (RequestKey),
+    CONSTRAINT [CK_Refunds_0] CHECK (Status IN ('Pending','Succeeded','Failed')),
+    CONSTRAINT [CK_Refunds_1] CHECK (Amount >= 0 AND AttemptCount >= 0)
+);
+
+CREATE TABLE dbo.[LoyaltyTransactions] (
+    [LoyaltyTransactionID] int IDENTITY(1,1) NOT NULL,
+    [CustomerID] int NOT NULL,
+    [OrderID] int NULL,
+    [CustomerPromotionID] int NULL,
+    [Kind] varchar(12) NOT NULL,
+    [Points] int NOT NULL,
+    [RequestKey] uniqueidentifier NOT NULL,
+    [Note] nvarchar(300) NULL,
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_LoyaltyTransactions_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT [PK_LoyaltyTransactions] PRIMARY KEY ([LoyaltyTransactionID]),
+    CONSTRAINT [UQ_LoyaltyTransactions_0] UNIQUE (RequestKey),
+    CONSTRAINT [CK_LoyaltyTransactions_0] CHECK (Kind IN ('Earn','Redeem','Reverse','Adjust')),
+    CONSTRAINT [CK_LoyaltyTransactions_1] CHECK ((Kind='Earn' AND Points>0 AND OrderID IS NOT NULL) OR (Kind='Redeem' AND Points<0 AND CustomerPromotionID IS NOT NULL) OR (Kind='Reverse' AND Points<0 AND OrderID IS NOT NULL) OR (Kind='Adjust' AND Points<>0))
+);
+
+CREATE TABLE dbo.[Feedbacks] (
+    [FeedbackID] int IDENTITY(1,1) NOT NULL,
+    [CustomerID] int NOT NULL,
+    [OrderID] int NULL,
+    [BranchID] int NULL,
+    [ProductID] int NULL,
+    [Type] varchar(15) NOT NULL,
+    [Content] nvarchar(4000) NOT NULL,
+    [Rating] tinyint NULL,
+    [Status] varchar(12) NOT NULL CONSTRAINT [DF_Feedbacks_Status] DEFAULT ('New'),
+    [HandledBy] int NULL,
+    [ResponseContent] nvarchar(4000) NULL,
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_Feedbacks_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    [HandledAt] datetime2(3) NULL,
+    CONSTRAINT [PK_Feedbacks] PRIMARY KEY ([FeedbackID]),
+    CONSTRAINT [CK_Feedbacks_0] CHECK (Type IN ('Product','Service','Space','Other')),
+    CONSTRAINT [CK_Feedbacks_1] CHECK (Rating IS NULL OR Rating BETWEEN 1 AND 5),
+    CONSTRAINT [CK_Feedbacks_2] CHECK (Status IN ('New','Processing','Resolved'))
+);
+
+CREATE TABLE dbo.[Surveys] (
+    [SurveyID] int IDENTITY(1,1) NOT NULL,
+    [Title] nvarchar(250) NOT NULL,
+    [Description] nvarchar(2000) NULL,
+    [CreatedBy] int NOT NULL,
+    [Scope] varchar(10) NOT NULL,
+    [AreaID] int NULL,
+    [BranchID] int NULL,
+    [StartsAt] datetime2(3) NOT NULL CONSTRAINT [DF_Surveys_StartsAt] DEFAULT (SYSUTCDATETIME()),
+    [EndsAt] datetime2(3) NOT NULL,
+    [Status] varchar(10) NOT NULL CONSTRAINT [DF_Surveys_Status] DEFAULT ('Draft'),
+    CONSTRAINT [PK_Surveys] PRIMARY KEY ([SurveyID]),
+    CONSTRAINT [CK_Surveys_0] CHECK (Scope IN ('Chain','Area','Branch')),
+    CONSTRAINT [CK_Surveys_1] CHECK ((Scope='Chain' AND AreaID IS NULL AND BranchID IS NULL) OR (Scope='Area' AND AreaID IS NOT NULL AND BranchID IS NULL) OR (Scope='Branch' AND AreaID IS NULL AND BranchID IS NOT NULL)),
+    CONSTRAINT [CK_Surveys_2] CHECK (EndsAt IS NOT NULL AND EndsAt > StartsAt),
+    CONSTRAINT [CK_Surveys_3] CHECK (Status IN ('Draft','Open','Closed'))
+);
+
+CREATE TABLE dbo.[SurveyQuestions] (
+    [QuestionID] int IDENTITY(1,1) NOT NULL,
+    [SurveyID] int NOT NULL,
+    [Text] nvarchar(2000) NOT NULL,
+    [Type] varchar(15) NOT NULL,
+    [IsRequired] bit NOT NULL CONSTRAINT [DF_SurveyQuestions_IsRequired] DEFAULT (1),
+    [DisplayOrder] int NOT NULL,
+    [RatingMin] int NULL,
+    [RatingMax] int NULL,
+    CONSTRAINT [PK_SurveyQuestions] PRIMARY KEY ([QuestionID]),
+    CONSTRAINT [UQ_SurveyQuestions_0] UNIQUE (SurveyID,DisplayOrder),
+    CONSTRAINT [UQ_SurveyQuestions_1] UNIQUE (QuestionID,SurveyID),
+    CONSTRAINT [CK_SurveyQuestions_0] CHECK (Type IN ('SingleChoice','MultipleChoice','Rating','Text')),
+    CONSTRAINT [CK_SurveyQuestions_1] CHECK (DisplayOrder >= 0),
+    CONSTRAINT [CK_SurveyQuestions_2] CHECK ((Type='Rating' AND RatingMin IS NOT NULL AND RatingMax IS NOT NULL AND RatingMin < RatingMax) OR (Type<>'Rating' AND RatingMin IS NULL AND RatingMax IS NULL))
+);
+
+CREATE TABLE dbo.[SurveyQuestionOptions] (
+    [OptionID] int IDENTITY(1,1) NOT NULL,
+    [QuestionID] int NOT NULL,
+    [Text] nvarchar(500) NOT NULL,
+    [DisplayOrder] int NOT NULL,
+    CONSTRAINT [PK_SurveyQuestionOptions] PRIMARY KEY ([OptionID]),
+    CONSTRAINT [UQ_SurveyQuestionOptions_0] UNIQUE (QuestionID,DisplayOrder),
+    CONSTRAINT [UQ_SurveyQuestionOptions_1] UNIQUE (OptionID,QuestionID),
+    CONSTRAINT [CK_SurveyQuestionOptions_0] CHECK (DisplayOrder >= 0)
+);
+
+CREATE TABLE dbo.[SurveyRecipients] (
+    [SurveyID] int NOT NULL,
+    [CustomerID] int NOT NULL,
+    [SentAt] datetime2(3) NOT NULL CONSTRAINT [DF_SurveyRecipients_SentAt] DEFAULT (SYSUTCDATETIME()),
+    [CompletedAt] datetime2(3) NULL,
+    CONSTRAINT [PK_SurveyRecipients] PRIMARY KEY ([SurveyID],[CustomerID])
+);
+
+CREATE TABLE dbo.[SurveyResponses] (
+    [ResponseID] int IDENTITY(1,1) NOT NULL,
+    [SurveyID] int NOT NULL,
+    [QuestionID] int NOT NULL,
+    [CustomerID] int NOT NULL,
+    [TextValue] nvarchar(4000) NULL,
+    [RatingValue] int NULL,
+    [SubmittedAt] datetime2(3) NOT NULL CONSTRAINT [DF_SurveyResponses_SubmittedAt] DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT [PK_SurveyResponses] PRIMARY KEY ([ResponseID]),
+    CONSTRAINT [UQ_SurveyResponses_0] UNIQUE (QuestionID,CustomerID),
+    CONSTRAINT [UQ_SurveyResponses_1] UNIQUE (ResponseID,QuestionID)
+);
+
+CREATE TABLE dbo.[SurveyAnswerOptions] (
+    [ResponseID] int NOT NULL,
+    [OptionID] int NOT NULL,
+    [QuestionID] int NOT NULL,
+    CONSTRAINT [PK_SurveyAnswerOptions] PRIMARY KEY ([ResponseID],[OptionID])
+);
+
+CREATE TABLE dbo.[Notifications] (
+    [NotificationID] int IDENTITY(1,1) NOT NULL,
+    [UserID] int NOT NULL,
+    [Title] nvarchar(200) NOT NULL,
+    [Body] nvarchar(2000) NOT NULL,
+    [OrderID] int NULL,
+    [CustomerPromotionID] int NULL,
+    [SurveyID] int NULL,
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_Notifications_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    [ReadAt] datetime2(3) NULL,
+    CONSTRAINT [PK_Notifications] PRIMARY KEY ([NotificationID])
+);
+
+CREATE TABLE dbo.[AuditLogs] (
+    [AuditID] int IDENTITY(1,1) NOT NULL,
+    [ActorID] int NULL,
+    [BranchID] int NULL,
+    [Action] varchar(80) NOT NULL,
+    [EntityType] varchar(60) NOT NULL,
+    [EntityID] int NULL,
+    [Details] nvarchar(4000) NULL,
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_AuditLogs_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT [PK_AuditLogs] PRIMARY KEY ([AuditID])
+);
+
+ALTER TABLE dbo.[RolePermissions] ADD CONSTRAINT [FK_RolePermissions_RoleID] FOREIGN KEY ([RoleID]) REFERENCES dbo.[Roles]([RoleID]);
+
+ALTER TABLE dbo.[RolePermissions] ADD CONSTRAINT [FK_RolePermissions_PermissionID] FOREIGN KEY ([PermissionID]) REFERENCES dbo.[Permissions]([PermissionID]);
+
+ALTER TABLE dbo.[Users] ADD CONSTRAINT [FK_Users_RoleID] FOREIGN KEY ([RoleID]) REFERENCES dbo.[Roles]([RoleID]);
+
+ALTER TABLE dbo.[UserSessions] ADD CONSTRAINT [FK_UserSessions_UserID] FOREIGN KEY ([UserID]) REFERENCES dbo.[Users]([UserID]);
+
+ALTER TABLE dbo.[Branches] ADD CONSTRAINT [FK_Branches_AreaID] FOREIGN KEY ([AreaID]) REFERENCES dbo.[Areas]([AreaID]);
+
+ALTER TABLE dbo.[Branches] ADD CONSTRAINT [FK_Branches_ManagerID] FOREIGN KEY ([ManagerID]) REFERENCES dbo.[Users]([UserID]);
+
+ALTER TABLE dbo.[AreaManagers] ADD CONSTRAINT [FK_AreaManagers_AreaID] FOREIGN KEY ([AreaID]) REFERENCES dbo.[Areas]([AreaID]);
+
+ALTER TABLE dbo.[AreaManagers] ADD CONSTRAINT [FK_AreaManagers_UserID] FOREIGN KEY ([UserID]) REFERENCES dbo.[Users]([UserID]);
+
+ALTER TABLE dbo.[StaffBranches] ADD CONSTRAINT [FK_StaffBranches_UserID] FOREIGN KEY ([UserID]) REFERENCES dbo.[Users]([UserID]);
+
+ALTER TABLE dbo.[StaffBranches] ADD CONSTRAINT [FK_StaffBranches_BranchID] FOREIGN KEY ([BranchID]) REFERENCES dbo.[Branches]([BranchID]);
+
+ALTER TABLE dbo.[Customers] ADD CONSTRAINT [FK_Customers_UserID] FOREIGN KEY ([UserID]) REFERENCES dbo.[Users]([UserID]);
+
+ALTER TABLE dbo.[CustomerAddresses] ADD CONSTRAINT [FK_CustomerAddresses_CustomerID] FOREIGN KEY ([CustomerID]) REFERENCES dbo.[Customers]([CustomerID]);
+
+ALTER TABLE dbo.[Products] ADD CONSTRAINT [FK_Products_CategoryID] FOREIGN KEY ([CategoryID]) REFERENCES dbo.[Categories]([CategoryID]);
+
+ALTER TABLE dbo.[ProductVariants] ADD CONSTRAINT [FK_ProductVariants_ProductID] FOREIGN KEY ([ProductID]) REFERENCES dbo.[Products]([ProductID]);
+
+ALTER TABLE dbo.[BranchProducts] ADD CONSTRAINT [FK_BranchProducts_BranchID] FOREIGN KEY ([BranchID]) REFERENCES dbo.[Branches]([BranchID]);
+
+ALTER TABLE dbo.[BranchProducts] ADD CONSTRAINT [FK_BranchProducts_ProductID] FOREIGN KEY ([ProductID]) REFERENCES dbo.[Products]([ProductID]);
+
+ALTER TABLE dbo.[BranchProductVariants] ADD CONSTRAINT [FK_BranchProductVariants_BranchID] FOREIGN KEY ([BranchID]) REFERENCES dbo.[Branches]([BranchID]);
+
+ALTER TABLE dbo.[BranchProductVariants] ADD CONSTRAINT [FK_BranchProductVariants_VariantID] FOREIGN KEY ([VariantID]) REFERENCES dbo.[ProductVariants]([VariantID]);
+
+ALTER TABLE dbo.[BranchProductVariants] ADD CONSTRAINT [FK_BranchProductVariants_ProductID] FOREIGN KEY ([ProductID]) REFERENCES dbo.[Products]([ProductID]);
+
+ALTER TABLE dbo.[ModifierOptions] ADD CONSTRAINT [FK_ModifierOptions_ModifierGroupID] FOREIGN KEY ([ModifierGroupID]) REFERENCES dbo.[ModifierGroups]([ModifierGroupID]);
+
+ALTER TABLE dbo.[ProductModifierGroups] ADD CONSTRAINT [FK_ProductModifierGroups_ProductID] FOREIGN KEY ([ProductID]) REFERENCES dbo.[Products]([ProductID]);
+
+ALTER TABLE dbo.[ProductModifierGroups] ADD CONSTRAINT [FK_ProductModifierGroups_ModifierGroupID] FOREIGN KEY ([ModifierGroupID]) REFERENCES dbo.[ModifierGroups]([ModifierGroupID]);
+
+ALTER TABLE dbo.[BranchModifierOptions] ADD CONSTRAINT [FK_BranchModifierOptions_BranchID] FOREIGN KEY ([BranchID]) REFERENCES dbo.[Branches]([BranchID]);
+
+ALTER TABLE dbo.[BranchModifierOptions] ADD CONSTRAINT [FK_BranchModifierOptions_ModifierOptionID] FOREIGN KEY ([ModifierOptionID]) REFERENCES dbo.[ModifierOptions]([ModifierOptionID]);
+
+ALTER TABLE dbo.[CustomerPreferences] ADD CONSTRAINT [FK_CustomerPreferences_CustomerID] FOREIGN KEY ([CustomerID]) REFERENCES dbo.[Customers]([CustomerID]);
+
+ALTER TABLE dbo.[CustomerPreferences] ADD CONSTRAINT [FK_CustomerPreferences_ProductID] FOREIGN KEY ([ProductID]) REFERENCES dbo.[Products]([ProductID]);
+
+ALTER TABLE dbo.[Promotions] ADD CONSTRAINT [FK_Promotions_AreaID] FOREIGN KEY ([AreaID]) REFERENCES dbo.[Areas]([AreaID]);
+
+ALTER TABLE dbo.[Promotions] ADD CONSTRAINT [FK_Promotions_BranchID] FOREIGN KEY ([BranchID]) REFERENCES dbo.[Branches]([BranchID]);
+
+ALTER TABLE dbo.[Promotions] ADD CONSTRAINT [FK_Promotions_CreatedBy] FOREIGN KEY ([CreatedBy]) REFERENCES dbo.[Users]([UserID]);
+
+ALTER TABLE dbo.[CustomerPromotions] ADD CONSTRAINT [FK_CustomerPromotions_CustomerID] FOREIGN KEY ([CustomerID]) REFERENCES dbo.[Customers]([CustomerID]);
+
+ALTER TABLE dbo.[CustomerPromotions] ADD CONSTRAINT [FK_CustomerPromotions_PromotionID] FOREIGN KEY ([PromotionID]) REFERENCES dbo.[Promotions]([PromotionID]);
+
+ALTER TABLE dbo.[CustomerPromotions] ADD CONSTRAINT [FK_CustomerPromotions_ReservedOrderID] FOREIGN KEY ([ReservedOrderID]) REFERENCES dbo.[Orders]([OrderID]);
+
+ALTER TABLE dbo.[CustomerPromotions] ADD CONSTRAINT [FK_CustomerPromotions_UsedOrderID] FOREIGN KEY ([UsedOrderID]) REFERENCES dbo.[Orders]([OrderID]);
+
+ALTER TABLE dbo.[Orders] ADD CONSTRAINT [FK_Orders_BranchID] FOREIGN KEY ([BranchID]) REFERENCES dbo.[Branches]([BranchID]);
+
+ALTER TABLE dbo.[Orders] ADD CONSTRAINT [FK_Orders_CustomerID] FOREIGN KEY ([CustomerID]) REFERENCES dbo.[Customers]([CustomerID]);
+
+ALTER TABLE dbo.[Orders] ADD CONSTRAINT [FK_Orders_CreatedBy] FOREIGN KEY ([CreatedBy]) REFERENCES dbo.[Users]([UserID]);
+
+ALTER TABLE dbo.[Orders] ADD CONSTRAINT [FK_Orders_CustomerPromotionID] FOREIGN KEY ([CustomerPromotionID]) REFERENCES dbo.[CustomerPromotions]([CustomerPromotionID]);
+
+ALTER TABLE dbo.[Orders] ADD CONSTRAINT [FK_Orders_PolicyID] FOREIGN KEY ([PolicyID]) REFERENCES dbo.[LoyaltyPolicies]([PolicyID]);
+
+ALTER TABLE dbo.[OrderDetails] ADD CONSTRAINT [FK_OrderDetails_OrderID] FOREIGN KEY ([OrderID]) REFERENCES dbo.[Orders]([OrderID]);
+
+ALTER TABLE dbo.[OrderDetails] ADD CONSTRAINT [FK_OrderDetails_ProductID] FOREIGN KEY ([ProductID]) REFERENCES dbo.[Products]([ProductID]);
+
+ALTER TABLE dbo.[OrderDetails] ADD CONSTRAINT [FK_OrderDetails_VariantID] FOREIGN KEY ([VariantID]) REFERENCES dbo.[ProductVariants]([VariantID]);
+
+ALTER TABLE dbo.[OrderItemModifiers] ADD CONSTRAINT [FK_OrderItemModifiers_OrderDetailID] FOREIGN KEY ([OrderDetailID]) REFERENCES dbo.[OrderDetails]([OrderDetailID]);
+
+ALTER TABLE dbo.[OrderItemModifiers] ADD CONSTRAINT [FK_OrderItemModifiers_ModifierOptionID] FOREIGN KEY ([ModifierOptionID]) REFERENCES dbo.[ModifierOptions]([ModifierOptionID]);
+
+ALTER TABLE dbo.[OrderStatusHistory] ADD CONSTRAINT [FK_OrderStatusHistory_OrderID] FOREIGN KEY ([OrderID]) REFERENCES dbo.[Orders]([OrderID]);
+
+ALTER TABLE dbo.[OrderStatusHistory] ADD CONSTRAINT [FK_OrderStatusHistory_ChangedBy] FOREIGN KEY ([ChangedBy]) REFERENCES dbo.[Users]([UserID]);
+
+ALTER TABLE dbo.[Deliveries] ADD CONSTRAINT [FK_Deliveries_OrderID] FOREIGN KEY ([OrderID]) REFERENCES dbo.[Orders]([OrderID]);
+
+ALTER TABLE dbo.[PaymentAttempts] ADD CONSTRAINT [FK_PaymentAttempts_OrderID] FOREIGN KEY ([OrderID]) REFERENCES dbo.[Orders]([OrderID]);
+
+ALTER TABLE dbo.[Refunds] ADD CONSTRAINT [FK_Refunds_PaymentID] FOREIGN KEY ([PaymentID]) REFERENCES dbo.[PaymentAttempts]([PaymentID]);
+
+ALTER TABLE dbo.[Refunds] ADD CONSTRAINT [FK_Refunds_OrderID] FOREIGN KEY ([OrderID]) REFERENCES dbo.[Orders]([OrderID]);
+
+ALTER TABLE dbo.[Refunds] ADD CONSTRAINT [FK_Refunds_RequestedBy] FOREIGN KEY ([RequestedBy]) REFERENCES dbo.[Users]([UserID]);
+
+ALTER TABLE dbo.[LoyaltyTransactions] ADD CONSTRAINT [FK_LoyaltyTransactions_CustomerID] FOREIGN KEY ([CustomerID]) REFERENCES dbo.[Customers]([CustomerID]);
+
+ALTER TABLE dbo.[LoyaltyTransactions] ADD CONSTRAINT [FK_LoyaltyTransactions_OrderID] FOREIGN KEY ([OrderID]) REFERENCES dbo.[Orders]([OrderID]);
+
+ALTER TABLE dbo.[LoyaltyTransactions] ADD CONSTRAINT [FK_LoyaltyTransactions_CustomerPromotionID] FOREIGN KEY ([CustomerPromotionID]) REFERENCES dbo.[CustomerPromotions]([CustomerPromotionID]);
+
+ALTER TABLE dbo.[Feedbacks] ADD CONSTRAINT [FK_Feedbacks_CustomerID] FOREIGN KEY ([CustomerID]) REFERENCES dbo.[Customers]([CustomerID]);
+
+ALTER TABLE dbo.[Feedbacks] ADD CONSTRAINT [FK_Feedbacks_OrderID] FOREIGN KEY ([OrderID]) REFERENCES dbo.[Orders]([OrderID]);
+
+ALTER TABLE dbo.[Feedbacks] ADD CONSTRAINT [FK_Feedbacks_BranchID] FOREIGN KEY ([BranchID]) REFERENCES dbo.[Branches]([BranchID]);
+
+ALTER TABLE dbo.[Feedbacks] ADD CONSTRAINT [FK_Feedbacks_ProductID] FOREIGN KEY ([ProductID]) REFERENCES dbo.[Products]([ProductID]);
+
+ALTER TABLE dbo.[Feedbacks] ADD CONSTRAINT [FK_Feedbacks_HandledBy] FOREIGN KEY ([HandledBy]) REFERENCES dbo.[Users]([UserID]);
+
+ALTER TABLE dbo.[Surveys] ADD CONSTRAINT [FK_Surveys_CreatedBy] FOREIGN KEY ([CreatedBy]) REFERENCES dbo.[Users]([UserID]);
+
+ALTER TABLE dbo.[Surveys] ADD CONSTRAINT [FK_Surveys_AreaID] FOREIGN KEY ([AreaID]) REFERENCES dbo.[Areas]([AreaID]);
+
+ALTER TABLE dbo.[Surveys] ADD CONSTRAINT [FK_Surveys_BranchID] FOREIGN KEY ([BranchID]) REFERENCES dbo.[Branches]([BranchID]);
+
+ALTER TABLE dbo.[SurveyQuestions] ADD CONSTRAINT [FK_SurveyQuestions_SurveyID] FOREIGN KEY ([SurveyID]) REFERENCES dbo.[Surveys]([SurveyID]);
+
+ALTER TABLE dbo.[SurveyQuestionOptions] ADD CONSTRAINT [FK_SurveyQuestionOptions_QuestionID] FOREIGN KEY ([QuestionID]) REFERENCES dbo.[SurveyQuestions]([QuestionID]);
+
+ALTER TABLE dbo.[SurveyRecipients] ADD CONSTRAINT [FK_SurveyRecipients_SurveyID] FOREIGN KEY ([SurveyID]) REFERENCES dbo.[Surveys]([SurveyID]);
+
+ALTER TABLE dbo.[SurveyRecipients] ADD CONSTRAINT [FK_SurveyRecipients_CustomerID] FOREIGN KEY ([CustomerID]) REFERENCES dbo.[Customers]([CustomerID]);
+
+ALTER TABLE dbo.[SurveyResponses] ADD CONSTRAINT [FK_SurveyResponses_SurveyID] FOREIGN KEY ([SurveyID]) REFERENCES dbo.[Surveys]([SurveyID]);
+
+ALTER TABLE dbo.[SurveyResponses] ADD CONSTRAINT [FK_SurveyResponses_QuestionID] FOREIGN KEY ([QuestionID]) REFERENCES dbo.[SurveyQuestions]([QuestionID]);
+
+ALTER TABLE dbo.[SurveyResponses] ADD CONSTRAINT [FK_SurveyResponses_CustomerID] FOREIGN KEY ([CustomerID]) REFERENCES dbo.[Customers]([CustomerID]);
+
+ALTER TABLE dbo.[SurveyAnswerOptions] ADD CONSTRAINT [FK_SurveyAnswerOptions_ResponseID] FOREIGN KEY ([ResponseID]) REFERENCES dbo.[SurveyResponses]([ResponseID]);
+
+ALTER TABLE dbo.[SurveyAnswerOptions] ADD CONSTRAINT [FK_SurveyAnswerOptions_OptionID] FOREIGN KEY ([OptionID]) REFERENCES dbo.[SurveyQuestionOptions]([OptionID]);
+
+ALTER TABLE dbo.[SurveyAnswerOptions] ADD CONSTRAINT [FK_SurveyAnswerOptions_QuestionID] FOREIGN KEY ([QuestionID]) REFERENCES dbo.[SurveyQuestions]([QuestionID]);
+
+ALTER TABLE dbo.[Notifications] ADD CONSTRAINT [FK_Notifications_UserID] FOREIGN KEY ([UserID]) REFERENCES dbo.[Users]([UserID]);
+
+ALTER TABLE dbo.[Notifications] ADD CONSTRAINT [FK_Notifications_OrderID] FOREIGN KEY ([OrderID]) REFERENCES dbo.[Orders]([OrderID]);
+
+ALTER TABLE dbo.[Notifications] ADD CONSTRAINT [FK_Notifications_CustomerPromotionID] FOREIGN KEY ([CustomerPromotionID]) REFERENCES dbo.[CustomerPromotions]([CustomerPromotionID]);
+
+ALTER TABLE dbo.[Notifications] ADD CONSTRAINT [FK_Notifications_SurveyID] FOREIGN KEY ([SurveyID]) REFERENCES dbo.[Surveys]([SurveyID]);
+
+ALTER TABLE dbo.[AuditLogs] ADD CONSTRAINT [FK_AuditLogs_ActorID] FOREIGN KEY ([ActorID]) REFERENCES dbo.[Users]([UserID]);
+
+ALTER TABLE dbo.[AuditLogs] ADD CONSTRAINT [FK_AuditLogs_BranchID] FOREIGN KEY ([BranchID]) REFERENCES dbo.[Branches]([BranchID]);
+
+ALTER TABLE dbo.[BranchProductVariants] ADD CONSTRAINT FK_Composite_0 FOREIGN KEY (BranchID,ProductID) REFERENCES dbo.[BranchProducts](BranchID,ProductID);
+
+ALTER TABLE dbo.[BranchProductVariants] ADD CONSTRAINT FK_Composite_1 FOREIGN KEY (VariantID,ProductID) REFERENCES dbo.[ProductVariants](VariantID,ProductID);
+
+ALTER TABLE dbo.[OrderDetails] ADD CONSTRAINT FK_Composite_2 FOREIGN KEY (VariantID,ProductID) REFERENCES dbo.[ProductVariants](VariantID,ProductID);
+
+ALTER TABLE dbo.[Orders] ADD CONSTRAINT FK_Composite_3 FOREIGN KEY (CustomerPromotionID,CustomerID) REFERENCES dbo.[CustomerPromotions](CustomerPromotionID,CustomerID);
+
+ALTER TABLE dbo.[Refunds] ADD CONSTRAINT FK_Composite_4 FOREIGN KEY (PaymentID,OrderID) REFERENCES dbo.[PaymentAttempts](PaymentID,OrderID);
+
+ALTER TABLE dbo.[Feedbacks] ADD CONSTRAINT FK_Composite_5 FOREIGN KEY (OrderID,CustomerID) REFERENCES dbo.[Orders](OrderID,CustomerID);
+
+ALTER TABLE dbo.[SurveyResponses] ADD CONSTRAINT FK_Composite_6 FOREIGN KEY (QuestionID,SurveyID) REFERENCES dbo.[SurveyQuestions](QuestionID,SurveyID);
+
+ALTER TABLE dbo.[SurveyResponses] ADD CONSTRAINT FK_Composite_7 FOREIGN KEY (SurveyID,CustomerID) REFERENCES dbo.[SurveyRecipients](SurveyID,CustomerID);
+
+ALTER TABLE dbo.[SurveyAnswerOptions] ADD CONSTRAINT FK_Composite_8 FOREIGN KEY (ResponseID,QuestionID) REFERENCES dbo.[SurveyResponses](ResponseID,QuestionID);
+
+ALTER TABLE dbo.[SurveyAnswerOptions] ADD CONSTRAINT FK_Composite_9 FOREIGN KEY (OptionID,QuestionID) REFERENCES dbo.[SurveyQuestionOptions](OptionID,QuestionID);
+
+CREATE UNIQUE INDEX IX_CustomerAddresses_0 ON dbo.[CustomerAddresses](CustomerID) WHERE IsDefault=1;
+
+CREATE  INDEX IX_CustomerPromotions_1 ON dbo.[CustomerPromotions](CustomerID,Status,ExpiresAt);
+
+CREATE UNIQUE INDEX IX_PaymentAttempts_2 ON dbo.[PaymentAttempts](OrderID) WHERE Status='Succeeded';
+
+CREATE UNIQUE INDEX IX_PaymentAttempts_3 ON dbo.[PaymentAttempts](OrderID) WHERE Status='Pending';
+
+CREATE UNIQUE INDEX IX_PaymentAttempts_4 ON dbo.[PaymentAttempts](Provider,ProviderReference) WHERE ProviderReference IS NOT NULL;
+
+CREATE UNIQUE INDEX IX_LoyaltyTransactions_5 ON dbo.[LoyaltyTransactions](OrderID) WHERE Kind='Earn';
+
+CREATE UNIQUE INDEX IX_LoyaltyTransactions_6 ON dbo.[LoyaltyTransactions](OrderID) WHERE Kind='Reverse';
+
+CREATE UNIQUE INDEX IX_LoyaltyTransactions_7 ON dbo.[LoyaltyTransactions](CustomerPromotionID) WHERE Kind='Redeem';
+
+CREATE  INDEX IX_LoyaltyTransactions_8 ON dbo.[LoyaltyTransactions](CustomerID,CreatedAt);
+
+CREATE  INDEX IX_Orders_9 ON dbo.[Orders](BranchID,Status,CreatedAt);
+
+CREATE  INDEX IX_Orders_10 ON dbo.[Orders](CustomerID,CreatedAt);
+
+CREATE  INDEX IX_OrderDetails_11 ON dbo.[OrderDetails](OrderID);
+
+CREATE  INDEX IX_OrderStatusHistory_12 ON dbo.[OrderStatusHistory](OrderID,CreatedAt);
+
+CREATE  INDEX IX_Feedbacks_13 ON dbo.[Feedbacks](BranchID,Status,CreatedAt);
+
+CREATE  INDEX IX_SurveyRecipients_14 ON dbo.[SurveyRecipients](CustomerID,CompletedAt);
+
+CREATE  INDEX IX_Notifications_15 ON dbo.[Notifications](UserID,ReadAt,CreatedAt);
+
+CREATE  INDEX IX_AuditLogs_16 ON dbo.[AuditLogs](BranchID,CreatedAt);
+
+CREATE  INDEX IX_UserSessions_17 ON dbo.[UserSessions](UserID,ExpiresAt);
+
+CREATE  INDEX IX_Customers_18 ON dbo.[Customers](DateOfBirth,Gender);
+
+COMMIT;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 02_rules.sql (historical filename)
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER FUNCTION dbo.CanBranch(@UserID int,@BranchID int,@Permission varchar(80))
+RETURNS bit AS
+BEGIN
+ DECLARE @ok bit=0;
+ IF EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
+ JOIN dbo.RolePermissions rp ON rp.RoleID=u.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
+ JOIN dbo.Branches b ON b.BranchID=@BranchID
+ WHERE u.UserID=@UserID AND u.IsActive=1 AND p.Code=@Permission AND
+ (r.Code='Owner' OR (r.Code='AreaManager' AND EXISTS(SELECT 1 FROM dbo.AreaManagers a WHERE a.UserID=u.UserID AND a.AreaID=b.AreaID AND a.IsActive=1))
+ OR (r.Code='BranchManager' AND b.ManagerID=u.UserID) OR (r.Code='Staff' AND EXISTS(SELECT 1 FROM dbo.StaffBranches s WHERE s.UserID=u.UserID AND s.BranchID=b.BranchID AND s.IsActive=1)))) SET @ok=1;
+ RETURN @ok;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER FUNCTION dbo.IsCustomer(@UserID int,@CustomerID int)
+RETURNS bit AS
+BEGIN
+ RETURN CASE WHEN EXISTS(SELECT 1 FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE c.CustomerID=@CustomerID AND u.UserID=@UserID AND u.IsActive=1 AND r.Code='Customer') THEN 1 ELSE 0 END;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER FUNCTION dbo.CanScope(@UserID int,@Scope varchar(10),@AreaID int,@BranchID int,@Permission varchar(80))
+RETURNS bit AS
+BEGIN
+ IF @Scope='Branch' RETURN dbo.CanBranch(@UserID,@BranchID,@Permission);
+ RETURN CASE WHEN EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
+ JOIN dbo.RolePermissions rp ON rp.RoleID=r.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
+ WHERE u.UserID=@UserID AND u.IsActive=1 AND p.Code=@Permission AND
+ (r.Code='Owner' OR (@Scope='Area' AND r.Code='AreaManager' AND EXISTS(SELECT 1 FROM dbo.AreaManagers am WHERE am.AreaID=@AreaID AND am.UserID=@UserID AND am.IsActive=1)))) THEN 1 ELSE 0 END;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER FUNCTION dbo.CustomerInScope(@CustomerID int,@Scope varchar(10),@AreaID int,@BranchID int)
+RETURNS bit AS
+BEGIN
+ RETURN CASE WHEN @Scope='Chain' OR EXISTS(SELECT 1 FROM dbo.Orders o JOIN dbo.Branches b ON b.BranchID=o.BranchID WHERE o.CustomerID=@CustomerID AND o.Status='Completed' AND ((@Scope='Branch' AND o.BranchID=@BranchID) OR (@Scope='Area' AND b.AreaID=@AreaID))) THEN 1 ELSE 0 END;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_Customers_Role ON dbo.Customers AFTER INSERT,UPDATE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.Users u ON u.UserID=i.UserID JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE r.Code<>'Customer') THROW 51001,N'Customer profile requires Customer role.',1;
+ IF EXISTS(SELECT 1 FROM inserted WHERE DateOfBirth>CONVERT(date,SYSUTCDATETIME())) THROW 51001,N'Date of birth cannot be in the future.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_AreaManagers_Role ON dbo.AreaManagers AFTER INSERT,UPDATE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.Users u ON u.UserID=i.UserID JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE r.Code<>'AreaManager') THROW 51001,N'Assignment requires AreaManager role.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_StaffBranches_Role ON dbo.StaffBranches AFTER INSERT,UPDATE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.Users u ON u.UserID=i.UserID JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE r.Code<>'Staff') THROW 51001,N'Assignment requires Staff role.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_Branches_Role ON dbo.Branches AFTER INSERT,UPDATE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.Users u ON u.UserID=i.ManagerID JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE r.Code<>'BranchManager') THROW 51001,N'Branch manager requires BranchManager role.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_Users_Role ON dbo.Users AFTER UPDATE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF UPDATE(RoleID) AND EXISTS(SELECT 1 FROM inserted i JOIN deleted d ON d.UserID=i.UserID WHERE i.RoleID<>d.RoleID AND
+ (EXISTS(SELECT 1 FROM dbo.Customers WHERE UserID=i.UserID) OR EXISTS(SELECT 1 FROM dbo.AreaManagers WHERE UserID=i.UserID) OR EXISTS(SELECT 1 FROM dbo.StaffBranches WHERE UserID=i.UserID) OR EXISTS(SELECT 1 FROM dbo.Branches WHERE ManagerID=i.UserID)))
+ THROW 51001,N'Remove incompatible assignments/profile before changing role.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_Policy_Overlap ON dbo.LoyaltyPolicies AFTER INSERT,UPDATE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF EXISTS(SELECT 1 FROM dbo.LoyaltyPolicies a WITH(UPDLOCK,HOLDLOCK) JOIN dbo.LoyaltyPolicies b WITH(UPDLOCK,HOLDLOCK) ON a.PolicyID<b.PolicyID AND a.EffectiveFrom<COALESCE(b.EffectiveTo,'9999-12-31') AND b.EffectiveFrom<COALESCE(a.EffectiveTo,'9999-12-31')) THROW 51001,N'Loyalty policy periods cannot overlap.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_ProductModifierGroups_Limits ON dbo.ProductModifierGroups AFTER INSERT,UPDATE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.ModifierGroups g ON g.ModifierGroupID=i.ModifierGroupID WHERE g.Kind IN ('Sugar','Ice') AND i.MaxSelections<>1) THROW 51001,N'Sugar/Ice must allow at most one selection.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_ModifierGroups_Limits ON dbo.ModifierGroups AFTER UPDATE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.ProductModifierGroups g ON g.ModifierGroupID=i.ModifierGroupID WHERE i.Kind IN ('Sugar','Ice') AND g.MaxSelections<>1) THROW 51001,N'Existing selection limits conflict with group kind.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_Loyalty_Immutable ON dbo.LoyaltyTransactions AFTER UPDATE,DELETE AS
+BEGIN
+ IF EXISTS(SELECT 1 FROM deleted) THROW 51001,N'Loyalty ledger is append-only; post a correcting transaction.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_Orders_Snapshot ON dbo.Orders AFTER UPDATE AS
+BEGIN
+ IF UPDATE(BranchID) OR UPDATE(CustomerID) OR UPDATE(CreatedBy) OR UPDATE(Source) OR UPDATE(Fulfillment) OR UPDATE(PaymentMode)
+ OR UPDATE(ContactName) OR UPDATE(ContactPhone) OR UPDATE(Subtotal) OR UPDATE(DiscountAmount) OR UPDATE(DeliveryFee)
+ OR UPDATE(TotalAmount) OR UPDATE(CustomerPromotionID) OR UPDATE(PolicyID) OR UPDATE(AmountPerPoint)
+ THROW 51001,N'Order identity and financial snapshots are immutable; cancel and create a new order.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_OrderDetails_Immutable ON dbo.OrderDetails AFTER UPDATE,DELETE AS
+BEGIN
+ IF EXISTS(SELECT 1 FROM deleted) THROW 51001,N'Order item snapshots are immutable.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_OrderItemModifiers_Immutable ON dbo.OrderItemModifiers AFTER UPDATE,DELETE AS
+BEGIN
+ IF EXISTS(SELECT 1 FROM deleted) THROW 51001,N'Order option snapshots are immutable.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_Deliveries_Snapshot ON dbo.Deliveries AFTER UPDATE AS
+BEGIN
+ IF UPDATE(RecipientName) OR UPDATE(Phone) OR UPDATE(AddressText) OR UPDATE(Note) THROW 51001,N'Delivery recipient snapshot is immutable.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_Promotions_Issued ON dbo.Promotions AFTER UPDATE AS
+BEGIN
+ IF (UPDATE(Scope) OR UPDATE(AreaID) OR UPDATE(BranchID)) AND EXISTS(SELECT 1 FROM inserted i JOIN dbo.CustomerPromotions cp ON cp.PromotionID=i.PromotionID) THROW 51001,N'Cannot change scope after issuing vouchers.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_CustomerPromotions_Terms ON dbo.CustomerPromotions AFTER UPDATE AS
+BEGIN
+ IF UPDATE(CustomerID) OR UPDATE(PromotionID) OR UPDATE(ExpiresAt) OR UPDATE(DiscountType) OR UPDATE(DiscountValue) OR UPDATE(MaxDiscount) OR UPDATE(MinSubtotal) OR UPDATE(PointsSpent)
+ THROW 51001,N'Issued voucher terms are immutable.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_SurveyQuestions_Freeze ON dbo.SurveyQuestions AFTER INSERT,UPDATE,DELETE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF EXISTS(SELECT 1 FROM dbo.Surveys s WHERE s.Status<>'Draft' AND (s.SurveyID IN (SELECT SurveyID FROM inserted) OR s.SurveyID IN (SELECT SurveyID FROM deleted))) THROW 51001,N'Published survey questions cannot change.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_SurveyOptions_Freeze ON dbo.SurveyQuestionOptions AFTER INSERT,UPDATE,DELETE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF EXISTS(SELECT 1 FROM dbo.SurveyQuestions q JOIN dbo.Surveys s ON s.SurveyID=q.SurveyID WHERE (q.QuestionID IN (SELECT QuestionID FROM inserted) OR q.QuestionID IN (SELECT QuestionID FROM deleted)) AND s.Status<>'Draft') THROW 51001,N'Published survey options cannot change.',1;
+ IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.SurveyQuestions q ON q.QuestionID=i.QuestionID WHERE q.Type NOT IN ('SingleChoice','MultipleChoice')) THROW 51001,N'Only choice questions have options.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_Surveys_Publish ON dbo.Surveys AFTER UPDATE,DELETE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF EXISTS(SELECT 1 FROM deleted d LEFT JOIN inserted i ON i.SurveyID=d.SurveyID WHERE d.Status<>'Draft' AND (i.SurveyID IS NULL OR i.Status='Draft' OR (d.Status='Closed' AND i.Status<>'Closed'))) THROW 51001,N'Published surveys cannot be reset or deleted.',1;
+ IF (UPDATE(Scope) OR UPDATE(AreaID) OR UPDATE(BranchID) OR UPDATE(StartsAt) OR UPDATE(EndsAt)) AND EXISTS(SELECT 1 FROM deleted WHERE Status<>'Draft') THROW 51001,N'Published survey scope and schedule are frozen.',1;
+ IF EXISTS(SELECT 1 FROM inserted s WHERE s.Status='Open' AND (NOT EXISTS(SELECT 1 FROM dbo.SurveyQuestions q WHERE q.SurveyID=s.SurveyID) OR EXISTS(SELECT 1 FROM dbo.SurveyQuestions q WHERE q.SurveyID=s.SurveyID AND q.Type IN ('SingleChoice','MultipleChoice') AND (SELECT COUNT(*) FROM dbo.SurveyQuestionOptions o WHERE o.QuestionID=q.QuestionID)<2))) THROW 51001,N'Survey needs questions and at least two options per choice question.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 03_orders.sql (historical filename)
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- ActorID always comes from authenticated backend claims, never from an app request body.
+CREATE OR ALTER PROCEDURE dbo.IssueVoucher
+ @ActorID int,@CustomerID int,@PromotionID int,@RequestKey uniqueidentifier
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @id int,@cost int,@limit int,@per int,@scope varchar(10),@area int,@branch int,@now datetime2(3)=SYSUTCDATETIME();
+ SELECT @scope=Scope,@area=AreaID,@branch=BranchID,@cost=PointsCost,@limit=TotalLimit,@per=PerCustomerLimit FROM dbo.Promotions WITH(UPDLOCK,HOLDLOCK) WHERE PromotionID=@PromotionID;
+ IF @scope IS NULL THROW 51100,N'Promotion not found.',1;
+ IF dbo.IsCustomer(@ActorID,@CustomerID)=0 AND (dbo.CanScope(@ActorID,@scope,@area,@branch,'Promotions.Manage')=0 OR dbo.CustomerInScope(@CustomerID,@scope,@area,@branch)=0) THROW 51103,N'Voucher recipient is outside actor scope.',1;
+ SELECT @id=CustomerPromotionID FROM dbo.CustomerPromotions WHERE RequestKey=@RequestKey AND CustomerID=@CustomerID AND PromotionID=@PromotionID;
+ IF @id IS NOT NULL BEGIN COMMIT; SELECT @id AS CustomerPromotionID; RETURN; END;
+ IF NOT EXISTS(SELECT 1 FROM dbo.Promotions WHERE PromotionID=@PromotionID AND IsActive=1 AND StartsAt<=@now AND EndsAt>@now) THROW 51100,N'Promotion is inactive or outside its validity period.',1;
+ IF dbo.IsCustomer(@ActorID,@CustomerID)=1 AND @cost IS NULL THROW 51103,N'Gift vouchers must be issued by management.',1;
+ IF (SELECT COUNT(*) FROM dbo.CustomerPromotions WHERE PromotionID=@PromotionID)>=@limit OR (SELECT COUNT(*) FROM dbo.CustomerPromotions WHERE PromotionID=@PromotionID AND CustomerID=@CustomerID)>=@per THROW 51100,N'Voucher issuance limit reached.',1;
+ DECLARE @balance int;
+ SELECT @balance=LoyaltyPoints FROM dbo.Customers WITH(UPDLOCK,HOLDLOCK) WHERE CustomerID=@CustomerID;
+ IF @balance IS NULL THROW 51100,N'Customer not found.',1;
+ IF COALESCE(@cost,0)>0 AND @balance<@cost THROW 51100,N'Insufficient points.',1;
+ INSERT dbo.CustomerPromotions(CustomerID,PromotionID,Code,RequestKey,ExpiresAt,PointsSpent,DiscountType,DiscountValue,MaxDiscount,MinSubtotal)
+ SELECT @CustomerID,PromotionID,CONCAT('MB-',REPLACE(CONVERT(varchar(36),NEWID()),'-','')),@RequestKey,EndsAt,COALESCE(PointsCost,0),DiscountType,DiscountValue,MaxDiscount,MinSubtotal FROM dbo.Promotions WHERE PromotionID=@PromotionID;
+ SET @id=SCOPE_IDENTITY();
+ IF COALESCE(@cost,0)>0 BEGIN
+  UPDATE dbo.Customers SET LoyaltyPoints=LoyaltyPoints-@cost WHERE CustomerID=@CustomerID;
+  INSERT dbo.LoyaltyTransactions(CustomerID,CustomerPromotionID,Kind,Points,RequestKey,Note) VALUES(@CustomerID,@id,'Redeem',-@cost,@RequestKey,N'Đổi điểm lấy voucher');
+ END;
+ INSERT dbo.Notifications(UserID,Title,Body,CustomerPromotionID) SELECT UserID,N'Voucher mới',N'Voucher đã được thêm vào tài khoản.',@id FROM dbo.Customers WHERE CustomerID=@CustomerID;
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID) VALUES(@ActorID,@branch,'Voucher.Issue','CustomerPromotions',@id);
+ COMMIT;
+ SELECT @id AS CustomerPromotionID;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Items JSON: [{"variantId":1,"quantity":2,"note":"...","optionIds":[1,4]}]
+CREATE OR ALTER PROCEDURE dbo.CreateOrder
+ @ActorID int,@BranchID int,@Source varchar(5),@Fulfillment varchar(10),@PaymentMode varchar(10),
+ @Items nvarchar(max),@RequestKey uniqueidentifier,@CustomerID int=NULL,@CustomerPromotionID int=NULL,
+ @ContactName nvarchar(120)=NULL,@ContactPhone varchar(20)=NULL,@AddressID int=NULL,
+ @DeliveryAddress nvarchar(500)=NULL,@DeliveryNote nvarchar(300)=NULL,@Note nvarchar(500)=NULL
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ IF @Source NOT IN ('App','POS') OR @Fulfillment NOT IN ('Pickup','Delivery') OR @PaymentMode NOT IN ('Prepaid','COD') THROW 51100,N'Invalid order mode.',1;
+ IF (@Source='App' AND dbo.IsCustomer(@ActorID,@CustomerID)=0) OR (@Source='POS' AND dbo.CanBranch(@ActorID,@BranchID,'Orders.Create')=0) THROW 51103,N'Cannot create this order.',1;
+ DECLARE @payload nvarchar(max)=(SELECT @ActorID ActorID,@BranchID BranchID,@Source Source,@Fulfillment Fulfillment,@PaymentMode PaymentMode,@Items Items,@CustomerID CustomerID,@CustomerPromotionID CustomerPromotionID,@ContactName ContactName,@ContactPhone ContactPhone,@AddressID AddressID,@DeliveryAddress DeliveryAddress,@DeliveryNote DeliveryNote,@Note Note FOR JSON PATH,WITHOUT_ARRAY_WRAPPER,INCLUDE_NULL_VALUES);
+ DECLARE @requestHash binary(32)=HASHBYTES('SHA2_256',@payload);
+ DECLARE @id int,@now datetime2(3)=SYSUTCDATETIME(),@fee decimal(18,2),@area int,@policy int,@rate decimal(18,2),@subtotal decimal(18,2),@discount decimal(18,2)=0;
+ -- Serialize identical request keys even if a caller retries while first submission is running.
+ DECLARE @lockResult int,@resource nvarchar(255)=CONCAT('CreateOrder:',CONVERT(varchar(36),@RequestKey));
+ EXEC @lockResult=sys.sp_getapplock @Resource=@resource,@LockMode='Exclusive',@LockOwner='Transaction',@LockTimeout=10000;
+ IF @lockResult<0 THROW 51109,N'Order request is busy; retry.',1;
+ SELECT @id=OrderID FROM dbo.Orders WHERE RequestKey=@RequestKey;
+ IF @id IS NOT NULL BEGIN
+  IF NOT EXISTS(SELECT 1 FROM dbo.Orders WHERE OrderID=@id AND RequestHash=@requestHash AND CreatedBy=@ActorID AND BranchID=@BranchID AND Source=@Source AND Fulfillment=@Fulfillment AND PaymentMode=@PaymentMode AND ISNULL(CustomerID,0)=ISNULL(@CustomerID,0) AND ISNULL(CustomerPromotionID,0)=ISNULL(@CustomerPromotionID,0)) THROW 51109,N'Request key belongs to a different order.',1;
+  COMMIT; SELECT @id AS OrderID; RETURN;
+ END;
+ DECLARE @localtime time=CONVERT(time,DATEADD(hour,7,@now));
+ SELECT @fee=CASE WHEN @Fulfillment='Delivery' THEN DeliveryFee ELSE 0 END,@area=AreaID FROM dbo.Branches WITH(HOLDLOCK)
+ WHERE BranchID=@BranchID AND IsActive=1 AND AcceptingOrders=1 AND @localtime>=OpeningTime AND @localtime<ClosingTime
+ AND ((@Fulfillment='Pickup' AND PickupEnabled=1) OR (@Fulfillment='Delivery' AND DeliveryEnabled=1));
+ IF @area IS NULL THROW 51100,N'Branch is closed or does not accept this fulfillment type.',1;
+ IF @CustomerID IS NOT NULL BEGIN
+  IF NOT EXISTS(SELECT 1 FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID WHERE c.CustomerID=@CustomerID AND u.IsActive=1) THROW 51100,N'Customer is inactive or missing.',1;
+  SELECT @ContactName=COALESCE(@ContactName,u.FullName),@ContactPhone=COALESCE(@ContactPhone,u.Phone) FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID WHERE c.CustomerID=@CustomerID;
+ END;
+ SET @ContactName=COALESCE(NULLIF(LTRIM(RTRIM(@ContactName)),''),N'Khách vãng lai');
+ IF @AddressID IS NOT NULL BEGIN
+  IF @Fulfillment<>'Delivery' OR NOT EXISTS(SELECT 1 FROM dbo.CustomerAddresses WHERE AddressID=@AddressID AND CustomerID=@CustomerID AND IsActive=1) THROW 51103,N'Address does not belong to this customer.',1;
+  SELECT @ContactName=RecipientName,@ContactPhone=Phone,@DeliveryAddress=AddressText,@DeliveryNote=Note FROM dbo.CustomerAddresses WHERE AddressID=@AddressID;
+ END;
+ IF @Fulfillment='Delivery' AND (NULLIF(LTRIM(RTRIM(@DeliveryAddress)),'') IS NULL OR NULLIF(@ContactPhone,'') IS NULL) THROW 51100,N'Delivery needs recipient phone and address.',1;
+ IF ISJSON(@Items)<>1 OR LEFT(LTRIM(@Items),1)<>'[' THROW 51100,N'Items must be a JSON array.',1;
+ DECLARE @lines TABLE(ItemIndex int PRIMARY KEY,VariantID int,Quantity int,Note nvarchar(300),Options nvarchar(max),ProductID int,ProductName nvarchar(150),VariantName nvarchar(50),UnitPrice decimal(18,2),ModifierTotal decimal(18,2));
+ INSERT @lines(ItemIndex,VariantID,Quantity,Note,Options)
+ SELECT CONVERT(int,j.[key]),x.variantId,x.quantity,x.note,COALESCE(x.optionIds,N'[]') FROM OPENJSON(@Items) j CROSS APPLY OPENJSON(j.value) WITH(variantId int,quantity int,note nvarchar(300),optionIds nvarchar(max) AS JSON) x;
+ IF NOT EXISTS(SELECT 1 FROM @lines) OR (SELECT COUNT(*) FROM @lines)>100 OR EXISTS(SELECT 1 FROM @lines WHERE VariantID IS NULL OR Quantity IS NULL OR Quantity NOT BETWEEN 1 AND 100 OR LEFT(LTRIM(Options),1)<>'[') THROW 51100,N'Invalid order lines.',1;
+ UPDATE l SET ProductID=p.ProductID,ProductName=p.Name,VariantName=v.Name,UnitPrice=v.BasePrice,ModifierTotal=0 FROM @lines l
+ JOIN dbo.ProductVariants v WITH(HOLDLOCK) ON v.VariantID=l.VariantID AND v.IsActive=1 JOIN dbo.Products p WITH(HOLDLOCK) ON p.ProductID=v.ProductID AND p.IsActive=1
+ JOIN dbo.Categories cat ON cat.CategoryID=p.CategoryID AND cat.IsActive=1 JOIN dbo.BranchProducts bp WITH(HOLDLOCK) ON bp.ProductID=p.ProductID AND bp.BranchID=@BranchID AND bp.IsAvailable=1
+ LEFT JOIN dbo.BranchProductVariants bv WITH(HOLDLOCK) ON bv.VariantID=v.VariantID AND bv.BranchID=@BranchID WHERE COALESCE(bv.IsAvailable,1)=1;
+ IF EXISTS(SELECT 1 FROM @lines WHERE ProductID IS NULL) THROW 51100,N'An item or size is unavailable at this branch.',1;
+ DECLARE @opts TABLE(ItemIndex int,OptionID int,GroupID int,GroupName nvarchar(100),OptionName nvarchar(100),Price decimal(18,2),PRIMARY KEY(ItemIndex,OptionID));
+ IF EXISTS(SELECT 1 FROM @lines l CROSS APPLY OPENJSON(l.Options) o WHERE o.type<>2 OR TRY_CONVERT(int,o.value) IS NULL) THROW 51100,N'Option IDs must be integers.',1;
+ INSERT @opts(ItemIndex,OptionID) SELECT l.ItemIndex,CONVERT(int,o.value) FROM @lines l CROSS APPLY OPENJSON(l.Options) o;
+ UPDATE o SET GroupID=g.ModifierGroupID,GroupName=g.Name,OptionName=mo.Name,Price=mo.ExtraPrice FROM @opts o JOIN @lines l ON l.ItemIndex=o.ItemIndex
+ JOIN dbo.ModifierOptions mo WITH(HOLDLOCK) ON mo.ModifierOptionID=o.OptionID AND mo.IsActive=1 JOIN dbo.ModifierGroups g ON g.ModifierGroupID=mo.ModifierGroupID AND g.IsActive=1
+ JOIN dbo.ProductModifierGroups pg ON pg.ProductID=l.ProductID AND pg.ModifierGroupID=g.ModifierGroupID
+ LEFT JOIN dbo.BranchModifierOptions bo WITH(HOLDLOCK) ON bo.BranchID=@BranchID AND bo.ModifierOptionID=mo.ModifierOptionID WHERE COALESCE(bo.IsAvailable,1)=1;
+ IF EXISTS(SELECT 1 FROM @opts WHERE GroupID IS NULL) THROW 51100,N'An option is unavailable or does not belong to this product.',1;
+ IF EXISTS(SELECT 1 FROM @lines l JOIN dbo.ProductModifierGroups pg ON pg.ProductID=l.ProductID JOIN dbo.ModifierGroups g ON g.ModifierGroupID=pg.ModifierGroupID AND g.IsActive=1
+ CROSS APPLY(SELECT COUNT(*) AS n FROM @opts o WHERE o.ItemIndex=l.ItemIndex AND o.GroupID=pg.ModifierGroupID) x WHERE x.n<pg.MinSelections OR x.n>pg.MaxSelections) THROW 51100,N'Option selection count is invalid.',1;
+ UPDATE l SET ModifierTotal=COALESCE((SELECT SUM(Price) FROM @opts o WHERE o.ItemIndex=l.ItemIndex),0) FROM @lines l;
+ SELECT @subtotal=SUM((UnitPrice+ModifierTotal)*Quantity) FROM @lines;
+ IF @CustomerPromotionID IS NOT NULL BEGIN
+  DECLARE @dtype varchar(10),@dvalue decimal(18,2),@cap decimal(18,2),@minimum decimal(18,2);
+  SELECT @dtype=cp.DiscountType,@dvalue=cp.DiscountValue,@cap=cp.MaxDiscount,@minimum=cp.MinSubtotal
+  FROM dbo.CustomerPromotions cp WITH(UPDLOCK,HOLDLOCK) JOIN dbo.Promotions p ON p.PromotionID=cp.PromotionID
+  WHERE cp.CustomerPromotionID=@CustomerPromotionID AND cp.CustomerID=@CustomerID AND cp.Status='Available' AND cp.ExpiresAt>@now
+  AND (p.Scope='Chain' OR (p.Scope='Area' AND p.AreaID=@area) OR (p.Scope='Branch' AND p.BranchID=@BranchID));
+  IF @dtype IS NULL OR @subtotal<@minimum THROW 51100,N'Voucher is invalid, reserved, expired or minimum is not met.',1;
+  SET @discount=CASE WHEN @dtype='Amount' THEN @dvalue ELSE FLOOR(@subtotal*@dvalue/100) END;
+  IF @cap IS NOT NULL AND @discount>@cap SET @discount=@cap;
+  IF @discount>@subtotal SET @discount=@subtotal;
+ END;
+ SELECT @policy=PolicyID,@rate=AmountPerPoint FROM dbo.LoyaltyPolicies WITH(HOLDLOCK) WHERE EffectiveFrom<=@now AND (EffectiveTo IS NULL OR EffectiveTo>@now);
+ IF @policy IS NULL THROW 51100,N'No active loyalty policy.',1;
+ DECLARE @status varchar(20)=CASE WHEN @PaymentMode='Prepaid' THEN 'AwaitingPayment' ELSE 'Pending' END;
+ INSERT dbo.Orders(OrderCode,RequestKey,RequestHash,BranchID,CustomerID,CreatedBy,Source,Fulfillment,PaymentMode,Status,ContactName,ContactPhone,Note,Subtotal,DiscountAmount,DeliveryFee,TotalAmount,CustomerPromotionID,PolicyID,AmountPerPoint,PaymentDueAt)
+ VALUES(CONCAT('MB-',REPLACE(CONVERT(varchar(36),NEWID()),'-','')),@RequestKey,@requestHash,@BranchID,@CustomerID,@ActorID,@Source,@Fulfillment,@PaymentMode,@status,@ContactName,@ContactPhone,@Note,@subtotal,@discount,@fee,@subtotal-@discount+@fee,@CustomerPromotionID,@policy,@rate,CASE WHEN @PaymentMode='Prepaid' THEN DATEADD(minute,15,@now) END);
+ SET @id=SCOPE_IDENTITY();
+ IF @CustomerPromotionID IS NOT NULL UPDATE dbo.CustomerPromotions SET Status='Reserved',ReservedOrderID=@id WHERE CustomerPromotionID=@CustomerPromotionID;
+ DECLARE @line int,@detail int;
+ DECLARE items CURSOR LOCAL FAST_FORWARD FOR SELECT ItemIndex FROM @lines;
+ OPEN items; FETCH NEXT FROM items INTO @line;
+ WHILE @@FETCH_STATUS=0 BEGIN
+  INSERT dbo.OrderDetails(OrderID,ProductID,VariantID,ProductName,VariantName,Quantity,UnitPrice,ModifierTotal,LineTotal,Note) SELECT @id,ProductID,VariantID,ProductName,VariantName,Quantity,UnitPrice,ModifierTotal,(UnitPrice+ModifierTotal)*Quantity,Note FROM @lines WHERE ItemIndex=@line;
+  SET @detail=SCOPE_IDENTITY();
+  INSERT dbo.OrderItemModifiers(OrderDetailID,ModifierOptionID,GroupName,OptionName,ExtraPrice) SELECT @detail,OptionID,GroupName,OptionName,Price FROM @opts WHERE ItemIndex=@line;
+  FETCH NEXT FROM items INTO @line;
+ END;
+ CLOSE items; DEALLOCATE items;
+ IF @Fulfillment='Delivery' INSERT dbo.Deliveries(OrderID,RecipientName,Phone,AddressText,Note) VALUES(@id,@ContactName,@ContactPhone,@DeliveryAddress,@DeliveryNote);
+ INSERT dbo.OrderStatusHistory(OrderID,ToStatus,ChangedBy,Reason) VALUES(@id,@status,@ActorID,N'Tạo đơn');
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID) VALUES(@ActorID,@BranchID,'Order.Create','Orders',@id);
+ COMMIT;
+ SELECT @id AS OrderID;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.StartPayment @ActorID int,@OrderID int,@RequestKey uniqueidentifier
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @branch int,@customer int,@status varchar(20),@mode varchar(10),@amount decimal(18,2),@id int,@due datetime2(3);
+ SELECT @branch=BranchID,@customer=CustomerID,@status=Status,@mode=PaymentMode,@amount=TotalAmount,@due=PaymentDueAt FROM dbo.Orders WITH(UPDLOCK,HOLDLOCK) WHERE OrderID=@OrderID;
+ IF @branch IS NULL THROW 51100,N'Order not found.',1;
+ IF dbo.IsCustomer(@ActorID,@customer)=0 AND dbo.CanBranch(@ActorID,@branch,'Payments.Manage')=0 THROW 51103,N'Cannot pay this order.',1;
+ IF @mode='COD' AND dbo.CanBranch(@ActorID,@branch,'Payments.Manage')=0 THROW 51103,N'Only POS can confirm collected COD.',1;
+ SELECT @id=PaymentID FROM dbo.PaymentAttempts WHERE RequestKey=@RequestKey AND OrderID=@OrderID;
+ IF @id IS NOT NULL BEGIN COMMIT; SELECT @id AS PaymentID; RETURN; END;
+ IF @status IN ('Cancelled','Completed') OR (@mode='Prepaid' AND (@status<>'AwaitingPayment' OR @due<=SYSUTCDATETIME())) THROW 51100,N'Order is not payable.',1;
+ IF EXISTS(SELECT 1 FROM dbo.PaymentAttempts WHERE OrderID=@OrderID AND Status IN ('Pending','Succeeded')) THROW 51109,N'Payment already pending or succeeded.',1;
+ INSERT dbo.PaymentAttempts(OrderID,RequestKey,Method,Provider,Amount) VALUES(@OrderID,@RequestKey,CASE WHEN @mode='COD' THEN 'Cash' ELSE 'Simulator' END,CASE WHEN @mode='COD' THEN 'Manual' ELSE 'Simulator' END,@amount);
+ SET @id=SCOPE_IDENTITY();
+ COMMIT; SELECT @id AS PaymentID;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Development simulator only. Production gateway callbacks must authenticate provider signatures in the backend.
+CREATE OR ALTER PROCEDURE dbo.SimulatePayment @ActorID int,@PaymentID int,@Outcome varchar(12),@Reason nvarchar(500)=NULL
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ IF @Outcome NOT IN ('Pending','Succeeded','Failed') THROW 51100,N'Invalid payment outcome.',1;
+ DECLARE @order int,@branch int,@customer int,@mode varchar(10),@old varchar(12),@status varchar(20),@due datetime2(3);
+ SELECT @order=OrderID FROM dbo.PaymentAttempts WHERE PaymentID=@PaymentID;
+ SELECT @branch=BranchID,@customer=CustomerID,@mode=PaymentMode,@status=Status,@due=PaymentDueAt FROM dbo.Orders WITH(UPDLOCK,HOLDLOCK) WHERE OrderID=@order;
+ IF @branch IS NULL THROW 51100,N'Payment not found.',1;
+ IF (@mode='COD' AND dbo.CanBranch(@ActorID,@branch,'Payments.Manage')=0) OR (@mode='Prepaid' AND dbo.IsCustomer(@ActorID,@customer)=0 AND dbo.CanBranch(@ActorID,@branch,'Payments.Manage')=0) THROW 51103,N'Cannot settle this payment.',1;
+ SELECT @old=Status FROM dbo.PaymentAttempts WITH(UPDLOCK,HOLDLOCK) WHERE PaymentID=@PaymentID;
+ IF @old=@Outcome BEGIN COMMIT; RETURN; END;
+ IF @old<>'Pending' THROW 51109,N'Terminal payment result cannot change.',1;
+ IF @Outcome='Succeeded' AND (@status IN ('Cancelled','Completed') OR (@mode='Prepaid' AND @due<=SYSUTCDATETIME())) THROW 51100,N'Order is cancelled or payment timed out; simulator cannot collect funds.',1;
+ IF @Outcome='Pending' BEGIN COMMIT; RETURN; END;
+ UPDATE dbo.PaymentAttempts SET Status=@Outcome,ProviderReference=CONCAT(CASE WHEN @mode='COD' THEN 'CASH-' ELSE 'SIM-' END,@PaymentID),SettledAt=SYSUTCDATETIME(),FailureReason=CASE WHEN @Outcome='Failed' THEN @Reason END WHERE PaymentID=@PaymentID;
+ IF @Outcome='Succeeded' AND @status='AwaitingPayment' BEGIN
+  UPDATE dbo.Orders SET Status='Pending' WHERE OrderID=@order;
+  INSERT dbo.OrderStatusHistory(OrderID,FromStatus,ToStatus,ChangedBy,Reason) VALUES(@order,@status,'Pending',@ActorID,N'Thanh toán thành công');
+ END;
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Payment.Simulate','PaymentAttempts',@PaymentID,@Outcome);
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.AdvanceOrder
+ @ActorID int,@OrderID int,@NextStatus varchar(20),@Reason nvarchar(500)=NULL,@CourierName nvarchar(120)=NULL,@CourierPhone varchar(20)=NULL
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @branch int,@old varchar(20),@fulfill varchar(10),@customer int,@voucher int,@points int;
+ SELECT @branch=BranchID,@old=Status,@fulfill=Fulfillment,@customer=CustomerID,@voucher=CustomerPromotionID,@points=FLOOR((Subtotal-DiscountAmount)/AmountPerPoint) FROM dbo.Orders WITH(UPDLOCK,HOLDLOCK) WHERE OrderID=@OrderID;
+ IF @branch IS NULL THROW 51100,N'Order not found.',1;
+ IF dbo.CanBranch(@ActorID,@branch,'Orders.Manage')=0 THROW 51103,N'Cannot manage this branch order.',1;
+ IF @old=@NextStatus BEGIN COMMIT; RETURN; END;
+ IF NOT ((@old='Pending' AND @NextStatus='Confirmed') OR (@old='Confirmed' AND @NextStatus='Preparing') OR (@old='Preparing' AND @NextStatus='Ready') OR (@old='Ready' AND @NextStatus='Delivering' AND @fulfill='Delivery') OR (@NextStatus='Completed' AND ((@old='Ready' AND @fulfill='Pickup') OR (@old='Delivering' AND @fulfill='Delivery')))) THROW 51100,N'Invalid order transition.',1;
+ IF @NextStatus='Delivering' BEGIN
+  IF NULLIF(@CourierName,'') IS NULL OR NULLIF(@CourierPhone,'') IS NULL THROW 51100,N'Courier name and phone are required.',1;
+  UPDATE dbo.Deliveries SET Status='Delivering',CourierName=@CourierName,CourierPhone=@CourierPhone,AttemptCount=AttemptCount+1,DispatchedAt=SYSUTCDATETIME(),FailureReason=NULL WHERE OrderID=@OrderID;
+ END;
+ IF @NextStatus='Completed' BEGIN
+  IF NOT EXISTS(SELECT 1 FROM dbo.PaymentAttempts WHERE OrderID=@OrderID AND Status='Succeeded') OR EXISTS(SELECT 1 FROM dbo.Refunds WHERE OrderID=@OrderID) THROW 51100,N'Order must be fully paid and not under refund.',1;
+  IF @fulfill='Delivery' AND NOT EXISTS(SELECT 1 FROM dbo.Deliveries WHERE OrderID=@OrderID AND Status='Delivering') THROW 51100,N'Delivery has not resumed after failure.',1;
+  IF @voucher IS NOT NULL BEGIN
+   UPDATE dbo.CustomerPromotions SET Status='Used',UsedOrderID=@OrderID,ReservedOrderID=NULL,UsedAt=SYSUTCDATETIME() WHERE CustomerPromotionID=@voucher AND Status='Reserved' AND ReservedOrderID=@OrderID;
+   IF @@ROWCOUNT<>1 THROW 51109,N'Voucher reservation was lost.',1;
+  END;
+  IF @customer IS NOT NULL AND @points>0 BEGIN
+   UPDATE dbo.Customers WITH(UPDLOCK) SET LoyaltyPoints=LoyaltyPoints+@points WHERE CustomerID=@customer;
+   INSERT dbo.LoyaltyTransactions(CustomerID,OrderID,Kind,Points,RequestKey,Note) VALUES(@customer,@OrderID,'Earn',@points,NEWID(),N'Tích điểm đơn hoàn tất');
+  END;
+  UPDATE dbo.Orders SET CompletedAt=SYSUTCDATETIME() WHERE OrderID=@OrderID;
+  IF @fulfill='Delivery' UPDATE dbo.Deliveries SET Status='Delivered',DeliveredAt=SYSUTCDATETIME() WHERE OrderID=@OrderID;
+ END;
+ UPDATE dbo.Orders SET Status=@NextStatus WHERE OrderID=@OrderID;
+ INSERT dbo.OrderStatusHistory(OrderID,FromStatus,ToStatus,ChangedBy,Reason) VALUES(@OrderID,@old,@NextStatus,@ActorID,@Reason);
+ INSERT dbo.Notifications(UserID,Title,Body,OrderID) SELECT UserID,N'Cập nhật đơn hàng',CONCAT(N'Trạng thái mới: ',@NextStatus),@OrderID FROM dbo.Customers WHERE CustomerID=@customer;
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Order.Advance','Orders',@OrderID,@NextStatus);
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.UpdateDelivery @ActorID int,@OrderID int,@Status varchar(12),@Reason nvarchar(500)=NULL
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @branch int,@orderStatus varchar(20),@old varchar(12);
+ SELECT @branch=BranchID,@orderStatus=Status FROM dbo.Orders WITH(UPDLOCK,HOLDLOCK) WHERE OrderID=@OrderID AND Fulfillment='Delivery';
+ IF @branch IS NULL OR dbo.CanBranch(@ActorID,@branch,'Orders.Manage')=0 THROW 51103,N'Cannot update this delivery.',1;
+ IF @orderStatus<>'Delivering' THROW 51100,N'Order is not in delivery phase.',1;
+ SELECT @old=Status FROM dbo.Deliveries WHERE OrderID=@OrderID;
+ IF @Status NOT IN ('Failed','Delivering') THROW 51100,N'Use AdvanceOrder for handover and completion.',1;
+ IF @old=@Status BEGIN COMMIT; RETURN; END;
+ IF NOT ((@old='Delivering' AND @Status='Failed') OR (@old='Failed' AND @Status='Delivering')) THROW 51100,N'Invalid delivery transition.',1;
+ IF @Status='Failed' AND NULLIF(@Reason,'') IS NULL THROW 51100,N'Failure reason is required.',1;
+ UPDATE dbo.Deliveries SET Status=@Status,FailureReason=CASE WHEN @Status='Failed' THEN @Reason END,AttemptCount=AttemptCount+CASE WHEN @Status='Delivering' THEN 1 ELSE 0 END,DispatchedAt=CASE WHEN @Status='Delivering' THEN SYSUTCDATETIME() ELSE DispatchedAt END WHERE OrderID=@OrderID;
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Delivery.Update','Deliveries',@OrderID,CONCAT(@Status,': ',@Reason));
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.CancelOrder @ActorID int,@OrderID int,@Reason nvarchar(500)
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @branch int,@customer int,@old varchar(20),@voucher int,@payment int,@amount decimal(18,2);
+ SELECT @branch=BranchID,@customer=CustomerID,@old=Status,@voucher=CustomerPromotionID FROM dbo.Orders WITH(UPDLOCK,HOLDLOCK) WHERE OrderID=@OrderID;
+ IF @branch IS NULL THROW 51100,N'Order not found.',1;
+ IF dbo.CanBranch(@ActorID,@branch,'Orders.Cancel')=0 AND NOT(dbo.IsCustomer(@ActorID,@customer)=1 AND @old IN ('AwaitingPayment','Pending','Cancelled')) THROW 51103,N'Cancellation requires management after confirmation.',1;
+ IF @old='Cancelled' BEGIN COMMIT; RETURN; END;
+ IF @old='Completed' THROW 51100,N'Completed orders use RequestRefund; operational history remains completed.',1;
+ IF NULLIF(LTRIM(RTRIM(@Reason)),'') IS NULL THROW 51100,N'Cancellation reason is required.',1;
+ UPDATE dbo.Orders SET Status='Cancelled',CancelledAt=SYSUTCDATETIME() WHERE OrderID=@OrderID;
+ UPDATE dbo.CustomerPromotions SET Status='Available',ReservedOrderID=NULL WHERE CustomerPromotionID=@voucher AND Status='Reserved' AND ReservedOrderID=@OrderID;
+ UPDATE dbo.Deliveries SET Status='Cancelled' WHERE OrderID=@OrderID;
+ UPDATE dbo.PaymentAttempts SET Status='Failed',FailureReason=N'Đơn bị hủy',SettledAt=SYSUTCDATETIME() WHERE OrderID=@OrderID AND Status='Pending';
+ SELECT @payment=PaymentID,@amount=Amount FROM dbo.PaymentAttempts WHERE OrderID=@OrderID AND Status='Succeeded';
+ IF @payment IS NOT NULL INSERT dbo.Refunds(PaymentID,OrderID,RequestKey,Amount,Reason,RequestedBy) VALUES(@payment,@OrderID,NEWID(),@amount,@Reason,@ActorID);
+ INSERT dbo.OrderStatusHistory(OrderID,FromStatus,ToStatus,ChangedBy,Reason) VALUES(@OrderID,@old,'Cancelled',@ActorID,@Reason);
+ INSERT dbo.Notifications(UserID,Title,Body,OrderID) SELECT UserID,N'Đơn hàng đã hủy',@Reason,@OrderID FROM dbo.Customers WHERE CustomerID=@customer;
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Order.Cancel','Orders',@OrderID,@Reason);
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.RequestRefund @ActorID int,@OrderID int,@Reason nvarchar(500),@RequestKey uniqueidentifier
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @branch int,@status varchar(20),@payment int,@amount decimal(18,2),@id int;
+ SELECT @branch=BranchID,@status=Status FROM dbo.Orders WITH(UPDLOCK,HOLDLOCK) WHERE OrderID=@OrderID;
+ IF @branch IS NULL OR dbo.CanBranch(@ActorID,@branch,'Refunds.Manage')=0 THROW 51103,N'Cannot refund this branch order.',1;
+ IF @status NOT IN ('Completed','Cancelled') THROW 51100,N'Cancel the active order before refunding.',1;
+ SELECT @id=RefundID FROM dbo.Refunds WHERE OrderID=@OrderID;
+ IF @id IS NOT NULL BEGIN COMMIT; SELECT @id AS RefundID; RETURN; END;
+ IF NULLIF(@Reason,'') IS NULL THROW 51100,N'Refund reason is required.',1;
+ SELECT @payment=PaymentID,@amount=Amount FROM dbo.PaymentAttempts WHERE OrderID=@OrderID AND Status='Succeeded';
+ IF @payment IS NULL THROW 51100,N'No successful payment to refund.',1;
+ INSERT dbo.Refunds(PaymentID,OrderID,RequestKey,Amount,Reason,RequestedBy) VALUES(@payment,@OrderID,@RequestKey,@amount,@Reason,@ActorID);
+ SET @id=SCOPE_IDENTITY();
+ COMMIT; SELECT @id AS RefundID;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.SimulateRefund @ActorID int,@RefundID int,@Outcome varchar(12),@FailureReason nvarchar(500)=NULL
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @order int,@branch int,@customer int,@voucher int,@old varchar(12),@points int;
+ SELECT @order=OrderID FROM dbo.Refunds WHERE RefundID=@RefundID;
+ SELECT @branch=BranchID,@customer=CustomerID,@voucher=CustomerPromotionID FROM dbo.Orders WITH(UPDLOCK,HOLDLOCK) WHERE OrderID=@order;
+ IF @branch IS NULL OR dbo.CanBranch(@ActorID,@branch,'Refunds.Manage')=0 THROW 51103,N'Cannot process this refund.',1;
+ IF @Outcome NOT IN ('Succeeded','Failed') THROW 51100,N'Invalid refund result.',1;
+ SELECT @old=Status FROM dbo.Refunds WITH(UPDLOCK,HOLDLOCK) WHERE RefundID=@RefundID;
+ IF @old='Succeeded' BEGIN
+  IF @Outcome<>'Succeeded' THROW 51109,N'Successful refund cannot change.',1;
+  COMMIT; RETURN;
+ END;
+ UPDATE dbo.Refunds SET Status=@Outcome,AttemptCount=AttemptCount+1,FailureReason=CASE WHEN @Outcome='Failed' THEN @FailureReason END,ProviderReference=CASE WHEN @Outcome='Succeeded' THEN CONCAT('REF-',@RefundID) END,CompletedAt=CASE WHEN @Outcome='Succeeded' THEN SYSUTCDATETIME() END WHERE RefundID=@RefundID;
+ IF @Outcome='Succeeded' BEGIN
+  SELECT @points=Points FROM dbo.LoyaltyTransactions WHERE OrderID=@order AND Kind='Earn';
+  IF @points IS NOT NULL BEGIN
+   UPDATE dbo.Customers WITH(UPDLOCK) SET LoyaltyPoints=LoyaltyPoints-@points WHERE CustomerID=@customer;
+   INSERT dbo.LoyaltyTransactions(CustomerID,OrderID,Kind,Points,RequestKey,Note) VALUES(@customer,@order,'Reverse',-@points,NEWID(),N'Thu hồi điểm do hoàn toàn bộ đơn');
+  END;
+  UPDATE dbo.CustomerPromotions SET Status='Available',UsedOrderID=NULL,UsedAt=NULL WHERE CustomerPromotionID=@voucher AND Status='Used' AND UsedOrderID=@order;
+  INSERT dbo.Notifications(UserID,Title,Body,OrderID) SELECT UserID,N'Hoàn tiền thành công',N'Toàn bộ tiền của đơn đã được hoàn.',@order FROM dbo.Customers WHERE CustomerID=@customer;
+ END;
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Refund.Simulate','Refunds',@RefundID,@Outcome);
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Backend scheduler calls every minute. Owner/service actor with chain scope is required.
+CREATE OR ALTER PROCEDURE dbo.ExpireUnpaidOrders @ActorID int
+AS
+BEGIN
+ SET NOCOUNT ON;
+ IF dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Orders.Cancel')=0 THROW 51103,N'Chain cancellation permission required.',1;
+ DECLARE @id int;
+ DECLARE expired CURSOR LOCAL FAST_FORWARD FOR SELECT OrderID FROM dbo.Orders WHERE Status='AwaitingPayment' AND PaymentDueAt<=SYSUTCDATETIME();
+ OPEN expired; FETCH NEXT FROM expired INTO @id;
+ WHILE @@FETCH_STATUS=0 BEGIN
+  -- Recheck under order lock so a just-settled order is not cancelled by a stale scan.
+  BEGIN TRAN;
+  IF EXISTS(SELECT 1 FROM dbo.Orders WITH(UPDLOCK,HOLDLOCK) WHERE OrderID=@id AND Status='AwaitingPayment' AND PaymentDueAt<=SYSUTCDATETIME()) EXEC dbo.CancelOrder @ActorID,@id,N'Hết thời gian thanh toán';
+  COMMIT;
+  FETCH NEXT FROM expired INTO @id;
+ END;
+ CLOSE expired; DEALLOCATE expired;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 04_crm.sql (historical filename)
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.PublishSurvey @ActorID int,@SurveyID int
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @scope varchar(10),@area int,@branch int;
+ SELECT @scope=Scope,@area=AreaID,@branch=BranchID FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@SurveyID AND Status='Draft';
+ IF @scope IS NULL OR dbo.CanScope(@ActorID,@scope,@area,@branch,'Surveys.Manage')=0 THROW 51103,N'Survey missing, published, or outside scope.',1;
+ UPDATE dbo.Surveys SET Status='Open' WHERE SurveyID=@SurveyID;
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID) VALUES(@ActorID,@branch,'Survey.Publish','Surveys',@SurveyID);
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.InviteSurvey @ActorID int,@SurveyID int,@CustomerID int
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @scope varchar(10),@area int,@branch int;
+ SELECT @scope=Scope,@area=AreaID,@branch=BranchID FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@SurveyID AND Status='Open' AND EndsAt>SYSUTCDATETIME();
+ IF @scope IS NULL OR dbo.CanScope(@ActorID,@scope,@area,@branch,'Surveys.Manage')=0 OR dbo.CustomerInScope(@CustomerID,@scope,@area,@branch)=0 THROW 51103,N'Cannot invite customer to this survey.',1;
+ IF EXISTS(SELECT 1 FROM dbo.SurveyRecipients WHERE SurveyID=@SurveyID AND CustomerID=@CustomerID) BEGIN COMMIT; RETURN; END;
+ INSERT dbo.SurveyRecipients(SurveyID,CustomerID) VALUES(@SurveyID,@CustomerID);
+ INSERT dbo.Notifications(UserID,Title,Body,SurveyID) SELECT c.UserID,N'Khảo sát mới',s.Title,@SurveyID FROM dbo.Customers c CROSS JOIN dbo.Surveys s WHERE c.CustomerID=@CustomerID AND s.SurveyID=@SurveyID;
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Whole form, atomic submission. Omit unanswered optional questions.
+-- Answers: [{"questionId":1,"optionIds":[1,2]},{"questionId":2,"rating":5},{"questionId":3,"text":"..."}]
+CREATE OR ALTER PROCEDURE dbo.SubmitSurvey @ActorID int,@SurveyID int,@CustomerID int,@Answers nvarchar(max)
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ IF dbo.IsCustomer(@ActorID,@CustomerID)=0 THROW 51103,N'Cannot submit for another customer.',1;
+ IF NOT EXISTS(SELECT 1 FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@SurveyID AND Status='Open' AND StartsAt<=SYSUTCDATETIME() AND EndsAt>SYSUTCDATETIME()) THROW 51100,N'Survey is not open.',1;
+ IF NOT EXISTS(SELECT 1 FROM dbo.SurveyRecipients WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@SurveyID AND CustomerID=@CustomerID AND CompletedAt IS NULL) THROW 51109,N'No invitation or already submitted.',1;
+ IF ISJSON(@Answers)<>1 OR LEFT(LTRIM(@Answers),1)<>'[' THROW 51100,N'Answers must be an array.',1;
+ DECLARE @a TABLE(QuestionID int PRIMARY KEY,TextValue nvarchar(4000),RatingValue int,Options nvarchar(max));
+ INSERT @a SELECT questionId,[text],rating,COALESCE(optionIds,N'[]') FROM OPENJSON(@Answers) WITH(questionId int,[text] nvarchar(4000),rating int,optionIds nvarchar(max) AS JSON);
+ IF EXISTS(SELECT 1 FROM @a a LEFT JOIN dbo.SurveyQuestions q ON q.QuestionID=a.QuestionID AND q.SurveyID=@SurveyID WHERE q.QuestionID IS NULL) THROW 51100,N'Question does not belong to survey.',1;
+ IF EXISTS(SELECT 1 FROM dbo.SurveyQuestions q WHERE q.SurveyID=@SurveyID AND q.IsRequired=1 AND NOT EXISTS(SELECT 1 FROM @a a WHERE a.QuestionID=q.QuestionID)) THROW 51100,N'Required question is missing.',1;
+ IF EXISTS(SELECT 1 FROM @a WHERE LEFT(LTRIM(Options),1)<>'[') THROW 51100,N'Option list must be an array.',1;
+ DECLARE @o TABLE(QuestionID int,OptionID int,PRIMARY KEY(QuestionID,OptionID));
+ IF EXISTS(SELECT 1 FROM @a a CROSS APPLY OPENJSON(a.Options) o WHERE o.type<>2 OR TRY_CONVERT(int,o.value) IS NULL) THROW 51100,N'Invalid option ID.',1;
+ INSERT @o SELECT a.QuestionID,CONVERT(int,o.value) FROM @a a CROSS APPLY OPENJSON(a.Options) o;
+ IF EXISTS(SELECT 1 FROM @o o LEFT JOIN dbo.SurveyQuestionOptions s ON s.OptionID=o.OptionID AND s.QuestionID=o.QuestionID WHERE s.OptionID IS NULL) THROW 51100,N'Option belongs to a different question.',1;
+ IF EXISTS(SELECT 1 FROM @a a JOIN dbo.SurveyQuestions q ON q.QuestionID=a.QuestionID CROSS APPLY(SELECT COUNT(*) n FROM @o o WHERE o.QuestionID=a.QuestionID)x WHERE
+ (q.Type='Text' AND (NULLIF(LTRIM(RTRIM(a.TextValue)),'') IS NULL OR a.RatingValue IS NOT NULL OR x.n<>0)) OR
+ (q.Type='Rating' AND (a.RatingValue IS NULL OR a.RatingValue<q.RatingMin OR a.RatingValue>q.RatingMax OR a.TextValue IS NOT NULL OR x.n<>0)) OR
+ (q.Type IN ('SingleChoice','MultipleChoice') AND (a.TextValue IS NOT NULL OR a.RatingValue IS NOT NULL OR x.n=0 OR (q.Type='SingleChoice' AND x.n<>1)))) THROW 51100,N'Answer type or rating bounds are invalid.',1;
+ DECLARE @map TABLE(ResponseID int,QuestionID int);
+ INSERT dbo.SurveyResponses(SurveyID,QuestionID,CustomerID,TextValue,RatingValue) OUTPUT inserted.ResponseID,inserted.QuestionID INTO @map SELECT @SurveyID,QuestionID,@CustomerID,TextValue,RatingValue FROM @a;
+ INSERT dbo.SurveyAnswerOptions(ResponseID,OptionID,QuestionID) SELECT m.ResponseID,o.OptionID,o.QuestionID FROM @o o JOIN @map m ON m.QuestionID=o.QuestionID;
+ UPDATE dbo.SurveyRecipients SET CompletedAt=SYSUTCDATETIME() WHERE SurveyID=@SurveyID AND CustomerID=@CustomerID;
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.SaveAddress
+ @ActorID int,@CustomerID int,@Label nvarchar(50),@RecipientName nvarchar(120),@Phone varchar(20),@AddressText nvarchar(500),@IsDefault bit=0,@AddressID int=NULL,@Note nvarchar(300)=NULL
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ IF dbo.IsCustomer(@ActorID,@CustomerID)=0 THROW 51103,N'Cannot change this address book.',1;
+ DECLARE @lock int;
+ SELECT @lock=CustomerID FROM dbo.Customers WITH(UPDLOCK,HOLDLOCK) WHERE CustomerID=@CustomerID;
+ IF NULLIF(@Phone,'') IS NULL OR NULLIF(@AddressText,'') IS NULL OR NULLIF(@RecipientName,'') IS NULL THROW 51100,N'Address details cannot be blank.',1;
+ IF @AddressID IS NOT NULL AND NOT EXISTS(SELECT 1 FROM dbo.CustomerAddresses WHERE AddressID=@AddressID AND CustomerID=@CustomerID) THROW 51103,N'Address not owned by customer.',1;
+ IF @IsDefault=1 UPDATE dbo.CustomerAddresses SET IsDefault=0 WHERE CustomerID=@CustomerID AND IsDefault=1;
+ IF @AddressID IS NULL BEGIN
+  INSERT dbo.CustomerAddresses(CustomerID,Label,RecipientName,Phone,AddressText,Note,IsDefault) VALUES(@CustomerID,@Label,@RecipientName,@Phone,@AddressText,@Note,@IsDefault);
+  SET @AddressID=SCOPE_IDENTITY();
+ END ELSE UPDATE dbo.CustomerAddresses SET Label=@Label,RecipientName=@RecipientName,Phone=@Phone,AddressText=@AddressText,Note=@Note,IsDefault=@IsDefault,IsActive=1 WHERE AddressID=@AddressID;
+ COMMIT; SELECT @AddressID AS AddressID;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.SubmitFeedback
+ @ActorID int,@CustomerID int,@Content nvarchar(4000),@Type varchar(15),@Rating tinyint=NULL,@OrderID int=NULL,@BranchID int=NULL,@ProductID int=NULL
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ IF dbo.IsCustomer(@ActorID,@CustomerID)=0 THROW 51103,N'Cannot send feedback for another customer.',1;
+ IF NULLIF(LTRIM(RTRIM(@Content)),'') IS NULL THROW 51100,N'Feedback cannot be blank.',1;
+ IF @OrderID IS NOT NULL BEGIN
+  DECLARE @actual int;
+  SELECT @actual=BranchID FROM dbo.Orders WHERE OrderID=@OrderID AND CustomerID=@CustomerID;
+  IF @actual IS NULL THROW 51103,N'Order does not belong to customer.',1;
+  IF @BranchID IS NOT NULL AND @BranchID<>@actual THROW 51100,N'Feedback branch differs from order branch.',1;
+  SET @BranchID=@actual;
+  IF @ProductID IS NOT NULL AND NOT EXISTS(SELECT 1 FROM dbo.OrderDetails WHERE OrderID=@OrderID AND ProductID=@ProductID) THROW 51100,N'Product does not occur in this order.',1;
+ END;
+ INSERT dbo.Feedbacks(CustomerID,OrderID,BranchID,ProductID,Type,Content,Rating) VALUES(@CustomerID,@OrderID,@BranchID,@ProductID,@Type,@Content,@Rating);
+ SELECT CONVERT(int,SCOPE_IDENTITY()) AS FeedbackID;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.HandleFeedback @ActorID int,@FeedbackID int,@Status varchar(12),@Response nvarchar(4000)=NULL
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @branch int,@customer int;
+ SELECT @branch=BranchID,@customer=CustomerID FROM dbo.Feedbacks WITH(UPDLOCK,HOLDLOCK) WHERE FeedbackID=@FeedbackID;
+ IF @customer IS NULL OR (@branch IS NULL AND dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Feedbacks.Manage')=0) OR (@branch IS NOT NULL AND dbo.CanBranch(@ActorID,@branch,'Feedbacks.Manage')=0) THROW 51103,N'Feedback is outside scope.',1;
+ IF @Status NOT IN ('Processing','Resolved') OR (@Status='Resolved' AND NULLIF(@Response,'') IS NULL) THROW 51100,N'Resolved feedback needs a response.',1;
+ UPDATE dbo.Feedbacks SET Status=@Status,HandledBy=@ActorID,ResponseContent=@Response,HandledAt=SYSUTCDATETIME() WHERE FeedbackID=@FeedbackID;
+ INSERT dbo.Notifications(UserID,Title,Body) SELECT UserID,N'Cập nhật phản hồi',COALESCE(@Response,N'Phản hồi đang được xử lý.') FROM dbo.Customers WHERE CustomerID=@customer;
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Feedback.Handle','Feedbacks',@FeedbackID,@Status);
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.SetBranchPrice @ActorID int,@BranchID int,@VariantID int,@Price decimal(18,2),@IsAvailable bit
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ IF dbo.CanBranch(@ActorID,@BranchID,'Menu.Manage')=0 THROW 51103,N'Cannot edit prices at this branch.',1;
+ DECLARE @product int;
+ SELECT @product=v.ProductID FROM dbo.ProductVariants v JOIN dbo.BranchProducts bp ON bp.ProductID=v.ProductID AND bp.BranchID=@BranchID WHERE v.VariantID=@VariantID;
+ IF @product IS NULL OR @Price<0 THROW 51100,N'Invalid price or product not distributed to branch.',1;
+ IF EXISTS(SELECT 1 FROM dbo.BranchProductVariants WITH(UPDLOCK,HOLDLOCK) WHERE BranchID=@BranchID AND VariantID=@VariantID)
+ UPDATE dbo.BranchProductVariants SET SellingPrice=@Price,IsAvailable=@IsAvailable WHERE BranchID=@BranchID AND VariantID=@VariantID;
+ ELSE INSERT dbo.BranchProductVariants(BranchID,VariantID,ProductID,SellingPrice,IsAvailable) VALUES(@BranchID,@VariantID,@product,@Price,@IsAvailable);
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@BranchID,'Menu.Price','ProductVariants',@VariantID,CONCAT(@Price,N' VND'));
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 05_access.sql (historical filename)
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.GetOrder @ActorID int,@OrderID int
+AS
+BEGIN
+ SET NOCOUNT ON;
+ DECLARE @branch int,@customer int;
+ SELECT @branch=BranchID,@customer=CustomerID FROM dbo.Orders WHERE OrderID=@OrderID;
+ IF @branch IS NULL OR (dbo.IsCustomer(@ActorID,@customer)=0 AND dbo.CanBranch(@ActorID,@branch,'Orders.Read')=0) THROW 51103,N'Order is not accessible.',1;
+ SELECT * FROM dbo.Orders WHERE OrderID=@OrderID;
+ SELECT * FROM dbo.OrderDetails WHERE OrderID=@OrderID;
+ SELECT m.* FROM dbo.OrderItemModifiers m JOIN dbo.OrderDetails d ON d.OrderDetailID=m.OrderDetailID WHERE d.OrderID=@OrderID;
+ SELECT * FROM dbo.Deliveries WHERE OrderID=@OrderID;
+ SELECT PaymentID,Method,Amount,Status,CreatedAt,SettledAt FROM dbo.PaymentAttempts WHERE OrderID=@OrderID;
+ SELECT RefundID,Amount,Status,Reason,CreatedAt,CompletedAt FROM dbo.Refunds WHERE OrderID=@OrderID;
+ SELECT FromStatus,ToStatus,Reason,CreatedAt FROM dbo.OrderStatusHistory WHERE OrderID=@OrderID ORDER BY HistoryID;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.ListOrders @ActorID int,@BranchID int=NULL,@CustomerID int=NULL,@Skip int=0,@Take int=50
+AS
+BEGIN
+ SET NOCOUNT ON;
+ IF @Skip<0 OR @Take NOT BETWEEN 1 AND 100 THROW 51100,N'Invalid pagination.',1;
+ SELECT o.OrderID,o.OrderCode,o.BranchID,o.CustomerID,o.Status,o.Source,o.Fulfillment,o.TotalAmount,o.CreatedAt FROM dbo.Orders o
+ WHERE (@BranchID IS NULL OR o.BranchID=@BranchID) AND (@CustomerID IS NULL OR o.CustomerID=@CustomerID)
+ AND (dbo.IsCustomer(@ActorID,o.CustomerID)=1 OR dbo.CanBranch(@ActorID,o.BranchID,'Orders.Read')=1)
+ ORDER BY o.CreatedAt DESC,o.OrderID DESC OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.LookupCustomer @ActorID int,@BranchID int,@Phone varchar(20)
+AS
+BEGIN
+ SET NOCOUNT ON;
+ IF dbo.CanBranch(@ActorID,@BranchID,'Customers.Lookup')=0 THROW 51103,N'POS lookup is outside scope.',1;
+ IF NULLIF(@Phone,'') IS NULL THROW 51100,N'Exact phone is required.',1;
+ SELECT c.CustomerID,u.FullName,u.Phone,c.LoyaltyPoints FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID WHERE u.Phone=@Phone AND u.IsActive=1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.GetCustomerAccount @ActorID int,@CustomerID int
+AS
+BEGIN
+ SET NOCOUNT ON;
+ IF dbo.IsCustomer(@ActorID,@CustomerID)=0 THROW 51103,N'Account belongs to another customer.',1;
+ SELECT c.CustomerID,u.FullName,u.Email,u.Phone,c.DateOfBirth,c.Gender,c.LoyaltyPoints,c.Version FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID WHERE c.CustomerID=@CustomerID;
+ SELECT * FROM dbo.CustomerAddresses WHERE CustomerID=@CustomerID AND IsActive=1;
+ SELECT * FROM dbo.CustomerPromotions WHERE CustomerID=@CustomerID ORDER BY IssuedAt DESC;
+ SELECT * FROM dbo.LoyaltyTransactions WHERE CustomerID=@CustomerID ORDER BY LoyaltyTransactionID DESC;
+ SELECT n.* FROM dbo.Notifications n WHERE n.UserID=@ActorID ORDER BY n.NotificationID DESC;
+ SELECT s.*,r.CompletedAt FROM dbo.SurveyRecipients r JOIN dbo.Surveys s ON s.SurveyID=r.SurveyID WHERE r.CustomerID=@CustomerID;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.GetMenu @BranchID int
+AS
+BEGIN
+ SET NOCOUNT ON;
+ SELECT b.BranchID,b.Name,b.Address,b.Phone,b.OpeningTime,b.ClosingTime,b.AcceptingOrders,b.PickupEnabled,b.DeliveryEnabled,b.DeliveryFee FROM dbo.Branches b WHERE b.BranchID=@BranchID AND b.IsActive=1;
+ SELECT p.ProductID,p.Name,p.Description,p.ImageURL,p.CategoryID,v.VariantID,v.Name AS VariantName,v.BasePrice AS Price,v.DisplayOrder
+ FROM dbo.BranchProducts bp JOIN dbo.Branches b ON b.BranchID=bp.BranchID AND b.IsActive=1 JOIN dbo.Products p ON p.ProductID=bp.ProductID AND p.IsActive=1
+ JOIN dbo.Categories c ON c.CategoryID=p.CategoryID AND c.IsActive=1 JOIN dbo.ProductVariants v ON v.ProductID=p.ProductID AND v.IsActive=1
+ LEFT JOIN dbo.BranchProductVariants bv ON bv.BranchID=bp.BranchID AND bv.VariantID=v.VariantID WHERE bp.BranchID=@BranchID AND bp.IsAvailable=1 AND COALESCE(bv.IsAvailable,1)=1 ORDER BY p.ProductID,v.DisplayOrder;
+ SELECT pg.ProductID,g.ModifierGroupID,g.Name AS GroupName,g.Kind,pg.MinSelections,pg.MaxSelections,o.ModifierOptionID,o.Name AS OptionName,o.ExtraPrice AS ExtraPrice
+ FROM dbo.ProductModifierGroups pg JOIN dbo.ModifierGroups g ON g.ModifierGroupID=pg.ModifierGroupID AND g.IsActive=1
+ JOIN dbo.ModifierOptions o ON o.ModifierGroupID=g.ModifierGroupID AND o.IsActive=1 JOIN dbo.BranchProducts bp ON bp.ProductID=pg.ProductID AND bp.BranchID=@BranchID AND bp.IsAvailable=1
+ LEFT JOIN dbo.BranchModifierOptions bo ON bo.BranchID=@BranchID AND bo.ModifierOptionID=o.ModifierOptionID WHERE COALESCE(bo.IsAvailable,1)=1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.SegmentCustomers
+ @ActorID int,@BranchID int=NULL,@MinAge int=NULL,@MaxAge int=NULL,@Gender varchar(15)=NULL,@ProductID int=NULL,@MinPoints int=NULL,@MinSpend decimal(18,2)=NULL,@InactiveDays int=NULL
+AS
+BEGIN
+ SET NOCOUNT ON;
+ -- Spending and recency are computed only from orders inside the actor's scope.
+ SELECT c.CustomerID,u.FullName,c.Gender,c.DateOfBirth,c.LoyaltyPoints,agg.Spend,agg.LastPurchase
+ FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID AND u.IsActive=1
+ CROSS APPLY(SELECT DATEDIFF(year,c.DateOfBirth,CONVERT(date,SYSUTCDATETIME()))-CASE WHEN DATEADD(year,DATEDIFF(year,c.DateOfBirth,CONVERT(date,SYSUTCDATETIME())),c.DateOfBirth)>CONVERT(date,SYSUTCDATETIME()) THEN 1 ELSE 0 END Age)x
+ OUTER APPLY(SELECT SUM(o.TotalAmount-COALESCE(r.Amount,0)) Spend,MAX(o.CompletedAt) LastPurchase FROM dbo.Orders o LEFT JOIN dbo.Refunds r ON r.OrderID=o.OrderID AND r.Status='Succeeded' WHERE o.CustomerID=c.CustomerID AND o.Status='Completed' AND (@BranchID IS NULL OR o.BranchID=@BranchID) AND dbo.CanBranch(@ActorID,o.BranchID,'Customers.Read')=1)agg
+ WHERE (dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Customers.Read')=1 AND @BranchID IS NULL OR agg.LastPurchase IS NOT NULL)
+ AND (@MinAge IS NULL OR x.Age>=@MinAge) AND (@MaxAge IS NULL OR x.Age<=@MaxAge) AND (@Gender IS NULL OR c.Gender=@Gender)
+ AND (@MinPoints IS NULL OR c.LoyaltyPoints>=@MinPoints) AND (@MinSpend IS NULL OR COALESCE(agg.Spend,0)>=@MinSpend)
+ AND (@InactiveDays IS NULL OR agg.LastPurchase IS NULL OR agg.LastPurchase<DATEADD(day,-@InactiveDays,SYSUTCDATETIME()))
+ AND (@ProductID IS NULL OR EXISTS(SELECT 1 FROM dbo.CustomerPreferences p WHERE p.CustomerID=c.CustomerID AND p.ProductID=@ProductID));
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.RevenueReport @ActorID int,@FromUTC datetime2(3),@ToUTC datetime2(3),@BranchID int=NULL
+AS
+BEGIN
+ SET NOCOUNT ON;
+ IF @FromUTC>=@ToUTC THROW 51100,N'Use a nonempty half-open UTC interval.',1;
+ ;WITH ledger AS (
+ SELECT o.BranchID,o.CompletedAt EventAt,CONVERT(int,1) CompletedOrders,o.TotalAmount GrossAmount,CONVERT(decimal(18,2),0) RefundedAmount
+ FROM dbo.Orders o WHERE o.CompletedAt IS NOT NULL
+ UNION ALL
+ SELECT o.BranchID,r.CompletedAt,0,0,r.Amount FROM dbo.Refunds r JOIN dbo.Orders o ON o.OrderID=r.OrderID WHERE r.Status='Succeeded' AND o.CompletedAt IS NOT NULL
+ ) SELECT l.BranchID,b.Name,SUM(l.CompletedOrders) CompletedOrders,SUM(l.GrossAmount) GrossRevenue,SUM(l.RefundedAmount) RefundedRevenue,SUM(l.GrossAmount-l.RefundedAmount) NetRevenue
+ FROM ledger l JOIN dbo.Branches b ON b.BranchID=l.BranchID WHERE l.EventAt>=@FromUTC AND l.EventAt<@ToUTC AND (@BranchID IS NULL OR l.BranchID=@BranchID) AND dbo.CanBranch(@ActorID,l.BranchID,'Reports.Read')=1 GROUP BY l.BranchID,b.Name;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER VIEW dbo.LoyaltyReconciliation AS
+ SELECT c.CustomerID,c.LoyaltyPoints AS CachedPoints,COALESCE(SUM(l.Points),0) AS LedgerPoints,c.LoyaltyPoints-COALESCE(SUM(l.Points),0) AS Difference FROM dbo.Customers c LEFT JOIN dbo.LoyaltyTransactions l ON l.CustomerID=c.CustomerID GROUP BY c.CustomerID,c.LoyaltyPoints;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- This role is for a trusted backend, NOT end users. Identity must be supplied from verified auth claims.
+-- Metadata CRUD not covered by procedures is performed by a separate trusted administration service.
+CREATE ROLE MorningBrewRuntime;
+DENY SELECT,INSERT,UPDATE,DELETE ON SCHEMA::dbo TO MorningBrewRuntime;
+GRANT EXECUTE ON SCHEMA::dbo TO MorningBrewRuntime;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+PRINT N'--- Bắt đầu phần 02_demo_data.sql ---';
+GO
+-- DB-TEST PACKAGE: Preserves the original SQL batch order. See database/README.md.
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 06_seed.sql (historical filename)
+-- Demo password for all accounts: MorningBrew!2026. ASP.NET PasswordHasher V3, SHA512.
+-- Phạm vi demo CRM: 1 cửa hàng (Morning Brew Thủ Đức), không có phần nhân sự (HRM).
+-- Tài khoản: 1 chủ cửa hàng, 1 quản lý, 1 thu ngân (POS) và 30 khách hàng.
+SET NOCOUNT ON; SET XACT_ABORT ON;
+IF EXISTS(SELECT 1 FROM dbo.Roles) THROW 51000,N'Seed requires empty tables.',1;
+BEGIN TRAN;
+-- Vai trò AreaManager đã bị bỏ trong 11_single_store.sql (chỉ có 1 cửa hàng).
+INSERT dbo.Roles(Code,Name) VALUES('Owner',N'Chủ cửa hàng'),('BranchManager',N'Quản lý cửa hàng'),('Staff',N'Nhân viên thu ngân'),('Customer',N'Khách hàng');
+INSERT dbo.Permissions(Code,Description) VALUES
+('Orders.Create',N'Tạo đơn tại POS'),('Orders.Manage',N'Cập nhật xử lý đơn'),('Orders.Cancel',N'Hủy đơn sau xác nhận'),('Orders.Read',N'Xem lịch sử đơn'),
+('Payments.Manage',N'Ghi nhận tiền đã thu'),('Refunds.Manage',N'Xử lý hoàn tiền'),('Menu.Manage',N'Quản lý thực đơn'),('Customers.Lookup',N'Tra cứu thành viên bằng số điện thoại'),('Customers.Read',N'Xem và phân nhóm khách hàng'),('Promotions.Manage',N'Quản lý và cấp ưu đãi'),('Surveys.Manage',N'Quản lý khảo sát'),('Feedbacks.Manage',N'Xử lý phản hồi'),('Reports.Read',N'Xem báo cáo'),('Organization.Manage',N'Quản lý tổ chức'),('Security.Manage',N'Quản lý tài khoản và quyền'),('Catalog.Manage',N'Quản lý danh mục dùng chung');
+INSERT dbo.RolePermissions SELECT r.RoleID,p.PermissionID FROM dbo.Roles r CROSS JOIN dbo.Permissions p WHERE r.Code='Owner' OR (r.Code='BranchManager' AND p.Code NOT IN ('Organization.Manage','Security.Manage','Catalog.Manage')) OR (r.Code='Staff' AND p.Code IN ('Orders.Create','Orders.Manage','Orders.Read','Payments.Manage','Customers.Lookup'));
+DECLARE @hash varchar(512)='AQAAAAIAAYagAAAAEE8G2F5hjA72TxlV9NrR092YRGzNf1+QMFGndUjRlWxuS/DMviEjHdzD5daFtHJW2w==';
+INSERT dbo.Users(RoleID,Email,NormalizedEmail,PasswordHash,FullName,Phone)
+SELECT r.RoleID,v.Email,UPPER(v.Email),@hash,v.FullName,v.Phone FROM (VALUES
+(1,'Owner','owner@morningbrew.test',N'Chủ cửa hàng','0900000001'),
+(2,'BranchManager','manager.1@morningbrew.test',N'Quản lý cửa hàng','0900000003'),
+(3,'Staff','staff.1@morningbrew.test',N'Thu ngân','0900000004'),
+(4,'Customer','lan@morningbrew.test',N'Nguyễn Lan','0901234567'),
+(5,'Customer','minh@morningbrew.test',N'Trần Minh','0907654321'),
+(6,'Customer','khach01@morningbrew.test',N'Phạm Thu Hà','0912000001'),
+(7,'Customer','khach02@morningbrew.test',N'Lê Quang Huy','0912000002'),
+(8,'Customer','khach03@morningbrew.test',N'Võ Ngọc Anh','0912000003'),
+(9,'Customer','khach04@morningbrew.test',N'Đặng Minh Khoa','0912000004'),
+(10,'Customer','khach05@morningbrew.test',N'Bùi Thảo Vy','0912000005'),
+(11,'Customer','khach06@morningbrew.test',N'Hoàng Gia Bảo','0912000006'),
+(12,'Customer','khach07@morningbrew.test',N'Ngô Khánh Linh','0912000007'),
+(13,'Customer','khach08@morningbrew.test',N'Trịnh Đức Thắng','0912000008'),
+(14,'Customer','khach09@morningbrew.test',N'Phan Mỹ Duyên','0912000009'),
+(15,'Customer','khach10@morningbrew.test',N'Đỗ Hoàng Nam','0912000010'),
+(16,'Customer','khach11@morningbrew.test',N'Huỳnh Bảo Trâm','0912000011'),
+(17,'Customer','khach12@morningbrew.test',N'Lý Tuấn Kiệt','0912000012'),
+(18,'Customer','khach13@morningbrew.test',N'Mai Phương Thảo','0912000013'),
+(19,'Customer','khach14@morningbrew.test',N'Tạ Quốc Việt','0912000014'),
+(20,'Customer','khach15@morningbrew.test',N'Châu Ngọc Hân','0912000015'),
+(21,'Customer','khach16@morningbrew.test',N'Kiều Anh Tú','0912000016'),
+(22,'Customer','khach17@morningbrew.test',N'Lâm Thanh Tâm','0912000017'),
+(23,'Customer','khach18@morningbrew.test',N'Dương Văn Lộc','0912000018'),
+(24,'Customer','khach19@morningbrew.test',N'Tô Hồng Nhung','0912000019'),
+(25,'Customer','khach20@morningbrew.test',N'Quách Minh Trí','0912000020'),
+(26,'Customer','khach21@morningbrew.test',N'Vương Thu Trang','0912000021'),
+(27,'Customer','khach22@morningbrew.test',N'La Đình Phúc','0912000022'),
+(28,'Customer','khach23@morningbrew.test',N'Thái Kim Oanh','0912000023'),
+(29,'Customer','khach24@morningbrew.test',N'Hà Văn Sơn','0912000024'),
+(30,'Customer','khach25@morningbrew.test',N'Lục Thị Mai','0912000025'),
+(31,'Customer','khach26@morningbrew.test',N'Cao Văn Hùng','0912000026'),
+(32,'Customer','khach27@morningbrew.test',N'Âu Thị Hồng','0912000027'),
+(33,'Customer','khach28@morningbrew.test',N'Nghiêm Văn Toàn','0912000028')
+) v(Seq,RoleCode,Email,FullName,Phone) JOIN dbo.Roles r ON r.Code=v.RoleCode ORDER BY v.Seq;
+DECLARE @owner int=(SELECT UserID FROM dbo.Users WHERE Email='owner@morningbrew.test'),
+        @manager int=(SELECT UserID FROM dbo.Users WHERE Email='manager.1@morningbrew.test'),
+        @staff int=(SELECT UserID FROM dbo.Users WHERE Email='staff.1@morningbrew.test');
+-- Một khu vực và một cửa hàng duy nhất (bảng Areas/Branches giữ nguyên trong schema).
+INSERT dbo.Areas(Name) VALUES(N'TP. Hồ Chí Minh');
+-- Demo shop opens all day so exercises work at any local time. Production should set real hours.
+INSERT dbo.Branches(AreaID,ManagerID,Code,Name,Address,Phone,OpeningTime,ClosingTime,DeliveryFee) VALUES
+(1,@manager,'MB01',N'Morning Brew Thủ Đức',N'12 Võ Văn Ngân, TP.HCM','0281111111','00:00','23:59:59',15000);
+INSERT dbo.StaffBranches(UserID,BranchID) VALUES(@staff,1);
+-- 30 khách hàng: ngày sinh trải đều các nhóm tuổi để báo cáo tỷ lệ độ tuổi có ý nghĩa.
+INSERT dbo.Customers(UserID,DateOfBirth,Gender,LoyaltyPoints)
+SELECT u.UserID,v.DateOfBirth,v.Gender,v.Points FROM (VALUES
+('lan@morningbrew.test','2002-05-12','Female',100),('minh@morningbrew.test','1998-10-10','Male',100)
+,
+('khach01@morningbrew.test','2006-03-14','Female',50),
+('khach02@morningbrew.test','2005-11-02','Male',50),
+('khach03@morningbrew.test','2004-07-21','Female',50),
+('khach04@morningbrew.test','2003-01-09','Male',50),
+('khach05@morningbrew.test','2003-09-30','Female',50),
+('khach06@morningbrew.test','2002-12-18','Male',50),
+('khach07@morningbrew.test','2001-04-25','Female',50),
+('khach08@morningbrew.test','2000-08-08','Male',50),
+('khach09@morningbrew.test','1999-02-11','Female',50),
+('khach10@morningbrew.test','1998-06-03','Male',50),
+('khach11@morningbrew.test','1997-10-27','Female',50),
+('khach12@morningbrew.test','1996-05-15','Male',50),
+('khach13@morningbrew.test','1995-01-20','Female',50),
+('khach14@morningbrew.test','1994-03-07','Male',50),
+('khach15@morningbrew.test','1993-12-01','Female',50),
+('khach16@morningbrew.test','1992-09-19','Other',50),
+('khach17@morningbrew.test','1990-07-04','Female',50),
+('khach18@morningbrew.test','1989-11-23','Male',50),
+('khach19@morningbrew.test','1987-02-28','Female',50),
+('khach20@morningbrew.test','1985-08-16','Male',50),
+('khach21@morningbrew.test','1983-05-09','Female',50),
+('khach22@morningbrew.test','1981-10-12','Male',50),
+('khach23@morningbrew.test','1979-04-02','Female',50),
+('khach24@morningbrew.test','1976-01-30','Male',50),
+('khach25@morningbrew.test','1973-06-21','Female',50),
+('khach26@morningbrew.test','1970-09-05','Male',50),
+('khach27@morningbrew.test','1967-12-14','Undisclosed',50),
+('khach28@morningbrew.test','1964-03-26','Male',50)
+) v(Email,DateOfBirth,Gender,Points) JOIN dbo.Users u ON u.Email=v.Email ORDER BY u.UserID;
+INSERT dbo.LoyaltyTransactions(CustomerID,Kind,Points,RequestKey,Note)
+SELECT CustomerID,'Adjust',LoyaltyPoints,NEWID(),N'Điểm tặng khởi tạo dữ liệu demo' FROM dbo.Customers;
+INSERT dbo.CustomerAddresses(CustomerID,Label,RecipientName,Phone,AddressText,IsDefault) VALUES(1,N'Nhà',N'Nguyễn Lan','0901234567',N'12 đường A, TP.HCM',1),(2,N'Công ty',N'Trần Minh','0907654321',N'20 đường B, TP.HCM',1);
+-- Thực đơn 10 món (ID trùng với thực đơn mẫu trong app khách hàng).
+INSERT dbo.Categories(Name) VALUES(N'Cà phê'),(N'Trà'),(N'Bánh');
+INSERT dbo.Products(CategoryID,Name,Description,ImageURL) VALUES
+(1,N'Cà phê sữa',N'Cà phê và sữa đặc','/images/coffee.jpg'),(2,N'Trà đào',N'Trà đào thơm mát','/images/tea.jpg'),(3,N'Bánh tiramisu',N'Bánh vị cà phê','/images/cake.jpg'),
+(1,N'Cà phê đen đá',N'Đậm vị robusta',NULL),(1,N'Bạc xỉu',N'Nhiều sữa, ít cà phê',NULL),(1,N'Cold brew cam sả',N'Ủ lạnh 16 giờ',NULL),
+(2,N'Trà vải lài',N'Trà lài và vải tươi',NULL),(2,N'Trà sen vàng',N'Hạt sen, kem sữa',NULL),(3,N'Bánh croissant bơ',N'Nướng mỗi sáng',NULL),(3,N'Bánh mousse chanh dây',N'Chua ngọt nhẹ',NULL);
+INSERT dbo.ProductVariants(ProductID,Name,BasePrice,DisplayOrder) VALUES
+(1,'M',30000,1),(1,'L',40000,2),(2,'M',35000,1),(3,'Standard',45000,1),
+(4,'M',29000,1),(5,'M',32000,1),(6,'M',45000,1),(7,'M',39000,1),(8,'M',45000,1),(9,'Standard',29000,1),(10,'Standard',39000,1);
+INSERT dbo.BranchProducts(BranchID,ProductID) SELECT 1,ProductID FROM dbo.Products;
+UPDATE dbo.BranchProducts SET IsAvailable=0 WHERE ProductID IN (8,10); -- minh họa món tạm hết
+INSERT dbo.BranchProductVariants(BranchID,VariantID,ProductID,SellingPrice) VALUES(1,1,1,30000);
+INSERT dbo.ModifierGroups(Name,Kind) VALUES(N'Đường','Sugar'),(N'Đá','Ice'),(N'Topping','Topping');
+INSERT dbo.ModifierOptions(ModifierGroupID,Name,ExtraPrice,DisplayOrder) VALUES(1,N'50% đường',0,1),(1,N'100% đường',0,2),(2,N'50% đá',0,1),(2,N'100% đá',0,2),(3,N'Trân châu',5000,1),(3,N'Pudding',7000,2);
+INSERT dbo.ProductModifierGroups(ProductID,ModifierGroupID,MinSelections,MaxSelections) VALUES(1,1,1,1),(1,2,1,1),(1,3,0,2),(2,1,1,1),(2,2,1,1),(2,3,0,2);
+-- Sở thích: mỗi khách 2 món, phân bố lệch để báo cáo "món được yêu thích" có xếp hạng rõ.
+INSERT dbo.CustomerPreferences(CustomerID,ProductID)
+SELECT c.CustomerID,p.ProductID FROM dbo.Customers c CROSS APPLY (VALUES
+ (CASE c.CustomerID % 5 WHEN 0 THEN 1 WHEN 1 THEN 1 WHEN 2 THEN 5 WHEN 3 THEN 2 ELSE 7 END),
+ (CASE c.CustomerID % 4 WHEN 0 THEN 3 WHEN 1 THEN 9 WHEN 2 THEN 6 ELSE 4 END)) p(ProductID)
+GROUP BY c.CustomerID,p.ProductID;
+INSERT dbo.LoyaltyPolicies(Name,AmountPerPoint,EffectiveFrom) VALUES(N'10.000 đồng đổi 1 điểm',10000,'2020-01-01');
+INSERT dbo.Promotions(Name,Description,Scope,CreatedBy,DiscountType,DiscountValue,MaxDiscount,MinSubtotal,StartsAt,EndsAt,PointsCost,TotalLimit,PerCustomerLimit) VALUES
+(N'Đổi 50 điểm giảm 10.000',N'Đơn từ 50.000 đồng','Chain',@owner,'Amount',10000,NULL,50000,DATEADD(day,-1,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME()),50,1000,3),
+(N'Quà tặng 10%',N'Đơn từ 30.000 đồng, giảm tối đa 20.000','Chain',@owner,'Percent',10,20000,30000,DATEADD(day,-1,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME()),NULL,1000,1),
+(N'Chào mừng',N'Nhận miễn phí, giảm 5.000 đồng từ đơn 10.000','Chain',@owner,'Amount',5000,NULL,10000,DATEADD(day,-1,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME()),0,1000,1);
+-- Khảo sát 1: trải nghiệm hiện tại. Khảo sát 2: thăm dò trước khi ra mắt món mới.
+INSERT dbo.Surveys(Title,Description,CreatedBy,Scope,StartsAt,EndsAt) VALUES
+(N'Khẩu vị và trải nghiệm',N'Khảo sát cải thiện sản phẩm',@owner,'Chain',DATEADD(day,-1,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME())),
+(N'Thăm dò món mới mùa đông',N'Giúp Morning Brew chọn món ra mắt tháng 12',@owner,'Chain',DATEADD(day,-1,SYSUTCDATETIME()),DATEADD(month,2,SYSUTCDATETIME()));
+INSERT dbo.SurveyQuestions(SurveyID,Text,Type,IsRequired,DisplayOrder,RatingMin,RatingMax) VALUES
+(1,N'Bạn thích những vị nào?','MultipleChoice',1,1,NULL,NULL),(1,N'Bạn hài lòng mức nào?','Rating',1,2,1,5),(1,N'Góp ý thêm','Text',0,3,NULL,NULL),
+(2,N'Bạn muốn thử món mới nào nhất?','SingleChoice',1,1,NULL,NULL),(2,N'Mức giá 45.000đ cho món mới có hợp lý?','Rating',1,2,1,5),(2,N'Bạn thường ghé quán vào lúc nào?','MultipleChoice',1,3,NULL,NULL),(2,N'Gợi ý khác cho món mới','Text',0,4,NULL,NULL);
+INSERT dbo.SurveyQuestionOptions(QuestionID,Text,DisplayOrder) VALUES
+(1,N'Cà phê',1),(1,N'Socola',2),(1,N'Trà',3),
+(4,N'Cacao muối',1),(4,N'Trà gừng mật ong',2),(4,N'Latte hạt dẻ',3),(4,N'Matcha khoai môn',4),
+(6,N'Buổi sáng',1),(6,N'Buổi trưa',2),(6,N'Buổi chiều',3),(6,N'Buổi tối',4);
+COMMIT;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 07_demo.sql (historical filename)
+-- Dữ liệu giao dịch demo cho phạm vi CRM (1 cửa hàng, 30 khách).
+-- Mọi ID được tra theo email / thứ tự hiển thị, không gán cứng.
+SET NOCOUNT ON;
+DECLARE @r TABLE(ID int);
+DECLARE @voucher int,@order int,@payment int,@refund int,@feedback int,@key uniqueidentifier=NEWID();
+DECLARE @owner int=(SELECT UserID FROM dbo.Users WHERE Email='owner@morningbrew.test'),
+        @manager int=(SELECT UserID FROM dbo.Users WHERE Email='manager.1@morningbrew.test'),
+        @staff int=(SELECT UserID FROM dbo.Users WHERE Email='staff.1@morningbrew.test'),
+        @lanUser int=(SELECT UserID FROM dbo.Users WHERE Email='lan@morningbrew.test'),
+        @minhUser int=(SELECT UserID FROM dbo.Users WHERE Email='minh@morningbrew.test');
+DECLARE @lan int=(SELECT CustomerID FROM dbo.Customers WHERE UserID=@lanUser),
+        @minh int=(SELECT CustomerID FROM dbo.Customers WHERE UserID=@minhUser),
+        @branch int=(SELECT BranchID FROM dbo.Branches WHERE Code='MB01'),
+        @minhAddress int;
+SELECT @minhAddress=AddressID FROM dbo.CustomerAddresses WHERE CustomerID=@minh AND IsDefault=1;
+
+-- ===== 1. Các luồng mẫu gốc (Lan, Minh, POS) =====
+INSERT @r EXEC dbo.IssueVoucher @lanUser,@lan,1,@key;
+SELECT @voucher=ID FROM @r; DELETE @r;
+SET @key=NEWID();
+INSERT @r EXEC dbo.CreateOrder @ActorID=@lanUser,@BranchID=@branch,@Source='App',@Fulfillment='Pickup',@PaymentMode='Prepaid',@Items=N'[{"variantId":1,"quantity":2,"optionIds":[1,3,5]}]',@RequestKey=@key,@CustomerID=@lan,@CustomerPromotionID=@voucher;
+SELECT @order=ID FROM @r; DELETE @r;
+SET @key=NEWID(); INSERT @r EXEC dbo.StartPayment @lanUser,@order,@key; SELECT @payment=ID FROM @r; DELETE @r;
+EXEC dbo.SimulatePayment @lanUser,@payment,'Failed',N'Khách hủy lần thanh toán đầu';
+SET @key=NEWID(); INSERT @r EXEC dbo.StartPayment @lanUser,@order,@key; SELECT @payment=ID FROM @r; DELETE @r;
+EXEC dbo.SimulatePayment @lanUser,@payment,'Succeeded';
+EXEC dbo.AdvanceOrder @staff,@order,'Confirmed'; EXEC dbo.AdvanceOrder @staff,@order,'Preparing'; EXEC dbo.AdvanceOrder @staff,@order,'Ready'; EXEC dbo.AdvanceOrder @staff,@order,'Completed';
+INSERT @r EXEC dbo.SubmitFeedback @ActorID=@lanUser,@CustomerID=@lan,@Content=N'Đồ uống ngon và phục vụ nhanh',@Type='Service',@Rating=5,@OrderID=@order,@BranchID=@branch;
+SELECT @feedback=ID FROM @r; DELETE @r;
+EXEC dbo.HandleFeedback @manager,@feedback,'Resolved',N'Cảm ơn bạn đã ghé Morning Brew!';
+SET @key=NEWID();
+INSERT @r EXEC dbo.CreateOrder @ActorID=@minhUser,@BranchID=@branch,@Source='App',@Fulfillment='Delivery',@PaymentMode='COD',@Items=N'[{"variantId":3,"quantity":1,"optionIds":[1,3]}]',@RequestKey=@key,@CustomerID=@minh,@AddressID=@minhAddress;
+SELECT @order=ID FROM @r; DELETE @r;
+EXEC dbo.AdvanceOrder @staff,@order,'Confirmed'; EXEC dbo.AdvanceOrder @staff,@order,'Preparing'; EXEC dbo.AdvanceOrder @staff,@order,'Ready';
+EXEC dbo.AdvanceOrder @ActorID=@staff,@OrderID=@order,@NextStatus='Delivering',@CourierName=N'Anh Bình',@CourierPhone='0908888888';
+EXEC dbo.UpdateDelivery @staff,@order,'Failed',N'Khách chưa nghe điện thoại';
+EXEC dbo.UpdateDelivery @staff,@order,'Delivering';
+SET @key=NEWID();
+INSERT @r EXEC dbo.CreateOrder @ActorID=@staff,@BranchID=@branch,@Source='POS',@Fulfillment='Pickup',@PaymentMode='COD',@Items=N'[{"variantId":4,"quantity":1}]',@RequestKey=@key;
+SELECT @order=ID FROM @r; DELETE @r;
+SET @key=NEWID(); INSERT @r EXEC dbo.StartPayment @staff,@order,@key; SELECT @payment=ID FROM @r; DELETE @r;
+EXEC dbo.SimulatePayment @staff,@payment,'Succeeded';
+EXEC dbo.AdvanceOrder @staff,@order,'Confirmed'; EXEC dbo.AdvanceOrder @staff,@order,'Preparing'; EXEC dbo.AdvanceOrder @staff,@order,'Ready'; EXEC dbo.AdvanceOrder @staff,@order,'Completed';
+SET @key=NEWID();
+INSERT @r EXEC dbo.CreateOrder @ActorID=@lanUser,@BranchID=@branch,@Source='App',@Fulfillment='Pickup',@PaymentMode='Prepaid',@Items=N'[{"variantId":4,"quantity":1}]',@RequestKey=@key,@CustomerID=@lan;
+SELECT @order=ID FROM @r; DELETE @r;
+EXEC dbo.CancelOrder @lanUser,@order,N'Khách đổi ý trước thanh toán';
+SET @key=NEWID();
+INSERT @r EXEC dbo.CreateOrder @ActorID=@minhUser,@BranchID=@branch,@Source='App',@Fulfillment='Delivery',@PaymentMode='Prepaid',@Items=N'[{"variantId":4,"quantity":1}]',@RequestKey=@key,@CustomerID=@minh,@AddressID=@minhAddress;
+SELECT @order=ID FROM @r; DELETE @r;
+SET @key=NEWID(); INSERT @r EXEC dbo.StartPayment @minhUser,@order,@key; SELECT @payment=ID FROM @r; DELETE @r;
+EXEC dbo.SimulatePayment @minhUser,@payment,'Succeeded';
+EXEC dbo.CancelOrder @minhUser,@order,N'Khách hủy trước xác nhận';
+SELECT @refund=RefundID FROM dbo.Refunds WHERE OrderID=@order;
+EXEC dbo.SimulateRefund @manager,@refund,'Failed',N'Lỗi mô phỏng lần đầu';
+EXEC dbo.SimulateRefund @manager,@refund,'Succeeded';
+
+-- ===== 2. Khảo sát: phát hành và mời toàn bộ 30 khách =====
+DECLARE @s1 int=(SELECT SurveyID FROM dbo.Surveys WHERE Title=N'Khẩu vị và trải nghiệm'),
+        @s2 int=(SELECT SurveyID FROM dbo.Surveys WHERE Title=N'Thăm dò món mới mùa đông');
+DECLARE @s1q1 int=(SELECT QuestionID FROM dbo.SurveyQuestions WHERE SurveyID=@s1 AND DisplayOrder=1),
+        @s1q2 int=(SELECT QuestionID FROM dbo.SurveyQuestions WHERE SurveyID=@s1 AND DisplayOrder=2),
+        @s1q3 int=(SELECT QuestionID FROM dbo.SurveyQuestions WHERE SurveyID=@s1 AND DisplayOrder=3),
+        @s2q1 int=(SELECT QuestionID FROM dbo.SurveyQuestions WHERE SurveyID=@s2 AND DisplayOrder=1),
+        @s2q2 int=(SELECT QuestionID FROM dbo.SurveyQuestions WHERE SurveyID=@s2 AND DisplayOrder=2),
+        @s2q3 int=(SELECT QuestionID FROM dbo.SurveyQuestions WHERE SurveyID=@s2 AND DisplayOrder=3),
+        @s2q4 int=(SELECT QuestionID FROM dbo.SurveyQuestions WHERE SurveyID=@s2 AND DisplayOrder=4);
+DECLARE @o1a int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s1q1 AND DisplayOrder=1),
+        @o1b int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s1q1 AND DisplayOrder=2),
+        @o1c int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s1q1 AND DisplayOrder=3),
+        @newCacao int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q1 AND DisplayOrder=1),
+        @newGinger int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q1 AND DisplayOrder=2),
+        @newLatte int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q1 AND DisplayOrder=3),
+        @newMatcha int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q1 AND DisplayOrder=4),
+        @tMorning int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q3 AND DisplayOrder=1),
+        @tNoon int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q3 AND DisplayOrder=2),
+        @tAfternoon int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q3 AND DisplayOrder=3),
+        @tEvening int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q3 AND DisplayOrder=4);
+EXEC dbo.PublishSurvey @owner,@s1;
+EXEC dbo.PublishSurvey @owner,@s2;
+DECLARE @c int,@u int;
+DECLARE invites CURSOR LOCAL FAST_FORWARD FOR SELECT CustomerID FROM dbo.Customers ORDER BY CustomerID;
+OPEN invites; FETCH NEXT FROM invites INTO @c;
+WHILE @@FETCH_STATUS=0
+BEGIN
+ EXEC dbo.InviteSurvey @owner,@s1,@c;
+ EXEC dbo.InviteSurvey @owner,@s2,@c;
+ FETCH NEXT FROM invites INTO @c;
+END;
+CLOSE invites; DEALLOCATE invites;
+-- Lan đã trả lời khảo sát 1; khảo sát 2 để trống cho phần demo trên app.
+DECLARE @answers nvarchar(max)=CONCAT(N'[{"questionId":',@s1q1,N',"optionIds":[',@o1a,N',',@o1b,N']},{"questionId":',@s1q2,N',"rating":5},{"questionId":',@s1q3,N',"text":"Thêm món theo mùa"}]');
+EXEC dbo.SubmitSurvey @lanUser,@s1,@lan,@answers;
+
+-- ===== 3. 28 khách còn lại: đơn hoàn tất, phản hồi, trả lời khảo sát =====
+-- Phân bố theo CustomerID để dữ liệu cố định giữa các lần cài, không dùng số ngẫu nhiên.
+DECLARE @items nvarchar(200),@variant int,@product int,@qty int,@rating int,@type varchar(15),@content nvarchar(400),@opts nvarchar(100),@text nvarchar(300);
+DECLARE people CURSOR LOCAL FAST_FORWARD FOR SELECT CustomerID,UserID FROM dbo.Customers WHERE CustomerID NOT IN (@lan,@minh) ORDER BY CustomerID;
+OPEN people; FETCH NEXT FROM people INTO @c,@u;
+WHILE @@FETCH_STATUS=0
+BEGIN
+ SET @order=NULL;
+ -- 4/5 số khách có 1 đơn hoàn tất (món không cần chọn topping/đường/đá).
+ IF @c % 5 <> 0
+ BEGIN
+  SET @variant=CHOOSE(@c % 6 + 1, 4, 5, 6, 7, 8, 10);
+  SET @qty=1 + @c % 2;
+  SELECT @product=ProductID FROM dbo.ProductVariants WHERE VariantID=@variant;
+  SET @key=NEWID();
+  SET @items=CONCAT(N'[{"variantId":',@variant,N',"quantity":',@qty,N'}]');
+  INSERT @r EXEC dbo.CreateOrder @ActorID=@u,@BranchID=@branch,@Source='App',@Fulfillment='Pickup',@PaymentMode='Prepaid',
+       @Items=@items,@RequestKey=@key,@CustomerID=@c;
+  SELECT @order=ID FROM @r; DELETE @r;
+  SET @key=NEWID(); INSERT @r EXEC dbo.StartPayment @u,@order,@key; SELECT @payment=ID FROM @r; DELETE @r;
+  EXEC dbo.SimulatePayment @u,@payment,'Succeeded';
+  EXEC dbo.AdvanceOrder @staff,@order,'Confirmed'; EXEC dbo.AdvanceOrder @staff,@order,'Preparing';
+  EXEC dbo.AdvanceOrder @staff,@order,'Ready'; EXEC dbo.AdvanceOrder @staff,@order,'Completed';
+ END;
+ -- Phản hồi: gắn với món trong đơn; đủ 3 trạng thái Mới / Đang xử lý / Đã giải quyết.
+ IF @order IS NOT NULL AND @c % 3 <> 0
+ BEGIN
+  SET @rating=CHOOSE(@c % 4 + 1, 5, 4, 3, 2);
+  SET @content=CHOOSE(@c % 6 + 1, N'Món rất ngon, sẽ quay lại', N'Hơi ngọt so với khẩu vị của tôi', N'Đồ uống ra hơi chậm giờ cao điểm',
+       N'Giá hợp lý, chất lượng ổn định', N'Ly nhỏ hơn mong đợi', N'Bánh mới, thơm, rất đáng thử');
+  INSERT @r EXEC dbo.SubmitFeedback @ActorID=@u,@CustomerID=@c,@Content=@content,@Type='Product',@Rating=@rating,@OrderID=@order,@BranchID=@branch,@ProductID=@product;
+  SELECT @feedback=ID FROM @r; DELETE @r;
+  IF @c % 4 = 0 EXEC dbo.HandleFeedback @manager,@feedback,'Resolved',N'Cảm ơn bạn! Quán đã ghi nhận và điều chỉnh.';
+  ELSE IF @c % 4 = 1 EXEC dbo.HandleFeedback @manager,@feedback,'Processing',N'Quán đang kiểm tra lại công thức.';
+ END
+ ELSE IF @order IS NULL AND @c % 2 = 1
+ BEGIN
+  SET @type=CASE WHEN @c % 4 = 1 THEN 'Space' ELSE 'Service' END;
+  INSERT @r EXEC dbo.SubmitFeedback @ActorID=@u,@CustomerID=@c,@Content=N'Không gian thoáng nhưng thiếu ổ cắm điện',@Type=@type,@Rating=4,@BranchID=@branch;
+  DELETE @r;
+ END;
+ -- Khảo sát 1: khoảng 3/4 số khách trả lời.
+ IF @c % 4 <> 3
+ BEGIN
+  SET @opts=CASE @c % 3 WHEN 0 THEN CONCAT(@o1a,N'') WHEN 1 THEN CONCAT(@o1a,N',',@o1c) ELSE CONCAT(@o1b,N',',@o1c) END;
+  SET @text=CASE WHEN @c % 5 = 1 THEN N'Mong có thêm món ít đường' ELSE NULL END;
+  SET @answers=CONCAT(N'[{"questionId":',@s1q1,N',"optionIds":[',@opts,N']},{"questionId":',@s1q2,N',"rating":',3 + @c % 3,N'}',
+       CASE WHEN @text IS NULL THEN N'' ELSE CONCAT(N',{"questionId":',@s1q3,N',"text":"',@text,N'"}') END,N']');
+  EXEC dbo.SubmitSurvey @u,@s1,@c,@answers;
+ END;
+ -- Khảo sát 2 (thăm dò món mới): khoảng 2/3 số khách trả lời, Cacao muối dẫn đầu.
+ IF @c % 3 <> 1
+ BEGIN
+  SET @opts=CONCAT(CASE WHEN @c % 7 IN (0,1,2) THEN @newCacao WHEN @c % 7 IN (3,4) THEN @newLatte WHEN @c % 7 = 5 THEN @newGinger ELSE @newMatcha END,N'');
+  SET @text=CASE WHEN @c % 6 = 0 THEN N'Nên có size nhỏ cho món mới' ELSE NULL END;
+  SET @answers=CONCAT(N'[{"questionId":',@s2q1,N',"optionIds":[',@opts,N']},{"questionId":',@s2q2,N',"rating":',2 + @c % 4,N'},',
+       N'{"questionId":',@s2q3,N',"optionIds":[',CASE @c % 3 WHEN 0 THEN CONCAT(@tMorning,N'') WHEN 1 THEN CONCAT(@tMorning,N',',@tAfternoon) ELSE CONCAT(@tNoon,N',',@tEvening) END,N']}',
+       CASE WHEN @text IS NULL THEN N'' ELSE CONCAT(N',{"questionId":',@s2q4,N',"text":"',@text,N'"}') END,N']');
+  EXEC dbo.SubmitSurvey @u,@s2,@c,@answers;
+ END;
+ FETCH NEXT FROM people INTO @c,@u;
+END;
+CLOSE people; DEALLOCATE people;
+SELECT 'Demo ready' AS Result,
+ (SELECT COUNT(*) FROM dbo.Customers) AS Customers,
+ (SELECT COUNT(*) FROM dbo.Orders WHERE Status='Completed') AS CompletedOrders,
+ (SELECT COUNT(*) FROM dbo.Feedbacks) AS Feedbacks,
+ (SELECT COUNT(*) FROM dbo.SurveyRecipients WHERE CompletedAt IS NOT NULL) AS SurveyAnswers;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- ===== Hết phần cài mới: chạy tiếp (trừ khi đã lỗi) =====
+SET NOEXEC OFF;
+GO
+IF SESSION_CONTEXT(N'mb_failed') = 1 SET NOEXEC ON;
+GO
+USE [MorningBrewCRM_Crm];
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+IF OBJECT_ID(N'dbo.CreateOrder', N'P') IS NULL
+BEGIN
+    RAISERROR(N'>>> DỪNG: chưa có bảng/thủ tục lõi.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+IF (SELECT COUNT(*) FROM dbo.Branches WHERE IsActive = 1) > 1
+BEGIN
+    RAISERROR(N'>>> DỪNG: bản cập nhật này chỉ dành cho mô hình MỘT cửa hàng.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+IF OBJECT_ID(N'dbo.AreaManagers', N'U') IS NOT NULL AND EXISTS (SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID = u.RoleID WHERE r.Code = 'AreaManager')
+BEGIN
+    RAISERROR(N'>>> DỪNG: còn tài khoản AreaManager. Chuyển các tài khoản này sang vai trò khác trước.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Sao lưu trước khi nâng cấp (chỉ khi NÂNG CẤP). Muốn bỏ qua: đổi @SaoLuu = 0.
+DECLARE @SaoLuu bit = 1;
+IF @SaoLuu = 1 AND SESSION_CONTEXT(N'mb_mode') = N'upgrade'
+BEGIN
+    DECLARE @dir nvarchar(300) = CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS nvarchar(300));
+    DECLARE @file nvarchar(400) = CONCAT(CASE WHEN @dir IS NULL THEN N'' WHEN RIGHT(@dir, 1) = N'\' THEN @dir ELSE @dir + N'\' END, N'MorningBrewCRM_Crm_truoc-nang-cap_', FORMAT(SYSDATETIME(), 'yyyyMMdd_HHmmss'), N'.bak');
+    DECLARE @sql nvarchar(max) = N'BACKUP DATABASE [MorningBrewCRM_Crm] TO DISK = @f WITH COPY_ONLY, CHECKSUM, INIT; RESTORE VERIFYONLY FROM DISK = @f WITH CHECKSUM;';
+    EXEC sp_executesql @sql, N'@f nvarchar(400)', @f = @file;
+    PRINT CONCAT(N'Đã sao lưu và kiểm tra bản sao lưu: ', @file);
+END
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+PRINT N'--- Bắt đầu phần 03_crm_updates.sql ---';
+GO
+-- DB-TEST PACKAGE: Preserves the original SQL batch order. See database/README.md.
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 08_admin.sql (historical filename)
+-- Additive, repeatable migration for Admin features. No existing data is reset.
+-- Phạm vi CRM: đã bỏ phần nhân sự (bảng StaffShifts và quyền Staff.Manage).
+SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
+BEGIN TRAN;
+IF OBJECT_ID('dbo.Suppliers','U') IS NULL
+CREATE TABLE dbo.Suppliers(
+ SupplierID int IDENTITY PRIMARY KEY,
+ Code varchar(30) NOT NULL UNIQUE,
+ Name nvarchar(150) NOT NULL,
+ Phone varchar(20) NULL,
+ Email nvarchar(254) NULL,
+ ProductGroup nvarchar(150) NULL,
+ IsActive bit NOT NULL DEFAULT 1
+);
+COMMIT;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Trusted API service role: metadata CRUD and business procedures, without schema/DDL ownership.
+IF DATABASE_PRINCIPAL_ID('MorningBrewApi') IS NULL CREATE ROLE MorningBrewApi;
+GRANT SELECT,INSERT,UPDATE,DELETE,EXECUTE ON SCHEMA::dbo TO MorningBrewApi;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 09_shared_prices.sql (historical filename)
+-- Repeatable upgrade: shared catalog prices for all future orders/menu reads.
+-- Retains existing availability rows and historical order snapshots. No data is deleted.
+SET NOCOUNT ON; SET XACT_ABORT ON;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+BEGIN TRAN;
+DECLARE @sql nvarchar(max), @name sysname;
+DECLARE procedures CURSOR LOCAL FAST_FORWARD FOR
+ SELECT name FROM sys.procedures WHERE schema_id=SCHEMA_ID('dbo') AND name IN ('CreateOrder','GetMenu');
+OPEN procedures;
+FETCH NEXT FROM procedures INTO @name;
+WHILE @@FETCH_STATUS=0
+BEGIN
+ SET @sql=OBJECT_DEFINITION(OBJECT_ID('dbo.'+@name));
+ IF @sql IS NULL THROW 51100,'Install core procedures before 09_shared_prices.sql.',1;
+ SET @sql='ALTER '+SUBSTRING(@sql,CHARINDEX('PROCEDURE',@sql),LEN(@sql));
+ SET @sql=REPLACE(@sql,'COALESCE(bv.SellingPrice,v.BasePrice)','v.BasePrice');
+ SET @sql=REPLACE(@sql,'COALESCE(bo.ExtraPrice,mo.ExtraPrice)','mo.ExtraPrice');
+ SET @sql=REPLACE(@sql,'COALESCE(bo.ExtraPrice,o.ExtraPrice)','o.ExtraPrice');
+ EXEC sys.sp_executesql @sql;
+ FETCH NEXT FROM procedures INTO @name;
+END;
+CLOSE procedures; DEALLOCATE procedures;
+IF OBJECT_ID('dbo.CreateOrder','P') IS NULL OR OBJECT_ID('dbo.GetMenu','P') IS NULL
+ THROW 51100,'Install core procedures before 09_shared_prices.sql.',1;
+COMMIT;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.SetBranchPrice
+ @ActorID int,@BranchID int,@VariantID int,@Price decimal(18,2),@IsAvailable bit
+AS
+BEGIN
+ SET NOCOUNT ON;
+ THROW 51100,'Branch-specific prices are retired. Use the owner-only shared variant price API.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 10_soft_delete.sql (historical filename)
+-- LƯU Ý: dbo.SoftDeleteUser được 11_single_store.sql định nghĩa lại (cho quản lý xóa khách). Nếu chạy lại file này, hãy chạy lại 11 sau đó.
+-- Xóa mềm tài khoản / khách hàng (yêu cầu 4.1 "Xóa khách hàng", II.2 "Thêm, xóa account").
+-- Chạy lặp lại được. Không xóa dòng nào: chỉ đánh dấu DeletedAt, khóa đăng nhập và ẩn danh dữ liệu cá nhân,
+-- để đơn hàng, điểm, phản hồi, khảo sát (khóa ngoại tới Users/Customers) và các báo cáo vẫn đúng.
+-- Database đã tạo trước đó: sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\10_soft_delete.sql
+SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
+IF COL_LENGTH('dbo.Users','DeletedAt') IS NULL
+    ALTER TABLE dbo.Users ADD DeletedAt datetime2(3) NULL;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.SoftDeleteUser @ActorID int,@UserID int
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRAN;
+ IF dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Security.Manage')=0 THROW 51103,N'Chỉ chủ cửa hàng được xóa tài khoản.',1;
+ IF @UserID=@ActorID THROW 51121,N'Không thể tự xóa tài khoản đang đăng nhập.',1;
+ DECLARE @role varchar(30);
+ SELECT @role=r.Code FROM dbo.Users u WITH(UPDLOCK,HOLDLOCK) JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE u.UserID=@UserID AND u.DeletedAt IS NULL;
+ IF @role IS NULL THROW 51104,N'Account not found.',1;
+ IF @role='Owner' AND NOT EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
+    WHERE r.Code='Owner' AND u.UserID<>@UserID AND u.IsActive=1 AND u.DeletedAt IS NULL)
+    THROW 51122,N'Phải còn ít nhất một chủ cửa hàng đang hoạt động.',1;
+ -- Ẩn danh: email đổi thành giá trị không dùng được để email gốc có thể đăng ký lại.
+ DECLARE @email nvarchar(254)=CONCAT(N'deleted-',@UserID,N'@deleted.invalid');
+ UPDATE dbo.Users SET IsActive=0,DeletedAt=SYSUTCDATETIME(),Email=@email,NormalizedEmail=UPPER(@email),
+    FullName=CASE WHEN @role='Customer' THEN N'Khách đã xóa' ELSE N'Tài khoản đã xóa' END,Phone=NULL
+ WHERE UserID=@UserID;
+ UPDATE dbo.UserSessions SET RevokedAt=SYSUTCDATETIME() WHERE UserID=@UserID AND RevokedAt IS NULL;
+ IF @role='BranchManager' UPDATE dbo.Branches SET ManagerID=NULL WHERE ManagerID=@UserID;
+ INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details) VALUES(@ActorID,'Account.SoftDelete','Users',@UserID,@role);
+ COMMIT;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 11_single_store.sql (historical filename)
+-- Chế độ MỘT CỬA HÀNG (phạm vi đồ án hiện tại). Chạy lặp lại được, không xóa dữ liệu nghiệp vụ.
+-- Áp dụng sau 01–10. Database đã có:
+--   sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\11_single_store.sql
+-- Thay đổi:
+--  1. CanScope: phạm vi chung (Chain) = cửa hàng duy nhất. Người có quyền tại một cửa hàng đang hoạt động
+--     thì có quyền đó ở phạm vi chung -> quản lý thấy toàn bộ khách, phản hồi không gắn cửa hàng,
+--     khảo sát/ưu đãi do chủ cửa hàng tạo.
+--  2. CustomerInScope: mọi khách chưa bị xóa đều thuộc cửa hàng (không còn phụ thuộc đơn hàng Completed).
+--  3. CanBranch: quản lý được gán qua Branches.ManagerID HOẶC StaffBranches -> có thể có nhiều quản lý.
+--  4. Bỏ vai trò AreaManager (bảng AreaManagers, trigger, nhánh kiểm tra quyền) và procedure SetBranchPrice đã ngừng dùng.
+--  5. Quyền Customers.Manage (thêm/xóa/khóa khách hàng) cho chủ cửa hàng và quản lý.
+SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER FUNCTION dbo.CanBranch(@UserID int,@BranchID int,@Permission varchar(80))
+RETURNS bit AS
+BEGIN
+ DECLARE @ok bit=0;
+ IF EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
+  JOIN dbo.RolePermissions rp ON rp.RoleID=u.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
+  JOIN dbo.Branches b ON b.BranchID=@BranchID
+  WHERE u.UserID=@UserID AND u.IsActive=1 AND p.Code=@Permission AND
+  (r.Code='Owner'
+   OR (r.Code='BranchManager' AND b.ManagerID=u.UserID)
+   OR (r.Code IN ('BranchManager','Staff') AND EXISTS(SELECT 1 FROM dbo.StaffBranches s WHERE s.UserID=u.UserID AND s.BranchID=b.BranchID AND s.IsActive=1)))) SET @ok=1;
+ RETURN @ok;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER FUNCTION dbo.CanScope(@UserID int,@Scope varchar(10),@AreaID int,@BranchID int,@Permission varchar(80))
+RETURNS bit AS
+BEGIN
+ IF @Scope='Branch' RETURN dbo.CanBranch(@UserID,@BranchID,@Permission);
+ -- Chain/Area: chủ cửa hàng có quyền, hoặc người có quyền tại một cửa hàng đang hoạt động (chỉ có 1 cửa hàng).
+ RETURN CASE WHEN EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
+   JOIN dbo.RolePermissions rp ON rp.RoleID=r.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
+   WHERE u.UserID=@UserID AND u.IsActive=1 AND p.Code=@Permission AND r.Code='Owner')
+  OR EXISTS(SELECT 1 FROM dbo.Branches b WHERE b.IsActive=1 AND dbo.CanBranch(@UserID,b.BranchID,@Permission)=1)
+  THEN 1 ELSE 0 END;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER FUNCTION dbo.CustomerInScope(@CustomerID int,@Scope varchar(10),@AreaID int,@BranchID int)
+RETURNS bit AS
+BEGIN
+ RETURN CASE WHEN EXISTS(SELECT 1 FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID
+  WHERE c.CustomerID=@CustomerID AND u.DeletedAt IS NULL) THEN 1 ELSE 0 END;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_StaffBranches_Role ON dbo.StaffBranches AFTER INSERT,UPDATE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.Users u ON u.UserID=i.UserID JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE r.Code NOT IN ('Staff','BranchManager'))
+  THROW 51001,N'Assignment requires Staff or BranchManager role.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_Users_Role ON dbo.Users AFTER UPDATE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF UPDATE(RoleID) AND EXISTS(SELECT 1 FROM inserted i JOIN deleted d ON d.UserID=i.UserID WHERE i.RoleID<>d.RoleID AND
+ (EXISTS(SELECT 1 FROM dbo.Customers WHERE UserID=i.UserID) OR EXISTS(SELECT 1 FROM dbo.StaffBranches WHERE UserID=i.UserID AND IsActive=1) OR EXISTS(SELECT 1 FROM dbo.Branches WHERE ManagerID=i.UserID)))
+ THROW 51001,N'Remove incompatible assignments/profile before changing role.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+BEGIN TRAN;
+-- Quản lý hiện tại (Branches.ManagerID) cũng được ghi vào StaffBranches để thống nhất cách gán.
+INSERT dbo.StaffBranches(UserID,BranchID)
+SELECT b.ManagerID,b.BranchID FROM dbo.Branches b
+WHERE b.ManagerID IS NOT NULL AND NOT EXISTS(SELECT 1 FROM dbo.StaffBranches s WHERE s.UserID=b.ManagerID AND s.BranchID=b.BranchID);
+-- Quyền thêm/xóa/khóa khách hàng.
+IF NOT EXISTS(SELECT 1 FROM dbo.Permissions WHERE Code='Customers.Manage')
+ INSERT dbo.Permissions(Code,Description) VALUES('Customers.Manage',N'Thêm, xóa, khóa tài khoản khách hàng');
+INSERT dbo.RolePermissions(RoleID,PermissionID)
+SELECT r.RoleID,p.PermissionID FROM dbo.Roles r CROSS JOIN dbo.Permissions p
+WHERE r.Code IN ('Owner','BranchManager') AND p.Code='Customers.Manage'
+ AND NOT EXISTS(SELECT 1 FROM dbo.RolePermissions x WHERE x.RoleID=r.RoleID AND x.PermissionID=p.PermissionID);
+COMMIT;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Bỏ vai trò AreaManager (không có tài khoản nào dùng trong chế độ một cửa hàng).
+IF OBJECT_ID('dbo.TR_AreaManagers_Role','TR') IS NOT NULL DROP TRIGGER dbo.TR_AreaManagers_Role;
+IF OBJECT_ID('dbo.AreaManagers','U') IS NOT NULL
+BEGIN
+ IF EXISTS(SELECT 1 FROM dbo.AreaManagers) THROW 51130,N'AreaManagers còn dữ liệu: chuyển các tài khoản này sang vai trò khác trước khi chạy script.',1;
+ DROP TABLE dbo.AreaManagers;
+END;
+IF EXISTS(SELECT 1 FROM dbo.Roles WHERE Code='AreaManager') THROW 51130,N'Còn vai trò AreaManager trong dbo.Roles.',1;
+IF EXISTS(SELECT 1 FROM sys.check_constraints WHERE name='CK_Roles_0' AND definition LIKE '%AreaManager%')
+BEGIN
+ ALTER TABLE dbo.Roles DROP CONSTRAINT CK_Roles_0;
+ ALTER TABLE dbo.Roles ADD CONSTRAINT CK_Roles_0 CHECK (Code IN ('Owner','BranchManager','Staff','Customer'));
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Giá riêng theo cửa hàng đã ngừng từ 09_shared_prices.sql.
+DROP PROCEDURE IF EXISTS dbo.SetBranchPrice;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Xóa mềm: thu hồi phân công cửa hàng; nếu xóa quản lý chính thì chuyển ManagerID cho quản lý khác còn hoạt động.
+CREATE OR ALTER PROCEDURE dbo.SoftDeleteUser @ActorID int,@UserID int
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRAN;
+ IF dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Security.Manage')=0
+    AND NOT (dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Customers.Manage')=1
+             AND EXISTS(SELECT 1 FROM dbo.Customers WHERE UserID=@UserID))
+    THROW 51103,N'Không có quyền xóa tài khoản này.',1;
+ IF @UserID=@ActorID THROW 51121,N'Không thể tự xóa tài khoản đang đăng nhập.',1;
+ DECLARE @role varchar(30);
+ SELECT @role=r.Code FROM dbo.Users u WITH(UPDLOCK,HOLDLOCK) JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE u.UserID=@UserID AND u.DeletedAt IS NULL;
+ IF @role IS NULL THROW 51104,N'Account not found.',1;
+ IF @role='Owner' AND NOT EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
+    WHERE r.Code='Owner' AND u.UserID<>@UserID AND u.IsActive=1 AND u.DeletedAt IS NULL)
+    THROW 51122,N'Phải còn ít nhất một chủ cửa hàng đang hoạt động.',1;
+ DECLARE @email nvarchar(254)=CONCAT(N'deleted-',@UserID,N'@deleted.invalid');
+ UPDATE dbo.Users SET IsActive=0,DeletedAt=SYSUTCDATETIME(),Email=@email,NormalizedEmail=UPPER(@email),
+    FullName=CASE WHEN @role='Customer' THEN N'Khách đã xóa' ELSE N'Tài khoản đã xóa' END,Phone=NULL
+ WHERE UserID=@UserID;
+ UPDATE dbo.UserSessions SET RevokedAt=SYSUTCDATETIME() WHERE UserID=@UserID AND RevokedAt IS NULL;
+ UPDATE dbo.StaffBranches SET IsActive=0 WHERE UserID=@UserID;
+ IF @role='BranchManager'
+  UPDATE b SET ManagerID=(SELECT TOP(1) s.UserID FROM dbo.StaffBranches s JOIN dbo.Users u ON u.UserID=s.UserID
+       JOIN dbo.Roles r ON r.RoleID=u.RoleID
+       WHERE s.BranchID=b.BranchID AND s.IsActive=1 AND r.Code='BranchManager' AND u.IsActive=1 AND u.UserID<>@UserID ORDER BY s.AssignedAt)
+  FROM dbo.Branches b WHERE b.ManagerID=@UserID;
+ INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details) VALUES(@ActorID,'Account.SoftDelete','Users',@UserID,@role);
+ COMMIT;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 12_bugfix.sql (historical filename)
+-- Đợt sửa lỗi theo docs/BugReport_MorningBrew_App-Admin.xlsx. Chạy lặp lại được, áp dụng sau 01–11.
+-- Database đã có:
+--   sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\12_bugfix.sql
+SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- [BUG-06] Tách lỗi "sai trạng thái" (51124 → HTTP 409, thông báo tiếng Việt) khỏi lỗi "thiếu quyền" (51103 → 403).
+-- [BUG-07] Không cho phát hành khảo sát đã quá ngày kết thúc.
+CREATE OR ALTER PROCEDURE dbo.PublishSurvey @ActorID int,@SurveyID int
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @status varchar(10),@scope varchar(10),@area int,@branch int,@ends datetime2(3);
+ SELECT @status=Status,@scope=Scope,@area=AreaID,@branch=BranchID,@ends=EndsAt FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@SurveyID;
+ IF @status IS NULL THROW 51104,N'Không tìm thấy khảo sát.',1;
+ IF dbo.CanScope(@ActorID,@scope,@area,@branch,'Surveys.Manage')=0 THROW 51103,N'Survey outside scope.',1;
+ IF @status<>'Draft' THROW 51124,N'Khảo sát đã được phát hành hoặc đã đóng, không phát hành lại được.',1;
+ IF @ends<=SYSUTCDATETIME() THROW 51124,N'Khảo sát đã quá ngày kết thúc, không thể phát hành.',1; -- [BUG-07]
+ UPDATE dbo.Surveys SET Status='Open' WHERE SurveyID=@SurveyID;
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID) VALUES(@ActorID,@branch,'Survey.Publish','Surveys',@SurveyID);
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- [BUG-06] Mời vào khảo sát chưa phát hành / đã đóng / hết hạn → 51124 thay vì 51103.
+CREATE OR ALTER PROCEDURE dbo.InviteSurvey @ActorID int,@SurveyID int,@CustomerID int
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @status varchar(10),@scope varchar(10),@area int,@branch int,@ends datetime2(3);
+ SELECT @status=Status,@scope=Scope,@area=AreaID,@branch=BranchID,@ends=EndsAt FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@SurveyID;
+ IF @status IS NULL THROW 51104,N'Không tìm thấy khảo sát.',1;
+ IF dbo.CanScope(@ActorID,@scope,@area,@branch,'Surveys.Manage')=0 THROW 51103,N'Survey outside scope.',1;
+ IF @status<>'Open' OR @ends<=SYSUTCDATETIME() THROW 51124,N'Khảo sát chưa phát hành, đã đóng hoặc đã hết hạn nên không mời thêm được.',1;
+ IF dbo.CustomerInScope(@CustomerID,@scope,@area,@branch)=0 THROW 51104,N'Không tìm thấy khách hàng.',1;
+ IF EXISTS(SELECT 1 FROM dbo.SurveyRecipients WHERE SurveyID=@SurveyID AND CustomerID=@CustomerID) BEGIN COMMIT; RETURN; END;
+ INSERT dbo.SurveyRecipients(SurveyID,CustomerID) VALUES(@SurveyID,@CustomerID);
+ INSERT dbo.Notifications(UserID,Title,Body,SurveyID) SELECT c.UserID,N'Khảo sát mới',s.Title,@SurveyID FROM dbo.Customers c CROSS JOIN dbo.Surveys s WHERE c.CustomerID=@CustomerID AND s.SurveyID=@SurveyID;
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- [Mã đơn ngắn] Mã đơn cũ 'MB-' + GUID (35 ký tự) quá dài để đọc / gọi tại quầy.
+-- Mã mới: MB + ngày đặt (giờ Việt Nam, yyMMdd) + '-' + số thứ tự đơn 4 chữ số, ví dụ MB261108-0028 (13 ký tự).
+-- Duy nhất vì gắn với OrderID. Trigger chạy sau khi CreateOrder thêm đơn nên không phải sửa procedure.
+CREATE OR ALTER TRIGGER dbo.TR_Orders_ShortCode ON dbo.Orders AFTER INSERT AS
+BEGIN
+ SET NOCOUNT ON;
+ UPDATE o SET OrderCode=CONCAT('MB',FORMAT(DATEADD(hour,7,i.CreatedAt),'yyMMdd'),'-',
+   CASE WHEN i.OrderID>9999 THEN CONVERT(varchar(12),i.OrderID) ELSE RIGHT(CONCAT('0000',i.OrderID),4) END)
+ FROM dbo.Orders o JOIN inserted i ON i.OrderID=o.OrderID;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Đổi mã các đơn đã có sang dạng ngắn (chạy lại không đổi gì vì chỉ áp dụng cho mã dạng cũ 'MB-…').
+UPDATE dbo.Orders SET OrderCode=CONCAT('MB',FORMAT(DATEADD(hour,7,CreatedAt),'yyMMdd'),'-',
+  CASE WHEN OrderID>9999 THEN CONVERT(varchar(12),OrderID) ELSE RIGHT(CONCAT('0000',OrderID),4) END)
+WHERE OrderCode LIKE 'MB-%';
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- [BUG-09] Không cho sửa phản hồi đã giải quyết (trước đây trả lời lại sẽ ghi đè câu trả lời cũ).
+CREATE OR ALTER PROCEDURE dbo.HandleFeedback @ActorID int,@FeedbackID int,@Status varchar(12),@Response nvarchar(4000)=NULL
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @branch int,@customer int,@old varchar(12);
+ SELECT @branch=BranchID,@customer=CustomerID,@old=Status FROM dbo.Feedbacks WITH(UPDLOCK,HOLDLOCK) WHERE FeedbackID=@FeedbackID;
+ IF @customer IS NULL OR (@branch IS NULL AND dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Feedbacks.Manage')=0) OR (@branch IS NOT NULL AND dbo.CanBranch(@ActorID,@branch,'Feedbacks.Manage')=0) THROW 51103,N'Feedback is outside scope.',1;
+ -- [BUG-09] Phản hồi đã giải quyết thì khóa: không đổi trạng thái, không ghi đè câu trả lời đã gửi khách.
+ IF @old='Resolved' THROW 51124,N'Phản hồi đã được giải quyết, không thể sửa trạng thái hoặc câu trả lời.',1;
+ IF @Status NOT IN ('Processing','Resolved') OR (@Status='Resolved' AND NULLIF(@Response,'') IS NULL) THROW 51100,N'Resolved feedback needs a response.',1;
+ UPDATE dbo.Feedbacks SET Status=@Status,HandledBy=@ActorID,ResponseContent=@Response,HandledAt=SYSUTCDATETIME() WHERE FeedbackID=@FeedbackID;
+ INSERT dbo.Notifications(UserID,Title,Body) SELECT UserID,N'Cập nhật phản hồi',COALESCE(@Response,N'Phản hồi đang được xử lý.') FROM dbo.Customers WHERE CustomerID=@customer;
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Feedback.Handle','Feedbacks',@FeedbackID,@Status);
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+PRINT N'--- Bắt đầu phần 04_menu_updates.sql ---';
+GO
+-- DB-TEST PACKAGE: Preserves the original SQL batch order. See database/README.md.
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 13_ui_review.sql (historical filename)
+-- 13_ui_review.sql – đợt góp ý giao diện 09/11/2026 (chạy sau 12_bugfix.sql). Chạy lại nhiều lần không sao.
+--   [UI2-A3]  Chọn món chỉ còn Size + Đá/Nóng: tắt nhóm Đường, Topping; nhóm "Đá" thành "Nhiệt độ" (Đá / Nóng, bắt buộc)
+--             cho mọi đồ uống; thêm size L (= giá M + 10.000đ) cho đồ uống chỉ có size M.
+--   [UI2-A4a] Hai món dữ liệu mẫu đang "Tạm hết" (Trà sen vàng, Bánh mousse chanh dây) đặt lại "Còn hàng";
+--             từ nay chỉnh tình trạng còn hàng ở Admin → Sản phẩm.
+--   [UI2-W2]  Dữ liệu mẫu nhà cung cấp (chỉ thêm khi bảng còn trống).
+SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
+BEGIN TRAN;
+
+-- ===== [UI2-A3] =====
+-- Tắt nhóm Đường và Topping (không xóa: đơn cũ vẫn giữ đúng tên tùy chọn đã chọn).
+UPDATE dbo.ModifierGroups SET IsActive=0 WHERE Kind IN ('Sugar','Topping') AND IsActive=1;
+
+DECLARE @temp int=(SELECT TOP(1) ModifierGroupID FROM dbo.ModifierGroups WHERE Kind='Ice' ORDER BY ModifierGroupID);
+IF @temp IS NULL
+BEGIN
+    INSERT dbo.ModifierGroups(Name,Kind) VALUES(N'Nhiệt độ','Ice');
+    SET @temp=SCOPE_IDENTITY();
+END
+UPDATE dbo.ModifierGroups SET Name=N'Nhiệt độ',IsActive=1 WHERE ModifierGroupID=@temp;
+-- Lựa chọn cũ (50% đá, 100% đá) ngừng dùng; thêm "Đá" và "Nóng".
+UPDATE dbo.ModifierOptions SET IsActive=0 WHERE ModifierGroupID=@temp AND Name NOT IN (N'Đá',N'Nóng');
+IF NOT EXISTS(SELECT 1 FROM dbo.ModifierOptions WHERE ModifierGroupID=@temp AND Name=N'Đá')
+    INSERT dbo.ModifierOptions(ModifierGroupID,Name,ExtraPrice,DisplayOrder) VALUES(@temp,N'Đá',0,1);
+IF NOT EXISTS(SELECT 1 FROM dbo.ModifierOptions WHERE ModifierGroupID=@temp AND Name=N'Nóng')
+    INSERT dbo.ModifierOptions(ModifierGroupID,Name,ExtraPrice,DisplayOrder) VALUES(@temp,N'Nóng',0,2);
+UPDATE dbo.ModifierOptions SET IsActive=1 WHERE ModifierGroupID=@temp AND Name IN (N'Đá',N'Nóng');
+
+-- Đồ uống = sản phẩm thuộc danh mục Cà phê / Trà.
+DECLARE @drinks TABLE(ProductID int PRIMARY KEY);
+INSERT @drinks SELECT p.ProductID FROM dbo.Products p JOIN dbo.Categories c ON c.CategoryID=p.CategoryID
+WHERE c.Name IN (N'Cà phê',N'Trà');
+
+UPDATE pg SET MinSelections=1,MaxSelections=1 FROM dbo.ProductModifierGroups pg JOIN @drinks d ON d.ProductID=pg.ProductID WHERE pg.ModifierGroupID=@temp;
+INSERT dbo.ProductModifierGroups(ProductID,ModifierGroupID,MinSelections,MaxSelections)
+SELECT d.ProductID,@temp,1,1 FROM @drinks d
+WHERE NOT EXISTS(SELECT 1 FROM dbo.ProductModifierGroups pg WHERE pg.ProductID=d.ProductID AND pg.ModifierGroupID=@temp);
+
+-- Size L cho đồ uống chỉ có size M.
+INSERT dbo.ProductVariants(ProductID,Name,BasePrice,DisplayOrder)
+SELECT m.ProductID,'L',m.BasePrice+10000,2 FROM dbo.ProductVariants m JOIN @drinks d ON d.ProductID=m.ProductID
+WHERE m.Name='M' AND m.IsActive=1 AND NOT EXISTS(SELECT 1 FROM dbo.ProductVariants l WHERE l.ProductID=m.ProductID AND l.Name='L');
+UPDATE v SET DisplayOrder=CASE v.Name WHEN 'M' THEN 1 WHEN 'L' THEN 2 ELSE v.DisplayOrder END
+FROM dbo.ProductVariants v JOIN @drinks d ON d.ProductID=v.ProductID;
+
+-- ===== [UI2-A4a] =====
+UPDATE bp SET IsAvailable=1 FROM dbo.BranchProducts bp JOIN dbo.Products p ON p.ProductID=bp.ProductID
+WHERE p.Name IN (N'Trà sen vàng',N'Bánh mousse chanh dây') AND bp.IsAvailable=0;
+
+-- ===== [UI2-W2] =====
+IF OBJECT_ID('dbo.Suppliers','U') IS NOT NULL AND NOT EXISTS(SELECT 1 FROM dbo.Suppliers)
+INSERT dbo.Suppliers(Code,Name,Phone,Email,ProductGroup,IsActive) VALUES
+('NCC-CF01',N'Công ty TNHH Cà phê Cầu Đất','0263 3812 456','kinhdoanh@caudatcoffee.test',N'Cà phê hạt Robusta, Arabica',1),
+('NCC-SU01',N'Nhà phân phối Sữa Phương Nam','028 3896 1122','order@suaphuongnam.test',N'Sữa tươi, sữa đặc, kem béo',1),
+('NCC-TR01',N'Trà Thái Nguyên Xanh','0208 3655 789','sales@trathainguyen.test',N'Trà lài, trà xanh, trà sen',1),
+('NCC-TC01',N'Vựa trái cây Bốn Mùa','0909 456 123','bonmua.fruit@mail.test',N'Đào, vải, cam, chanh dây',1),
+('NCC-BK01',N'Lò bánh Ngọc Lan','028 3512 7788','ngoclan.bakery@mail.test',N'Bánh croissant, tiramisu, mousse',1),
+('NCC-BB01',N'Bao bì Minh Phát','028 3754 2299','minhphat.pack@mail.test',N'Ly nhựa, ống hút, túi giấy',0);
+
+COMMIT;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+PRINT CONCAT(N'=== HOÀN TẤT ', CASE SESSION_CONTEXT(N'mb_mode') WHEN N'install' THEN N'CÀI MỚI' ELSE N'NÂNG CẤP' END, N' database [MorningBrewCRM_Crm] (bản góp ý giao diện 09/11). Có thể chạy API, Admin, app.');
+SELECT (SELECT COUNT(*) FROM sys.tables) AS SoBang,
+       (SELECT COUNT(*) FROM dbo.Users) AS SoTaiKhoan,
+       (SELECT COUNT(*) FROM dbo.ModifierOptions mo JOIN dbo.ModifierGroups mg ON mg.ModifierGroupID = mo.ModifierGroupID WHERE mg.Kind = 'Ice' AND mg.IsActive = 1 AND mo.IsActive = 1) AS SoLuaChonDaNong,
+       (SELECT COUNT(*) FROM dbo.ModifierGroups WHERE Kind IN ('Sugar','Topping') AND IsActive = 1) AS NhomDuongToppingConBat,
+       (SELECT COUNT(*) FROM dbo.Suppliers) AS SoNhaCungCap;
+GO
+SET NOEXEC OFF;
+IF SESSION_CONTEXT(N'mb_failed') = 1 PRINT N'>>> KẾT QUẢ: CHƯA HOÀN TẤT – xem dòng lỗi màu đỏ đầu tiên phía trên.';
+GO

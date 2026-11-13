@@ -1,0 +1,104 @@
+@page "/feedback/new"
+@inject CrmService Crm
+@inject ShopService Shop
+@inject ToastService Toasts
+@inject NavigationManager Nav
+
+<PageHeader Title="@(order is null ? "Gửi phản hồi" : "Đánh giá đơn hàng")" />
+
+<div class="page-body with-footer">
+    @if (order is not null)
+    {
+        <div class="card">
+            <div class="row-between"><b>@order.OrderCode</b><span class="muted small">@Fmt.When(order.CreatedAt)</span></div>
+            <p class="muted small">@order.BranchName</p>
+        </div>
+    }
+
+    <div class="card form">
+        <label>Bạn muốn góp ý về</label>
+        <div class="chips wrap">
+            @foreach (var t in new[] { "Product", "Service", "Space", "Other" })
+            {
+                <button type="button" class="chip-btn @(type == t ? "active" : "")" @onclick="() => type = t">@Fmt.FeedbackType(t)</button>
+            }
+        </div>
+
+        @if (type == "Product")
+        {
+            <label for="product">Sản phẩm</label>
+            <select id="product" class="input" @bind="productId">
+                <option value="0">— Chọn sản phẩm —</option>
+                @foreach (var p in products)
+                {
+                    <option value="@p.Id">@p.Name</option>
+                }
+            </select>
+        }
+
+        <label>Mức độ hài lòng</label>
+        <StarRating @bind-Value="rating" />
+        @if (rating is null) { <small class="muted block">Chưa chấm – có thể bỏ trống nếu bạn không muốn đánh giá sao.</small> } @* [BUG-10] *@
+
+        <label for="content">Nội dung *</label>
+        <textarea id="content" class="input" rows="5" maxlength="4000" @bind="content" @bind:event="oninput"
+                  placeholder="Chia sẻ trải nghiệm của bạn: hương vị, nhiệt độ, thái độ phục vụ..."></textarea>
+        <small class="muted right">@content.Length/4000</small>
+    </div>
+</div>
+
+<div class="footer-bar">
+    <button class="btn btn-primary block" @onclick="Send" disabled="@(busy || string.IsNullOrWhiteSpace(content))">
+        @(busy ? "Đang gửi..." : "Gửi phản hồi")
+    </button>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public int? OrderId { get; set; }
+    [SupplyParameterFromQuery] public int? ProductId { get; set; }
+
+    private Order? order;
+    private List<(int Id, string Name)> products = [];
+    private string type = "Product";
+    private int productId;
+    private int? rating; // [BUG-10] trước đây mặc định 5 sao → khách không chạm vẫn gửi 5 sao
+    private string content = "";
+    private bool busy;
+    private HashSet<int> demoIds = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var menu = await Shop.GetMenuAsync();
+            demoIds = menu.Items.Where(x => x.IsDemo).Select(x => x.ProductId).ToHashSet();
+            if (OrderId is not null)
+            {
+                order = await Shop.GetOrderAsync(OrderId.Value);
+                products = order?.Lines.GroupBy(l => l.ProductId).Select(g => (Id: g.Key, Name: g.First().Name)).ToList() ?? new();
+            }
+            if (products.Count == 0)
+                products = menu.Items.Where(x => !x.IsDemo).GroupBy(x => x.ProductId).Select(g => (Id: g.Key, Name: g.First().Name)).ToList();
+        }
+        catch (ApiException e) { Toasts.Error(e); }
+        productId = ProductId ?? products.FirstOrDefault().Id;
+    }
+
+    private async Task Send()
+    {
+        if (type == "Product" && productId == 0) { Toasts.Show("Vui lòng chọn sản phẩm.", true); return; }
+        busy = true;
+        try
+        {
+            // Đơn/sản phẩm mẫu không tồn tại trong database → không gửi ID của chúng.
+            int? realOrder = order is { IsDemo: false } ? order.OrderId : null;
+            int? realProduct = type == "Product" && productId > 0 && !demoIds.Contains(productId) ? productId : null;
+            await Crm.SendFeedbackAsync(type, rating, content, realProduct, order?.BranchId ?? Shop.CurrentBranch.BranchId, realOrder);
+            if (order is not null) Shop.MarkFeedbackSent(order.OrderId);
+            Toasts.Show("Cảm ơn bạn! Phản hồi đã được gửi tới Morning Brew.");
+            Nav.NavigateTo("/account/feedbacks", replace: true);
+        }
+        catch (ApiException e) { Toasts.Error(e); }
+        busy = false;
+    }
+}

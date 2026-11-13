@@ -1,0 +1,41 @@
+@* Giao diện QUẢN TRỊ HỆ THỐNG (yêu cầu II.2): tách biệt với giao diện quản lý nghiệp vụ CRM. *@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · Quản trị Morning Brew</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="theme-admin">
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">A</div><div><strong>MORNING BREW</strong><small>Quản trị hệ thống</small></div></div>
+        <div class="user-box"><div class="avatar">@(User.Identity?.Name?.FirstOrDefault())</div><div class="user-info"><b>@User.Identity?.Name</b><small>Quản trị viên · @RowDisplay.Value("role",JsonSerializer.SerializeToElement(User.FindFirstValue(ClaimTypes.Role)))</small></div></div>
+        <div class="nav-label">HỆ THỐNG</div>
+        <nav>
+            <a asp-page="/Admin/Index">Tổng quan hệ thống</a>
+            <a asp-page="/Admin/Accounts">Tài khoản</a>
+            <a asp-page="/Admin/Permissions">Phân quyền</a>
+            <a asp-page="/Admin/AuditLogs">Nhật ký hệ thống</a>
+            <a asp-page="/Admin/Backup">Sao lưu &amp; phục hồi</a>
+        </nav>
+        <div class="nav-label">DỮ LIỆU DÙNG CHUNG</div>
+        <nav>
+            <a asp-page="/Admin/Products">Sản phẩm &amp; giá</a>
+            <a asp-page="/Admin/Suppliers">Nhà cung cấp</a>
+        </nav>
+        <a class="area-switch" href="@(Portals.Manager.BaseUrl + Portals.Manager.Home)" target="_blank" rel="noopener">Mở Quản lý CRM (cổng riêng, đăng nhập riêng) ↗</a> @* [SEP-06] *@
+        <form method="post" asp-page="/Logout" class="logout-form"><button>Đăng xuất</button></form>
+    </aside>
+    <main class="content">
+        <div class="area-banner">Admin server · @Portals.Admin.BaseUrl · chỉ chủ cửa hàng</div> @* [SEP-06] *@
+        <partial name="_UiShell" /> @* [UI-01][UI-04][UI-05] toast, mở lại modal khi lỗi, ngăn chi tiết *@
+        @RenderBody()
+        <footer class="footer">Morning Brew · Admin server</footer>
+    </main>
+</div>
+@await RenderSectionAsync("Scripts",required:false) @* [UI-D] trang Tổng quan nạp Chart.js *@
+<script src="~/js/ui.js" asp-append-version="true" defer></script>
+</body>
+</html>

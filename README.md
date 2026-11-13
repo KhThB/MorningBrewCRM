@@ -1,79 +1,70 @@
-# Admin_MC + MorningBrew SQL Server
+# MorningBrew CRM
 
-Đã thay backend của Admin_MC bằng MorningBrew.Api trong file MorningBrewCRM-integration-crm-sqlserver.zip. Giao diện Razor, bố cục, CSS và JavaScript của Admin_MC là nền giao diện. Các trường/nút được chỉnh theo hợp đồng API mới.
+Bản đồ án CRM hiện tại gồm **MorningBrew.Api**, **MorningBrew.Admin**, app khách hàng **.NET MAUI Blazor** và **MorningBrewPos**. Backend dùng SQL Server qua `SqlStore`, API `/v1`, phiên đăng nhập bearer; không dùng EF InMemory/JWT của bản cũ.
 
-## Chạy trên Windows
+## Chạy sau khi clone (Windows)
 
-1. Cài **.NET 10 SDK** (project MorningBrew gốc là net10.0), SQL Server 2022+ hoặc LocalDB tương thích, và `sqlcmd`. Nếu Visual Studio hiện tại không hỗ trợ net10.0, vẫn có thể mở thư mục và chạy các file CMD bằng SDK; không đổi riêng một project về net8.0.
-2. Giải nén toàn bộ ZIP. Mở đúng thư mục có `CHAY_CA_HAI.cmd` và `MorningBrewCRM.slnx`.
-3. Nếu chưa có database: chạy `TAO_DATABASE_MOI.cmd`. Bộ cài dùng schema, procedure và seed **của MorningBrew**, không dùng dữ liệu Admin_MC. Script từ chối ghi đè database đã tồn tại. Nếu đã có MorningBrewCRM đủ script 01–09, bỏ qua bước tạo mới.
-4. Sửa `MorningBrew.Api/appsettings.Development.json` nếu dùng server khác:
+Cài .NET SDK 10, workload .NET MAUI, Windows SDK phù hợp project, SQL Server 2022+ hoặc LocalDB và `sqlcmd`. Mở **MorningBrewCRM.slnx** ở thư mục gốc; solution có đủ bốn project. Chọn Windows Machine khi chạy app MAUI; Android cần thêm SDK/emulator, iOS cần môi trường Mac để chạy.
 
-```json
-{
-  "ConnectionStrings": {
-    "MorningBrew": "Server=(localdb)\\MSSQLLocalDB;Database=MorningBrewCRM;Integrated Security=true;TrustServerCertificate=true"
-  }
-}
-```
-
-5. Chạy `BUILD.cmd`. Sau khi build thành công, chạy `CHAY_CA_HAI.cmd`.
-6. Đợi cả hai cửa sổ báo `Now listening on`. Mở **http://localhost:5199**. API: **http://localhost:5099**; kiểm tra database: **http://localhost:5099/health**; Swagger trong Development: **http://localhost:5099/swagger**.
-
-Nếu chạy bằng PowerShell từ thư mục gốc:
+Tại thư mục gốc repo, tạo database khớp cấu hình Development:
 
 ```powershell
-dotnet build .\MorningBrewCRM.slnx
-.\CHAY_CA_HAI.cmd
+./database/tools/Apply.ps1 -Database MorningBrewCRM_Crm
 ```
 
-Không chạy `dotnet build` từ thư mục cha chỉ chứa file ZIP; đó là nguyên nhân MSB1003. Khi giải nén, giữ nguyên `wwwroot` trong project web để CSS/JS được phục vụ.
+Installer chạy 4 script SQL (01–04) và tạo dữ liệu mẫu. Nếu database đã tồn tại, installer dừng để bảo vệ dữ liệu; không chạy lại để ghi đè. Nếu dùng database/server khác, cấu hình `ConnectionStrings:MorningBrew` bằng user secrets hoặc biến môi trường; xem [hướng dẫn database](database/README.md).
 
-## Đăng nhập
+Build solution:
 
-Chỉ có các tài khoản dưới đây nếu đã nạp seed MorningBrew. Mật khẩu seed: `MorningBrew!2026`.
+```powershell
+dotnet build MorningBrewCRM.slnx
+```
 
-| Email | Vai trò |
-|---|---|
-| owner@morningbrew.test | Owner |
-| area.east@morningbrew.test | AreaManager |
-| manager.1@morningbrew.test | BranchManager |
-| staff.1@morningbrew.test | Staff — trang hồ sơ và ca cá nhân |
-| lan@morningbrew.test | Customer — cổng thành viên |
+Nếu chỉ kiểm tra Windows, có thể build riêng app:
 
-Các tài khoản owner/area/store/employee và mật khẩu 123456 của Admin_MC cũ đã bị bỏ. Không có đăng nhập dự phòng khi SQL Server/API tắt.
+```powershell
+dotnet build MorningBrew.Api/MorningBrew.Api.csproj
+dotnet build MorningBrew.Admin/MorningBrew.Admin.csproj
+dotnet build MorningBrewApp/MauiApp1/MauiApp1/MorningBrewwApp.csproj -p:TargetFrameworks=net10.0-windows10.0.19041.0
+```
 
-## Cấu trúc
+Chạy API và Admin trong hai terminal:
 
-- `Admin_MC/`: frontend Razor Pages và lớp gọi HTTP API; không có kết nối database.
-- `MorningBrew.Api/`: toàn bộ backend SQL Server của MorningBrew; thêm hai API chỉ đọc cho ca cá nhân và thống kê sản phẩm yêu thích.
-- `Shared/ApiJson.cs`: quy ước JSON dùng chung nguyên bản MorningBrew.
-- `database/`: schema, procedure, dữ liệu seed, công cụ cài SQL Server của MorningBrew.
-- `MorningBrew.Pos/`: project POS nguyên bản của MorningBrew, vẫn là khung, không được coi là POS hoàn thiện.
-- `tests/`: kiểm thử nguồn và bộ kiểm thử tích hợp cần .NET/SQL Server.
+```powershell
+dotnet run --project MorningBrew.Api --launch-profile http
+```
 
-## Thay đổi nghiệp vụ trên giao diện
+```powershell
+dotnet run --project MorningBrew.Admin --launch-profile http
+```
 
-| Giao diện | Cách dùng backend MorningBrew |
-|---|---|
-| Đăng nhập/đăng xuất | Email và mật khẩu → bearer session; cookie web được bảo vệ; POST logout có chống CSRF |
-| Dashboard | API tổng quan + nhân sự trong phạm vi; không có số liệu hardcode |
-| Khách hàng | Xem/tìm theo API; Owner tạo tài khoản, khóa/mở khóa qua account; phân biệt CustomerID và UserID |
-| Sản phẩm | Biến thể/kích cỡ và giá chung; Owner tạo, sửa giá, ngừng bán/bán trở lại |
-| Nhà cung cấp | Xem/tìm/lọc/thêm/đổi trạng thái; Owner quản lý |
-| Tài khoản | Owner tạo theo vai trò và phạm vi, khóa/mở khóa; không xóa lịch sử |
-| Phân quyền | Theo RolePermissions của MorningBrew, không phải UserPermissions cũ |
-| Ca làm | Chọn nhân viên + chi nhánh, tạo/hủy; ca qua đêm; tổng tháng loại ca đã hủy; giờ Việt Nam |
-| Phản hồi | Gửi/phản hồi/đánh dấu Resolved qua API; nội dung trả lời xuất hiện ở cổng khách |
-| Khảo sát | Tạo nháp, chọn phạm vi/thời hạn, phát hành, mời, trả lời toàn bộ form một lần, đóng |
-| Báo cáo CRM | Độ tuổi, khóa tài khoản, sản phẩm yêu thích, kết quả khảo sát theo dữ liệu trong phạm vi |
-| Ưu đãi/điểm/doanh thu | Các trang MorningBrew bổ sung nằm trong shell Admin_MC |
-| Hồ sơ khách | PATCH kèm ETag để tránh ghi đè cập nhật đồng thời; không thay email đăng nhập |
+- API: http://localhost:5029 — kiểm tra `/health`, Swagger tại `/swagger`.
+- Web nội bộ gồm **hai giao diện tách biệt** chạy từ project `MorningBrew.Admin` (mỗi cổng một phiên đăng nhập riêng) [SEP]:
+  - **Admin server**: http://localhost:5190 — chỉ `/Admin/*`, chỉ chủ cửa hàng.
+  - **Quản lý CRM**: http://localhost:5191 — chỉ `/Manager/*`, chủ cửa hàng và quản lý.
+  - Mở nhầm khu của giao diện kia sẽ được chuyển sang trang hướng dẫn kèm link đúng cổng. Cổng/địa chỉ cấu hình ở `appsettings.json` → `Portals`. Cả hai gọi API ở cổng 5029.
+  - `/Admin/*` — **giao diện Quản trị** (chỉ chủ cửa hàng): tổng quan hệ thống, tài khoản (lọc, thêm, đổi vai trò, khóa, xóa), ma trận phân quyền, nhật ký hệ thống, sao lưu & phục hồi, sản phẩm & giá, nhà cung cấp.
+  - `/Manager/*` — **giao diện Quản lý CRM** (quản lý và chủ cửa hàng): khách hàng (thêm/khóa/xóa), phản hồi (lọc theo trạng thái), khảo sát (câu hỏi đánh giá/chọn một/chọn nhiều/tự luận, mời hàng loạt theo nhóm), ưu đãi, báo cáo.
+  - Web chỉ dành cho nội bộ: chủ cửa hàng đăng nhập Admin server (5190) để quản trị và có thể đăng nhập riêng Quản lý CRM (5191); quản lý chỉ đăng nhập được Quản lý CRM. **Khách hàng chỉ dùng app MAUI** (đăng ký, đăng nhập, sửa hồ sơ, phản hồi, khảo sát); thu ngân dùng POS.
+- App MAUI khách hàng: chọn project `MorningBrewwApp` và **Windows Machine** trong Visual Studio rồi chạy. Android emulator gọi API qua `10.0.2.2:5029`; thiết bị thật cần địa chỉ LAN và cấu hình kết nối phù hợp.
+- App **POS** cho thu ngân: chọn project `MorningBrewPos` → **Windows Machine**. Đăng nhập bằng `staff.1@morningbrew.test` (quản lý / chủ cửa hàng cũng đăng nhập được và có thêm quyền hủy đơn).
 
-Các chức năng **không có API tương ứng trong bản MorningBrew** không được giả lập: tự đăng ký khách hàng; xóa cứng tài khoản/khách/sản phẩm/nhà cung cấp; tồn kho kiểu Admin_MC; sửa tên/nhóm danh mục/chi tiết nhà cung cấp; sửa trực tiếp ca đã tạo; mở lại khảo sát đã đóng. Các thao tác được chuyển thành khóa/ngừng bán/hủy khi backend hỗ trợ; trường chỉ xem được đánh dấu readonly. Muốn đổi ca hãy hủy rồi tạo ca mới.
+Tài khoản **dữ liệu mẫu local**: `owner@morningbrew.test`, `manager.1@morningbrew.test`, thu ngân `staff.1@morningbrew.test`, khách hàng `lan@morningbrew.test`; mật khẩu `MorningBrew!2026`.
 
-Không chuyển dữ liệu từ crm.db cũ sang SQL Server. Bộ seed MorningBrew cũng là **dữ liệu minh họa trong SQL Server**, không phải dữ liệu kinh doanh thực tế đã xác minh.
+## Phạm vi và ảnh sản phẩm
 
-## Trạng thái kiểm tra
+- CRM: tài khoản, khách hàng, phản hồi, khảo sát, báo cáo; dữ liệu từ SQL Server.
+- Thực đơn và đơn hàng là **dữ liệu thật**: app khách đặt đơn (nhận tại quầy / giao hàng; trả trước qua cổng thanh toán mô phỏng / tiền mặt), quản lý xử lý ở `/Manager/Orders`, thu ngân xử lý trên app POS. Đơn trả trước không thanh toán trong 15 phút được API tự hủy (chạy mỗi phút). Dữ liệu mẫu trong app chỉ hiện khi không kết nối được API.
+- 10 ảnh sản phẩm được đóng gói trong `MorningBrewApp/MauiApp1/MauiApp1/wwwroot/images/products`, ánh xạ theo tên tại `Services/ProductPhotos.cs`. Khi ảnh không tải được hoặc món chưa có ảnh, app dùng hình minh họa dự phòng.
+- Nguồn ảnh: [sources.json](MorningBrewApp/MauiApp1/MauiApp1/wwwroot/images/products/sources.json). Đây là ảnh tham khảo cho bản demo; hồ sơ nguồn không đồng nghĩa với giấy phép tái phân phối/thương mại. Cold brew có logo 1000M.
 
-Đọc `KIEM_TRA.md`. Trong môi trường bàn giao chưa có .NET SDK, SQL Server hay sqlcmd; do đó **chưa xác nhận build, chạy web hay CRUD thực tế thành công**. Không lấy báo cáo kiểm thử của project MorningBrew gốc làm kết quả của bản ghép này.
+## Tài liệu và kiểm thử
+
+- [Database và scripts cài đặt](database/README.md).
+- [Sao lưu và phục hồi CSDL](docs/backup-restore.md): sao lưu, phục hồi và sao lưu tự động hằng ngày đều trên trang Admin → Sao lưu & phục hồi.
+- [API v1](docs/api-v1.md): quy ước, nhóm endpoint và cách kiểm tra bằng Swagger.
+- [Nhật ký db-test](docs/DB_TEST_CHANGES.md): thay đổi, tài liệu đã bỏ, các phần có thể rút gọn tiếp và kết quả kiểm tra.
+- `tests/integration.py`, `tests/api_contract.py` và `database/tests/verify.py` còn giả định dữ liệu nhiều chi nhánh/quản lý khu vực; cần cập nhật trước khi dùng làm tiêu chí nghiệm thu. Chỉ chạy trên database kiểm thử riêng.
+- Database đã có: xem mục nâng cấp trong [hướng dẫn database](database/README.md). Không chạy lại installer hoặc seed vào database đang dùng.
+
+Không đưa `bin/`, `obj/`, `.vs/`, file `*.user`, database MDF/LDF, bản backup hoặc cấu hình chứa mật khẩu riêng lên GitHub; các loại file này đã được `.gitignore` loại trừ.

@@ -1,0 +1,87 @@
+@page
+@model AccountsModel
+@{
+    ViewData["Title"]=Model.Title; var me=User.FindFirstValue(ClaimTypes.NameIdentifier);
+    // [UI-02] Thao tác theo dòng; không thao tác trên chính tài khoản đang đăng nhập.
+    Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
+        @{var id=item["user_id"].ToString(); var name=item["full_name"].ToString(); var role=item["role"].ToString(); var active=item["is_active"].ValueKind==JsonValueKind.True;
+          var fill=JsonSerializer.Serialize(new{id,full_name=name,role,role_name=RowDisplay.Value("role",item["role"])});}
+        @if(id==me){<span class="muted" style="font-size:12px">Tài khoản của bạn</span>}
+        else{
+            if(role!="Customer"){<button type="button" class="btn-sm" data-open="m-role" data-fill="@fill">Đổi vai trò</button>}
+            <button type="button" class="btn-sm" data-open="m-password" data-fill="@fill">Mật khẩu</button>
+            <button type="button" class="btn-sm" data-open="@(active?"m-lock":"m-unlock")" data-fill="@fill">@(active?"Khóa":"Mở khóa")</button>
+            <button type="button" class="btn-sm danger-text" data-open="m-delete" data-fill="@fill">Xóa</button>
+        }
+    </div>;
+}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel">
+    @* [UI-03] Tìm kiếm + lọc vai trò, trạng thái + nút Thêm trên cùng một hàng *@
+    <div class="list-toolbar">
+        <form method="get">
+            <input name="q" type="search" value="@Model.Q" placeholder="Họ tên, email, điện thoại" aria-label="Tìm tài khoản">
+            <select name="role" aria-label="Vai trò" onchange="this.form.submit()"><option value="">Mọi vai trò</option>@foreach(var r in AccountsModel.Roles){<option value="@r.Code" selected="@(Model.Role==r.Code)">@r.Name</option>}</select>
+            <select name="active" aria-label="Trạng thái" onchange="this.form.submit()"><option value="">Mọi trạng thái</option><option value="true" selected="@(Model.Active=="true")">Đang hoạt động</option><option value="false" selected="@(Model.Active=="false")">Đang khóa</option></select>
+            <button class="secondary">Tìm</button>@if(!string.IsNullOrEmpty(Model.Q+Model.Role+Model.Active)){<a class="btn-sm" asp-page="/Admin/Accounts">Bỏ lọc</a>}
+        </form>
+        <button type="button" class="primary add-btn" data-open="m-add">+ Thêm tài khoản</button>
+    </div>
+    <p class="list-count">@Model.Rows.Count tài khoản · bấm vào một dòng để xem chi tiết</p>
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,RowDetail=true,DetailTitle="Chi tiết tài khoản"})" />
+    <partial name="_Pager" model="Model" />
+</section>
+
+<dialog class="modal" id="m-add"><form method="post">
+    <input type="hidden" name="operation" value="account"><input type="hidden" name="modal" value="m-add">
+    <header><h2>Thêm tài khoản</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <label>Họ tên *</label><input name="fullName" maxlength="120" required>
+        <div class="two"><div><label>Email *</label><input name="email" type="email" required></div>
+            <div><label>Điện thoại</label>@* [BUG-04] kiểm tra trên trình duyệt; API kiểm tra lại bằng PhoneRule *@<input name="phone" maxlength="20" pattern="^0[0-9 .\-]{9,14}$" title="10–11 số, bắt đầu bằng 0"></div></div>
+        <label>Mật khẩu ban đầu * (ít nhất 10 ký tự)</label><input name="password" type="password" minlength="10" required autocomplete="new-password">
+        <label>Vai trò</label><select name="role"><option value="BranchManager">Quản lý cửa hàng</option><option value="Staff">Thu ngân</option><option value="Customer">Khách hàng</option><option value="Owner">Chủ cửa hàng</option></select>
+        <p class="muted">Quản lý và thu ngân được gán vào cửa hàng duy nhất của hệ thống. Có thể có nhiều quản lý.</p>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Tạo tài khoản</button></footer>
+</form></dialog>
+
+<dialog class="modal" id="m-role"><form method="post">
+    <input type="hidden" name="operation" value="account-role"><input type="hidden" name="modal" value="m-role"><input type="hidden" name="id">
+    <header><h2>Đổi vai trò</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p><b data-text="full_name"></b> · hiện là <b data-text="role_name"></b></p>
+        <label>Vai trò mới</label><select name="role"><option value="BranchManager">Quản lý cửa hàng</option><option value="Staff">Thu ngân</option><option value="Owner">Chủ cửa hàng</option></select>
+        <p class="muted">Quyền nhận theo bảng Phân quyền. Tài khoản khách hàng không đổi sang vai trò nội bộ. Người được đổi phải đăng nhập lại.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Đổi vai trò</button></footer>
+</form></dialog>
+
+@* [BUG-05] Đặt lại mật khẩu cho tài khoản khác *@
+<dialog class="modal" id="m-password"><form method="post">
+    <input type="hidden" name="operation" value="account-password"><input type="hidden" name="modal" value="m-password"><input type="hidden" name="id">
+    <header><h2>Đặt lại mật khẩu</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Tài khoản <b data-text="full_name"></b></p>
+        <div class="two"><div><label>Mật khẩu mới * (ít nhất 10 ký tự)</label><input name="password" type="password" minlength="10" required autocomplete="new-password"></div>
+            <div><label>Nhập lại *</label><input name="confirm" type="password" minlength="10" required autocomplete="new-password"></div></div>
+        <p class="muted">Tài khoản đó bị đăng xuất khỏi mọi thiết bị và phải đăng nhập bằng mật khẩu mới.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Đặt lại mật khẩu</button></footer>
+</form></dialog>
+
+<dialog class="modal" id="m-lock"><form method="post">
+    <input type="hidden" name="operation" value="account-active"><input type="hidden" name="modal" value="m-lock"><input type="hidden" name="id"><input type="hidden" name="active" value="false">
+    <header><h2>Khóa tài khoản</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Khóa tài khoản <b data-text="full_name"></b> (<span data-text="role_name"></span>)?</p><p class="muted">Lịch sử giao dịch được giữ, các phiên đăng nhập bị thu hồi. Có thể mở khóa lại.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Khóa tài khoản</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-unlock"><form method="post">
+    <input type="hidden" name="operation" value="account-active"><input type="hidden" name="modal" value="m-unlock"><input type="hidden" name="id"><input type="hidden" name="active" value="true">
+    <header><h2>Mở khóa tài khoản</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Mở khóa tài khoản <b data-text="full_name"></b>?</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Mở khóa</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-delete"><form method="post">
+    <input type="hidden" name="operation" value="account-delete"><input type="hidden" name="modal" value="m-delete"><input type="hidden" name="id">
+    <header><h2>Xóa tài khoản</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Xóa tài khoản <b data-text="full_name"></b>? Thao tác này không hoàn tác được.</p>
+        <p class="muted">Xóa mềm: không đăng nhập được nữa và thông tin cá nhân được ẩn danh. Đơn hàng, điểm, phản hồi, khảo sát vẫn được giữ cho báo cáo. Khác với <b>Khóa</b>, không mở lại được.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Xóa tài khoản</button></footer>
+</form></dialog>

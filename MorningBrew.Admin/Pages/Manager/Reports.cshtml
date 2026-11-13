@@ -1,0 +1,21 @@
+@page
+@model ReportsModel
+@{
+    ViewData["Title"]=Model.Title;
+    decimal Sum(string key)=>Model.Rows.Sum(r=>ReportView.Decimal(r,key)??0);
+    string Money(decimal v)=>v.ToString("#,0",System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))+"đ";
+    var orders=(int)Sum("completed_orders"); var net=Sum("net_revenue");
+}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+@* [UI2-W4] Doanh thu 30 ngày đưa lên đầu trang, hiển thị dạng thẻ số liệu có định dạng tiền *@
+<section class="panel">
+    <div class="dash-head"><h2>Doanh thu 30 ngày gần nhất</h2><a class="btn-sm" href="/Manager">Xem biểu đồ theo tháng →</a></div>
+    <p class="muted">Từ @Model.From.ToString("dd/MM/yyyy") đến @Model.To.ToString("dd/MM/yyyy") (giờ Việt Nam). Doanh thu thuần = đơn hoàn tất trừ khoản đã hoàn tiền trong kỳ.</p>
+    <div class="cards" style="margin-bottom:0">
+        <div class="stat"><span>Đơn hoàn tất</span><b>@orders</b></div>
+        <div class="stat"><span>Doanh thu</span><b class="stat-text">@Money(Sum("gross_revenue"))</b></div>
+        <div class="stat"><span>Đã hoàn tiền</span><b class="stat-text">@Money(Sum("refunded_revenue"))</b></div>
+        <div class="stat"><span>Doanh thu thuần</span><b class="stat-text">@Money(net)</b><small>@(orders>0?$"Trung bình {Money(Math.Round(net/orders))} / đơn":"Chưa có đơn hoàn tất")</small></div>
+    </div>
+</section>
+@if(Model.Report is not null){<partial name="_CustomerReport" model="Model.Report" />}

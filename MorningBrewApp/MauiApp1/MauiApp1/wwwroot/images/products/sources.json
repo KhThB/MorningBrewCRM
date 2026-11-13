@@ -1,0 +1,149 @@
+[
+  {
+    "source": "https://1000m.vn/products/",
+    "url": "https://1000m.vn/wp-content/uploads/2024/05/Ca-Phe-Sua-Thuong-Hang.jpg",
+    "file": "ca-phe-sua.jpeg",
+    "processing": {
+      "quality": 92,
+      "height": 800,
+      "width": 800,
+      "format": "JPEG",
+      "background": "#FFFFFF",
+      "product_max_dimension": 640,
+      "preserve_aspect_ratio": true,
+      "framing": "Near-front view, tall clear glass; original 1000M branding retained."
+    }
+  },
+  {
+    "source": "https://online.comgadongnguyen.vn/products/tra-dao-peach-tea",
+    "url": "https://cdn.hstatic.net/products/200000475475/screenshot_1_d8cfb791b694479ab9f7d083bfe189c2_grande.png",
+    "file": "tra-dao.jpeg",
+    "processing": {
+      "quality": 92,
+      "height": 800,
+      "width": 800,
+      "format": "JPEG",
+      "background": "#FFFFFF",
+      "product_max_dimension": 640,
+      "preserve_aspect_ratio": true
+    }
+  },
+  {
+    "source": "https://jadoresweets.com/products/tiramisu-square",
+    "url": "https://jadoresweets.com/cdn/shop/files/Tiramisu-Square_1200x1200.jpg?v=1690365057",
+    "file": "tiramisu.jpeg",
+    "processing": {
+      "quality": 92,
+      "height": 800,
+      "width": 800,
+      "format": "JPEG",
+      "background": "#FFFFFF",
+      "product_max_dimension": 461,
+      "preserve_aspect_ratio": true,
+      "display_adjustment": "Reduced a further 10% from the previous 512px subject size; approximately 461px maximum dimension, centered on white 800x800 JPEG canvas."
+    }
+  },
+  {
+    "source": "https://rootatkiss.square.site/coffee",
+    "url": "https://129135324.cdn6.editmysite.com/uploads/1/2/9/1/129135324/TTF5YQGHWRV6II6SHGUUDAKK.jpeg?optimize=medium&width=640",
+    "file": "ca-phe-den.jpeg",
+    "processing": {
+      "quality": 92,
+      "height": 800,
+      "width": 800,
+      "format": "JPEG",
+      "background": "#FFFFFF",
+      "product_max_dimension": 640,
+      "preserve_aspect_ratio": true
+    }
+  },
+  {
+    "source": "https://1000m.vn/products/",
+    "url": "https://1000m.vn/wp-content/uploads/2024/05/Bac-Xiu.jpg",
+    "file": "bac-xiu.jpeg",
+    "processing": {
+      "quality": 92,
+      "height": 800,
+      "width": 800,
+      "format": "JPEG",
+      "background": "#FFFFFF",
+      "product_max_dimension": 640,
+      "preserve_aspect_ratio": true,
+      "framing": "Near-front view, tall clear glass; original 1000M branding retained."
+    }
+  },
+  {
+    "source": "https://1000m.vn/san-pham/cold-brew-cam-sa/",
+    "url": "https://1000m.vn/wp-content/uploads/2024/05/Cold-Brew-Cam-Sa.jpg",
+    "file": "cold-brew-white.jpeg",
+    "processing": {
+      "quality": 92,
+      "height": 800,
+      "width": 800,
+      "format": "JPEG",
+      "background": "#FFFFFF",
+      "product_max_dimension": 640,
+      "preserve_aspect_ratio": true
+    }
+  },
+  {
+    "source": "https://kimochisushi.vn/tra-vai-lai-ngot-thanh-thom-mat",
+    "url": "https://bizweb.dktcdn.net/100/430/970/products/z6737320114918-5e49fb91e9f9417d6d6032e14d757e90.jpg?v=1750753375680",
+    "file": "tra-vai.jpeg",
+    "processing": {
+      "quality": 92,
+      "height": 800,
+      "width": 800,
+      "format": "JPEG",
+      "background": "#FFFFFF",
+      "product_max_dimension": 640,
+      "preserve_aspect_ratio": true
+    }
+  },
+  {
+    "source": "https://lisaphuquoc.com/Product",
+    "url": "https://lisaphuquoc.com/assets/menu/drink/tea/golden-lotus-tea.png",
+    "file": "tra-sen-white.jpeg",
+    "processing": {
+      "quality": 92,
+      "height": 800,
+      "width": 800,
+      "format": "JPEG",
+      "background": "#FFFFFF",
+      "product_max_dimension": 640,
+      "preserve_aspect_ratio": true
+    }
+  },
+  {
+    "source": "https://www.sweetnfresh.com/bakery/sucre-patisserie-cafe-mark-on-10th-1007-8-st-sw-calgary/",
+    "url": "https://www.sweetnfresh.com/upload/1690015824-butter-croissant-resize.jpg",
+    "file": "croissant.jpeg",
+    "processing": {
+      "quality": 92,
+      "preserve_aspect_ratio": true,
+      "product_max_dimension": 461,
+      "width": 800,
+      "height": 800,
+      "edit_prompt": "Edit target: the supplied photograph of a single butter croissant. This is a precise background-cleanup edit for the same product in an existing cafe menu. Preserve the exact croissant's silhouette, camera angle, orientation, flaky texture, warm baked color, and all recognizable details. Do not redesign or replace the pastry. Remove the dirty light-gray tabletop/background gradient and specks. Surround the croissant with a seamless pure white #FFFFFF studio background reaching every image edge, with no rectangular patch or horizon. Preserve only a very small soft neutral contact shadow directly beneath the pastry, fading entirely into white before reaching any edge. Single croissant, no extra food, plate, props, logo, text. Square composition, full pastry visible, centered with generous clean white margins. Main subject occupies about 78% of image width, no cropping.",
+      "background": "#FFFFFF",
+      "format": "JPEG",
+      "background_edit": "Built-in imagegen: clean gray tabletop and specks; preserve original pastry, camera angle, flaky texture and color; seamless white background with a soft contact shadow.",
+      "display_adjustment": "Reduced a further 10% from the previous 512px subject size; approximately 461px maximum dimension, centered on white 800x800 JPEG canvas."
+    }
+  },
+  {
+    "source": "https://www.putka.pl/produkt/torcik-marakuja-750-g/",
+    "url": "https://www.putka.pl/app/uploads/2025/07/p_1584085919_torcik-marakuja-kawaleks.jpg",
+    "file": "mousse.jpeg",
+    "processing": {
+      "quality": 92,
+      "height": 800,
+      "width": 800,
+      "format": "JPEG",
+      "background": "#FFFFFF",
+      "product_max_dimension": 461,
+      "preserve_aspect_ratio": true,
+      "display_adjustment": "Reduced a further 10% from the previous 512px subject size; approximately 461px maximum dimension, centered on white 800x800 JPEG canvas."
+    }
+  }
+]

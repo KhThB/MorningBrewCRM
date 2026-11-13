@@ -1,0 +1,365 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" version="26.0.0">
+  <diagram name="ERD 41 bang" id="morningbrew-41">
+    <mxGraphModel grid="1" gridSize="10" page="0" pageScale="1">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Roles" value="&lt;b&gt;Roles&lt;/b&gt;&lt;br&gt;&lt;i&gt;Tài khoản · Gốc&lt;/i&gt;&lt;br&gt;PK RoleID : int&lt;br&gt;Code : varchar(30)&lt;br&gt;Name : nvarchar(100)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e9eef5;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="30" y="30" width="365" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="Permissions" value="&lt;b&gt;Permissions&lt;/b&gt;&lt;br&gt;&lt;i&gt;Tài khoản · Mới&lt;/i&gt;&lt;br&gt;PK PermissionID : int&lt;br&gt;Code : varchar(80)&lt;br&gt;Description : nvarchar(250)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e9eef5;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="460" y="30" width="365" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="RolePermissions" value="&lt;b&gt;RolePermissions&lt;/b&gt;&lt;br&gt;&lt;i&gt;Tài khoản · Mới&lt;/i&gt;&lt;br&gt;PK FK RoleID : int&lt;br&gt;PK FK PermissionID : int" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e9eef5;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="890" y="30" width="365" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="Users" value="&lt;b&gt;Users&lt;/b&gt;&lt;br&gt;&lt;i&gt;Tài khoản · Gốc&lt;/i&gt;&lt;br&gt;PK UserID : int&lt;br&gt;FK RoleID : int&lt;br&gt;Email : nvarchar(254)&lt;br&gt;NormalizedEmail : nvarchar(254)&lt;br&gt;PasswordHash : varchar(512)&lt;br&gt;FullName : nvarchar(120)&lt;br&gt;Phone : varchar(20) ?&lt;br&gt;IsActive : bit&lt;br&gt;CreatedAt : datetime2(3)&lt;br&gt;Version : rowversion" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e9eef5;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="30" width="365" height="272" as="geometry" />
+        </mxCell>
+        <mxCell id="UserSessions" value="&lt;b&gt;UserSessions&lt;/b&gt;&lt;br&gt;&lt;i&gt;Tài khoản · Mới&lt;/i&gt;&lt;br&gt;PK SessionID : int&lt;br&gt;FK UserID : int&lt;br&gt;TokenHash : binary(32)&lt;br&gt;DeviceName : nvarchar(120) ?&lt;br&gt;CreatedAt : datetime2(3)&lt;br&gt;ExpiresAt : datetime2(3)&lt;br&gt;RevokedAt : datetime2(3) ?" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e9eef5;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1750" y="30" width="365" height="209" as="geometry" />
+        </mxCell>
+        <mxCell id="Areas" value="&lt;b&gt;Areas&lt;/b&gt;&lt;br&gt;&lt;i&gt;Tổ chức · Gốc&lt;/i&gt;&lt;br&gt;PK AreaID : int&lt;br&gt;Name : nvarchar(120)&lt;br&gt;IsActive : bit" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#edf3e7;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="30" y="412" width="365" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="Branches" value="&lt;b&gt;Branches&lt;/b&gt;&lt;br&gt;&lt;i&gt;Tổ chức · Gốc&lt;/i&gt;&lt;br&gt;PK BranchID : int&lt;br&gt;FK AreaID : int&lt;br&gt;FK ManagerID : int ?&lt;br&gt;Code : varchar(30)&lt;br&gt;Name : nvarchar(150)&lt;br&gt;Address : nvarchar(500)&lt;br&gt;Phone : varchar(20)&lt;br&gt;OpeningTime : time(0)&lt;br&gt;ClosingTime : time(0)&lt;br&gt;IsActive : bit&lt;br&gt;AcceptingOrders : bit&lt;br&gt;PickupEnabled : bit&lt;br&gt;DeliveryEnabled : bit&lt;br&gt;DeliveryFee : decimal(18,2)&lt;br&gt;Version : rowversion" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#edf3e7;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="460" y="412" width="365" height="377" as="geometry" />
+        </mxCell>
+        <mxCell id="AreaManagers" value="&lt;b&gt;AreaManagers&lt;/b&gt;&lt;br&gt;&lt;i&gt;Tổ chức · Gốc&lt;/i&gt;&lt;br&gt;PK FK AreaID : int&lt;br&gt;PK FK UserID : int&lt;br&gt;AssignedAt : datetime2(3)&lt;br&gt;IsActive : bit" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#edf3e7;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="890" y="412" width="365" height="146" as="geometry" />
+        </mxCell>
+        <mxCell id="StaffBranches" value="&lt;b&gt;StaffBranches&lt;/b&gt;&lt;br&gt;&lt;i&gt;Tổ chức · Gốc&lt;/i&gt;&lt;br&gt;PK FK UserID : int&lt;br&gt;PK FK BranchID : int&lt;br&gt;AssignedAt : datetime2(3)&lt;br&gt;IsActive : bit" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#edf3e7;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="412" width="365" height="146" as="geometry" />
+        </mxCell>
+        <mxCell id="Customers" value="&lt;b&gt;Customers&lt;/b&gt;&lt;br&gt;&lt;i&gt;CRM · Gốc&lt;/i&gt;&lt;br&gt;PK CustomerID : int&lt;br&gt;FK UserID : int&lt;br&gt;DateOfBirth : date ?&lt;br&gt;Gender : varchar(15) ?&lt;br&gt;LoyaltyPoints : int&lt;br&gt;CreatedAt : datetime2(3)&lt;br&gt;Version : rowversion" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#efe9f8;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1750" y="412" width="365" height="209" as="geometry" />
+        </mxCell>
+        <mxCell id="CustomerAddresses" value="&lt;b&gt;CustomerAddresses&lt;/b&gt;&lt;br&gt;&lt;i&gt;CRM · Mới&lt;/i&gt;&lt;br&gt;PK AddressID : int&lt;br&gt;FK CustomerID : int&lt;br&gt;Label : nvarchar(50)&lt;br&gt;RecipientName : nvarchar(120)&lt;br&gt;Phone : varchar(20)&lt;br&gt;AddressText : nvarchar(500)&lt;br&gt;Note : nvarchar(300) ?&lt;br&gt;IsDefault : bit&lt;br&gt;IsActive : bit&lt;br&gt;CreatedAt : datetime2(3)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#efe9f8;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="30" y="899" width="365" height="272" as="geometry" />
+        </mxCell>
+        <mxCell id="Categories" value="&lt;b&gt;Categories&lt;/b&gt;&lt;br&gt;&lt;i&gt;Thực đơn · Gốc&lt;/i&gt;&lt;br&gt;PK CategoryID : int&lt;br&gt;Name : nvarchar(100)&lt;br&gt;IsActive : bit" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#fff1dd;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="460" y="899" width="365" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="Products" value="&lt;b&gt;Products&lt;/b&gt;&lt;br&gt;&lt;i&gt;Thực đơn · Gốc&lt;/i&gt;&lt;br&gt;PK ProductID : int&lt;br&gt;FK CategoryID : int&lt;br&gt;Name : nvarchar(150)&lt;br&gt;Description : nvarchar(2000) ?&lt;br&gt;ImageURL : nvarchar(1000) ?&lt;br&gt;IsActive : bit&lt;br&gt;Version : rowversion" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#fff1dd;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="890" y="899" width="365" height="209" as="geometry" />
+        </mxCell>
+        <mxCell id="ProductVariants" value="&lt;b&gt;ProductVariants&lt;/b&gt;&lt;br&gt;&lt;i&gt;Thực đơn · Mới&lt;/i&gt;&lt;br&gt;PK VariantID : int&lt;br&gt;FK ProductID : int&lt;br&gt;Name : nvarchar(50)&lt;br&gt;BasePrice : decimal(18,2)&lt;br&gt;DisplayOrder : int&lt;br&gt;IsActive : bit" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#fff1dd;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="899" width="365" height="188" as="geometry" />
+        </mxCell>
+        <mxCell id="BranchProducts" value="&lt;b&gt;BranchProducts&lt;/b&gt;&lt;br&gt;&lt;i&gt;Thực đơn · Gốc&lt;/i&gt;&lt;br&gt;PK FK BranchID : int&lt;br&gt;PK FK ProductID : int&lt;br&gt;IsAvailable : bit" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#fff1dd;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1750" y="899" width="365" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="BranchProductVariants" value="&lt;b&gt;BranchProductVariants&lt;/b&gt;&lt;br&gt;&lt;i&gt;Thực đơn · Mới&lt;/i&gt;&lt;br&gt;PK FK BranchID : int&lt;br&gt;PK FK VariantID : int&lt;br&gt;FK ProductID : int&lt;br&gt;SellingPrice : decimal(18,2)&lt;br&gt;IsAvailable : bit" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#fff1dd;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="30" y="1281" width="365" height="167" as="geometry" />
+        </mxCell>
+        <mxCell id="ModifierGroups" value="&lt;b&gt;ModifierGroups&lt;/b&gt;&lt;br&gt;&lt;i&gt;Thực đơn · Mới&lt;/i&gt;&lt;br&gt;PK ModifierGroupID : int&lt;br&gt;Name : nvarchar(100)&lt;br&gt;Kind : varchar(20)&lt;br&gt;IsActive : bit" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#fff1dd;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="460" y="1281" width="365" height="146" as="geometry" />
+        </mxCell>
+        <mxCell id="ModifierOptions" value="&lt;b&gt;ModifierOptions&lt;/b&gt;&lt;br&gt;&lt;i&gt;Thực đơn · Mới&lt;/i&gt;&lt;br&gt;PK ModifierOptionID : int&lt;br&gt;FK ModifierGroupID : int&lt;br&gt;Name : nvarchar(100)&lt;br&gt;ExtraPrice : decimal(18,2)&lt;br&gt;DisplayOrder : int&lt;br&gt;IsActive : bit" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#fff1dd;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="890" y="1281" width="365" height="188" as="geometry" />
+        </mxCell>
+        <mxCell id="ProductModifierGroups" value="&lt;b&gt;ProductModifierGroups&lt;/b&gt;&lt;br&gt;&lt;i&gt;Thực đơn · Mới&lt;/i&gt;&lt;br&gt;PK FK ProductID : int&lt;br&gt;PK FK ModifierGroupID : int&lt;br&gt;MinSelections : int&lt;br&gt;MaxSelections : int" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#fff1dd;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="1281" width="365" height="146" as="geometry" />
+        </mxCell>
+        <mxCell id="BranchModifierOptions" value="&lt;b&gt;BranchModifierOptions&lt;/b&gt;&lt;br&gt;&lt;i&gt;Thực đơn · Mới&lt;/i&gt;&lt;br&gt;PK FK BranchID : int&lt;br&gt;PK FK ModifierOptionID : int&lt;br&gt;ExtraPrice : decimal(18,2)&lt;br&gt;IsAvailable : bit" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#fff1dd;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1750" y="1281" width="365" height="146" as="geometry" />
+        </mxCell>
+        <mxCell id="CustomerPreferences" value="&lt;b&gt;CustomerPreferences&lt;/b&gt;&lt;br&gt;&lt;i&gt;CRM · Gốc&lt;/i&gt;&lt;br&gt;PK FK CustomerID : int&lt;br&gt;PK FK ProductID : int&lt;br&gt;CreatedAt : datetime2(3)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#efe9f8;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="30" y="1579" width="365" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="LoyaltyPolicies" value="&lt;b&gt;LoyaltyPolicies&lt;/b&gt;&lt;br&gt;&lt;i&gt;Điểm và ưu đãi · Mới&lt;/i&gt;&lt;br&gt;PK PolicyID : int&lt;br&gt;Name : nvarchar(120)&lt;br&gt;AmountPerPoint : decimal(18,2)&lt;br&gt;EffectiveFrom : datetime2(3)&lt;br&gt;EffectiveTo : datetime2(3) ?" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#fff8d9;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="460" y="1579" width="365" height="167" as="geometry" />
+        </mxCell>
+        <mxCell id="Promotions" value="&lt;b&gt;Promotions&lt;/b&gt;&lt;br&gt;&lt;i&gt;Điểm và ưu đãi · Gốc&lt;/i&gt;&lt;br&gt;PK PromotionID : int&lt;br&gt;Name : nvarchar(150)&lt;br&gt;Description : nvarchar(2000) ?&lt;br&gt;Scope : varchar(10)&lt;br&gt;FK AreaID : int ?&lt;br&gt;FK BranchID : int ?&lt;br&gt;FK CreatedBy : int&lt;br&gt;DiscountType : varchar(10)&lt;br&gt;DiscountValue : decimal(18,2)&lt;br&gt;MaxDiscount : decimal(18,2) ?&lt;br&gt;MinSubtotal : decimal(18,2)&lt;br&gt;StartsAt : datetime2(3)&lt;br&gt;EndsAt : datetime2(3)&lt;br&gt;PointsCost : int ?&lt;br&gt;TotalLimit : int&lt;br&gt;PerCustomerLimit : int&lt;br&gt;IsActive : bit&lt;br&gt;Version : rowversion" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#fff8d9;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="890" y="1579" width="365" height="440" as="geometry" />
+        </mxCell>
+        <mxCell id="CustomerPromotions" value="&lt;b&gt;CustomerPromotions&lt;/b&gt;&lt;br&gt;&lt;i&gt;Điểm và ưu đãi · Gốc&lt;/i&gt;&lt;br&gt;PK CustomerPromotionID : int&lt;br&gt;FK CustomerID : int&lt;br&gt;FK PromotionID : int&lt;br&gt;Code : varchar(40)&lt;br&gt;RequestKey : uniqueidentifier&lt;br&gt;Status : varchar(12)&lt;br&gt;IssuedAt : datetime2(3)&lt;br&gt;ExpiresAt : datetime2(3)&lt;br&gt;PointsSpent : int&lt;br&gt;DiscountType : varchar(10)&lt;br&gt;DiscountValue : decimal(18,2)&lt;br&gt;MaxDiscount : decimal(18,2) ?&lt;br&gt;MinSubtotal : decimal(18,2)&lt;br&gt;FK ReservedOrderID : int ?&lt;br&gt;FK UsedOrderID : int ?&lt;br&gt;UsedAt : datetime2(3) ?&lt;br&gt;Version : rowversion" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#fff8d9;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="1579" width="365" height="419" as="geometry" />
+        </mxCell>
+        <mxCell id="Orders" value="&lt;b&gt;Orders&lt;/b&gt;&lt;br&gt;&lt;i&gt;Bán hàng · Gốc&lt;/i&gt;&lt;br&gt;PK OrderID : int&lt;br&gt;OrderCode : varchar(40)&lt;br&gt;RequestKey : uniqueidentifier&lt;br&gt;RequestHash : binary(32)&lt;br&gt;FK BranchID : int&lt;br&gt;FK CustomerID : int ?&lt;br&gt;FK CreatedBy : int&lt;br&gt;Source : varchar(5)&lt;br&gt;Fulfillment : varchar(10)&lt;br&gt;PaymentMode : varchar(10)&lt;br&gt;Status : varchar(20)&lt;br&gt;ContactName : nvarchar(120)&lt;br&gt;ContactPhone : varchar(20) ?&lt;br&gt;Note : nvarchar(500) ?&lt;br&gt;Subtotal : decimal(18,2)&lt;br&gt;DiscountAmount : decimal(18,2)&lt;br&gt;DeliveryFee : decimal(18,2)&lt;br&gt;TotalAmount : decimal(18,2)&lt;br&gt;FK CustomerPromotionID : int ?&lt;br&gt;FK PolicyID : int&lt;br&gt;AmountPerPoint : decimal(18,2)&lt;br&gt;CreatedAt : datetime2(3)&lt;br&gt;PaymentDueAt : datetime2(3) ?&lt;br&gt;CompletedAt : datetime2(3) ?&lt;br&gt;CancelledAt : datetime2(3) ?&lt;br&gt;Version : rowversion" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e4f1f5;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1750" y="1579" width="365" height="608" as="geometry" />
+        </mxCell>
+        <mxCell id="OrderDetails" value="&lt;b&gt;OrderDetails&lt;/b&gt;&lt;br&gt;&lt;i&gt;Bán hàng · Gốc&lt;/i&gt;&lt;br&gt;PK OrderDetailID : int&lt;br&gt;FK OrderID : int&lt;br&gt;FK ProductID : int&lt;br&gt;FK VariantID : int&lt;br&gt;ProductName : nvarchar(150)&lt;br&gt;VariantName : nvarchar(50)&lt;br&gt;Quantity : int&lt;br&gt;UnitPrice : decimal(18,2)&lt;br&gt;ModifierTotal : decimal(18,2)&lt;br&gt;LineTotal : decimal(18,2)&lt;br&gt;Note : nvarchar(300) ?" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e4f1f5;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="30" y="2297" width="365" height="293" as="geometry" />
+        </mxCell>
+        <mxCell id="OrderItemModifiers" value="&lt;b&gt;OrderItemModifiers&lt;/b&gt;&lt;br&gt;&lt;i&gt;Bán hàng · Mới&lt;/i&gt;&lt;br&gt;PK FK OrderDetailID : int&lt;br&gt;PK FK ModifierOptionID : int&lt;br&gt;GroupName : nvarchar(100)&lt;br&gt;OptionName : nvarchar(100)&lt;br&gt;ExtraPrice : decimal(18,2)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e4f1f5;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="460" y="2297" width="365" height="167" as="geometry" />
+        </mxCell>
+        <mxCell id="OrderStatusHistory" value="&lt;b&gt;OrderStatusHistory&lt;/b&gt;&lt;br&gt;&lt;i&gt;Bán hàng · Mới&lt;/i&gt;&lt;br&gt;PK HistoryID : int&lt;br&gt;FK OrderID : int&lt;br&gt;FromStatus : varchar(20) ?&lt;br&gt;ToStatus : varchar(20)&lt;br&gt;FK ChangedBy : int ?&lt;br&gt;Reason : nvarchar(500) ?&lt;br&gt;CreatedAt : datetime2(3)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e4f1f5;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="890" y="2297" width="365" height="209" as="geometry" />
+        </mxCell>
+        <mxCell id="Deliveries" value="&lt;b&gt;Deliveries&lt;/b&gt;&lt;br&gt;&lt;i&gt;Bán hàng · Mới&lt;/i&gt;&lt;br&gt;PK FK OrderID : int&lt;br&gt;RecipientName : nvarchar(120)&lt;br&gt;Phone : varchar(20)&lt;br&gt;AddressText : nvarchar(500)&lt;br&gt;Note : nvarchar(300) ?&lt;br&gt;Status : varchar(12)&lt;br&gt;CourierName : nvarchar(120) ?&lt;br&gt;CourierPhone : varchar(20) ?&lt;br&gt;FailureReason : nvarchar(500) ?&lt;br&gt;AttemptCount : int&lt;br&gt;DispatchedAt : datetime2(3) ?&lt;br&gt;DeliveredAt : datetime2(3) ?&lt;br&gt;Version : rowversion" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e4f1f5;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="2297" width="365" height="335" as="geometry" />
+        </mxCell>
+        <mxCell id="PaymentAttempts" value="&lt;b&gt;PaymentAttempts&lt;/b&gt;&lt;br&gt;&lt;i&gt;Thanh toán · Mới&lt;/i&gt;&lt;br&gt;PK PaymentID : int&lt;br&gt;FK OrderID : int&lt;br&gt;RequestKey : uniqueidentifier&lt;br&gt;Method : varchar(15)&lt;br&gt;Provider : varchar(40)&lt;br&gt;ProviderReference : varchar(120) ?&lt;br&gt;Amount : decimal(18,2)&lt;br&gt;Status : varchar(12)&lt;br&gt;FailureReason : nvarchar(500) ?&lt;br&gt;CreatedAt : datetime2(3)&lt;br&gt;SettledAt : datetime2(3) ?" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#f8e9e8;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1750" y="2297" width="365" height="293" as="geometry" />
+        </mxCell>
+        <mxCell id="Refunds" value="&lt;b&gt;Refunds&lt;/b&gt;&lt;br&gt;&lt;i&gt;Thanh toán · Mới&lt;/i&gt;&lt;br&gt;PK RefundID : int&lt;br&gt;FK PaymentID : int&lt;br&gt;FK OrderID : int&lt;br&gt;RequestKey : uniqueidentifier&lt;br&gt;Amount : decimal(18,2)&lt;br&gt;Status : varchar(12)&lt;br&gt;Reason : nvarchar(500)&lt;br&gt;FK RequestedBy : int&lt;br&gt;ProviderReference : varchar(120) ?&lt;br&gt;AttemptCount : int&lt;br&gt;FailureReason : nvarchar(500) ?&lt;br&gt;CreatedAt : datetime2(3)&lt;br&gt;CompletedAt : datetime2(3) ?" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#f8e9e8;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="30" y="2742" width="365" height="335" as="geometry" />
+        </mxCell>
+        <mxCell id="LoyaltyTransactions" value="&lt;b&gt;LoyaltyTransactions&lt;/b&gt;&lt;br&gt;&lt;i&gt;Điểm và ưu đãi · Gốc&lt;/i&gt;&lt;br&gt;PK LoyaltyTransactionID : int&lt;br&gt;FK CustomerID : int&lt;br&gt;FK OrderID : int ?&lt;br&gt;FK CustomerPromotionID : int ?&lt;br&gt;Kind : varchar(12)&lt;br&gt;Points : int&lt;br&gt;RequestKey : uniqueidentifier&lt;br&gt;Note : nvarchar(300) ?&lt;br&gt;CreatedAt : datetime2(3)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#fff8d9;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="460" y="2742" width="365" height="251" as="geometry" />
+        </mxCell>
+        <mxCell id="Feedbacks" value="&lt;b&gt;Feedbacks&lt;/b&gt;&lt;br&gt;&lt;i&gt;CRM · Gốc&lt;/i&gt;&lt;br&gt;PK FeedbackID : int&lt;br&gt;FK CustomerID : int&lt;br&gt;FK OrderID : int ?&lt;br&gt;FK BranchID : int ?&lt;br&gt;FK ProductID : int ?&lt;br&gt;Type : varchar(15)&lt;br&gt;Content : nvarchar(4000)&lt;br&gt;Rating : tinyint ?&lt;br&gt;Status : varchar(12)&lt;br&gt;FK HandledBy : int ?&lt;br&gt;ResponseContent : nvarchar(4000) ?&lt;br&gt;CreatedAt : datetime2(3)&lt;br&gt;HandledAt : datetime2(3) ?" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#efe9f8;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="890" y="2742" width="365" height="335" as="geometry" />
+        </mxCell>
+        <mxCell id="Surveys" value="&lt;b&gt;Surveys&lt;/b&gt;&lt;br&gt;&lt;i&gt;Khảo sát · Gốc&lt;/i&gt;&lt;br&gt;PK SurveyID : int&lt;br&gt;Title : nvarchar(250)&lt;br&gt;Description : nvarchar(2000) ?&lt;br&gt;FK CreatedBy : int&lt;br&gt;Scope : varchar(10)&lt;br&gt;FK AreaID : int ?&lt;br&gt;FK BranchID : int ?&lt;br&gt;StartsAt : datetime2(3)&lt;br&gt;EndsAt : datetime2(3)&lt;br&gt;Status : varchar(10)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e6f1e9;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="2742" width="365" height="272" as="geometry" />
+        </mxCell>
+        <mxCell id="SurveyQuestions" value="&lt;b&gt;SurveyQuestions&lt;/b&gt;&lt;br&gt;&lt;i&gt;Khảo sát · Gốc&lt;/i&gt;&lt;br&gt;PK QuestionID : int&lt;br&gt;FK SurveyID : int&lt;br&gt;Text : nvarchar(2000)&lt;br&gt;Type : varchar(15)&lt;br&gt;IsRequired : bit&lt;br&gt;DisplayOrder : int&lt;br&gt;RatingMin : int ?&lt;br&gt;RatingMax : int ?" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e6f1e9;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1750" y="2742" width="365" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="SurveyQuestionOptions" value="&lt;b&gt;SurveyQuestionOptions&lt;/b&gt;&lt;br&gt;&lt;i&gt;Khảo sát · Mới&lt;/i&gt;&lt;br&gt;PK OptionID : int&lt;br&gt;FK QuestionID : int&lt;br&gt;Text : nvarchar(500)&lt;br&gt;DisplayOrder : int" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e6f1e9;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="30" y="3187" width="365" height="146" as="geometry" />
+        </mxCell>
+        <mxCell id="SurveyRecipients" value="&lt;b&gt;SurveyRecipients&lt;/b&gt;&lt;br&gt;&lt;i&gt;Khảo sát · Gốc&lt;/i&gt;&lt;br&gt;PK FK SurveyID : int&lt;br&gt;PK FK CustomerID : int&lt;br&gt;SentAt : datetime2(3)&lt;br&gt;CompletedAt : datetime2(3) ?" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e6f1e9;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="460" y="3187" width="365" height="146" as="geometry" />
+        </mxCell>
+        <mxCell id="SurveyResponses" value="&lt;b&gt;SurveyResponses&lt;/b&gt;&lt;br&gt;&lt;i&gt;Khảo sát · Gốc&lt;/i&gt;&lt;br&gt;PK ResponseID : int&lt;br&gt;FK SurveyID : int&lt;br&gt;FK QuestionID : int&lt;br&gt;FK CustomerID : int&lt;br&gt;TextValue : nvarchar(4000) ?&lt;br&gt;RatingValue : int ?&lt;br&gt;SubmittedAt : datetime2(3)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e6f1e9;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="890" y="3187" width="365" height="209" as="geometry" />
+        </mxCell>
+        <mxCell id="SurveyAnswerOptions" value="&lt;b&gt;SurveyAnswerOptions&lt;/b&gt;&lt;br&gt;&lt;i&gt;Khảo sát · Mới&lt;/i&gt;&lt;br&gt;PK FK ResponseID : int&lt;br&gt;PK FK OptionID : int&lt;br&gt;FK QuestionID : int" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e6f1e9;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="3187" width="365" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="Notifications" value="&lt;b&gt;Notifications&lt;/b&gt;&lt;br&gt;&lt;i&gt;CRM · Mới&lt;/i&gt;&lt;br&gt;PK NotificationID : int&lt;br&gt;FK UserID : int&lt;br&gt;Title : nvarchar(200)&lt;br&gt;Body : nvarchar(2000)&lt;br&gt;FK OrderID : int ?&lt;br&gt;FK CustomerPromotionID : int ?&lt;br&gt;FK SurveyID : int ?&lt;br&gt;CreatedAt : datetime2(3)&lt;br&gt;ReadAt : datetime2(3) ?" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#efe9f8;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="1750" y="3187" width="365" height="251" as="geometry" />
+        </mxCell>
+        <mxCell id="AuditLogs" value="&lt;b&gt;AuditLogs&lt;/b&gt;&lt;br&gt;&lt;i&gt;Tài khoản · Mới&lt;/i&gt;&lt;br&gt;PK AuditID : int&lt;br&gt;FK ActorID : int ?&lt;br&gt;FK BranchID : int ?&lt;br&gt;Action : varchar(80)&lt;br&gt;EntityType : varchar(60)&lt;br&gt;EntityID : int ?&lt;br&gt;Details : nvarchar(4000) ?&lt;br&gt;CreatedAt : datetime2(3)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=9;fontFamily=Arial;fontSize=12;fillColor=#e9eef5;strokeColor=#758292;" vertex="1" parent="1">
+          <mxGeometry x="30" y="3548" width="365" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="fk0" value="RoleID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Roles" target="RolePermissions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk1" value="PermissionID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Permissions" target="RolePermissions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk2" value="RoleID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Roles" target="Users">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk3" value="UserID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Users" target="UserSessions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk4" value="AreaID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Areas" target="Branches">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk5" value="ManagerID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Users" target="Branches">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk6" value="AreaID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Areas" target="AreaManagers">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk7" value="UserID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Users" target="AreaManagers">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk8" value="UserID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Users" target="StaffBranches">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk9" value="BranchID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Branches" target="StaffBranches">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk10" value="UserID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToOne;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Users" target="Customers">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk11" value="CustomerID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Customers" target="CustomerAddresses">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk12" value="CategoryID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Categories" target="Products">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk13" value="ProductID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Products" target="ProductVariants">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk14" value="BranchID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Branches" target="BranchProducts">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk15" value="ProductID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Products" target="BranchProducts">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk16" value="BranchID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Branches" target="BranchProductVariants">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk17" value="VariantID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ProductVariants" target="BranchProductVariants">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk18" value="ProductID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Products" target="BranchProductVariants">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk19" value="ModifierGroupID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ModifierGroups" target="ModifierOptions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk20" value="ProductID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Products" target="ProductModifierGroups">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk21" value="ModifierGroupID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ModifierGroups" target="ProductModifierGroups">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk22" value="BranchID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Branches" target="BranchModifierOptions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk23" value="ModifierOptionID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ModifierOptions" target="BranchModifierOptions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk24" value="CustomerID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Customers" target="CustomerPreferences">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk25" value="ProductID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Products" target="CustomerPreferences">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk26" value="AreaID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Areas" target="Promotions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk27" value="BranchID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Branches" target="Promotions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk28" value="CreatedBy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Users" target="Promotions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk29" value="CustomerID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Customers" target="CustomerPromotions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk30" value="PromotionID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Promotions" target="CustomerPromotions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk31" value="ReservedOrderID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Orders" target="CustomerPromotions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk32" value="UsedOrderID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Orders" target="CustomerPromotions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk33" value="BranchID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Branches" target="Orders">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk34" value="CustomerID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Customers" target="Orders">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk35" value="CreatedBy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Users" target="Orders">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk36" value="CustomerPromotionID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="CustomerPromotions" target="Orders">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk37" value="PolicyID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="LoyaltyPolicies" target="Orders">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk38" value="OrderID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Orders" target="OrderDetails">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk39" value="ProductID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Products" target="OrderDetails">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk40" value="VariantID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ProductVariants" target="OrderDetails">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk41" value="OrderDetailID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="OrderDetails" target="OrderItemModifiers">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk42" value="ModifierOptionID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="ModifierOptions" target="OrderItemModifiers">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk43" value="OrderID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Orders" target="OrderStatusHistory">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk44" value="ChangedBy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Users" target="OrderStatusHistory">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk45" value="OrderID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToOne;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Orders" target="Deliveries">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk46" value="OrderID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Orders" target="PaymentAttempts">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk47" value="PaymentID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToOne;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="PaymentAttempts" target="Refunds">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk48" value="OrderID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Orders" target="Refunds">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk49" value="RequestedBy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Users" target="Refunds">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk50" value="CustomerID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Customers" target="LoyaltyTransactions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk51" value="OrderID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Orders" target="LoyaltyTransactions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk52" value="CustomerPromotionID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="CustomerPromotions" target="LoyaltyTransactions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk53" value="CustomerID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Customers" target="Feedbacks">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk54" value="OrderID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Orders" target="Feedbacks">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk55" value="BranchID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Branches" target="Feedbacks">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk56" value="ProductID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Products" target="Feedbacks">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk57" value="HandledBy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Users" target="Feedbacks">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk58" value="CreatedBy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Users" target="Surveys">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk59" value="AreaID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Areas" target="Surveys">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk60" value="BranchID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Branches" target="Surveys">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk61" value="SurveyID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Surveys" target="SurveyQuestions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk62" value="QuestionID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="SurveyQuestions" target="SurveyQuestionOptions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk63" value="SurveyID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Surveys" target="SurveyRecipients">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk64" value="CustomerID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Customers" target="SurveyRecipients">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk65" value="SurveyID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Surveys" target="SurveyResponses">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk66" value="QuestionID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="SurveyQuestions" target="SurveyResponses">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk67" value="CustomerID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Customers" target="SurveyResponses">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk68" value="ResponseID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="SurveyResponses" target="SurveyAnswerOptions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk69" value="OptionID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="SurveyQuestionOptions" target="SurveyAnswerOptions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk70" value="QuestionID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="SurveyQuestions" target="SurveyAnswerOptions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk71" value="UserID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERone;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Users" target="Notifications">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk72" value="OrderID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Orders" target="Notifications">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk73" value="CustomerPromotionID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="CustomerPromotions" target="Notifications">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk74" value="SurveyID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Surveys" target="Notifications">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk75" value="ActorID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Users" target="AuditLogs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk76" value="BranchID" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#76818e;fontSize=9;startArrow=ERzeroToOne;endArrow=ERzeroToMany;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Branches" target="AuditLogs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

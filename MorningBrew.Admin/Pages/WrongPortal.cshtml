@@ -1,0 +1,13 @@
+@page
+@model WrongPortalModel
+@* [SEP-03] Hiện khi mở nhầm khu của giao diện kia trên cổng này. *@
+@{ Layout=null; }
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sai giao diện · Morning Brew</title><link rel="stylesheet" href="/css/site.css"></head>
+<body class="login-bg"><main class="login-card">
+<div class="brand big">Morning<span>Brew</span></div>
+<h1>Trang này không thuộc @Model.Current.Title</h1>
+<p class="muted">Hệ thống có hai giao diện tách biệt, mỗi giao diện một địa chỉ và một phiên đăng nhập riêng:</p>
+<ul class="muted"><li><b>Admin server</b> (chủ cửa hàng): @Portals.Admin.BaseUrl</li><li><b>Quản lý CRM</b> (chủ cửa hàng, quản lý): @Portals.Manager.BaseUrl</li></ul>
+<a class="primary full" style="display:block;text-align:center;text-decoration:none;padding:12px" href="@Model.Target">Mở @Model.Other.Title</a>
+<p style="margin-top:12px"><a href="@Model.Current.Home">← Về @Model.Current.Title</a></p>
+</main></body></html>

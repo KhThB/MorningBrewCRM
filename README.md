@@ -39,10 +39,13 @@ dotnet run --project MorningBrew.Admin --launch-profile http
 ```
 
 - API: http://localhost:5029 — kiểm tra `/health`, Swagger tại `/swagger`.
-- Admin: http://localhost:5191 — cấu hình Development gọi API ở cổng 5029.
+- Web nội bộ gồm **hai giao diện tách biệt** chạy từ project `MorningBrew.Admin` (mỗi cổng một phiên đăng nhập riêng) [SEP]:
+  - **Admin server**: http://localhost:5190 — chỉ `/Admin/*`, chỉ chủ cửa hàng.
+  - **Quản lý CRM**: http://localhost:5191 — chỉ `/Manager/*`, chủ cửa hàng và quản lý.
+  - Mở nhầm khu của giao diện kia sẽ được chuyển sang trang hướng dẫn kèm link đúng cổng. Cổng/địa chỉ cấu hình ở `appsettings.json` → `Portals`. Cả hai gọi API ở cổng 5029.
   - `/Admin/*` — **giao diện Quản trị** (chỉ chủ cửa hàng): tổng quan hệ thống, tài khoản (lọc, thêm, đổi vai trò, khóa, xóa), ma trận phân quyền, nhật ký hệ thống, sao lưu & phục hồi, sản phẩm & giá, nhà cung cấp.
   - `/Manager/*` — **giao diện Quản lý CRM** (quản lý và chủ cửa hàng): khách hàng (thêm/khóa/xóa), phản hồi (lọc theo trạng thái), khảo sát (câu hỏi đánh giá/chọn một/chọn nhiều/tự luận, mời hàng loạt theo nhóm), ưu đãi, báo cáo.
-  - Web chỉ dành cho nội bộ: sau khi đăng nhập, chủ cửa hàng vào `/Admin`, quản lý vào `/Manager`. **Khách hàng chỉ dùng app MAUI** (đăng ký, đăng nhập, sửa hồ sơ, phản hồi, khảo sát); thu ngân dùng POS.
+  - Web chỉ dành cho nội bộ: chủ cửa hàng đăng nhập Admin server (5190) để quản trị và có thể đăng nhập riêng Quản lý CRM (5191); quản lý chỉ đăng nhập được Quản lý CRM. **Khách hàng chỉ dùng app MAUI** (đăng ký, đăng nhập, sửa hồ sơ, phản hồi, khảo sát); thu ngân dùng POS.
 - App MAUI khách hàng: chọn project `MorningBrewwApp` và **Windows Machine** trong Visual Studio rồi chạy. Android emulator gọi API qua `10.0.2.2:5029`; thiết bị thật cần địa chỉ LAN và cấu hình kết nối phù hợp.
 - App **POS** cho thu ngân: chọn project `MorningBrewPos` → **Windows Machine**. Đăng nhập bằng `staff.1@morningbrew.test` (quản lý / chủ cửa hàng cũng đăng nhập được và có thêm quyền hủy đơn).
 

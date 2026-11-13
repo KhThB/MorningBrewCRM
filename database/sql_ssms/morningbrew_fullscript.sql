@@ -1,27 +1,32 @@
-﻿-- 01_core.sql – bảng, khóa, hàm phân quyền, trigger, thủ tục (chỉ chạy trên database trống)
+﻿-- CAI_DAT_DAY_DU.sql – cài mới HOẶC nâng cấp database MorningBrew CRM lên bản mới nhất (gồm góp ý giao diện 09/11)
 -- =====================================================================================
--- CÁCH CHẠY (SQL Server Management Studio hoặc Azure Data Studio, KHÔNG cần PowerShell):
---   1. Kết nối tới server, ví dụ (localdb)\MSSQLLocalDB.
---   2. File → Open → chọn file này → bấm Execute (F5). Không cần chọn database trước:
---      file tự chuyển sang database [MorningBrewCRM_Crm].
---   3. Chạy lần lượt: 01_core → 02_demo_data (tùy chọn) → 03_crm_updates → 04_menu_updates.
---   4. Chạy xong, tab Messages phải có dòng "=== HOÀN TẤT ...". Nếu thấy dòng ">>> DỪNG"
---      hoặc không có "HOÀN TẤT" thì file đã dừng giữa chừng: đọc lỗi màu đỏ đầu tiên, sửa
---      nguyên nhân rồi mới chạy tiếp. Khi có lỗi, các lệnh phía sau tự động không chạy.
---   Muốn dùng tên database khác: Edit → Find and Replace "MorningBrewCRM_Crm" ở CẢ 4 file
---   (và sửa ConnectionStrings:MorningBrew của API cho khớp).
---   File lưu UTF-8 có BOM để SSMS đọc đúng tiếng Việt.
--- Nội dung SQL giữ nguyên bản database/sql (nhánh db-test); chỉ thêm phần chọn database,
--- kiểm tra điều kiện trước khi chạy và lệnh "dừng khi lỗi" giữa các khối lệnh.
+-- KHÔNG cần PowerShell. SSMS: kết nối (localdb)\MSSQLLocalDB → File → Open file này → Execute (F5).
+-- File tự nhận biết tình trạng database [MorningBrewCRM_Crm]:
+--   * Chưa có database / database trống  → CÀI MỚI: tạo database, chạy 01_core → 02_demo_data → 03 → 04.
+--   * Đã có database đang dùng           → NÂNG CẤP: kiểm tra, SAO LƯU (.bak có CHECKSUM + VERIFYONLY),
+--                                           rồi chạy 03_crm_updates → 04_menu_updates. KHÔNG đụng 01/02,
+--                                           không xóa dữ liệu. Nhớ ĐÓNG API, Admin, app, POS trước khi chạy.
+-- Bản 09/11: đồ uống chỉ còn Size M/L + Đá/Nóng, size L = M + 10.000đ, 2 món mẫu còn hàng lại, 6 nhà cung cấp.
+-- Kết quả: tab Messages có "=== HOÀN TẤT ..." và bảng kiểm tra (SoBang = 41). Thấy ">>> DỪNG" thì các lệnh
+-- sau không chạy; đọc lỗi đỏ đầu tiên. Nâng cấp lỗi giữa chừng: phục hồi từ file .bak đã in ra.
+-- Chạy lại nhiều lần không sao (lần sau sẽ là NÂNG CẤP, mỗi lần thêm 1 bản .bak).
+-- Lưu ý khi NÂNG CẤP: SQL Server vẫn "dịch thử" phần 01/02 bị bỏ qua nên có thể hiện vài dòng đỏ ở đoạn đó
+-- (ví dụ không tìm thấy bảng AreaManagers đã bỏ). Không lệnh nào trong 01/02 được chạy; kết quả thật là dòng
+-- "=== HOÀN TẤT" cuối cùng. Muốn không có dòng đỏ nào: chạy 2 file lẻ 03_crm_updates.sql rồi 04_menu_updates.sql.
+-- Tên database khác: Edit → Find and Replace "MorningBrewCRM_Crm" (và sửa ConnectionStrings:MorningBrew của API).
+-- Nội dung SQL các phần 01–04 giữ nguyên bản database/sql (nhánh db-test).
 -- =====================================================================================
 GO
-SET NOEXEC OFF;  -- bỏ trạng thái dừng còn sót từ lần chạy trước trong cùng cửa sổ
+SET NOEXEC OFF;
+EXEC sp_set_session_context N'mb_failed', 0;
+EXEC sp_set_session_context N'mb_mode', NULL;
 GO
 USE master;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -30,12 +35,11 @@ BEGIN
     CREATE DATABASE [MorningBrewCRM_Crm];
     PRINT N'Đã tạo database [MorningBrewCRM_Crm].';
 END
-ELSE
-    PRINT N'Database [MorningBrewCRM_Crm] đã có sẵn: tiếp tục nếu database còn trống.';
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -43,46 +47,72 @@ USE [MorningBrewCRM_Crm];
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
 IF DB_NAME() <> N'MorningBrewCRM_Crm'
 BEGIN
     RAISERROR(N'>>> DỪNG: không chuyển được sang database [MorningBrewCRM_Crm].', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
-IF EXISTS (SELECT 1 FROM sys.tables)
+IF NOT EXISTS (SELECT 1 FROM sys.tables)
 BEGIN
-    RAISERROR(N'>>> DỪNG: database [MorningBrewCRM_Crm] đã có bảng. 01_core.sql chỉ chạy trên database trống; database đang dùng thì chỉ chạy 03 và 04.', 16, 1);
+    EXEC sp_set_session_context N'mb_mode', N'install';
+    PRINT N'>>> Database trống: CÀI MỚI (01 → 02 → 03 → 04).';
+END
+ELSE IF OBJECT_ID(N'dbo.CreateOrder', N'P') IS NOT NULL AND OBJECT_ID(N'dbo.GetMenu', N'P') IS NOT NULL
+BEGIN
+    EXEC sp_set_session_context N'mb_mode', N'upgrade';
+    PRINT N'>>> Database đã có dữ liệu: NÂNG CẤP (sao lưu → 03 → 04). Bỏ qua 01, 02.';
+END
+ELSE
+BEGIN
+    RAISERROR(N'>>> DỪNG: database [MorningBrewCRM_Crm] có bảng nhưng không phải database MorningBrew CRM. Dùng database trống hoặc đổi tên database.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
 IF CAST(SERVERPROPERTY('ProductMajorVersion') AS int) < 16
 BEGIN
     RAISERROR(N'>>> DỪNG: cần SQL Server 2022 trở lên (hoặc LocalDB 2022).', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
-ELSE
+ELSE IF SESSION_CONTEXT(N'mb_mode') = N'install'
     ALTER DATABASE [MorningBrewCRM_Crm] SET COMPATIBILITY_LEVEL = 160;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
+GO
+-- ===== PHẦN CÀI MỚI (01, 02): bỏ qua khi nâng cấp =====
+IF SESSION_CONTEXT(N'mb_mode') = N'upgrade'
+BEGIN
+    PRINT N'(Bỏ qua 01, 02 – dòng đỏ nếu có trong đoạn này là do SQL Server dịch thử, không phải lỗi thật.)';
+    SET NOEXEC ON;
+END
+GO
+PRINT N'--- Bắt đầu phần 01_core.sql ---';
 GO
 -- DB-TEST PACKAGE: Preserves the original SQL batch order. See database/README.md.
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -888,7 +918,8 @@ COMMIT;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -898,7 +929,8 @@ SET QUOTED_IDENTIFIER ON;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -917,7 +949,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -929,7 +962,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -945,7 +979,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -957,7 +992,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -970,7 +1006,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -982,7 +1019,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -994,7 +1032,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1006,7 +1045,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1020,7 +1060,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1032,7 +1073,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1044,7 +1086,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1056,7 +1099,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1067,7 +1111,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1081,7 +1126,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1092,7 +1138,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1103,7 +1150,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1114,7 +1162,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1125,7 +1174,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1137,7 +1187,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1149,7 +1200,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1162,7 +1214,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1176,7 +1229,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1186,7 +1240,8 @@ SET QUOTED_IDENTIFIER ON;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1227,7 +1282,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1331,7 +1387,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1358,7 +1415,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1392,7 +1450,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1437,7 +1496,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1464,7 +1524,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1496,7 +1557,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1523,7 +1585,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1560,7 +1623,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1585,7 +1649,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1595,7 +1660,8 @@ SET QUOTED_IDENTIFIER ON;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1616,7 +1682,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1638,7 +1705,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1677,7 +1745,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1704,7 +1773,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1729,7 +1799,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1752,7 +1823,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1776,7 +1848,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1786,7 +1859,8 @@ SET QUOTED_IDENTIFIER ON;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1808,7 +1882,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1825,7 +1900,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1840,7 +1916,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1859,7 +1936,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1880,7 +1958,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1903,7 +1982,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1923,7 +2003,8 @@ END;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1932,7 +2013,8 @@ CREATE OR ALTER VIEW dbo.LoyaltyReconciliation AS
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
@@ -1944,12 +2026,949 @@ GRANT EXECUTE ON SCHEMA::dbo TO MorningBrewRuntime;
 GO
 IF @@ERROR <> 0
 BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại trong file KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
 GO
-PRINT N'=== HOÀN TẤT 01_core.sql trên database [MorningBrewCRM_Crm]. Tiếp theo: 02_demo_data.sql (nếu cần dữ liệu mẫu), rồi 03_crm_updates.sql.';
-SELECT COUNT(*) AS SoBang FROM sys.tables;
+PRINT N'--- Bắt đầu phần 02_demo_data.sql ---';
+GO
+-- DB-TEST PACKAGE: Preserves the original SQL batch order. See database/README.md.
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 06_seed.sql (historical filename)
+-- Demo password for all accounts: MorningBrew!2026. ASP.NET PasswordHasher V3, SHA512.
+-- Phạm vi demo CRM: 1 cửa hàng (Morning Brew Thủ Đức), không có phần nhân sự (HRM).
+-- Tài khoản: 1 chủ cửa hàng, 1 quản lý, 1 thu ngân (POS) và 30 khách hàng.
+SET NOCOUNT ON; SET XACT_ABORT ON;
+IF EXISTS(SELECT 1 FROM dbo.Roles) THROW 51000,N'Seed requires empty tables.',1;
+BEGIN TRAN;
+-- Vai trò AreaManager đã bị bỏ trong 11_single_store.sql (chỉ có 1 cửa hàng).
+INSERT dbo.Roles(Code,Name) VALUES('Owner',N'Chủ cửa hàng'),('BranchManager',N'Quản lý cửa hàng'),('Staff',N'Nhân viên thu ngân'),('Customer',N'Khách hàng');
+INSERT dbo.Permissions(Code,Description) VALUES
+('Orders.Create',N'Tạo đơn tại POS'),('Orders.Manage',N'Cập nhật xử lý đơn'),('Orders.Cancel',N'Hủy đơn sau xác nhận'),('Orders.Read',N'Xem lịch sử đơn'),
+('Payments.Manage',N'Ghi nhận tiền đã thu'),('Refunds.Manage',N'Xử lý hoàn tiền'),('Menu.Manage',N'Quản lý thực đơn'),('Customers.Lookup',N'Tra cứu thành viên bằng số điện thoại'),('Customers.Read',N'Xem và phân nhóm khách hàng'),('Promotions.Manage',N'Quản lý và cấp ưu đãi'),('Surveys.Manage',N'Quản lý khảo sát'),('Feedbacks.Manage',N'Xử lý phản hồi'),('Reports.Read',N'Xem báo cáo'),('Organization.Manage',N'Quản lý tổ chức'),('Security.Manage',N'Quản lý tài khoản và quyền'),('Catalog.Manage',N'Quản lý danh mục dùng chung');
+INSERT dbo.RolePermissions SELECT r.RoleID,p.PermissionID FROM dbo.Roles r CROSS JOIN dbo.Permissions p WHERE r.Code='Owner' OR (r.Code='BranchManager' AND p.Code NOT IN ('Organization.Manage','Security.Manage','Catalog.Manage')) OR (r.Code='Staff' AND p.Code IN ('Orders.Create','Orders.Manage','Orders.Read','Payments.Manage','Customers.Lookup'));
+DECLARE @hash varchar(512)='AQAAAAIAAYagAAAAEE8G2F5hjA72TxlV9NrR092YRGzNf1+QMFGndUjRlWxuS/DMviEjHdzD5daFtHJW2w==';
+INSERT dbo.Users(RoleID,Email,NormalizedEmail,PasswordHash,FullName,Phone)
+SELECT r.RoleID,v.Email,UPPER(v.Email),@hash,v.FullName,v.Phone FROM (VALUES
+(1,'Owner','owner@morningbrew.test',N'Chủ cửa hàng','0900000001'),
+(2,'BranchManager','manager.1@morningbrew.test',N'Quản lý cửa hàng','0900000003'),
+(3,'Staff','staff.1@morningbrew.test',N'Thu ngân','0900000004'),
+(4,'Customer','lan@morningbrew.test',N'Nguyễn Lan','0901234567'),
+(5,'Customer','minh@morningbrew.test',N'Trần Minh','0907654321'),
+(6,'Customer','khach01@morningbrew.test',N'Phạm Thu Hà','0912000001'),
+(7,'Customer','khach02@morningbrew.test',N'Lê Quang Huy','0912000002'),
+(8,'Customer','khach03@morningbrew.test',N'Võ Ngọc Anh','0912000003'),
+(9,'Customer','khach04@morningbrew.test',N'Đặng Minh Khoa','0912000004'),
+(10,'Customer','khach05@morningbrew.test',N'Bùi Thảo Vy','0912000005'),
+(11,'Customer','khach06@morningbrew.test',N'Hoàng Gia Bảo','0912000006'),
+(12,'Customer','khach07@morningbrew.test',N'Ngô Khánh Linh','0912000007'),
+(13,'Customer','khach08@morningbrew.test',N'Trịnh Đức Thắng','0912000008'),
+(14,'Customer','khach09@morningbrew.test',N'Phan Mỹ Duyên','0912000009'),
+(15,'Customer','khach10@morningbrew.test',N'Đỗ Hoàng Nam','0912000010'),
+(16,'Customer','khach11@morningbrew.test',N'Huỳnh Bảo Trâm','0912000011'),
+(17,'Customer','khach12@morningbrew.test',N'Lý Tuấn Kiệt','0912000012'),
+(18,'Customer','khach13@morningbrew.test',N'Mai Phương Thảo','0912000013'),
+(19,'Customer','khach14@morningbrew.test',N'Tạ Quốc Việt','0912000014'),
+(20,'Customer','khach15@morningbrew.test',N'Châu Ngọc Hân','0912000015'),
+(21,'Customer','khach16@morningbrew.test',N'Kiều Anh Tú','0912000016'),
+(22,'Customer','khach17@morningbrew.test',N'Lâm Thanh Tâm','0912000017'),
+(23,'Customer','khach18@morningbrew.test',N'Dương Văn Lộc','0912000018'),
+(24,'Customer','khach19@morningbrew.test',N'Tô Hồng Nhung','0912000019'),
+(25,'Customer','khach20@morningbrew.test',N'Quách Minh Trí','0912000020'),
+(26,'Customer','khach21@morningbrew.test',N'Vương Thu Trang','0912000021'),
+(27,'Customer','khach22@morningbrew.test',N'La Đình Phúc','0912000022'),
+(28,'Customer','khach23@morningbrew.test',N'Thái Kim Oanh','0912000023'),
+(29,'Customer','khach24@morningbrew.test',N'Hà Văn Sơn','0912000024'),
+(30,'Customer','khach25@morningbrew.test',N'Lục Thị Mai','0912000025'),
+(31,'Customer','khach26@morningbrew.test',N'Cao Văn Hùng','0912000026'),
+(32,'Customer','khach27@morningbrew.test',N'Âu Thị Hồng','0912000027'),
+(33,'Customer','khach28@morningbrew.test',N'Nghiêm Văn Toàn','0912000028')
+) v(Seq,RoleCode,Email,FullName,Phone) JOIN dbo.Roles r ON r.Code=v.RoleCode ORDER BY v.Seq;
+DECLARE @owner int=(SELECT UserID FROM dbo.Users WHERE Email='owner@morningbrew.test'),
+        @manager int=(SELECT UserID FROM dbo.Users WHERE Email='manager.1@morningbrew.test'),
+        @staff int=(SELECT UserID FROM dbo.Users WHERE Email='staff.1@morningbrew.test');
+-- Một khu vực và một cửa hàng duy nhất (bảng Areas/Branches giữ nguyên trong schema).
+INSERT dbo.Areas(Name) VALUES(N'TP. Hồ Chí Minh');
+-- Demo shop opens all day so exercises work at any local time. Production should set real hours.
+INSERT dbo.Branches(AreaID,ManagerID,Code,Name,Address,Phone,OpeningTime,ClosingTime,DeliveryFee) VALUES
+(1,@manager,'MB01',N'Morning Brew Thủ Đức',N'12 Võ Văn Ngân, TP.HCM','0281111111','00:00','23:59:59',15000);
+INSERT dbo.StaffBranches(UserID,BranchID) VALUES(@staff,1);
+-- 30 khách hàng: ngày sinh trải đều các nhóm tuổi để báo cáo tỷ lệ độ tuổi có ý nghĩa.
+INSERT dbo.Customers(UserID,DateOfBirth,Gender,LoyaltyPoints)
+SELECT u.UserID,v.DateOfBirth,v.Gender,v.Points FROM (VALUES
+('lan@morningbrew.test','2002-05-12','Female',100),('minh@morningbrew.test','1998-10-10','Male',100)
+,
+('khach01@morningbrew.test','2006-03-14','Female',50),
+('khach02@morningbrew.test','2005-11-02','Male',50),
+('khach03@morningbrew.test','2004-07-21','Female',50),
+('khach04@morningbrew.test','2003-01-09','Male',50),
+('khach05@morningbrew.test','2003-09-30','Female',50),
+('khach06@morningbrew.test','2002-12-18','Male',50),
+('khach07@morningbrew.test','2001-04-25','Female',50),
+('khach08@morningbrew.test','2000-08-08','Male',50),
+('khach09@morningbrew.test','1999-02-11','Female',50),
+('khach10@morningbrew.test','1998-06-03','Male',50),
+('khach11@morningbrew.test','1997-10-27','Female',50),
+('khach12@morningbrew.test','1996-05-15','Male',50),
+('khach13@morningbrew.test','1995-01-20','Female',50),
+('khach14@morningbrew.test','1994-03-07','Male',50),
+('khach15@morningbrew.test','1993-12-01','Female',50),
+('khach16@morningbrew.test','1992-09-19','Other',50),
+('khach17@morningbrew.test','1990-07-04','Female',50),
+('khach18@morningbrew.test','1989-11-23','Male',50),
+('khach19@morningbrew.test','1987-02-28','Female',50),
+('khach20@morningbrew.test','1985-08-16','Male',50),
+('khach21@morningbrew.test','1983-05-09','Female',50),
+('khach22@morningbrew.test','1981-10-12','Male',50),
+('khach23@morningbrew.test','1979-04-02','Female',50),
+('khach24@morningbrew.test','1976-01-30','Male',50),
+('khach25@morningbrew.test','1973-06-21','Female',50),
+('khach26@morningbrew.test','1970-09-05','Male',50),
+('khach27@morningbrew.test','1967-12-14','Undisclosed',50),
+('khach28@morningbrew.test','1964-03-26','Male',50)
+) v(Email,DateOfBirth,Gender,Points) JOIN dbo.Users u ON u.Email=v.Email ORDER BY u.UserID;
+INSERT dbo.LoyaltyTransactions(CustomerID,Kind,Points,RequestKey,Note)
+SELECT CustomerID,'Adjust',LoyaltyPoints,NEWID(),N'Điểm tặng khởi tạo dữ liệu demo' FROM dbo.Customers;
+INSERT dbo.CustomerAddresses(CustomerID,Label,RecipientName,Phone,AddressText,IsDefault) VALUES(1,N'Nhà',N'Nguyễn Lan','0901234567',N'12 đường A, TP.HCM',1),(2,N'Công ty',N'Trần Minh','0907654321',N'20 đường B, TP.HCM',1);
+-- Thực đơn 10 món (ID trùng với thực đơn mẫu trong app khách hàng).
+INSERT dbo.Categories(Name) VALUES(N'Cà phê'),(N'Trà'),(N'Bánh');
+INSERT dbo.Products(CategoryID,Name,Description,ImageURL) VALUES
+(1,N'Cà phê sữa',N'Cà phê và sữa đặc','/images/coffee.jpg'),(2,N'Trà đào',N'Trà đào thơm mát','/images/tea.jpg'),(3,N'Bánh tiramisu',N'Bánh vị cà phê','/images/cake.jpg'),
+(1,N'Cà phê đen đá',N'Đậm vị robusta',NULL),(1,N'Bạc xỉu',N'Nhiều sữa, ít cà phê',NULL),(1,N'Cold brew cam sả',N'Ủ lạnh 16 giờ',NULL),
+(2,N'Trà vải lài',N'Trà lài và vải tươi',NULL),(2,N'Trà sen vàng',N'Hạt sen, kem sữa',NULL),(3,N'Bánh croissant bơ',N'Nướng mỗi sáng',NULL),(3,N'Bánh mousse chanh dây',N'Chua ngọt nhẹ',NULL);
+INSERT dbo.ProductVariants(ProductID,Name,BasePrice,DisplayOrder) VALUES
+(1,'M',30000,1),(1,'L',40000,2),(2,'M',35000,1),(3,'Standard',45000,1),
+(4,'M',29000,1),(5,'M',32000,1),(6,'M',45000,1),(7,'M',39000,1),(8,'M',45000,1),(9,'Standard',29000,1),(10,'Standard',39000,1);
+INSERT dbo.BranchProducts(BranchID,ProductID) SELECT 1,ProductID FROM dbo.Products;
+UPDATE dbo.BranchProducts SET IsAvailable=0 WHERE ProductID IN (8,10); -- minh họa món tạm hết
+INSERT dbo.BranchProductVariants(BranchID,VariantID,ProductID,SellingPrice) VALUES(1,1,1,30000);
+INSERT dbo.ModifierGroups(Name,Kind) VALUES(N'Đường','Sugar'),(N'Đá','Ice'),(N'Topping','Topping');
+INSERT dbo.ModifierOptions(ModifierGroupID,Name,ExtraPrice,DisplayOrder) VALUES(1,N'50% đường',0,1),(1,N'100% đường',0,2),(2,N'50% đá',0,1),(2,N'100% đá',0,2),(3,N'Trân châu',5000,1),(3,N'Pudding',7000,2);
+INSERT dbo.ProductModifierGroups(ProductID,ModifierGroupID,MinSelections,MaxSelections) VALUES(1,1,1,1),(1,2,1,1),(1,3,0,2),(2,1,1,1),(2,2,1,1),(2,3,0,2);
+-- Sở thích: mỗi khách 2 món, phân bố lệch để báo cáo "món được yêu thích" có xếp hạng rõ.
+INSERT dbo.CustomerPreferences(CustomerID,ProductID)
+SELECT c.CustomerID,p.ProductID FROM dbo.Customers c CROSS APPLY (VALUES
+ (CASE c.CustomerID % 5 WHEN 0 THEN 1 WHEN 1 THEN 1 WHEN 2 THEN 5 WHEN 3 THEN 2 ELSE 7 END),
+ (CASE c.CustomerID % 4 WHEN 0 THEN 3 WHEN 1 THEN 9 WHEN 2 THEN 6 ELSE 4 END)) p(ProductID)
+GROUP BY c.CustomerID,p.ProductID;
+INSERT dbo.LoyaltyPolicies(Name,AmountPerPoint,EffectiveFrom) VALUES(N'10.000 đồng đổi 1 điểm',10000,'2020-01-01');
+INSERT dbo.Promotions(Name,Description,Scope,CreatedBy,DiscountType,DiscountValue,MaxDiscount,MinSubtotal,StartsAt,EndsAt,PointsCost,TotalLimit,PerCustomerLimit) VALUES
+(N'Đổi 50 điểm giảm 10.000',N'Đơn từ 50.000 đồng','Chain',@owner,'Amount',10000,NULL,50000,DATEADD(day,-1,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME()),50,1000,3),
+(N'Quà tặng 10%',N'Đơn từ 30.000 đồng, giảm tối đa 20.000','Chain',@owner,'Percent',10,20000,30000,DATEADD(day,-1,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME()),NULL,1000,1),
+(N'Chào mừng',N'Nhận miễn phí, giảm 5.000 đồng từ đơn 10.000','Chain',@owner,'Amount',5000,NULL,10000,DATEADD(day,-1,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME()),0,1000,1);
+-- Khảo sát 1: trải nghiệm hiện tại. Khảo sát 2: thăm dò trước khi ra mắt món mới.
+INSERT dbo.Surveys(Title,Description,CreatedBy,Scope,StartsAt,EndsAt) VALUES
+(N'Khẩu vị và trải nghiệm',N'Khảo sát cải thiện sản phẩm',@owner,'Chain',DATEADD(day,-1,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME())),
+(N'Thăm dò món mới mùa đông',N'Giúp Morning Brew chọn món ra mắt tháng 12',@owner,'Chain',DATEADD(day,-1,SYSUTCDATETIME()),DATEADD(month,2,SYSUTCDATETIME()));
+INSERT dbo.SurveyQuestions(SurveyID,Text,Type,IsRequired,DisplayOrder,RatingMin,RatingMax) VALUES
+(1,N'Bạn thích những vị nào?','MultipleChoice',1,1,NULL,NULL),(1,N'Bạn hài lòng mức nào?','Rating',1,2,1,5),(1,N'Góp ý thêm','Text',0,3,NULL,NULL),
+(2,N'Bạn muốn thử món mới nào nhất?','SingleChoice',1,1,NULL,NULL),(2,N'Mức giá 45.000đ cho món mới có hợp lý?','Rating',1,2,1,5),(2,N'Bạn thường ghé quán vào lúc nào?','MultipleChoice',1,3,NULL,NULL),(2,N'Gợi ý khác cho món mới','Text',0,4,NULL,NULL);
+INSERT dbo.SurveyQuestionOptions(QuestionID,Text,DisplayOrder) VALUES
+(1,N'Cà phê',1),(1,N'Socola',2),(1,N'Trà',3),
+(4,N'Cacao muối',1),(4,N'Trà gừng mật ong',2),(4,N'Latte hạt dẻ',3),(4,N'Matcha khoai môn',4),
+(6,N'Buổi sáng',1),(6,N'Buổi trưa',2),(6,N'Buổi chiều',3),(6,N'Buổi tối',4);
+COMMIT;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 07_demo.sql (historical filename)
+-- Dữ liệu giao dịch demo cho phạm vi CRM (1 cửa hàng, 30 khách).
+-- Mọi ID được tra theo email / thứ tự hiển thị, không gán cứng.
+SET NOCOUNT ON;
+DECLARE @r TABLE(ID int);
+DECLARE @voucher int,@order int,@payment int,@refund int,@feedback int,@key uniqueidentifier=NEWID();
+DECLARE @owner int=(SELECT UserID FROM dbo.Users WHERE Email='owner@morningbrew.test'),
+        @manager int=(SELECT UserID FROM dbo.Users WHERE Email='manager.1@morningbrew.test'),
+        @staff int=(SELECT UserID FROM dbo.Users WHERE Email='staff.1@morningbrew.test'),
+        @lanUser int=(SELECT UserID FROM dbo.Users WHERE Email='lan@morningbrew.test'),
+        @minhUser int=(SELECT UserID FROM dbo.Users WHERE Email='minh@morningbrew.test');
+DECLARE @lan int=(SELECT CustomerID FROM dbo.Customers WHERE UserID=@lanUser),
+        @minh int=(SELECT CustomerID FROM dbo.Customers WHERE UserID=@minhUser),
+        @branch int=(SELECT BranchID FROM dbo.Branches WHERE Code='MB01'),
+        @minhAddress int;
+SELECT @minhAddress=AddressID FROM dbo.CustomerAddresses WHERE CustomerID=@minh AND IsDefault=1;
+
+-- ===== 1. Các luồng mẫu gốc (Lan, Minh, POS) =====
+INSERT @r EXEC dbo.IssueVoucher @lanUser,@lan,1,@key;
+SELECT @voucher=ID FROM @r; DELETE @r;
+SET @key=NEWID();
+INSERT @r EXEC dbo.CreateOrder @ActorID=@lanUser,@BranchID=@branch,@Source='App',@Fulfillment='Pickup',@PaymentMode='Prepaid',@Items=N'[{"variantId":1,"quantity":2,"optionIds":[1,3,5]}]',@RequestKey=@key,@CustomerID=@lan,@CustomerPromotionID=@voucher;
+SELECT @order=ID FROM @r; DELETE @r;
+SET @key=NEWID(); INSERT @r EXEC dbo.StartPayment @lanUser,@order,@key; SELECT @payment=ID FROM @r; DELETE @r;
+EXEC dbo.SimulatePayment @lanUser,@payment,'Failed',N'Khách hủy lần thanh toán đầu';
+SET @key=NEWID(); INSERT @r EXEC dbo.StartPayment @lanUser,@order,@key; SELECT @payment=ID FROM @r; DELETE @r;
+EXEC dbo.SimulatePayment @lanUser,@payment,'Succeeded';
+EXEC dbo.AdvanceOrder @staff,@order,'Confirmed'; EXEC dbo.AdvanceOrder @staff,@order,'Preparing'; EXEC dbo.AdvanceOrder @staff,@order,'Ready'; EXEC dbo.AdvanceOrder @staff,@order,'Completed';
+INSERT @r EXEC dbo.SubmitFeedback @ActorID=@lanUser,@CustomerID=@lan,@Content=N'Đồ uống ngon và phục vụ nhanh',@Type='Service',@Rating=5,@OrderID=@order,@BranchID=@branch;
+SELECT @feedback=ID FROM @r; DELETE @r;
+EXEC dbo.HandleFeedback @manager,@feedback,'Resolved',N'Cảm ơn bạn đã ghé Morning Brew!';
+SET @key=NEWID();
+INSERT @r EXEC dbo.CreateOrder @ActorID=@minhUser,@BranchID=@branch,@Source='App',@Fulfillment='Delivery',@PaymentMode='COD',@Items=N'[{"variantId":3,"quantity":1,"optionIds":[1,3]}]',@RequestKey=@key,@CustomerID=@minh,@AddressID=@minhAddress;
+SELECT @order=ID FROM @r; DELETE @r;
+EXEC dbo.AdvanceOrder @staff,@order,'Confirmed'; EXEC dbo.AdvanceOrder @staff,@order,'Preparing'; EXEC dbo.AdvanceOrder @staff,@order,'Ready';
+EXEC dbo.AdvanceOrder @ActorID=@staff,@OrderID=@order,@NextStatus='Delivering',@CourierName=N'Anh Bình',@CourierPhone='0908888888';
+EXEC dbo.UpdateDelivery @staff,@order,'Failed',N'Khách chưa nghe điện thoại';
+EXEC dbo.UpdateDelivery @staff,@order,'Delivering';
+SET @key=NEWID();
+INSERT @r EXEC dbo.CreateOrder @ActorID=@staff,@BranchID=@branch,@Source='POS',@Fulfillment='Pickup',@PaymentMode='COD',@Items=N'[{"variantId":4,"quantity":1}]',@RequestKey=@key;
+SELECT @order=ID FROM @r; DELETE @r;
+SET @key=NEWID(); INSERT @r EXEC dbo.StartPayment @staff,@order,@key; SELECT @payment=ID FROM @r; DELETE @r;
+EXEC dbo.SimulatePayment @staff,@payment,'Succeeded';
+EXEC dbo.AdvanceOrder @staff,@order,'Confirmed'; EXEC dbo.AdvanceOrder @staff,@order,'Preparing'; EXEC dbo.AdvanceOrder @staff,@order,'Ready'; EXEC dbo.AdvanceOrder @staff,@order,'Completed';
+SET @key=NEWID();
+INSERT @r EXEC dbo.CreateOrder @ActorID=@lanUser,@BranchID=@branch,@Source='App',@Fulfillment='Pickup',@PaymentMode='Prepaid',@Items=N'[{"variantId":4,"quantity":1}]',@RequestKey=@key,@CustomerID=@lan;
+SELECT @order=ID FROM @r; DELETE @r;
+EXEC dbo.CancelOrder @lanUser,@order,N'Khách đổi ý trước thanh toán';
+SET @key=NEWID();
+INSERT @r EXEC dbo.CreateOrder @ActorID=@minhUser,@BranchID=@branch,@Source='App',@Fulfillment='Delivery',@PaymentMode='Prepaid',@Items=N'[{"variantId":4,"quantity":1}]',@RequestKey=@key,@CustomerID=@minh,@AddressID=@minhAddress;
+SELECT @order=ID FROM @r; DELETE @r;
+SET @key=NEWID(); INSERT @r EXEC dbo.StartPayment @minhUser,@order,@key; SELECT @payment=ID FROM @r; DELETE @r;
+EXEC dbo.SimulatePayment @minhUser,@payment,'Succeeded';
+EXEC dbo.CancelOrder @minhUser,@order,N'Khách hủy trước xác nhận';
+SELECT @refund=RefundID FROM dbo.Refunds WHERE OrderID=@order;
+EXEC dbo.SimulateRefund @manager,@refund,'Failed',N'Lỗi mô phỏng lần đầu';
+EXEC dbo.SimulateRefund @manager,@refund,'Succeeded';
+
+-- ===== 2. Khảo sát: phát hành và mời toàn bộ 30 khách =====
+DECLARE @s1 int=(SELECT SurveyID FROM dbo.Surveys WHERE Title=N'Khẩu vị và trải nghiệm'),
+        @s2 int=(SELECT SurveyID FROM dbo.Surveys WHERE Title=N'Thăm dò món mới mùa đông');
+DECLARE @s1q1 int=(SELECT QuestionID FROM dbo.SurveyQuestions WHERE SurveyID=@s1 AND DisplayOrder=1),
+        @s1q2 int=(SELECT QuestionID FROM dbo.SurveyQuestions WHERE SurveyID=@s1 AND DisplayOrder=2),
+        @s1q3 int=(SELECT QuestionID FROM dbo.SurveyQuestions WHERE SurveyID=@s1 AND DisplayOrder=3),
+        @s2q1 int=(SELECT QuestionID FROM dbo.SurveyQuestions WHERE SurveyID=@s2 AND DisplayOrder=1),
+        @s2q2 int=(SELECT QuestionID FROM dbo.SurveyQuestions WHERE SurveyID=@s2 AND DisplayOrder=2),
+        @s2q3 int=(SELECT QuestionID FROM dbo.SurveyQuestions WHERE SurveyID=@s2 AND DisplayOrder=3),
+        @s2q4 int=(SELECT QuestionID FROM dbo.SurveyQuestions WHERE SurveyID=@s2 AND DisplayOrder=4);
+DECLARE @o1a int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s1q1 AND DisplayOrder=1),
+        @o1b int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s1q1 AND DisplayOrder=2),
+        @o1c int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s1q1 AND DisplayOrder=3),
+        @newCacao int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q1 AND DisplayOrder=1),
+        @newGinger int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q1 AND DisplayOrder=2),
+        @newLatte int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q1 AND DisplayOrder=3),
+        @newMatcha int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q1 AND DisplayOrder=4),
+        @tMorning int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q3 AND DisplayOrder=1),
+        @tNoon int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q3 AND DisplayOrder=2),
+        @tAfternoon int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q3 AND DisplayOrder=3),
+        @tEvening int=(SELECT OptionID FROM dbo.SurveyQuestionOptions WHERE QuestionID=@s2q3 AND DisplayOrder=4);
+EXEC dbo.PublishSurvey @owner,@s1;
+EXEC dbo.PublishSurvey @owner,@s2;
+DECLARE @c int,@u int;
+DECLARE invites CURSOR LOCAL FAST_FORWARD FOR SELECT CustomerID FROM dbo.Customers ORDER BY CustomerID;
+OPEN invites; FETCH NEXT FROM invites INTO @c;
+WHILE @@FETCH_STATUS=0
+BEGIN
+ EXEC dbo.InviteSurvey @owner,@s1,@c;
+ EXEC dbo.InviteSurvey @owner,@s2,@c;
+ FETCH NEXT FROM invites INTO @c;
+END;
+CLOSE invites; DEALLOCATE invites;
+-- Lan đã trả lời khảo sát 1; khảo sát 2 để trống cho phần demo trên app.
+DECLARE @answers nvarchar(max)=CONCAT(N'[{"questionId":',@s1q1,N',"optionIds":[',@o1a,N',',@o1b,N']},{"questionId":',@s1q2,N',"rating":5},{"questionId":',@s1q3,N',"text":"Thêm món theo mùa"}]');
+EXEC dbo.SubmitSurvey @lanUser,@s1,@lan,@answers;
+
+-- ===== 3. 28 khách còn lại: đơn hoàn tất, phản hồi, trả lời khảo sát =====
+-- Phân bố theo CustomerID để dữ liệu cố định giữa các lần cài, không dùng số ngẫu nhiên.
+DECLARE @items nvarchar(200),@variant int,@product int,@qty int,@rating int,@type varchar(15),@content nvarchar(400),@opts nvarchar(100),@text nvarchar(300);
+DECLARE people CURSOR LOCAL FAST_FORWARD FOR SELECT CustomerID,UserID FROM dbo.Customers WHERE CustomerID NOT IN (@lan,@minh) ORDER BY CustomerID;
+OPEN people; FETCH NEXT FROM people INTO @c,@u;
+WHILE @@FETCH_STATUS=0
+BEGIN
+ SET @order=NULL;
+ -- 4/5 số khách có 1 đơn hoàn tất (món không cần chọn topping/đường/đá).
+ IF @c % 5 <> 0
+ BEGIN
+  SET @variant=CHOOSE(@c % 6 + 1, 4, 5, 6, 7, 8, 10);
+  SET @qty=1 + @c % 2;
+  SELECT @product=ProductID FROM dbo.ProductVariants WHERE VariantID=@variant;
+  SET @key=NEWID();
+  SET @items=CONCAT(N'[{"variantId":',@variant,N',"quantity":',@qty,N'}]');
+  INSERT @r EXEC dbo.CreateOrder @ActorID=@u,@BranchID=@branch,@Source='App',@Fulfillment='Pickup',@PaymentMode='Prepaid',
+       @Items=@items,@RequestKey=@key,@CustomerID=@c;
+  SELECT @order=ID FROM @r; DELETE @r;
+  SET @key=NEWID(); INSERT @r EXEC dbo.StartPayment @u,@order,@key; SELECT @payment=ID FROM @r; DELETE @r;
+  EXEC dbo.SimulatePayment @u,@payment,'Succeeded';
+  EXEC dbo.AdvanceOrder @staff,@order,'Confirmed'; EXEC dbo.AdvanceOrder @staff,@order,'Preparing';
+  EXEC dbo.AdvanceOrder @staff,@order,'Ready'; EXEC dbo.AdvanceOrder @staff,@order,'Completed';
+ END;
+ -- Phản hồi: gắn với món trong đơn; đủ 3 trạng thái Mới / Đang xử lý / Đã giải quyết.
+ IF @order IS NOT NULL AND @c % 3 <> 0
+ BEGIN
+  SET @rating=CHOOSE(@c % 4 + 1, 5, 4, 3, 2);
+  SET @content=CHOOSE(@c % 6 + 1, N'Món rất ngon, sẽ quay lại', N'Hơi ngọt so với khẩu vị của tôi', N'Đồ uống ra hơi chậm giờ cao điểm',
+       N'Giá hợp lý, chất lượng ổn định', N'Ly nhỏ hơn mong đợi', N'Bánh mới, thơm, rất đáng thử');
+  INSERT @r EXEC dbo.SubmitFeedback @ActorID=@u,@CustomerID=@c,@Content=@content,@Type='Product',@Rating=@rating,@OrderID=@order,@BranchID=@branch,@ProductID=@product;
+  SELECT @feedback=ID FROM @r; DELETE @r;
+  IF @c % 4 = 0 EXEC dbo.HandleFeedback @manager,@feedback,'Resolved',N'Cảm ơn bạn! Quán đã ghi nhận và điều chỉnh.';
+  ELSE IF @c % 4 = 1 EXEC dbo.HandleFeedback @manager,@feedback,'Processing',N'Quán đang kiểm tra lại công thức.';
+ END
+ ELSE IF @order IS NULL AND @c % 2 = 1
+ BEGIN
+  SET @type=CASE WHEN @c % 4 = 1 THEN 'Space' ELSE 'Service' END;
+  INSERT @r EXEC dbo.SubmitFeedback @ActorID=@u,@CustomerID=@c,@Content=N'Không gian thoáng nhưng thiếu ổ cắm điện',@Type=@type,@Rating=4,@BranchID=@branch;
+  DELETE @r;
+ END;
+ -- Khảo sát 1: khoảng 3/4 số khách trả lời.
+ IF @c % 4 <> 3
+ BEGIN
+  SET @opts=CASE @c % 3 WHEN 0 THEN CONCAT(@o1a,N'') WHEN 1 THEN CONCAT(@o1a,N',',@o1c) ELSE CONCAT(@o1b,N',',@o1c) END;
+  SET @text=CASE WHEN @c % 5 = 1 THEN N'Mong có thêm món ít đường' ELSE NULL END;
+  SET @answers=CONCAT(N'[{"questionId":',@s1q1,N',"optionIds":[',@opts,N']},{"questionId":',@s1q2,N',"rating":',3 + @c % 3,N'}',
+       CASE WHEN @text IS NULL THEN N'' ELSE CONCAT(N',{"questionId":',@s1q3,N',"text":"',@text,N'"}') END,N']');
+  EXEC dbo.SubmitSurvey @u,@s1,@c,@answers;
+ END;
+ -- Khảo sát 2 (thăm dò món mới): khoảng 2/3 số khách trả lời, Cacao muối dẫn đầu.
+ IF @c % 3 <> 1
+ BEGIN
+  SET @opts=CONCAT(CASE WHEN @c % 7 IN (0,1,2) THEN @newCacao WHEN @c % 7 IN (3,4) THEN @newLatte WHEN @c % 7 = 5 THEN @newGinger ELSE @newMatcha END,N'');
+  SET @text=CASE WHEN @c % 6 = 0 THEN N'Nên có size nhỏ cho món mới' ELSE NULL END;
+  SET @answers=CONCAT(N'[{"questionId":',@s2q1,N',"optionIds":[',@opts,N']},{"questionId":',@s2q2,N',"rating":',2 + @c % 4,N'},',
+       N'{"questionId":',@s2q3,N',"optionIds":[',CASE @c % 3 WHEN 0 THEN CONCAT(@tMorning,N'') WHEN 1 THEN CONCAT(@tMorning,N',',@tAfternoon) ELSE CONCAT(@tNoon,N',',@tEvening) END,N']}',
+       CASE WHEN @text IS NULL THEN N'' ELSE CONCAT(N',{"questionId":',@s2q4,N',"text":"',@text,N'"}') END,N']');
+  EXEC dbo.SubmitSurvey @u,@s2,@c,@answers;
+ END;
+ FETCH NEXT FROM people INTO @c,@u;
+END;
+CLOSE people; DEALLOCATE people;
+SELECT 'Demo ready' AS Result,
+ (SELECT COUNT(*) FROM dbo.Customers) AS Customers,
+ (SELECT COUNT(*) FROM dbo.Orders WHERE Status='Completed') AS CompletedOrders,
+ (SELECT COUNT(*) FROM dbo.Feedbacks) AS Feedbacks,
+ (SELECT COUNT(*) FROM dbo.SurveyRecipients WHERE CompletedAt IS NOT NULL) AS SurveyAnswers;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- ===== Hết phần cài mới: chạy tiếp (trừ khi đã lỗi) =====
+SET NOEXEC OFF;
+GO
+IF SESSION_CONTEXT(N'mb_failed') = 1 SET NOEXEC ON;
+GO
+USE [MorningBrewCRM_Crm];
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+IF OBJECT_ID(N'dbo.CreateOrder', N'P') IS NULL
+BEGIN
+    RAISERROR(N'>>> DỪNG: chưa có bảng/thủ tục lõi.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+IF (SELECT COUNT(*) FROM dbo.Branches WHERE IsActive = 1) > 1
+BEGIN
+    RAISERROR(N'>>> DỪNG: bản cập nhật này chỉ dành cho mô hình MỘT cửa hàng.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+IF OBJECT_ID(N'dbo.AreaManagers', N'U') IS NOT NULL AND EXISTS (SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID = u.RoleID WHERE r.Code = 'AreaManager')
+BEGIN
+    RAISERROR(N'>>> DỪNG: còn tài khoản AreaManager. Chuyển các tài khoản này sang vai trò khác trước.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Sao lưu trước khi nâng cấp (chỉ khi NÂNG CẤP). Muốn bỏ qua: đổi @SaoLuu = 0.
+DECLARE @SaoLuu bit = 1;
+IF @SaoLuu = 1 AND SESSION_CONTEXT(N'mb_mode') = N'upgrade'
+BEGIN
+    DECLARE @dir nvarchar(300) = CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS nvarchar(300));
+    DECLARE @file nvarchar(400) = CONCAT(CASE WHEN @dir IS NULL THEN N'' WHEN RIGHT(@dir, 1) = N'\' THEN @dir ELSE @dir + N'\' END, N'MorningBrewCRM_Crm_truoc-nang-cap_', FORMAT(SYSDATETIME(), 'yyyyMMdd_HHmmss'), N'.bak');
+    DECLARE @sql nvarchar(max) = N'BACKUP DATABASE [MorningBrewCRM_Crm] TO DISK = @f WITH COPY_ONLY, CHECKSUM, INIT; RESTORE VERIFYONLY FROM DISK = @f WITH CHECKSUM;';
+    EXEC sp_executesql @sql, N'@f nvarchar(400)', @f = @file;
+    PRINT CONCAT(N'Đã sao lưu và kiểm tra bản sao lưu: ', @file);
+END
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+PRINT N'--- Bắt đầu phần 03_crm_updates.sql ---';
+GO
+-- DB-TEST PACKAGE: Preserves the original SQL batch order. See database/README.md.
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 08_admin.sql (historical filename)
+-- Additive, repeatable migration for Admin features. No existing data is reset.
+-- Phạm vi CRM: đã bỏ phần nhân sự (bảng StaffShifts và quyền Staff.Manage).
+SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
+BEGIN TRAN;
+IF OBJECT_ID('dbo.Suppliers','U') IS NULL
+CREATE TABLE dbo.Suppliers(
+ SupplierID int IDENTITY PRIMARY KEY,
+ Code varchar(30) NOT NULL UNIQUE,
+ Name nvarchar(150) NOT NULL,
+ Phone varchar(20) NULL,
+ Email nvarchar(254) NULL,
+ ProductGroup nvarchar(150) NULL,
+ IsActive bit NOT NULL DEFAULT 1
+);
+COMMIT;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Trusted API service role: metadata CRUD and business procedures, without schema/DDL ownership.
+IF DATABASE_PRINCIPAL_ID('MorningBrewApi') IS NULL CREATE ROLE MorningBrewApi;
+GRANT SELECT,INSERT,UPDATE,DELETE,EXECUTE ON SCHEMA::dbo TO MorningBrewApi;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 09_shared_prices.sql (historical filename)
+-- Repeatable upgrade: shared catalog prices for all future orders/menu reads.
+-- Retains existing availability rows and historical order snapshots. No data is deleted.
+SET NOCOUNT ON; SET XACT_ABORT ON;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+BEGIN TRAN;
+DECLARE @sql nvarchar(max), @name sysname;
+DECLARE procedures CURSOR LOCAL FAST_FORWARD FOR
+ SELECT name FROM sys.procedures WHERE schema_id=SCHEMA_ID('dbo') AND name IN ('CreateOrder','GetMenu');
+OPEN procedures;
+FETCH NEXT FROM procedures INTO @name;
+WHILE @@FETCH_STATUS=0
+BEGIN
+ SET @sql=OBJECT_DEFINITION(OBJECT_ID('dbo.'+@name));
+ IF @sql IS NULL THROW 51100,'Install core procedures before 09_shared_prices.sql.',1;
+ SET @sql='ALTER '+SUBSTRING(@sql,CHARINDEX('PROCEDURE',@sql),LEN(@sql));
+ SET @sql=REPLACE(@sql,'COALESCE(bv.SellingPrice,v.BasePrice)','v.BasePrice');
+ SET @sql=REPLACE(@sql,'COALESCE(bo.ExtraPrice,mo.ExtraPrice)','mo.ExtraPrice');
+ SET @sql=REPLACE(@sql,'COALESCE(bo.ExtraPrice,o.ExtraPrice)','o.ExtraPrice');
+ EXEC sys.sp_executesql @sql;
+ FETCH NEXT FROM procedures INTO @name;
+END;
+CLOSE procedures; DEALLOCATE procedures;
+IF OBJECT_ID('dbo.CreateOrder','P') IS NULL OR OBJECT_ID('dbo.GetMenu','P') IS NULL
+ THROW 51100,'Install core procedures before 09_shared_prices.sql.',1;
+COMMIT;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.SetBranchPrice
+ @ActorID int,@BranchID int,@VariantID int,@Price decimal(18,2),@IsAvailable bit
+AS
+BEGIN
+ SET NOCOUNT ON;
+ THROW 51100,'Branch-specific prices are retired. Use the owner-only shared variant price API.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 10_soft_delete.sql (historical filename)
+-- LƯU Ý: dbo.SoftDeleteUser được 11_single_store.sql định nghĩa lại (cho quản lý xóa khách). Nếu chạy lại file này, hãy chạy lại 11 sau đó.
+-- Xóa mềm tài khoản / khách hàng (yêu cầu 4.1 "Xóa khách hàng", II.2 "Thêm, xóa account").
+-- Chạy lặp lại được. Không xóa dòng nào: chỉ đánh dấu DeletedAt, khóa đăng nhập và ẩn danh dữ liệu cá nhân,
+-- để đơn hàng, điểm, phản hồi, khảo sát (khóa ngoại tới Users/Customers) và các báo cáo vẫn đúng.
+-- Database đã tạo trước đó: sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\10_soft_delete.sql
+SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
+IF COL_LENGTH('dbo.Users','DeletedAt') IS NULL
+    ALTER TABLE dbo.Users ADD DeletedAt datetime2(3) NULL;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER PROCEDURE dbo.SoftDeleteUser @ActorID int,@UserID int
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRAN;
+ IF dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Security.Manage')=0 THROW 51103,N'Chỉ chủ cửa hàng được xóa tài khoản.',1;
+ IF @UserID=@ActorID THROW 51121,N'Không thể tự xóa tài khoản đang đăng nhập.',1;
+ DECLARE @role varchar(30);
+ SELECT @role=r.Code FROM dbo.Users u WITH(UPDLOCK,HOLDLOCK) JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE u.UserID=@UserID AND u.DeletedAt IS NULL;
+ IF @role IS NULL THROW 51104,N'Account not found.',1;
+ IF @role='Owner' AND NOT EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
+    WHERE r.Code='Owner' AND u.UserID<>@UserID AND u.IsActive=1 AND u.DeletedAt IS NULL)
+    THROW 51122,N'Phải còn ít nhất một chủ cửa hàng đang hoạt động.',1;
+ -- Ẩn danh: email đổi thành giá trị không dùng được để email gốc có thể đăng ký lại.
+ DECLARE @email nvarchar(254)=CONCAT(N'deleted-',@UserID,N'@deleted.invalid');
+ UPDATE dbo.Users SET IsActive=0,DeletedAt=SYSUTCDATETIME(),Email=@email,NormalizedEmail=UPPER(@email),
+    FullName=CASE WHEN @role='Customer' THEN N'Khách đã xóa' ELSE N'Tài khoản đã xóa' END,Phone=NULL
+ WHERE UserID=@UserID;
+ UPDATE dbo.UserSessions SET RevokedAt=SYSUTCDATETIME() WHERE UserID=@UserID AND RevokedAt IS NULL;
+ IF @role='BranchManager' UPDATE dbo.Branches SET ManagerID=NULL WHERE ManagerID=@UserID;
+ INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details) VALUES(@ActorID,'Account.SoftDelete','Users',@UserID,@role);
+ COMMIT;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 11_single_store.sql (historical filename)
+-- Chế độ MỘT CỬA HÀNG (phạm vi đồ án hiện tại). Chạy lặp lại được, không xóa dữ liệu nghiệp vụ.
+-- Áp dụng sau 01–10. Database đã có:
+--   sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\11_single_store.sql
+-- Thay đổi:
+--  1. CanScope: phạm vi chung (Chain) = cửa hàng duy nhất. Người có quyền tại một cửa hàng đang hoạt động
+--     thì có quyền đó ở phạm vi chung -> quản lý thấy toàn bộ khách, phản hồi không gắn cửa hàng,
+--     khảo sát/ưu đãi do chủ cửa hàng tạo.
+--  2. CustomerInScope: mọi khách chưa bị xóa đều thuộc cửa hàng (không còn phụ thuộc đơn hàng Completed).
+--  3. CanBranch: quản lý được gán qua Branches.ManagerID HOẶC StaffBranches -> có thể có nhiều quản lý.
+--  4. Bỏ vai trò AreaManager (bảng AreaManagers, trigger, nhánh kiểm tra quyền) và procedure SetBranchPrice đã ngừng dùng.
+--  5. Quyền Customers.Manage (thêm/xóa/khóa khách hàng) cho chủ cửa hàng và quản lý.
+SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER FUNCTION dbo.CanBranch(@UserID int,@BranchID int,@Permission varchar(80))
+RETURNS bit AS
+BEGIN
+ DECLARE @ok bit=0;
+ IF EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
+  JOIN dbo.RolePermissions rp ON rp.RoleID=u.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
+  JOIN dbo.Branches b ON b.BranchID=@BranchID
+  WHERE u.UserID=@UserID AND u.IsActive=1 AND p.Code=@Permission AND
+  (r.Code='Owner'
+   OR (r.Code='BranchManager' AND b.ManagerID=u.UserID)
+   OR (r.Code IN ('BranchManager','Staff') AND EXISTS(SELECT 1 FROM dbo.StaffBranches s WHERE s.UserID=u.UserID AND s.BranchID=b.BranchID AND s.IsActive=1)))) SET @ok=1;
+ RETURN @ok;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER FUNCTION dbo.CanScope(@UserID int,@Scope varchar(10),@AreaID int,@BranchID int,@Permission varchar(80))
+RETURNS bit AS
+BEGIN
+ IF @Scope='Branch' RETURN dbo.CanBranch(@UserID,@BranchID,@Permission);
+ -- Chain/Area: chủ cửa hàng có quyền, hoặc người có quyền tại một cửa hàng đang hoạt động (chỉ có 1 cửa hàng).
+ RETURN CASE WHEN EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
+   JOIN dbo.RolePermissions rp ON rp.RoleID=r.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
+   WHERE u.UserID=@UserID AND u.IsActive=1 AND p.Code=@Permission AND r.Code='Owner')
+  OR EXISTS(SELECT 1 FROM dbo.Branches b WHERE b.IsActive=1 AND dbo.CanBranch(@UserID,b.BranchID,@Permission)=1)
+  THEN 1 ELSE 0 END;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER FUNCTION dbo.CustomerInScope(@CustomerID int,@Scope varchar(10),@AreaID int,@BranchID int)
+RETURNS bit AS
+BEGIN
+ RETURN CASE WHEN EXISTS(SELECT 1 FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID
+  WHERE c.CustomerID=@CustomerID AND u.DeletedAt IS NULL) THEN 1 ELSE 0 END;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_StaffBranches_Role ON dbo.StaffBranches AFTER INSERT,UPDATE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.Users u ON u.UserID=i.UserID JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE r.Code NOT IN ('Staff','BranchManager'))
+  THROW 51001,N'Assignment requires Staff or BranchManager role.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_Users_Role ON dbo.Users AFTER UPDATE AS
+BEGIN
+ SET NOCOUNT ON;
+ IF UPDATE(RoleID) AND EXISTS(SELECT 1 FROM inserted i JOIN deleted d ON d.UserID=i.UserID WHERE i.RoleID<>d.RoleID AND
+ (EXISTS(SELECT 1 FROM dbo.Customers WHERE UserID=i.UserID) OR EXISTS(SELECT 1 FROM dbo.StaffBranches WHERE UserID=i.UserID AND IsActive=1) OR EXISTS(SELECT 1 FROM dbo.Branches WHERE ManagerID=i.UserID)))
+ THROW 51001,N'Remove incompatible assignments/profile before changing role.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+BEGIN TRAN;
+-- Quản lý hiện tại (Branches.ManagerID) cũng được ghi vào StaffBranches để thống nhất cách gán.
+INSERT dbo.StaffBranches(UserID,BranchID)
+SELECT b.ManagerID,b.BranchID FROM dbo.Branches b
+WHERE b.ManagerID IS NOT NULL AND NOT EXISTS(SELECT 1 FROM dbo.StaffBranches s WHERE s.UserID=b.ManagerID AND s.BranchID=b.BranchID);
+-- Quyền thêm/xóa/khóa khách hàng.
+IF NOT EXISTS(SELECT 1 FROM dbo.Permissions WHERE Code='Customers.Manage')
+ INSERT dbo.Permissions(Code,Description) VALUES('Customers.Manage',N'Thêm, xóa, khóa tài khoản khách hàng');
+INSERT dbo.RolePermissions(RoleID,PermissionID)
+SELECT r.RoleID,p.PermissionID FROM dbo.Roles r CROSS JOIN dbo.Permissions p
+WHERE r.Code IN ('Owner','BranchManager') AND p.Code='Customers.Manage'
+ AND NOT EXISTS(SELECT 1 FROM dbo.RolePermissions x WHERE x.RoleID=r.RoleID AND x.PermissionID=p.PermissionID);
+COMMIT;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Bỏ vai trò AreaManager (không có tài khoản nào dùng trong chế độ một cửa hàng).
+IF OBJECT_ID('dbo.TR_AreaManagers_Role','TR') IS NOT NULL DROP TRIGGER dbo.TR_AreaManagers_Role;
+IF OBJECT_ID('dbo.AreaManagers','U') IS NOT NULL
+BEGIN
+ IF EXISTS(SELECT 1 FROM dbo.AreaManagers) THROW 51130,N'AreaManagers còn dữ liệu: chuyển các tài khoản này sang vai trò khác trước khi chạy script.',1;
+ DROP TABLE dbo.AreaManagers;
+END;
+IF EXISTS(SELECT 1 FROM dbo.Roles WHERE Code='AreaManager') THROW 51130,N'Còn vai trò AreaManager trong dbo.Roles.',1;
+IF EXISTS(SELECT 1 FROM sys.check_constraints WHERE name='CK_Roles_0' AND definition LIKE '%AreaManager%')
+BEGIN
+ ALTER TABLE dbo.Roles DROP CONSTRAINT CK_Roles_0;
+ ALTER TABLE dbo.Roles ADD CONSTRAINT CK_Roles_0 CHECK (Code IN ('Owner','BranchManager','Staff','Customer'));
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Giá riêng theo cửa hàng đã ngừng từ 09_shared_prices.sql.
+DROP PROCEDURE IF EXISTS dbo.SetBranchPrice;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Xóa mềm: thu hồi phân công cửa hàng; nếu xóa quản lý chính thì chuyển ManagerID cho quản lý khác còn hoạt động.
+CREATE OR ALTER PROCEDURE dbo.SoftDeleteUser @ActorID int,@UserID int
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRAN;
+ IF dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Security.Manage')=0
+    AND NOT (dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Customers.Manage')=1
+             AND EXISTS(SELECT 1 FROM dbo.Customers WHERE UserID=@UserID))
+    THROW 51103,N'Không có quyền xóa tài khoản này.',1;
+ IF @UserID=@ActorID THROW 51121,N'Không thể tự xóa tài khoản đang đăng nhập.',1;
+ DECLARE @role varchar(30);
+ SELECT @role=r.Code FROM dbo.Users u WITH(UPDLOCK,HOLDLOCK) JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE u.UserID=@UserID AND u.DeletedAt IS NULL;
+ IF @role IS NULL THROW 51104,N'Account not found.',1;
+ IF @role='Owner' AND NOT EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
+    WHERE r.Code='Owner' AND u.UserID<>@UserID AND u.IsActive=1 AND u.DeletedAt IS NULL)
+    THROW 51122,N'Phải còn ít nhất một chủ cửa hàng đang hoạt động.',1;
+ DECLARE @email nvarchar(254)=CONCAT(N'deleted-',@UserID,N'@deleted.invalid');
+ UPDATE dbo.Users SET IsActive=0,DeletedAt=SYSUTCDATETIME(),Email=@email,NormalizedEmail=UPPER(@email),
+    FullName=CASE WHEN @role='Customer' THEN N'Khách đã xóa' ELSE N'Tài khoản đã xóa' END,Phone=NULL
+ WHERE UserID=@UserID;
+ UPDATE dbo.UserSessions SET RevokedAt=SYSUTCDATETIME() WHERE UserID=@UserID AND RevokedAt IS NULL;
+ UPDATE dbo.StaffBranches SET IsActive=0 WHERE UserID=@UserID;
+ IF @role='BranchManager'
+  UPDATE b SET ManagerID=(SELECT TOP(1) s.UserID FROM dbo.StaffBranches s JOIN dbo.Users u ON u.UserID=s.UserID
+       JOIN dbo.Roles r ON r.RoleID=u.RoleID
+       WHERE s.BranchID=b.BranchID AND s.IsActive=1 AND r.Code='BranchManager' AND u.IsActive=1 AND u.UserID<>@UserID ORDER BY s.AssignedAt)
+  FROM dbo.Branches b WHERE b.ManagerID=@UserID;
+ INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details) VALUES(@ActorID,'Account.SoftDelete','Users',@UserID,@role);
+ COMMIT;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 12_bugfix.sql (historical filename)
+-- Đợt sửa lỗi theo docs/BugReport_MorningBrew_App-Admin.xlsx. Chạy lặp lại được, áp dụng sau 01–11.
+-- Database đã có:
+--   sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\12_bugfix.sql
+SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- [BUG-06] Tách lỗi "sai trạng thái" (51124 → HTTP 409, thông báo tiếng Việt) khỏi lỗi "thiếu quyền" (51103 → 403).
+-- [BUG-07] Không cho phát hành khảo sát đã quá ngày kết thúc.
+CREATE OR ALTER PROCEDURE dbo.PublishSurvey @ActorID int,@SurveyID int
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @status varchar(10),@scope varchar(10),@area int,@branch int,@ends datetime2(3);
+ SELECT @status=Status,@scope=Scope,@area=AreaID,@branch=BranchID,@ends=EndsAt FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@SurveyID;
+ IF @status IS NULL THROW 51104,N'Không tìm thấy khảo sát.',1;
+ IF dbo.CanScope(@ActorID,@scope,@area,@branch,'Surveys.Manage')=0 THROW 51103,N'Survey outside scope.',1;
+ IF @status<>'Draft' THROW 51124,N'Khảo sát đã được phát hành hoặc đã đóng, không phát hành lại được.',1;
+ IF @ends<=SYSUTCDATETIME() THROW 51124,N'Khảo sát đã quá ngày kết thúc, không thể phát hành.',1; -- [BUG-07]
+ UPDATE dbo.Surveys SET Status='Open' WHERE SurveyID=@SurveyID;
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID) VALUES(@ActorID,@branch,'Survey.Publish','Surveys',@SurveyID);
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- [BUG-06] Mời vào khảo sát chưa phát hành / đã đóng / hết hạn → 51124 thay vì 51103.
+CREATE OR ALTER PROCEDURE dbo.InviteSurvey @ActorID int,@SurveyID int,@CustomerID int
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @status varchar(10),@scope varchar(10),@area int,@branch int,@ends datetime2(3);
+ SELECT @status=Status,@scope=Scope,@area=AreaID,@branch=BranchID,@ends=EndsAt FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@SurveyID;
+ IF @status IS NULL THROW 51104,N'Không tìm thấy khảo sát.',1;
+ IF dbo.CanScope(@ActorID,@scope,@area,@branch,'Surveys.Manage')=0 THROW 51103,N'Survey outside scope.',1;
+ IF @status<>'Open' OR @ends<=SYSUTCDATETIME() THROW 51124,N'Khảo sát chưa phát hành, đã đóng hoặc đã hết hạn nên không mời thêm được.',1;
+ IF dbo.CustomerInScope(@CustomerID,@scope,@area,@branch)=0 THROW 51104,N'Không tìm thấy khách hàng.',1;
+ IF EXISTS(SELECT 1 FROM dbo.SurveyRecipients WHERE SurveyID=@SurveyID AND CustomerID=@CustomerID) BEGIN COMMIT; RETURN; END;
+ INSERT dbo.SurveyRecipients(SurveyID,CustomerID) VALUES(@SurveyID,@CustomerID);
+ INSERT dbo.Notifications(UserID,Title,Body,SurveyID) SELECT c.UserID,N'Khảo sát mới',s.Title,@SurveyID FROM dbo.Customers c CROSS JOIN dbo.Surveys s WHERE c.CustomerID=@CustomerID AND s.SurveyID=@SurveyID;
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- [Mã đơn ngắn] Mã đơn cũ 'MB-' + GUID (35 ký tự) quá dài để đọc / gọi tại quầy.
+-- Mã mới: MB + ngày đặt (giờ Việt Nam, yyMMdd) + '-' + số thứ tự đơn 4 chữ số, ví dụ MB261108-0028 (13 ký tự).
+-- Duy nhất vì gắn với OrderID. Trigger chạy sau khi CreateOrder thêm đơn nên không phải sửa procedure.
+CREATE OR ALTER TRIGGER dbo.TR_Orders_ShortCode ON dbo.Orders AFTER INSERT AS
+BEGIN
+ SET NOCOUNT ON;
+ UPDATE o SET OrderCode=CONCAT('MB',FORMAT(DATEADD(hour,7,i.CreatedAt),'yyMMdd'),'-',
+   CASE WHEN i.OrderID>9999 THEN CONVERT(varchar(12),i.OrderID) ELSE RIGHT(CONCAT('0000',i.OrderID),4) END)
+ FROM dbo.Orders o JOIN inserted i ON i.OrderID=o.OrderID;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Đổi mã các đơn đã có sang dạng ngắn (chạy lại không đổi gì vì chỉ áp dụng cho mã dạng cũ 'MB-…').
+UPDATE dbo.Orders SET OrderCode=CONCAT('MB',FORMAT(DATEADD(hour,7,CreatedAt),'yyMMdd'),'-',
+  CASE WHEN OrderID>9999 THEN CONVERT(varchar(12),OrderID) ELSE RIGHT(CONCAT('0000',OrderID),4) END)
+WHERE OrderCode LIKE 'MB-%';
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- [BUG-09] Không cho sửa phản hồi đã giải quyết (trước đây trả lời lại sẽ ghi đè câu trả lời cũ).
+CREATE OR ALTER PROCEDURE dbo.HandleFeedback @ActorID int,@FeedbackID int,@Status varchar(12),@Response nvarchar(4000)=NULL
+AS
+BEGIN
+ SET NOCOUNT ON; SET XACT_ABORT ON;
+ BEGIN TRY
+ BEGIN TRAN;
+ DECLARE @branch int,@customer int,@old varchar(12);
+ SELECT @branch=BranchID,@customer=CustomerID,@old=Status FROM dbo.Feedbacks WITH(UPDLOCK,HOLDLOCK) WHERE FeedbackID=@FeedbackID;
+ IF @customer IS NULL OR (@branch IS NULL AND dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Feedbacks.Manage')=0) OR (@branch IS NOT NULL AND dbo.CanBranch(@ActorID,@branch,'Feedbacks.Manage')=0) THROW 51103,N'Feedback is outside scope.',1;
+ -- [BUG-09] Phản hồi đã giải quyết thì khóa: không đổi trạng thái, không ghi đè câu trả lời đã gửi khách.
+ IF @old='Resolved' THROW 51124,N'Phản hồi đã được giải quyết, không thể sửa trạng thái hoặc câu trả lời.',1;
+ IF @Status NOT IN ('Processing','Resolved') OR (@Status='Resolved' AND NULLIF(@Response,'') IS NULL) THROW 51100,N'Resolved feedback needs a response.',1;
+ UPDATE dbo.Feedbacks SET Status=@Status,HandledBy=@ActorID,ResponseContent=@Response,HandledAt=SYSUTCDATETIME() WHERE FeedbackID=@FeedbackID;
+ INSERT dbo.Notifications(UserID,Title,Body) SELECT UserID,N'Cập nhật phản hồi',COALESCE(@Response,N'Phản hồi đang được xử lý.') FROM dbo.Customers WHERE CustomerID=@customer;
+ INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Feedback.Handle','Feedbacks',@FeedbackID,@Status);
+ COMMIT;
+ END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+PRINT N'--- Bắt đầu phần 04_menu_updates.sql ---';
+GO
+-- DB-TEST PACKAGE: Preserves the original SQL batch order. See database/README.md.
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- DB-TEST SOURCE: 13_ui_review.sql (historical filename)
+-- 13_ui_review.sql – đợt góp ý giao diện 09/11/2026 (chạy sau 12_bugfix.sql). Chạy lại nhiều lần không sao.
+--   [UI2-A3]  Chọn món chỉ còn Size + Đá/Nóng: tắt nhóm Đường, Topping; nhóm "Đá" thành "Nhiệt độ" (Đá / Nóng, bắt buộc)
+--             cho mọi đồ uống; thêm size L (= giá M + 10.000đ) cho đồ uống chỉ có size M.
+--   [UI2-A4a] Hai món dữ liệu mẫu đang "Tạm hết" (Trà sen vàng, Bánh mousse chanh dây) đặt lại "Còn hàng";
+--             từ nay chỉnh tình trạng còn hàng ở Admin → Sản phẩm.
+--   [UI2-W2]  Dữ liệu mẫu nhà cung cấp (chỉ thêm khi bảng còn trống).
+SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
+BEGIN TRAN;
+
+-- ===== [UI2-A3] =====
+-- Tắt nhóm Đường và Topping (không xóa: đơn cũ vẫn giữ đúng tên tùy chọn đã chọn).
+UPDATE dbo.ModifierGroups SET IsActive=0 WHERE Kind IN ('Sugar','Topping') AND IsActive=1;
+
+DECLARE @temp int=(SELECT TOP(1) ModifierGroupID FROM dbo.ModifierGroups WHERE Kind='Ice' ORDER BY ModifierGroupID);
+IF @temp IS NULL
+BEGIN
+    INSERT dbo.ModifierGroups(Name,Kind) VALUES(N'Nhiệt độ','Ice');
+    SET @temp=SCOPE_IDENTITY();
+END
+UPDATE dbo.ModifierGroups SET Name=N'Nhiệt độ',IsActive=1 WHERE ModifierGroupID=@temp;
+-- Lựa chọn cũ (50% đá, 100% đá) ngừng dùng; thêm "Đá" và "Nóng".
+UPDATE dbo.ModifierOptions SET IsActive=0 WHERE ModifierGroupID=@temp AND Name NOT IN (N'Đá',N'Nóng');
+IF NOT EXISTS(SELECT 1 FROM dbo.ModifierOptions WHERE ModifierGroupID=@temp AND Name=N'Đá')
+    INSERT dbo.ModifierOptions(ModifierGroupID,Name,ExtraPrice,DisplayOrder) VALUES(@temp,N'Đá',0,1);
+IF NOT EXISTS(SELECT 1 FROM dbo.ModifierOptions WHERE ModifierGroupID=@temp AND Name=N'Nóng')
+    INSERT dbo.ModifierOptions(ModifierGroupID,Name,ExtraPrice,DisplayOrder) VALUES(@temp,N'Nóng',0,2);
+UPDATE dbo.ModifierOptions SET IsActive=1 WHERE ModifierGroupID=@temp AND Name IN (N'Đá',N'Nóng');
+
+-- Đồ uống = sản phẩm thuộc danh mục Cà phê / Trà.
+DECLARE @drinks TABLE(ProductID int PRIMARY KEY);
+INSERT @drinks SELECT p.ProductID FROM dbo.Products p JOIN dbo.Categories c ON c.CategoryID=p.CategoryID
+WHERE c.Name IN (N'Cà phê',N'Trà');
+
+UPDATE pg SET MinSelections=1,MaxSelections=1 FROM dbo.ProductModifierGroups pg JOIN @drinks d ON d.ProductID=pg.ProductID WHERE pg.ModifierGroupID=@temp;
+INSERT dbo.ProductModifierGroups(ProductID,ModifierGroupID,MinSelections,MaxSelections)
+SELECT d.ProductID,@temp,1,1 FROM @drinks d
+WHERE NOT EXISTS(SELECT 1 FROM dbo.ProductModifierGroups pg WHERE pg.ProductID=d.ProductID AND pg.ModifierGroupID=@temp);
+
+-- Size L cho đồ uống chỉ có size M.
+INSERT dbo.ProductVariants(ProductID,Name,BasePrice,DisplayOrder)
+SELECT m.ProductID,'L',m.BasePrice+10000,2 FROM dbo.ProductVariants m JOIN @drinks d ON d.ProductID=m.ProductID
+WHERE m.Name='M' AND m.IsActive=1 AND NOT EXISTS(SELECT 1 FROM dbo.ProductVariants l WHERE l.ProductID=m.ProductID AND l.Name='L');
+UPDATE v SET DisplayOrder=CASE v.Name WHEN 'M' THEN 1 WHEN 'L' THEN 2 ELSE v.DisplayOrder END
+FROM dbo.ProductVariants v JOIN @drinks d ON d.ProductID=v.ProductID;
+
+-- ===== [UI2-A4a] =====
+UPDATE bp SET IsAvailable=1 FROM dbo.BranchProducts bp JOIN dbo.Products p ON p.ProductID=bp.ProductID
+WHERE p.Name IN (N'Trà sen vàng',N'Bánh mousse chanh dây') AND bp.IsAvailable=0;
+
+-- ===== [UI2-W2] =====
+IF OBJECT_ID('dbo.Suppliers','U') IS NOT NULL AND NOT EXISTS(SELECT 1 FROM dbo.Suppliers)
+INSERT dbo.Suppliers(Code,Name,Phone,Email,ProductGroup,IsActive) VALUES
+('NCC-CF01',N'Công ty TNHH Cà phê Cầu Đất','0263 3812 456','kinhdoanh@caudatcoffee.test',N'Cà phê hạt Robusta, Arabica',1),
+('NCC-SU01',N'Nhà phân phối Sữa Phương Nam','028 3896 1122','order@suaphuongnam.test',N'Sữa tươi, sữa đặc, kem béo',1),
+('NCC-TR01',N'Trà Thái Nguyên Xanh','0208 3655 789','sales@trathainguyen.test',N'Trà lài, trà xanh, trà sen',1),
+('NCC-TC01',N'Vựa trái cây Bốn Mùa','0909 456 123','bonmua.fruit@mail.test',N'Đào, vải, cam, chanh dây',1),
+('NCC-BK01',N'Lò bánh Ngọc Lan','028 3512 7788','ngoclan.bakery@mail.test',N'Bánh croissant, tiramisu, mousse',1),
+('NCC-BB01',N'Bao bì Minh Phát','028 3754 2299','minhphat.pack@mail.test',N'Ly nhựa, ống hút, túi giấy',0);
+
+COMMIT;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+PRINT CONCAT(N'=== HOÀN TẤT ', CASE SESSION_CONTEXT(N'mb_mode') WHEN N'install' THEN N'CÀI MỚI' ELSE N'NÂNG CẤP' END, N' database [MorningBrewCRM_Crm] (bản góp ý giao diện 09/11). Có thể chạy API, Admin, app.');
+SELECT (SELECT COUNT(*) FROM sys.tables) AS SoBang,
+       (SELECT COUNT(*) FROM dbo.Users) AS SoTaiKhoan,
+       (SELECT COUNT(*) FROM dbo.ModifierOptions mo JOIN dbo.ModifierGroups mg ON mg.ModifierGroupID = mo.ModifierGroupID WHERE mg.Kind = 'Ice' AND mg.IsActive = 1 AND mo.IsActive = 1) AS SoLuaChonDaNong,
+       (SELECT COUNT(*) FROM dbo.ModifierGroups WHERE Kind IN ('Sugar','Topping') AND IsActive = 1) AS NhomDuongToppingConBat,
+       (SELECT COUNT(*) FROM dbo.Suppliers) AS SoNhaCungCap;
 GO
 SET NOEXEC OFF;
+IF SESSION_CONTEXT(N'mb_failed') = 1 PRINT N'>>> KẾT QUẢ: CHƯA HOÀN TẤT – xem dòng lỗi màu đỏ đầu tiên phía trên.';
 GO

@@ -1,0 +1,5382 @@
+﻿DANH SÁCH 896 TÀI KHOẢN MỚI — MORNING BREW
+16 quản lý khu vực, 80 quản lý chi nhánh, 800 nhân viên.
+Mật khẩu ban đầu của tài khoản mới: MorningBrew!2026
+Chỉ đăng nhập được sau khi script tạo dữ liệu chạy thành công.
+Nếu đã đổi mật khẩu, dùng mật khẩu mới thay cho danh sách này.
+Chủ doanh nghiệp và các tài khoản cũ: giữ nguyên, không nằm trong danh sách.
+
+001. Morning Brew Quận 1
+Vai trò: Quản lý khu vực
+Khu vực: Quận 1 | Quán: —
+Tài khoản: morningbrewquan1@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+002. Morning Brew Nguyễn Huệ
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 1 | Quán: Morning Brew Nguyễn Huệ
+Tài khoản: morningbrewnguyenhue@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+003. Nguyễn Minh An
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Nguyễn Huệ
+Tài khoản: nguyenminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+004. Phạm Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Nguyễn Huệ
+Tài khoản: phamgiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+005. Phan Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Nguyễn Huệ
+Tài khoản: phanthanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+006. Bùi Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Nguyễn Huệ
+Tài khoản: buithuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+007. Ngô Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Nguyễn Huệ
+Tài khoản: ngokimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+008. Trương Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Nguyễn Huệ
+Tài khoản: truongminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+009. Nguyễn Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Nguyễn Huệ
+Tài khoản: nguyenanhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+010. Phạm Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Nguyễn Huệ
+Tài khoản: phamhoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+011. Vũ Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Nguyễn Huệ
+Tài khoản: vuminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+012. Bùi Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Nguyễn Huệ
+Tài khoản: buingocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+013. Morning Brew Lê Lợi
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 1 | Quán: Morning Brew Lê Lợi
+Tài khoản: morningbrewleloi@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+014. Dương Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Lê Lợi
+Tài khoản: duonghoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+015. Trương Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Lê Lợi
+Tài khoản: truonghoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+016. Trần Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Lê Lợi
+Tài khoản: trangiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+017. Hoàng Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Lê Lợi
+Tài khoản: hoangdangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+018. Vũ Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Lê Lợi
+Tài khoản: vuminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+019. Đỗ Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Lê Lợi
+Tài khoản: dotrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+020. Dương Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Lê Lợi
+Tài khoản: duongducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+021. Đào Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Lê Lợi
+Tài khoản: daokhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+022. Trần Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Lê Lợi
+Tài khoản: trannhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+023. Huỳnh Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Lê Lợi
+Tài khoản: huynhducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+024. Morning Brew Đồng Khởi
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 1 | Quán: Morning Brew Đồng Khởi
+Tài khoản: morningbrewdongkhoi@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+025. Võ Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Đồng Khởi
+Tài khoản: vominhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+026. Đỗ Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Đồng Khởi
+Tài khoản: dongoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+027. Lý Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Đồng Khởi
+Tài khoản: lyquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+028. Đào Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Đồng Khởi
+Tài khoản: daominhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+029. Lê Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Đồng Khởi
+Tài khoản: letiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+030. Huỳnh Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Đồng Khởi
+Tài khoản: huynhkhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+031. Đặng Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Đồng Khởi
+Tài khoản: dangtuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+032. Hồ Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Đồng Khởi
+Tài khoản: hobaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+033. Lý Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Đồng Khởi
+Tài khoản: lyanhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+034. Mai Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Đồng Khởi
+Tài khoản: maithanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+035. Morning Brew Hàm Nghi
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 1 | Quán: Morning Brew Hàm Nghi
+Tài khoản: morningbrewhamnghi@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+036. Lê Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Hàm Nghi
+Tài khoản: lequynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+037. Phan Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Hàm Nghi
+Tài khoản: phanthuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+038. Đặng Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Hàm Nghi
+Tài khoản: danghoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+039. Ngô Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Hàm Nghi
+Tài khoản: ngoquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+040. Đinh Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Hàm Nghi
+Tài khoản: dinhthanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+041. Mai Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Hàm Nghi
+Tài khoản: maiphuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+042. Phạm Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Hàm Nghi
+Tài khoản: phamngochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+043. Phan Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Hàm Nghi
+Tài khoản: phanthaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+044. Bùi Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Hàm Nghi
+Tài khoản: buingocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+045. Ngô Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Hàm Nghi
+Tài khoản: ngongoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+046. Morning Brew Tôn Đức Thắng
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 1 | Quán: Morning Brew Tôn Đức Thắng
+Tài khoản: morningbrewtonducthang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+047. Trương Minh An
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Tôn Đức Thắng
+Tài khoản: truongminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+048. Nguyễn Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Tôn Đức Thắng
+Tài khoản: nguyengiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+049. Phạm Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Tôn Đức Thắng
+Tài khoản: phamthanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+050. Vũ Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Tôn Đức Thắng
+Tài khoản: vuthuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+051. Bùi Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Tôn Đức Thắng
+Tài khoản: buikimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+052. Dương Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Tôn Đức Thắng
+Tài khoản: duongminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+053. Trương Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Tôn Đức Thắng
+Tài khoản: truonganhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+054. Nguyễn Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Tôn Đức Thắng
+Tài khoản: nguyenhoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+055. Hoàng Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Tôn Đức Thắng
+Tài khoản: hoangminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+056. Vũ Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận 1 | Quán: Morning Brew Tôn Đức Thắng
+Tài khoản: vungocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+057. Morning Brew Quận 3
+Vai trò: Quản lý khu vực
+Khu vực: Quận 3 | Quán: —
+Tài khoản: morningbrewquan3@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+058. Morning Brew Võ Văn Tần
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 3 | Quán: Morning Brew Võ Văn Tần
+Tài khoản: morningbrewvovantan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+059. Đỗ Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Võ Văn Tần
+Tài khoản: dohoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+060. Dương Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Võ Văn Tần
+Tài khoản: duonghoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+061. Đào Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Võ Văn Tần
+Tài khoản: daogiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+062. Trần Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Võ Văn Tần
+Tài khoản: trandangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+063. Hoàng Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Võ Văn Tần
+Tài khoản: hoangminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+064. Võ Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Võ Văn Tần
+Tài khoản: votrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+065. Đỗ Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Võ Văn Tần
+Tài khoản: doducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+066. Lý Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Võ Văn Tần
+Tài khoản: lykhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+067. Đào Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Võ Văn Tần
+Tài khoản: daonhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+068. Lê Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Võ Văn Tần
+Tài khoản: leducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+069. Morning Brew Nguyễn Đình Chiểu
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 3 | Quán: Morning Brew Nguyễn Đình Chiểu
+Tài khoản: morningbrewnguyendinhchieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+070. Huỳnh Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Nguyễn Đình Chiểu
+Tài khoản: huynhminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+071. Võ Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Nguyễn Đình Chiểu
+Tài khoản: vongoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+072. Hồ Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Nguyễn Đình Chiểu
+Tài khoản: hoquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+073. Lý Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Nguyễn Đình Chiểu
+Tài khoản: lyminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+074. Mai Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Nguyễn Đình Chiểu
+Tài khoản: maitiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+075. Lê Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Nguyễn Đình Chiểu
+Tài khoản: lekhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+076. Phan Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Nguyễn Đình Chiểu
+Tài khoản: phantuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+077. Đặng Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Nguyễn Đình Chiểu
+Tài khoản: dangbaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+078. Hồ Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Nguyễn Đình Chiểu
+Tài khoản: hoanhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+079. Đinh Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Nguyễn Đình Chiểu
+Tài khoản: dinhthanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+080. Morning Brew Cao Thắng
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 3 | Quán: Morning Brew Cao Thắng
+Tài khoản: morningbrewcaothang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+081. Mai Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Cao Thắng
+Tài khoản: maiquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+082. Phạm Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Cao Thắng
+Tài khoản: phamthuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+083. Phan Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Cao Thắng
+Tài khoản: phanhoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+084. Bùi Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Cao Thắng
+Tài khoản: buiquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+085. Ngô Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Cao Thắng
+Tài khoản: ngothanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+086. Đinh Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Cao Thắng
+Tài khoản: dinhphuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+087. Nguyễn Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Cao Thắng
+Tài khoản: nguyenngochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+088. Phạm Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Cao Thắng
+Tài khoản: phamthaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+089. Vũ Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Cao Thắng
+Tài khoản: vungocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+090. Bùi Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Cao Thắng
+Tài khoản: buingoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+091. Morning Brew Bà Huyện Thanh Quan
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 3 | Quán: Morning Brew Bà Huyện Thanh Quan
+Tài khoản: morningbrewbahuyenthanhquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+092. Dương Minh An
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Bà Huyện Thanh Quan
+Tài khoản: duongminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+093. Trương Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Bà Huyện Thanh Quan
+Tài khoản: truonggiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+094. Nguyễn Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Bà Huyện Thanh Quan
+Tài khoản: nguyenthanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+095. Hoàng Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Bà Huyện Thanh Quan
+Tài khoản: hoangthuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+096. Vũ Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Bà Huyện Thanh Quan
+Tài khoản: vukimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+097. Đỗ Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Bà Huyện Thanh Quan
+Tài khoản: dominhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+098. Dương Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Bà Huyện Thanh Quan
+Tài khoản: duonganhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+099. Trương Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Bà Huyện Thanh Quan
+Tài khoản: truonghoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+100. Trần Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Bà Huyện Thanh Quan
+Tài khoản: tranminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+101. Hoàng Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Bà Huyện Thanh Quan
+Tài khoản: hoangngocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+102. Morning Brew Tú Xương
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 3 | Quán: Morning Brew Tú Xương
+Tài khoản: morningbrewtuxuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+103. Võ Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Tú Xương
+Tài khoản: vohoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+104. Đỗ Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Tú Xương
+Tài khoản: dohoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+105. Lý Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Tú Xương
+Tài khoản: lygiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+106. Đào Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Tú Xương
+Tài khoản: daodangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+107. Trần Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Tú Xương
+Tài khoản: tranminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+108. Huỳnh Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Tú Xương
+Tài khoản: huynhtrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+109. Võ Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Tú Xương
+Tài khoản: voducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+110. Hồ Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Tú Xương
+Tài khoản: hokhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+111. Lý Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Tú Xương
+Tài khoản: lynhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+112. Mai Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 3 | Quán: Morning Brew Tú Xương
+Tài khoản: maiducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+113. Morning Brew Quận 4
+Vai trò: Quản lý khu vực
+Khu vực: Quận 4 | Quán: —
+Tài khoản: morningbrewquan4@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+114. Morning Brew Hoàng Diệu
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 4 | Quán: Morning Brew Hoàng Diệu
+Tài khoản: morningbrewhoangdieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+115. Lê Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Hoàng Diệu
+Tài khoản: leminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+116. Huỳnh Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Hoàng Diệu
+Tài khoản: huynhngoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+117. Đặng Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Hoàng Diệu
+Tài khoản: dangquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+118. Hồ Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Hoàng Diệu
+Tài khoản: hominhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+119. Đinh Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Hoàng Diệu
+Tài khoản: dinhtiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+120. Mai Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Hoàng Diệu
+Tài khoản: maikhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+121. Phạm Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Hoàng Diệu
+Tài khoản: phamtuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+122. Phan Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Hoàng Diệu
+Tài khoản: phanbaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+123. Đặng Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Hoàng Diệu
+Tài khoản: danganhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+124. Ngô Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Hoàng Diệu
+Tài khoản: ngothanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+125. Morning Brew Khánh Hội
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 4 | Quán: Morning Brew Khánh Hội
+Tài khoản: morningbrewkhanhhoi@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+126. Đinh Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Khánh Hội
+Tài khoản: dinhquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+127. Nguyễn Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Khánh Hội
+Tài khoản: nguyenthuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+128. Phạm Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Khánh Hội
+Tài khoản: phamhoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+129. Vũ Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Khánh Hội
+Tài khoản: vuquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+130. Bùi Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Khánh Hội
+Tài khoản: buithanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+131. Ngô Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Khánh Hội
+Tài khoản: ngophuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+132. Trương Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Khánh Hội
+Tài khoản: truongngochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+133. Nguyễn Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Khánh Hội
+Tài khoản: nguyenthaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+134. Hoàng Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Khánh Hội
+Tài khoản: hoangngocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+135. Vũ Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Khánh Hội
+Tài khoản: vungoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+136. Morning Brew Bến Vân Đồn
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 4 | Quán: Morning Brew Bến Vân Đồn
+Tài khoản: morningbrewbenvandon@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+137. Đỗ Minh An
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Bến Vân Đồn
+Tài khoản: dominhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+138. Dương Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Bến Vân Đồn
+Tài khoản: duonggiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+139. Trương Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Bến Vân Đồn
+Tài khoản: truongthanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+140. Trần Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Bến Vân Đồn
+Tài khoản: tranthuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+141. Hoàng Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Bến Vân Đồn
+Tài khoản: hoangkimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+142. Võ Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Bến Vân Đồn
+Tài khoản: vominhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+143. Đỗ Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Bến Vân Đồn
+Tài khoản: doanhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+144. Dương Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Bến Vân Đồn
+Tài khoản: duonghoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+145. Đào Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Bến Vân Đồn
+Tài khoản: daominhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+146. Trần Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Bến Vân Đồn
+Tài khoản: tranngocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+147. Morning Brew Tôn Đản
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 4 | Quán: Morning Brew Tôn Đản
+Tài khoản: morningbrewtondan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+148. Huỳnh Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Tôn Đản
+Tài khoản: huynhhoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+149. Võ Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Tôn Đản
+Tài khoản: vohoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+150. Hồ Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Tôn Đản
+Tài khoản: hogiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+151. Lý Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Tôn Đản
+Tài khoản: lydangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+152. Đào Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Tôn Đản
+Tài khoản: daominhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+153. Lê Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Tôn Đản
+Tài khoản: letrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+154. Huỳnh Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Tôn Đản
+Tài khoản: huynhducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+155. Đặng Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Tôn Đản
+Tài khoản: dangkhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+156. Hồ Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Tôn Đản
+Tài khoản: honhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+157. Đinh Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Tôn Đản
+Tài khoản: dinhducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+158. Morning Brew Đoàn Văn Bơ
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 4 | Quán: Morning Brew Đoàn Văn Bơ
+Tài khoản: morningbrewdoanvanbo@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+159. Mai Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Đoàn Văn Bơ
+Tài khoản: maiminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+160. Lê Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Đoàn Văn Bơ
+Tài khoản: lengoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+161. Phan Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Đoàn Văn Bơ
+Tài khoản: phanquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+162. Đặng Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Đoàn Văn Bơ
+Tài khoản: dangminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+163. Ngô Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Đoàn Văn Bơ
+Tài khoản: ngotiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+164. Đinh Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Đoàn Văn Bơ
+Tài khoản: dinhkhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+165. Nguyễn Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Đoàn Văn Bơ
+Tài khoản: nguyentuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+166. Phạm Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Đoàn Văn Bơ
+Tài khoản: phambaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+167. Phan Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Đoàn Văn Bơ
+Tài khoản: phananhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+168. Bùi Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận 4 | Quán: Morning Brew Đoàn Văn Bơ
+Tài khoản: buithanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+169. Morning Brew Quận 5
+Vai trò: Quản lý khu vực
+Khu vực: Quận 5 | Quán: —
+Tài khoản: morningbrewquan5@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+170. Morning Brew Trần Hưng Đạo
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 5 | Quán: Morning Brew Trần Hưng Đạo
+Tài khoản: morningbrewtranhungdao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+171. Ngô Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Trần Hưng Đạo
+Tài khoản: ngoquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+172. Trương Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Trần Hưng Đạo
+Tài khoản: truongthuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+173. Nguyễn Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Trần Hưng Đạo
+Tài khoản: nguyenhoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+174. Hoàng Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Trần Hưng Đạo
+Tài khoản: hoangquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+175. Vũ Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Trần Hưng Đạo
+Tài khoản: vuthanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+176. Bùi Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Trần Hưng Đạo
+Tài khoản: buiphuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+177. Dương Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Trần Hưng Đạo
+Tài khoản: duongngochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+178. Trương Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Trần Hưng Đạo
+Tài khoản: truongthaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+179. Trần Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Trần Hưng Đạo
+Tài khoản: tranngocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+180. Hoàng Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Trần Hưng Đạo
+Tài khoản: hoangngoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+181. Morning Brew Nguyễn Trãi
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 5 | Quán: Morning Brew Nguyễn Trãi
+Tài khoản: morningbrewnguyentrai@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+182. Võ Minh An
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Nguyễn Trãi
+Tài khoản: vominhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+183. Đỗ Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Nguyễn Trãi
+Tài khoản: dogiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+184. Dương Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Nguyễn Trãi
+Tài khoản: duongthanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+185. Đào Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Nguyễn Trãi
+Tài khoản: daothuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+186. Trần Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Nguyễn Trãi
+Tài khoản: trankimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+187. Huỳnh Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Nguyễn Trãi
+Tài khoản: huynhminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+188. Võ Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Nguyễn Trãi
+Tài khoản: voanhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+189. Đỗ Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Nguyễn Trãi
+Tài khoản: dohoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+190. Lý Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Nguyễn Trãi
+Tài khoản: lyminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+191. Đào Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Nguyễn Trãi
+Tài khoản: daongocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+192. Morning Brew An Dương Vương
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 5 | Quán: Morning Brew An Dương Vương
+Tài khoản: morningbrewanduongvuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+193. Lê Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew An Dương Vương
+Tài khoản: lehoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+194. Huỳnh Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew An Dương Vương
+Tài khoản: huynhhoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+195. Đặng Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew An Dương Vương
+Tài khoản: danggiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+196. Hồ Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew An Dương Vương
+Tài khoản: hodangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+197. Lý Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew An Dương Vương
+Tài khoản: lyminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+198. Mai Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew An Dương Vương
+Tài khoản: maitrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+199. Lê Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew An Dương Vương
+Tài khoản: leducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+200. Phan Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew An Dương Vương
+Tài khoản: phankhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+201. Đặng Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew An Dương Vương
+Tài khoản: dangnhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+202. Ngô Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew An Dương Vương
+Tài khoản: ngoducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+203. Morning Brew Châu Văn Liêm
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 5 | Quán: Morning Brew Châu Văn Liêm
+Tài khoản: morningbrewchauvanliem@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+204. Đinh Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Châu Văn Liêm
+Tài khoản: dinhminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+205. Mai Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Châu Văn Liêm
+Tài khoản: maingoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+206. Phạm Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Châu Văn Liêm
+Tài khoản: phamquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+207. Phan Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Châu Văn Liêm
+Tài khoản: phanminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+208. Bùi Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Châu Văn Liêm
+Tài khoản: buitiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+209. Ngô Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Châu Văn Liêm
+Tài khoản: ngokhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+210. Trương Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Châu Văn Liêm
+Tài khoản: truongtuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+211. Nguyễn Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Châu Văn Liêm
+Tài khoản: nguyenbaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+212. Phạm Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Châu Văn Liêm
+Tài khoản: phamanhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+213. Vũ Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Châu Văn Liêm
+Tài khoản: vuthanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+214. Morning Brew Hải Thượng Lãn Ông
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 5 | Quán: Morning Brew Hải Thượng Lãn Ông
+Tài khoản: morningbrewhaithuonglanong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+215. Bùi Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Hải Thượng Lãn Ông
+Tài khoản: buiquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+216. Dương Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Hải Thượng Lãn Ông
+Tài khoản: duongthuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+217. Trương Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Hải Thượng Lãn Ông
+Tài khoản: truonghoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+218. Trần Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Hải Thượng Lãn Ông
+Tài khoản: tranquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+219. Hoàng Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Hải Thượng Lãn Ông
+Tài khoản: hoangthanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+220. Vũ Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Hải Thượng Lãn Ông
+Tài khoản: vuphuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+221. Đỗ Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Hải Thượng Lãn Ông
+Tài khoản: dongochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+222. Dương Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Hải Thượng Lãn Ông
+Tài khoản: duongthaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+223. Đào Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Hải Thượng Lãn Ông
+Tài khoản: daongocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+224. Trần Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận 5 | Quán: Morning Brew Hải Thượng Lãn Ông
+Tài khoản: tranngoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+225. Morning Brew Quận 6
+Vai trò: Quản lý khu vực
+Khu vực: Quận 6 | Quán: —
+Tài khoản: morningbrewquan6@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+226. Morning Brew Hậu Giang
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 6 | Quán: Morning Brew Hậu Giang
+Tài khoản: morningbrewhaugiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+227. Huỳnh Minh An
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Hậu Giang
+Tài khoản: huynhminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+228. Võ Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Hậu Giang
+Tài khoản: vogiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+229. Đỗ Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Hậu Giang
+Tài khoản: dothanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+230. Lý Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Hậu Giang
+Tài khoản: lythuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+231. Đào Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Hậu Giang
+Tài khoản: daokimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+232. Lê Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Hậu Giang
+Tài khoản: leminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+233. Huỳnh Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Hậu Giang
+Tài khoản: huynhanhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+234. Võ Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Hậu Giang
+Tài khoản: vohoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+235. Hồ Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Hậu Giang
+Tài khoản: hominhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+236. Lý Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Hậu Giang
+Tài khoản: lyngocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+237. Morning Brew Bà Hom
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 6 | Quán: Morning Brew Bà Hom
+Tài khoản: morningbrewbahom@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+238. Mai Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bà Hom
+Tài khoản: maihoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+239. Lê Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bà Hom
+Tài khoản: lehoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+240. Phan Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bà Hom
+Tài khoản: phangiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+241. Đặng Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bà Hom
+Tài khoản: dangdangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+242. Hồ Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bà Hom
+Tài khoản: hominhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+243. Đinh Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bà Hom
+Tài khoản: dinhtrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+244. Mai Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bà Hom
+Tài khoản: maiducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+245. Phạm Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bà Hom
+Tài khoản: phamkhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+246. Phan Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bà Hom
+Tài khoản: phannhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+247. Bùi Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bà Hom
+Tài khoản: buiducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+248. Morning Brew Bình Phú
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 6 | Quán: Morning Brew Bình Phú
+Tài khoản: morningbrewbinhphu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+249. Ngô Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bình Phú
+Tài khoản: ngominhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+250. Đinh Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bình Phú
+Tài khoản: dinhngoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+251. Nguyễn Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bình Phú
+Tài khoản: nguyenquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+252. Phạm Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bình Phú
+Tài khoản: phamminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+253. Vũ Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bình Phú
+Tài khoản: vutiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+254. Bùi Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bình Phú
+Tài khoản: buikhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+255. Dương Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bình Phú
+Tài khoản: duongtuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+256. Trương Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bình Phú
+Tài khoản: truongbaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+257. Nguyễn Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bình Phú
+Tài khoản: nguyenanhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+258. Hoàng Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Bình Phú
+Tài khoản: hoangthanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+259. Morning Brew Phạm Văn Chí
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 6 | Quán: Morning Brew Phạm Văn Chí
+Tài khoản: morningbrewphamvanchi@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+260. Vũ Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Phạm Văn Chí
+Tài khoản: vuquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+261. Đỗ Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Phạm Văn Chí
+Tài khoản: dothuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+262. Dương Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Phạm Văn Chí
+Tài khoản: duonghoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+263. Đào Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Phạm Văn Chí
+Tài khoản: daoquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+264. Trần Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Phạm Văn Chí
+Tài khoản: tranthanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+265. Hoàng Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Phạm Văn Chí
+Tài khoản: hoangphuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+266. Võ Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Phạm Văn Chí
+Tài khoản: vongochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+267. Đỗ Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Phạm Văn Chí
+Tài khoản: dothaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+268. Lý Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Phạm Văn Chí
+Tài khoản: lyngocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+269. Đào Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Phạm Văn Chí
+Tài khoản: daongoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+270. Morning Brew Minh Phụng
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 6 | Quán: Morning Brew Minh Phụng
+Tài khoản: morningbrewminhphung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+271. Lê Minh An
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Minh Phụng
+Tài khoản: leminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+272. Huỳnh Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Minh Phụng
+Tài khoản: huynhgiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+273. Võ Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Minh Phụng
+Tài khoản: vothanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+274. Hồ Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Minh Phụng
+Tài khoản: hothuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+275. Lý Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Minh Phụng
+Tài khoản: lykimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+276. Mai Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Minh Phụng
+Tài khoản: maiminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+277. Lê Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Minh Phụng
+Tài khoản: leanhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+278. Huỳnh Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Minh Phụng
+Tài khoản: huynhhoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+279. Đặng Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Minh Phụng
+Tài khoản: dangminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+280. Hồ Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận 6 | Quán: Morning Brew Minh Phụng
+Tài khoản: hongocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+281. Morning Brew Quận 7
+Vai trò: Quản lý khu vực
+Khu vực: Quận 7 | Quán: —
+Tài khoản: morningbrewquan7@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+282. Morning Brew Nguyễn Thị Thập
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Thị Thập
+Tài khoản: morningbrewnguyenthithap@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+283. Đinh Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Thị Thập
+Tài khoản: dinhhoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+284. Mai Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Thị Thập
+Tài khoản: maihoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+285. Phạm Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Thị Thập
+Tài khoản: phamgiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+286. Phan Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Thị Thập
+Tài khoản: phandangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+287. Đặng Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Thị Thập
+Tài khoản: dangminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+288. Ngô Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Thị Thập
+Tài khoản: ngotrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+289. Đinh Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Thị Thập
+Tài khoản: dinhducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+290. Nguyễn Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Thị Thập
+Tài khoản: nguyenkhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+291. Phạm Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Thị Thập
+Tài khoản: phamnhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+292. Vũ Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Thị Thập
+Tài khoản: vuducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+293. Morning Brew Huỳnh Tấn Phát
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 7 | Quán: Morning Brew Huỳnh Tấn Phát
+Tài khoản: morningbrewhuynhtanphat@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+294. Bùi Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Huỳnh Tấn Phát
+Tài khoản: buiminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+295. Ngô Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Huỳnh Tấn Phát
+Tài khoản: ngongoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+296. Trương Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Huỳnh Tấn Phát
+Tài khoản: truongquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+297. Nguyễn Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Huỳnh Tấn Phát
+Tài khoản: nguyenminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+298. Hoàng Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Huỳnh Tấn Phát
+Tài khoản: hoangtiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+299. Vũ Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Huỳnh Tấn Phát
+Tài khoản: vukhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+300. Đỗ Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Huỳnh Tấn Phát
+Tài khoản: dotuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+301. Dương Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Huỳnh Tấn Phát
+Tài khoản: duongbaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+302. Trương Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Huỳnh Tấn Phát
+Tài khoản: truonganhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+303. Trần Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Huỳnh Tấn Phát
+Tài khoản: tranthanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+304. Morning Brew Nguyễn Lương Bằng
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Lương Bằng
+Tài khoản: morningbrewnguyenluongbang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+305. Hoàng Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Lương Bằng
+Tài khoản: hoangquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+306. Võ Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Lương Bằng
+Tài khoản: vothuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+307. Đỗ Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Lương Bằng
+Tài khoản: dohoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+308. Lý Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Lương Bằng
+Tài khoản: lyquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+309. Đào Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Lương Bằng
+Tài khoản: daothanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+310. Trần Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Lương Bằng
+Tài khoản: tranphuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+311. Huỳnh Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Lương Bằng
+Tài khoản: huynhngochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+312. Võ Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Lương Bằng
+Tài khoản: vothaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+313. Hồ Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Lương Bằng
+Tài khoản: hongocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+314. Lý Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Lương Bằng
+Tài khoản: lyngoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+315. Morning Brew Nguyễn Đức Cảnh
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Đức Cảnh
+Tài khoản: morningbrewnguyenduccanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+316. Mai Minh An
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Đức Cảnh
+Tài khoản: maiminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+317. Lê Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Đức Cảnh
+Tài khoản: legiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+318. Huỳnh Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Đức Cảnh
+Tài khoản: huynhthanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+319. Đặng Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Đức Cảnh
+Tài khoản: dangthuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+320. Hồ Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Đức Cảnh
+Tài khoản: hokimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+321. Đinh Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Đức Cảnh
+Tài khoản: dinhminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+322. Mai Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Đức Cảnh
+Tài khoản: maianhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+323. Lê Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Đức Cảnh
+Tài khoản: lehoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+324. Phan Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Đức Cảnh
+Tài khoản: phanminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+325. Đặng Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Nguyễn Đức Cảnh
+Tài khoản: dangngocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+326. Morning Brew Tân Mỹ
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 7 | Quán: Morning Brew Tân Mỹ
+Tài khoản: morningbrewtanmy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+327. Ngô Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Tân Mỹ
+Tài khoản: ngohoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+328. Đinh Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Tân Mỹ
+Tài khoản: dinhhoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+329. Nguyễn Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Tân Mỹ
+Tài khoản: nguyengiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+330. Phạm Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Tân Mỹ
+Tài khoản: phamdangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+331. Phan Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Tân Mỹ
+Tài khoản: phanminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+332. Bùi Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Tân Mỹ
+Tài khoản: buitrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+333. Ngô Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Tân Mỹ
+Tài khoản: ngoducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+334. Trương Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Tân Mỹ
+Tài khoản: truongkhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+335. Nguyễn Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Tân Mỹ
+Tài khoản: nguyennhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+336. Hoàng Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 7 | Quán: Morning Brew Tân Mỹ
+Tài khoản: hoangducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+337. Morning Brew Quận 8
+Vai trò: Quản lý khu vực
+Khu vực: Quận 8 | Quán: —
+Tài khoản: morningbrewquan8@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+338. Morning Brew Dương Bá Trạc
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 8 | Quán: Morning Brew Dương Bá Trạc
+Tài khoản: morningbrewduongbatrac@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+339. Vũ Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Dương Bá Trạc
+Tài khoản: vuminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+340. Bùi Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Dương Bá Trạc
+Tài khoản: buingoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+341. Dương Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Dương Bá Trạc
+Tài khoản: duongquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+342. Trương Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Dương Bá Trạc
+Tài khoản: truongminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+343. Trần Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Dương Bá Trạc
+Tài khoản: trantiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+344. Hoàng Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Dương Bá Trạc
+Tài khoản: hoangkhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+345. Võ Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Dương Bá Trạc
+Tài khoản: votuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+346. Đỗ Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Dương Bá Trạc
+Tài khoản: dobaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+347. Dương Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Dương Bá Trạc
+Tài khoản: duonganhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+348. Đào Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Dương Bá Trạc
+Tài khoản: daothanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+349. Morning Brew Phạm Thế Hiển
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 8 | Quán: Morning Brew Phạm Thế Hiển
+Tài khoản: morningbrewphamthehien@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+350. Trần Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Phạm Thế Hiển
+Tài khoản: tranquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+351. Huỳnh Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Phạm Thế Hiển
+Tài khoản: huynhthuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+352. Võ Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Phạm Thế Hiển
+Tài khoản: vohoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+353. Hồ Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Phạm Thế Hiển
+Tài khoản: hoquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+354. Lý Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Phạm Thế Hiển
+Tài khoản: lythanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+355. Đào Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Phạm Thế Hiển
+Tài khoản: daophuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+356. Lê Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Phạm Thế Hiển
+Tài khoản: lengochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+357. Huỳnh Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Phạm Thế Hiển
+Tài khoản: huynhthaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+358. Đặng Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Phạm Thế Hiển
+Tài khoản: dangngocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+359. Hồ Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Phạm Thế Hiển
+Tài khoản: hongoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+360. Morning Brew Tạ Quang Bửu
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 8 | Quán: Morning Brew Tạ Quang Bửu
+Tài khoản: morningbrewtaquangbuu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+361. Đinh Minh An
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Tạ Quang Bửu
+Tài khoản: dinhminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+362. Mai Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Tạ Quang Bửu
+Tài khoản: maigiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+363. Lê Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Tạ Quang Bửu
+Tài khoản: lethanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+364. Phan Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Tạ Quang Bửu
+Tài khoản: phanthuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+365. Đặng Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Tạ Quang Bửu
+Tài khoản: dangkimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+366. Ngô Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Tạ Quang Bửu
+Tài khoản: ngominhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+367. Đinh Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Tạ Quang Bửu
+Tài khoản: dinhanhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+368. Mai Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Tạ Quang Bửu
+Tài khoản: maihoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+369. Phạm Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Tạ Quang Bửu
+Tài khoản: phamminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+370. Phan Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Tạ Quang Bửu
+Tài khoản: phanngocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+371. Morning Brew Âu Dương Lân
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 8 | Quán: Morning Brew Âu Dương Lân
+Tài khoản: morningbrewauduonglan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+372. Bùi Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Âu Dương Lân
+Tài khoản: buihoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+373. Ngô Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Âu Dương Lân
+Tài khoản: ngohoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+374. Trương Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Âu Dương Lân
+Tài khoản: truonggiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+375. Nguyễn Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Âu Dương Lân
+Tài khoản: nguyendangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+376. Phạm Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Âu Dương Lân
+Tài khoản: phamminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+377. Vũ Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Âu Dương Lân
+Tài khoản: vutrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+378. Bùi Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Âu Dương Lân
+Tài khoản: buiducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+379. Dương Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Âu Dương Lân
+Tài khoản: duongkhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+380. Trương Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Âu Dương Lân
+Tài khoản: truongnhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+381. Trần Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Âu Dương Lân
+Tài khoản: tranducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+382. Morning Brew Bùi Minh Trực
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 8 | Quán: Morning Brew Bùi Minh Trực
+Tài khoản: morningbrewbuiminhtruc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+383. Hoàng Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Bùi Minh Trực
+Tài khoản: hoangminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+384. Vũ Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Bùi Minh Trực
+Tài khoản: vungoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+385. Đỗ Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Bùi Minh Trực
+Tài khoản: doquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+386. Dương Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Bùi Minh Trực
+Tài khoản: duongminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+387. Đào Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Bùi Minh Trực
+Tài khoản: daotiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+388. Trần Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Bùi Minh Trực
+Tài khoản: trankhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+389. Huỳnh Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Bùi Minh Trực
+Tài khoản: huynhtuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+390. Võ Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Bùi Minh Trực
+Tài khoản: vobaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+391. Đỗ Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Bùi Minh Trực
+Tài khoản: doanhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+392. Lý Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận 8 | Quán: Morning Brew Bùi Minh Trực
+Tài khoản: lythanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+393. Morning Brew Quận 10
+Vai trò: Quản lý khu vực
+Khu vực: Quận 10 | Quán: —
+Tài khoản: morningbrewquan10@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+394. Morning Brew Sư Vạn Hạnh
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 10 | Quán: Morning Brew Sư Vạn Hạnh
+Tài khoản: morningbrewsuvanhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+395. Đào Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Sư Vạn Hạnh
+Tài khoản: daoquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+396. Lê Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Sư Vạn Hạnh
+Tài khoản: lethuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+397. Huỳnh Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Sư Vạn Hạnh
+Tài khoản: huynhhoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+398. Đặng Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Sư Vạn Hạnh
+Tài khoản: dangquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+399. Hồ Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Sư Vạn Hạnh
+Tài khoản: hothanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+400. Lý Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Sư Vạn Hạnh
+Tài khoản: lyphuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+401. Mai Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Sư Vạn Hạnh
+Tài khoản: maingochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+402. Lê Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Sư Vạn Hạnh
+Tài khoản: lethaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+403. Phan Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Sư Vạn Hạnh
+Tài khoản: phanngocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+404. Đặng Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Sư Vạn Hạnh
+Tài khoản: dangngoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+405. Morning Brew Thành Thái
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 10 | Quán: Morning Brew Thành Thái
+Tài khoản: morningbrewthanhthai@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+406. Ngô Minh An
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Thành Thái
+Tài khoản: ngominhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+407. Đinh Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Thành Thái
+Tài khoản: dinhgiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+408. Mai Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Thành Thái
+Tài khoản: maithanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+409. Phạm Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Thành Thái
+Tài khoản: phamthuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+410. Phan Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Thành Thái
+Tài khoản: phankimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+411. Bùi Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Thành Thái
+Tài khoản: buiminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+412. Ngô Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Thành Thái
+Tài khoản: ngoanhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+413. Đinh Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Thành Thái
+Tài khoản: dinhhoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+414. Nguyễn Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Thành Thái
+Tài khoản: nguyenminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+415. Phạm Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Thành Thái
+Tài khoản: phamngocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+416. Morning Brew Tô Hiến Thành
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 10 | Quán: Morning Brew Tô Hiến Thành
+Tài khoản: morningbrewtohienthanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+417. Vũ Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Tô Hiến Thành
+Tài khoản: vuhoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+418. Bùi Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Tô Hiến Thành
+Tài khoản: buihoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+419. Dương Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Tô Hiến Thành
+Tài khoản: duonggiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+420. Trương Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Tô Hiến Thành
+Tài khoản: truongdangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+421. Nguyễn Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Tô Hiến Thành
+Tài khoản: nguyenminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+422. Hoàng Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Tô Hiến Thành
+Tài khoản: hoangtrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+423. Vũ Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Tô Hiến Thành
+Tài khoản: vuducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+424. Đỗ Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Tô Hiến Thành
+Tài khoản: dokhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+425. Dương Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Tô Hiến Thành
+Tài khoản: duongnhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+426. Đào Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Tô Hiến Thành
+Tài khoản: daoducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+427. Morning Brew Ba Tháng Hai
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 10 | Quán: Morning Brew Ba Tháng Hai
+Tài khoản: morningbrewbathanghai@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+428. Trần Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Ba Tháng Hai
+Tài khoản: tranminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+429. Hoàng Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Ba Tháng Hai
+Tài khoản: hoangngoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+430. Võ Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Ba Tháng Hai
+Tài khoản: voquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+431. Đỗ Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Ba Tháng Hai
+Tài khoản: dominhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+432. Lý Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Ba Tháng Hai
+Tài khoản: lytiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+433. Đào Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Ba Tháng Hai
+Tài khoản: daokhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+434. Lê Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Ba Tháng Hai
+Tài khoản: letuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+435. Huỳnh Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Ba Tháng Hai
+Tài khoản: huynhbaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+436. Võ Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Ba Tháng Hai
+Tài khoản: voanhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+437. Hồ Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Ba Tháng Hai
+Tài khoản: hothanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+438. Morning Brew Nguyễn Tri Phương
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 10 | Quán: Morning Brew Nguyễn Tri Phương
+Tài khoản: morningbrewnguyentriphuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+439. Lý Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Nguyễn Tri Phương
+Tài khoản: lyquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+440. Mai Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Nguyễn Tri Phương
+Tài khoản: maithuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+441. Lê Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Nguyễn Tri Phương
+Tài khoản: lehoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+442. Phan Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Nguyễn Tri Phương
+Tài khoản: phanquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+443. Đặng Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Nguyễn Tri Phương
+Tài khoản: dangthanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+444. Hồ Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Nguyễn Tri Phương
+Tài khoản: hophuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+445. Đinh Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Nguyễn Tri Phương
+Tài khoản: dinhngochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+446. Mai Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Nguyễn Tri Phương
+Tài khoản: maithaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+447. Phạm Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Nguyễn Tri Phương
+Tài khoản: phamngocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+448. Phan Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận 10 | Quán: Morning Brew Nguyễn Tri Phương
+Tài khoản: phanngoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+449. Morning Brew Quận 11
+Vai trò: Quản lý khu vực
+Khu vực: Quận 11 | Quán: —
+Tài khoản: morningbrewquan11@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+450. Morning Brew Lạc Long Quân
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 11 | Quán: Morning Brew Lạc Long Quân
+Tài khoản: morningbrewlaclongquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+451. Bùi Minh An
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lạc Long Quân
+Tài khoản: buiminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+452. Ngô Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lạc Long Quân
+Tài khoản: ngogiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+453. Đinh Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lạc Long Quân
+Tài khoản: dinhthanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+454. Nguyễn Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lạc Long Quân
+Tài khoản: nguyenthuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+455. Phạm Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lạc Long Quân
+Tài khoản: phamkimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+456. Vũ Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lạc Long Quân
+Tài khoản: vuminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+457. Bùi Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lạc Long Quân
+Tài khoản: buianhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+458. Ngô Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lạc Long Quân
+Tài khoản: ngohoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+459. Trương Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lạc Long Quân
+Tài khoản: truongminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+460. Nguyễn Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lạc Long Quân
+Tài khoản: nguyenngocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+461. Morning Brew Bình Thới
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 11 | Quán: Morning Brew Bình Thới
+Tài khoản: morningbrewbinhthoi@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+462. Hoàng Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Bình Thới
+Tài khoản: hoanghoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+463. Vũ Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Bình Thới
+Tài khoản: vuhoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+464. Đỗ Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Bình Thới
+Tài khoản: dogiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+465. Dương Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Bình Thới
+Tài khoản: duongdangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+466. Trương Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Bình Thới
+Tài khoản: truongminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+467. Trần Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Bình Thới
+Tài khoản: trantrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+468. Hoàng Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Bình Thới
+Tài khoản: hoangducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+469. Võ Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Bình Thới
+Tài khoản: vokhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+470. Đỗ Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Bình Thới
+Tài khoản: donhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+471. Lý Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Bình Thới
+Tài khoản: lyducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+472. Morning Brew Lê Đại Hành
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 11 | Quán: Morning Brew Lê Đại Hành
+Tài khoản: morningbrewledaihanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+473. Đào Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lê Đại Hành
+Tài khoản: daominhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+474. Trần Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lê Đại Hành
+Tài khoản: tranngoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+475. Huỳnh Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lê Đại Hành
+Tài khoản: huynhquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+476. Võ Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lê Đại Hành
+Tài khoản: vominhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+477. Hồ Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lê Đại Hành
+Tài khoản: hotiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+478. Lý Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lê Đại Hành
+Tài khoản: lykhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+479. Mai Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lê Đại Hành
+Tài khoản: maituananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+480. Lê Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lê Đại Hành
+Tài khoản: lebaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+481. Huỳnh Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lê Đại Hành
+Tài khoản: huynhanhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+482. Đặng Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Lê Đại Hành
+Tài khoản: dangthanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+483. Morning Brew Ông Ích Khiêm
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 11 | Quán: Morning Brew Ông Ích Khiêm
+Tài khoản: morningbrewongichkhiem@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+484. Hồ Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Ông Ích Khiêm
+Tài khoản: hoquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+485. Đinh Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Ông Ích Khiêm
+Tài khoản: dinhthuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+486. Mai Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Ông Ích Khiêm
+Tài khoản: maihoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+487. Phạm Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Ông Ích Khiêm
+Tài khoản: phamquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+488. Phan Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Ông Ích Khiêm
+Tài khoản: phanthanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+489. Đặng Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Ông Ích Khiêm
+Tài khoản: dangphuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+490. Ngô Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Ông Ích Khiêm
+Tài khoản: ngongochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+491. Đinh Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Ông Ích Khiêm
+Tài khoản: dinhthaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+492. Nguyễn Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Ông Ích Khiêm
+Tài khoản: nguyenngocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+493. Phạm Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Ông Ích Khiêm
+Tài khoản: phamngoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+494. Morning Brew Hàn Hải Nguyên
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 11 | Quán: Morning Brew Hàn Hải Nguyên
+Tài khoản: morningbrewhanhainguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+495. Vũ Minh An
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Hàn Hải Nguyên
+Tài khoản: vuminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+496. Bùi Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Hàn Hải Nguyên
+Tài khoản: buigiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+497. Ngô Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Hàn Hải Nguyên
+Tài khoản: ngothanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+498. Trương Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Hàn Hải Nguyên
+Tài khoản: truongthuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+499. Nguyễn Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Hàn Hải Nguyên
+Tài khoản: nguyenkimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+500. Hoàng Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Hàn Hải Nguyên
+Tài khoản: hoangminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+501. Vũ Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Hàn Hải Nguyên
+Tài khoản: vuanhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+502. Bùi Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Hàn Hải Nguyên
+Tài khoản: buihoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+503. Dương Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Hàn Hải Nguyên
+Tài khoản: duongminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+504. Trương Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận 11 | Quán: Morning Brew Hàn Hải Nguyên
+Tài khoản: truongngocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+505. Morning Brew Quận 12
+Vai trò: Quản lý khu vực
+Khu vực: Quận 12 | Quán: —
+Tài khoản: morningbrewquan12@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+506. Morning Brew Nguyễn Ảnh Thủ
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 12 | Quán: Morning Brew Nguyễn Ảnh Thủ
+Tài khoản: morningbrewnguyenanhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+507. Trần Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Nguyễn Ảnh Thủ
+Tài khoản: tranhoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+508. Hoàng Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Nguyễn Ảnh Thủ
+Tài khoản: hoanghoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+509. Võ Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Nguyễn Ảnh Thủ
+Tài khoản: vogiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+510. Đỗ Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Nguyễn Ảnh Thủ
+Tài khoản: dodangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+511. Dương Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Nguyễn Ảnh Thủ
+Tài khoản: duongminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+512. Đào Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Nguyễn Ảnh Thủ
+Tài khoản: daotrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+513. Trần Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Nguyễn Ảnh Thủ
+Tài khoản: tranducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+514. Huỳnh Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Nguyễn Ảnh Thủ
+Tài khoản: huynhkhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+515. Võ Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Nguyễn Ảnh Thủ
+Tài khoản: vonhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+516. Hồ Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Nguyễn Ảnh Thủ
+Tài khoản: hoducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+517. Morning Brew Lê Văn Khương
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 12 | Quán: Morning Brew Lê Văn Khương
+Tài khoản: morningbrewlevankhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+518. Lý Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Lê Văn Khương
+Tài khoản: lyminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+519. Đào Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Lê Văn Khương
+Tài khoản: daongoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+520. Lê Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Lê Văn Khương
+Tài khoản: lequanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+521. Huỳnh Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Lê Văn Khương
+Tài khoản: huynhminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+522. Đặng Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Lê Văn Khương
+Tài khoản: dangtiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+523. Hồ Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Lê Văn Khương
+Tài khoản: hokhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+524. Đinh Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Lê Văn Khương
+Tài khoản: dinhtuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+525. Mai Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Lê Văn Khương
+Tài khoản: maibaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+526. Lê Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Lê Văn Khương
+Tài khoản: leanhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+527. Phan Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Lê Văn Khương
+Tài khoản: phanthanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+528. Morning Brew Hà Huy Giáp
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 12 | Quán: Morning Brew Hà Huy Giáp
+Tài khoản: morningbrewhahuygiap@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+529. Đặng Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Hà Huy Giáp
+Tài khoản: dangquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+530. Ngô Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Hà Huy Giáp
+Tài khoản: ngothuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+531. Đinh Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Hà Huy Giáp
+Tài khoản: dinhhoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+532. Nguyễn Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Hà Huy Giáp
+Tài khoản: nguyenquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+533. Phạm Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Hà Huy Giáp
+Tài khoản: phamthanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+534. Phan Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Hà Huy Giáp
+Tài khoản: phanphuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+535. Bùi Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Hà Huy Giáp
+Tài khoản: buingochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+536. Ngô Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Hà Huy Giáp
+Tài khoản: ngothaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+537. Trương Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Hà Huy Giáp
+Tài khoản: truongngocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+538. Nguyễn Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Hà Huy Giáp
+Tài khoản: nguyenngoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+539. Morning Brew Tô Ký
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 12 | Quán: Morning Brew Tô Ký
+Tài khoản: morningbrewtoky@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+540. Hoàng Minh An
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Tô Ký
+Tài khoản: hoangminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+541. Vũ Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Tô Ký
+Tài khoản: vugiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+542. Bùi Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Tô Ký
+Tài khoản: buithanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+543. Dương Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Tô Ký
+Tài khoản: duongthuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+544. Trương Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Tô Ký
+Tài khoản: truongkimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+545. Trần Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Tô Ký
+Tài khoản: tranminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+546. Hoàng Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Tô Ký
+Tài khoản: hoanganhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+547. Vũ Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Tô Ký
+Tài khoản: vuhoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+548. Đỗ Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Tô Ký
+Tài khoản: dominhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+549. Dương Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Tô Ký
+Tài khoản: duongngocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+550. Morning Brew Dương Thị Mười
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận 12 | Quán: Morning Brew Dương Thị Mười
+Tài khoản: morningbrewduongthimuoi@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+551. Đào Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Dương Thị Mười
+Tài khoản: daohoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+552. Trần Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Dương Thị Mười
+Tài khoản: tranhoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+553. Huỳnh Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Dương Thị Mười
+Tài khoản: huynhgiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+554. Võ Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Dương Thị Mười
+Tài khoản: vodangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+555. Đỗ Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Dương Thị Mười
+Tài khoản: dominhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+556. Lý Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Dương Thị Mười
+Tài khoản: lytrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+557. Đào Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Dương Thị Mười
+Tài khoản: daoducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+558. Lê Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Dương Thị Mười
+Tài khoản: lekhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+559. Huỳnh Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Dương Thị Mười
+Tài khoản: huynhnhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+560. Đặng Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận 12 | Quán: Morning Brew Dương Thị Mười
+Tài khoản: dangducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+561. Morning Brew Quận Bình Tân
+Vai trò: Quản lý khu vực
+Khu vực: Quận Bình Tân | Quán: —
+Tài khoản: morningbrewquanbinhtan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+562. Morning Brew Tên Lửa
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Bình Tân | Quán: Morning Brew Tên Lửa
+Tài khoản: morningbrewtenlua@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+563. Hồ Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Tên Lửa
+Tài khoản: hominhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+564. Lý Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Tên Lửa
+Tài khoản: lyngoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+565. Mai Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Tên Lửa
+Tài khoản: maiquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+566. Lê Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Tên Lửa
+Tài khoản: leminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+567. Phan Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Tên Lửa
+Tài khoản: phantiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+568. Đặng Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Tên Lửa
+Tài khoản: dangkhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+569. Ngô Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Tên Lửa
+Tài khoản: ngotuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+570. Đinh Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Tên Lửa
+Tài khoản: dinhbaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+571. Mai Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Tên Lửa
+Tài khoản: maianhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+572. Phạm Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Tên Lửa
+Tài khoản: phamthanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+573. Morning Brew Kinh Dương Vương
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Bình Tân | Quán: Morning Brew Kinh Dương Vương
+Tài khoản: morningbrewkinhduongvuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+574. Phan Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Kinh Dương Vương
+Tài khoản: phanquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+575. Bùi Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Kinh Dương Vương
+Tài khoản: buithuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+576. Ngô Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Kinh Dương Vương
+Tài khoản: ngohoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+577. Trương Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Kinh Dương Vương
+Tài khoản: truongquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+578. Nguyễn Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Kinh Dương Vương
+Tài khoản: nguyenthanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+579. Phạm Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Kinh Dương Vương
+Tài khoản: phamphuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+580. Vũ Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Kinh Dương Vương
+Tài khoản: vungochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+581. Bùi Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Kinh Dương Vương
+Tài khoản: buithaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+582. Dương Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Kinh Dương Vương
+Tài khoản: duongngocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+583. Trương Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Kinh Dương Vương
+Tài khoản: truongngoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+584. Morning Brew Lê Văn Quới
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Bình Tân | Quán: Morning Brew Lê Văn Quới
+Tài khoản: morningbrewlevanquoi@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+585. Trần Minh An
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Lê Văn Quới
+Tài khoản: tranminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+586. Hoàng Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Lê Văn Quới
+Tài khoản: hoanggiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+587. Vũ Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Lê Văn Quới
+Tài khoản: vuthanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+588. Đỗ Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Lê Văn Quới
+Tài khoản: dothuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+589. Dương Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Lê Văn Quới
+Tài khoản: duongkimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+590. Đào Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Lê Văn Quới
+Tài khoản: daominhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+591. Trần Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Lê Văn Quới
+Tài khoản: trananhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+592. Hoàng Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Lê Văn Quới
+Tài khoản: hoanghoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+593. Võ Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Lê Văn Quới
+Tài khoản: vominhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+594. Đỗ Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Lê Văn Quới
+Tài khoản: dongocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+595. Morning Brew Bình Long
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Bình Tân | Quán: Morning Brew Bình Long
+Tài khoản: morningbrewbinhlong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+596. Lý Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Bình Long
+Tài khoản: lyhoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+597. Đào Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Bình Long
+Tài khoản: daohoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+598. Lê Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Bình Long
+Tài khoản: legiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+599. Huỳnh Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Bình Long
+Tài khoản: huynhdangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+600. Võ Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Bình Long
+Tài khoản: vominhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+601. Hồ Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Bình Long
+Tài khoản: hotrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+602. Lý Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Bình Long
+Tài khoản: lyducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+603. Mai Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Bình Long
+Tài khoản: maikhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+604. Lê Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Bình Long
+Tài khoản: lenhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+605. Phan Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Bình Long
+Tài khoản: phanducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+606. Morning Brew Hồ Học Lãm
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Bình Tân | Quán: Morning Brew Hồ Học Lãm
+Tài khoản: morningbrewhohoclam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+607. Đặng Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Hồ Học Lãm
+Tài khoản: dangminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+608. Hồ Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Hồ Học Lãm
+Tài khoản: hongoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+609. Đinh Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Hồ Học Lãm
+Tài khoản: dinhquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+610. Mai Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Hồ Học Lãm
+Tài khoản: maiminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+611. Phạm Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Hồ Học Lãm
+Tài khoản: phamtiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+612. Phan Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Hồ Học Lãm
+Tài khoản: phankhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+613. Bùi Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Hồ Học Lãm
+Tài khoản: buituananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+614. Ngô Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Hồ Học Lãm
+Tài khoản: ngobaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+615. Đinh Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Hồ Học Lãm
+Tài khoản: dinhanhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+616. Nguyễn Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận Bình Tân | Quán: Morning Brew Hồ Học Lãm
+Tài khoản: nguyenthanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+617. Morning Brew Quận Bình Thạnh
+Vai trò: Quản lý khu vực
+Khu vực: Quận Bình Thạnh | Quán: —
+Tài khoản: morningbrewquanbinhthanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+618. Morning Brew Xô Viết Nghệ Tĩnh
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Xô Viết Nghệ Tĩnh
+Tài khoản: morningbrewxovietnghetinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+619. Phạm Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Xô Viết Nghệ Tĩnh
+Tài khoản: phamquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+620. Vũ Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Xô Viết Nghệ Tĩnh
+Tài khoản: vuthuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+621. Bùi Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Xô Viết Nghệ Tĩnh
+Tài khoản: buihoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+622. Dương Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Xô Viết Nghệ Tĩnh
+Tài khoản: duongquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+623. Trương Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Xô Viết Nghệ Tĩnh
+Tài khoản: truongthanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+624. Nguyễn Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Xô Viết Nghệ Tĩnh
+Tài khoản: nguyenphuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+625. Hoàng Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Xô Viết Nghệ Tĩnh
+Tài khoản: hoangngochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+626. Vũ Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Xô Viết Nghệ Tĩnh
+Tài khoản: vuthaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+627. Đỗ Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Xô Viết Nghệ Tĩnh
+Tài khoản: dongocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+628. Dương Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Xô Viết Nghệ Tĩnh
+Tài khoản: duongngoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+629. Morning Brew Đinh Bộ Lĩnh
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Đinh Bộ Lĩnh
+Tài khoản: morningbrewdinhbolinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+630. Đào Minh An
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Đinh Bộ Lĩnh
+Tài khoản: daominhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+631. Trần Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Đinh Bộ Lĩnh
+Tài khoản: trangiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+632. Hoàng Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Đinh Bộ Lĩnh
+Tài khoản: hoangthanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+633. Võ Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Đinh Bộ Lĩnh
+Tài khoản: vothuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+634. Đỗ Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Đinh Bộ Lĩnh
+Tài khoản: dokimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+635. Lý Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Đinh Bộ Lĩnh
+Tài khoản: lyminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+636. Đào Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Đinh Bộ Lĩnh
+Tài khoản: daoanhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+637. Trần Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Đinh Bộ Lĩnh
+Tài khoản: tranhoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+638. Huỳnh Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Đinh Bộ Lĩnh
+Tài khoản: huynhminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+639. Võ Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Đinh Bộ Lĩnh
+Tài khoản: vongocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+640. Morning Brew Ung Văn Khiêm
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Ung Văn Khiêm
+Tài khoản: morningbrewungvankhiem@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+641. Hồ Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Ung Văn Khiêm
+Tài khoản: hohoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+642. Lý Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Ung Văn Khiêm
+Tài khoản: lyhoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+643. Mai Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Ung Văn Khiêm
+Tài khoản: maigiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+644. Lê Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Ung Văn Khiêm
+Tài khoản: ledangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+645. Huỳnh Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Ung Văn Khiêm
+Tài khoản: huynhminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+646. Đặng Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Ung Văn Khiêm
+Tài khoản: dangtrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+647. Hồ Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Ung Văn Khiêm
+Tài khoản: hoducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+648. Đinh Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Ung Văn Khiêm
+Tài khoản: dinhkhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+649. Mai Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Ung Văn Khiêm
+Tài khoản: mainhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+650. Phạm Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Ung Văn Khiêm
+Tài khoản: phamducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+651. Morning Brew Nguyễn Gia Trí
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Nguyễn Gia Trí
+Tài khoản: morningbrewnguyengiatri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+652. Phan Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Nguyễn Gia Trí
+Tài khoản: phanminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+653. Đặng Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Nguyễn Gia Trí
+Tài khoản: dangngoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+654. Ngô Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Nguyễn Gia Trí
+Tài khoản: ngoquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+655. Đinh Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Nguyễn Gia Trí
+Tài khoản: dinhminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+656. Nguyễn Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Nguyễn Gia Trí
+Tài khoản: nguyentiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+657. Phạm Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Nguyễn Gia Trí
+Tài khoản: phamkhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+658. Vũ Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Nguyễn Gia Trí
+Tài khoản: vutuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+659. Bùi Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Nguyễn Gia Trí
+Tài khoản: buibaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+660. Ngô Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Nguyễn Gia Trí
+Tài khoản: ngoanhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+661. Trương Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Nguyễn Gia Trí
+Tài khoản: truongthanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+662. Morning Brew Bình Quới
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Bình Quới
+Tài khoản: morningbrewbinhquoi@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+663. Nguyễn Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Bình Quới
+Tài khoản: nguyenquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+664. Hoàng Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Bình Quới
+Tài khoản: hoangthuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+665. Vũ Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Bình Quới
+Tài khoản: vuhoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+666. Đỗ Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Bình Quới
+Tài khoản: doquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+667. Dương Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Bình Quới
+Tài khoản: duongthanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+668. Trương Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Bình Quới
+Tài khoản: truongphuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+669. Trần Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Bình Quới
+Tài khoản: tranngochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+670. Hoàng Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Bình Quới
+Tài khoản: hoangthaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+671. Võ Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Bình Quới
+Tài khoản: vongocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+672. Đỗ Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận Bình Thạnh | Quán: Morning Brew Bình Quới
+Tài khoản: dongoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+673. Morning Brew Quận Gò Vấp
+Vai trò: Quản lý khu vực
+Khu vực: Quận Gò Vấp | Quán: —
+Tài khoản: morningbrewquangovap@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+674. Morning Brew Quang Trung
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Quang Trung
+Tài khoản: morningbrewquangtrung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+675. Lý Minh An
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Quang Trung
+Tài khoản: lyminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+676. Đào Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Quang Trung
+Tài khoản: daogiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+677. Trần Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Quang Trung
+Tài khoản: tranthanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+678. Huỳnh Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Quang Trung
+Tài khoản: huynhthuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+679. Võ Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Quang Trung
+Tài khoản: vokimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+680. Hồ Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Quang Trung
+Tài khoản: hominhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+681. Lý Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Quang Trung
+Tài khoản: lyanhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+682. Đào Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Quang Trung
+Tài khoản: daohoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+683. Lê Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Quang Trung
+Tài khoản: leminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+684. Huỳnh Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Quang Trung
+Tài khoản: huynhngocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+685. Morning Brew Phan Văn Trị
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Phan Văn Trị
+Tài khoản: morningbrewphanvantri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+686. Đặng Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Phan Văn Trị
+Tài khoản: danghoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+687. Hồ Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Phan Văn Trị
+Tài khoản: hohoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+688. Đinh Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Phan Văn Trị
+Tài khoản: dinhgiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+689. Mai Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Phan Văn Trị
+Tài khoản: maidangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+690. Lê Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Phan Văn Trị
+Tài khoản: leminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+691. Phan Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Phan Văn Trị
+Tài khoản: phantrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+692. Đặng Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Phan Văn Trị
+Tài khoản: dangducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+693. Ngô Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Phan Văn Trị
+Tài khoản: ngokhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+694. Đinh Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Phan Văn Trị
+Tài khoản: dinhnhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+695. Nguyễn Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Phan Văn Trị
+Tài khoản: nguyenducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+696. Morning Brew Nguyễn Oanh
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Oanh
+Tài khoản: morningbrewnguyenoanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+697. Phạm Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Oanh
+Tài khoản: phamminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+698. Phan Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Oanh
+Tài khoản: phanngoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+699. Bùi Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Oanh
+Tài khoản: buiquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+700. Ngô Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Oanh
+Tài khoản: ngominhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+701. Trương Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Oanh
+Tài khoản: truongtiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+702. Nguyễn Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Oanh
+Tài khoản: nguyenkhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+703. Hoàng Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Oanh
+Tài khoản: hoangtuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+704. Vũ Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Oanh
+Tài khoản: vubaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+705. Bùi Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Oanh
+Tài khoản: buianhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+706. Dương Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Oanh
+Tài khoản: duongthanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+707. Morning Brew Lê Đức Thọ
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Lê Đức Thọ
+Tài khoản: morningbrewleductho@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+708. Trương Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Lê Đức Thọ
+Tài khoản: truongquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+709. Trần Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Lê Đức Thọ
+Tài khoản: tranthuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+710. Hoàng Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Lê Đức Thọ
+Tài khoản: hoanghoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+711. Võ Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Lê Đức Thọ
+Tài khoản: voquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+712. Đỗ Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Lê Đức Thọ
+Tài khoản: dothanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+713. Dương Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Lê Đức Thọ
+Tài khoản: duongphuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+714. Đào Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Lê Đức Thọ
+Tài khoản: daongochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+715. Trần Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Lê Đức Thọ
+Tài khoản: tranthaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+716. Huỳnh Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Lê Đức Thọ
+Tài khoản: huynhngocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+717. Võ Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Lê Đức Thọ
+Tài khoản: vongoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+718. Morning Brew Nguyễn Văn Lượng
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Văn Lượng
+Tài khoản: morningbrewnguyenvanluong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+719. Hồ Minh An
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Văn Lượng
+Tài khoản: hominhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+720. Lý Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Văn Lượng
+Tài khoản: lygiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+721. Đào Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Văn Lượng
+Tài khoản: daothanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+722. Lê Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Văn Lượng
+Tài khoản: lethuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+723. Huỳnh Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Văn Lượng
+Tài khoản: huynhkimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+724. Đặng Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Văn Lượng
+Tài khoản: dangminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+725. Hồ Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Văn Lượng
+Tài khoản: hoanhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+726. Lý Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Văn Lượng
+Tài khoản: lyhoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+727. Mai Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Văn Lượng
+Tài khoản: maiminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+728. Lê Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận Gò Vấp | Quán: Morning Brew Nguyễn Văn Lượng
+Tài khoản: lengocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+729. Morning Brew Quận Phú Nhuận
+Vai trò: Quản lý khu vực
+Khu vực: Quận Phú Nhuận | Quán: —
+Tài khoản: morningbrewquanphunhuan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+730. Morning Brew Phan Xích Long
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Xích Long
+Tài khoản: morningbrewphanxichlong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+731. Phan Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Xích Long
+Tài khoản: phanhoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+732. Đặng Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Xích Long
+Tài khoản: danghoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+733. Ngô Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Xích Long
+Tài khoản: ngogiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+734. Đinh Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Xích Long
+Tài khoản: dinhdangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+735. Mai Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Xích Long
+Tài khoản: maiminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+736. Phạm Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Xích Long
+Tài khoản: phamtrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+737. Phan Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Xích Long
+Tài khoản: phanducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+738. Bùi Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Xích Long
+Tài khoản: buikhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+739. Ngô Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Xích Long
+Tài khoản: ngonhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+740. Trương Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Xích Long
+Tài khoản: truongducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+741. Morning Brew Phan Đăng Lưu
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Đăng Lưu
+Tài khoản: morningbrewphandangluu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+742. Nguyễn Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Đăng Lưu
+Tài khoản: nguyenminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+743. Phạm Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Đăng Lưu
+Tài khoản: phamngoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+744. Vũ Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Đăng Lưu
+Tài khoản: vuquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+745. Bùi Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Đăng Lưu
+Tài khoản: buiminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+746. Dương Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Đăng Lưu
+Tài khoản: duongtiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+747. Trương Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Đăng Lưu
+Tài khoản: truongkhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+748. Trần Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Đăng Lưu
+Tài khoản: trantuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+749. Hoàng Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Đăng Lưu
+Tài khoản: hoangbaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+750. Vũ Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Đăng Lưu
+Tài khoản: vuanhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+751. Đỗ Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Phan Đăng Lưu
+Tài khoản: dothanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+752. Morning Brew Huỳnh Văn Bánh
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Huỳnh Văn Bánh
+Tài khoản: morningbrewhuynhvanbanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+753. Dương Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Huỳnh Văn Bánh
+Tài khoản: duongquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+754. Đào Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Huỳnh Văn Bánh
+Tài khoản: daothuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+755. Trần Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Huỳnh Văn Bánh
+Tài khoản: tranhoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+756. Huỳnh Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Huỳnh Văn Bánh
+Tài khoản: huynhquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+757. Võ Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Huỳnh Văn Bánh
+Tài khoản: vothanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+758. Đỗ Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Huỳnh Văn Bánh
+Tài khoản: dophuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+759. Lý Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Huỳnh Văn Bánh
+Tài khoản: lyngochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+760. Đào Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Huỳnh Văn Bánh
+Tài khoản: daothaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+761. Lê Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Huỳnh Văn Bánh
+Tài khoản: lengocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+762. Huỳnh Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Huỳnh Văn Bánh
+Tài khoản: huynhngoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+763. Morning Brew Hoa Sứ
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Hoa Sứ
+Tài khoản: morningbrewhoasu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+764. Đặng Minh An
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Hoa Sứ
+Tài khoản: dangminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+765. Hồ Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Hoa Sứ
+Tài khoản: hogiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+766. Lý Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Hoa Sứ
+Tài khoản: lythanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+767. Mai Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Hoa Sứ
+Tài khoản: maithuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+768. Lê Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Hoa Sứ
+Tài khoản: lekimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+769. Phan Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Hoa Sứ
+Tài khoản: phanminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+770. Đặng Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Hoa Sứ
+Tài khoản: danganhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+771. Hồ Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Hoa Sứ
+Tài khoản: hohoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+772. Đinh Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Hoa Sứ
+Tài khoản: dinhminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+773. Mai Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Hoa Sứ
+Tài khoản: maingocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+774. Morning Brew Trương Quốc Dung
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Trương Quốc Dung
+Tài khoản: morningbrewtruongquocdung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+775. Phạm Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Trương Quốc Dung
+Tài khoản: phamhoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+776. Phan Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Trương Quốc Dung
+Tài khoản: phanhoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+777. Bùi Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Trương Quốc Dung
+Tài khoản: buigiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+778. Ngô Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Trương Quốc Dung
+Tài khoản: ngodangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+779. Đinh Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Trương Quốc Dung
+Tài khoản: dinhminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+780. Nguyễn Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Trương Quốc Dung
+Tài khoản: nguyentrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+781. Phạm Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Trương Quốc Dung
+Tài khoản: phamducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+782. Vũ Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Trương Quốc Dung
+Tài khoản: vukhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+783. Bùi Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Trương Quốc Dung
+Tài khoản: buinhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+784. Dương Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận Phú Nhuận | Quán: Morning Brew Trương Quốc Dung
+Tài khoản: duongducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+785. Morning Brew Quận Tân Bình
+Vai trò: Quản lý khu vực
+Khu vực: Quận Tân Bình | Quán: —
+Tài khoản: morningbrewquantanbinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+786. Morning Brew Cộng Hòa
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Tân Bình | Quán: Morning Brew Cộng Hòa
+Tài khoản: morningbrewconghoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+787. Trương Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Cộng Hòa
+Tài khoản: truongminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+788. Nguyễn Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Cộng Hòa
+Tài khoản: nguyenngoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+789. Hoàng Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Cộng Hòa
+Tài khoản: hoangquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+790. Vũ Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Cộng Hòa
+Tài khoản: vuminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+791. Đỗ Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Cộng Hòa
+Tài khoản: dotiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+792. Dương Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Cộng Hòa
+Tài khoản: duongkhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+793. Đào Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Cộng Hòa
+Tài khoản: daotuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+794. Trần Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Cộng Hòa
+Tài khoản: tranbaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+795. Hoàng Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Cộng Hòa
+Tài khoản: hoanganhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+796. Võ Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Cộng Hòa
+Tài khoản: vothanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+797. Morning Brew Hoàng Văn Thụ
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Tân Bình | Quán: Morning Brew Hoàng Văn Thụ
+Tài khoản: morningbrewhoangvanthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+798. Đỗ Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Hoàng Văn Thụ
+Tài khoản: doquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+799. Lý Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Hoàng Văn Thụ
+Tài khoản: lythuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+800. Đào Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Hoàng Văn Thụ
+Tài khoản: daohoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+801. Lê Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Hoàng Văn Thụ
+Tài khoản: lequocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+802. Huỳnh Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Hoàng Văn Thụ
+Tài khoản: huynhthanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+803. Võ Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Hoàng Văn Thụ
+Tài khoản: vophuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+804. Hồ Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Hoàng Văn Thụ
+Tài khoản: hongochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+805. Lý Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Hoàng Văn Thụ
+Tài khoản: lythaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+806. Mai Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Hoàng Văn Thụ
+Tài khoản: maingocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+807. Lê Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Hoàng Văn Thụ
+Tài khoản: lengoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+808. Morning Brew Trường Sơn
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Tân Bình | Quán: Morning Brew Trường Sơn
+Tài khoản: morningbrewtruongson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+809. Phan Minh An
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Trường Sơn
+Tài khoản: phanminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+810. Đặng Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Trường Sơn
+Tài khoản: danggiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+811. Hồ Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Trường Sơn
+Tài khoản: hothanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+812. Đinh Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Trường Sơn
+Tài khoản: dinhthuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+813. Mai Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Trường Sơn
+Tài khoản: maikimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+814. Phạm Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Trường Sơn
+Tài khoản: phamminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+815. Phan Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Trường Sơn
+Tài khoản: phananhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+816. Đặng Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Trường Sơn
+Tài khoản: danghoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+817. Ngô Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Trường Sơn
+Tài khoản: ngominhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+818. Đinh Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Trường Sơn
+Tài khoản: dinhngocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+819. Morning Brew Bàu Cát
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Tân Bình | Quán: Morning Brew Bàu Cát
+Tài khoản: morningbrewbaucat@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+820. Nguyễn Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Bàu Cát
+Tài khoản: nguyenhoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+821. Phạm Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Bàu Cát
+Tài khoản: phamhoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+822. Vũ Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Bàu Cát
+Tài khoản: vugiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+823. Bùi Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Bàu Cát
+Tài khoản: buidangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+824. Ngô Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Bàu Cát
+Tài khoản: ngominhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+825. Trương Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Bàu Cát
+Tài khoản: truongtrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+826. Nguyễn Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Bàu Cát
+Tài khoản: nguyenducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+827. Hoàng Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Bàu Cát
+Tài khoản: hoangkhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+828. Vũ Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Bàu Cát
+Tài khoản: vunhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+829. Đỗ Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Bàu Cát
+Tài khoản: doducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+830. Morning Brew Út Tịch
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Tân Bình | Quán: Morning Brew Út Tịch
+Tài khoản: morningbrewuttich@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+831. Dương Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Út Tịch
+Tài khoản: duongminhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+832. Trương Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Út Tịch
+Tài khoản: truongngoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+833. Trần Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Út Tịch
+Tài khoản: tranquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+834. Hoàng Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Út Tịch
+Tài khoản: hoangminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+835. Võ Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Út Tịch
+Tài khoản: votiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+836. Đỗ Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Út Tịch
+Tài khoản: dokhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+837. Lý Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Út Tịch
+Tài khoản: lytuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+838. Đào Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Út Tịch
+Tài khoản: daobaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+839. Trần Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Út Tịch
+Tài khoản: trananhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+840. Huỳnh Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận Tân Bình | Quán: Morning Brew Út Tịch
+Tài khoản: huynhthanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+841. Morning Brew Quận Tân Phú
+Vai trò: Quản lý khu vực
+Khu vực: Quận Tân Phú | Quán: —
+Tài khoản: morningbrewquantanphu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+842. Morning Brew Tân Sơn Nhì
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Sơn Nhì
+Tài khoản: morningbrewtansonnhi@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+843. Võ Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Sơn Nhì
+Tài khoản: voquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+844. Hồ Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Sơn Nhì
+Tài khoản: hothuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+845. Lý Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Sơn Nhì
+Tài khoản: lyhoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+846. Mai Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Sơn Nhì
+Tài khoản: maiquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+847. Lê Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Sơn Nhì
+Tài khoản: lethanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+848. Huỳnh Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Sơn Nhì
+Tài khoản: huynhphuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+849. Đặng Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Sơn Nhì
+Tài khoản: dangngochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+850. Hồ Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Sơn Nhì
+Tài khoản: hothaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+851. Đinh Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Sơn Nhì
+Tài khoản: dinhngocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+852. Mai Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Sơn Nhì
+Tài khoản: maingoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+853. Morning Brew Lũy Bán Bích
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Tân Phú | Quán: Morning Brew Lũy Bán Bích
+Tài khoản: morningbrewluybanbich@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+854. Phạm Minh An
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Lũy Bán Bích
+Tài khoản: phamminhan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+855. Phan Gia Huy
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Lũy Bán Bích
+Tài khoản: phangiahuy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+856. Đặng Thanh Sơn
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Lũy Bán Bích
+Tài khoản: dangthanhson@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+857. Ngô Thu Hà
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Lũy Bán Bích
+Tài khoản: ngothuha@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+858. Đinh Kim Ngân
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Lũy Bán Bích
+Tài khoản: dinhkimngan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+859. Nguyễn Minh Châu
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Lũy Bán Bích
+Tài khoản: nguyenminhchau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+860. Phạm Anh Kiệt
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Lũy Bán Bích
+Tài khoản: phamanhkiet@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+861. Phan Hoàng Yến
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Lũy Bán Bích
+Tài khoản: phanhoangyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+862. Bùi Minh Hoàng
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Lũy Bán Bích
+Tài khoản: buiminhhoang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+863. Ngô Ngọc Quỳnh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Lũy Bán Bích
+Tài khoản: ngongocquynh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+864. Morning Brew Tân Kỳ Tân Quý
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Kỳ Tân Quý
+Tài khoản: morningbrewtankytanquy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+865. Trương Hoàng Giang
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Kỳ Tân Quý
+Tài khoản: truonghoanggiang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+866. Nguyễn Hoài Nam
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Kỳ Tân Quý
+Tài khoản: nguyenhoainam@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+867. Hoàng Gia Bảo
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Kỳ Tân Quý
+Tài khoản: hoanggiabao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+868. Vũ Đăng Khoa
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Kỳ Tân Quý
+Tài khoản: vudangkhoa@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+869. Bùi Minh Trí
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Kỳ Tân Quý
+Tài khoản: buiminhtri@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+870. Dương Trung Hiếu
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Kỳ Tân Quý
+Tài khoản: duongtrunghieu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+871. Trương Đức Quân
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Kỳ Tân Quý
+Tài khoản: truongducquan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+872. Trần Khánh Duy
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Kỳ Tân Quý
+Tài khoản: trankhanhduy@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+873. Hoàng Nhật Minh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Kỳ Tân Quý
+Tài khoản: hoangnhatminh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+874. Võ Đức Bảo
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tân Kỳ Tân Quý
+Tài khoản: voducbao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+875. Morning Brew Gò Dầu
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Tân Phú | Quán: Morning Brew Gò Dầu
+Tài khoản: morningbrewgodau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+876. Đỗ Minh Khánh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Gò Dầu
+Tài khoản: dominhkhanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+877. Dương Ngọc Trâm
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Gò Dầu
+Tài khoản: duongngoctram@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+878. Đào Quang Hậu
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Gò Dầu
+Tài khoản: daoquanghau@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+879. Trần Minh Phúc
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Gò Dầu
+Tài khoản: tranminhphuc@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+880. Huỳnh Tiến Dũng
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Gò Dầu
+Tài khoản: huynhtiendung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+881. Võ Khánh Linh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Gò Dầu
+Tài khoản: vokhanhlinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+882. Hồ Tuấn Anh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Gò Dầu
+Tài khoản: hotuananh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+883. Lý Bảo Khang
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Gò Dầu
+Tài khoản: lybaokhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+884. Đào Anh Thư
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Gò Dầu
+Tài khoản: daoanhthu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+885. Lê Thanh Hằng
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Gò Dầu
+Tài khoản: lethanhhang@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+886. Morning Brew Tây Thạnh
+Vai trò: Quản lý chi nhánh
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tây Thạnh
+Tài khoản: morningbrewtaythanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+887. Huỳnh Quỳnh Như
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tây Thạnh
+Tài khoản: huynhquynhnhu@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+888. Đặng Thùy Dung
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tây Thạnh
+Tài khoản: dangthuydung@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+889. Hồ Hoàng Linh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tây Thạnh
+Tài khoản: hohoanglinh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+890. Đinh Quốc Anh
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tây Thạnh
+Tài khoản: dinhquocanh@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+891. Mai Thanh Hương
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tây Thạnh
+Tài khoản: maithanhhuong@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+892. Lê Phương Thảo
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tây Thạnh
+Tài khoản: lephuongthao@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+893. Phan Ngọc Hân
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tây Thạnh
+Tài khoản: phanngochan@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+894. Đặng Thảo Nguyên
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tây Thạnh
+Tài khoản: dangthaonguyen@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+895. Ngô Ngọc Diệp
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tây Thạnh
+Tài khoản: ngongocdiep@morningbrew.test
+Mật khẩu: MorningBrew!2026
+
+896. Đinh Ngọc Lan
+Vai trò: Nhân viên
+Khu vực: Quận Tân Phú | Quán: Morning Brew Tây Thạnh
+Tài khoản: dinhngoclan@morningbrew.test
+Mật khẩu: MorningBrew!2026

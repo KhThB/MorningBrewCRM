@@ -8,43 +8,7 @@ public record ApiPage<T>(List<T> Items, string? NextPageToken);
 public record IdentityInfo(int Id, string Email, string FullName, string Role);
 public record LoginResponse(string Token, DateTimeOffset ExpiresAt, IdentityInfo User);
 
-public record Profile(
-    int CustomerId, string FullName, string Email, string? Phone, string? DateOfBirth,
-    string? Gender, int LoyaltyPoints, DateTimeOffset? CreatedAt, string Etag)
-{
-    public DateOnly? Birthday =>
-        DateOfBirth is { Length: >= 10 } && DateOnly.TryParse(DateOfBirth[..10], out var d) ? d : null;
-}
-
-public record LoyaltyTransaction(int LoyaltyTransactionId, string Kind, int Points, string? Note, DateTimeOffset CreatedAt);
-
-public record Voucher(
-    int CustomerPromotionId, string Name, string? Code, string Status, string DiscountType,
-    decimal DiscountValue, int? PointsSpent, DateTimeOffset? ExpiresAt);
-
-public record Promotion(
-    int PromotionId, string Name, string? Description, string? Scope, string DiscountType,
-    decimal DiscountValue, decimal? MaxDiscount, decimal MinSubtotal, int? PointsCost, DateTimeOffset? EndsAt);
-
-public record Feedback(
-    int FeedbackId, string Type, string Content, int? Rating, string Status,
-    string? ResponseContent, DateTimeOffset CreatedAt);
-
-public record SurveyItem(
-    int SurveyId, string Title, string? Description, string Status,
-    DateTimeOffset? StartsAt, DateTimeOffset? EndsAt, DateTimeOffset? CompletedAt)
-{
-    public bool IsDone => CompletedAt is not null;
-    public bool IsExpired => Status != "Open" || (EndsAt is not null && EndsAt <= DateTimeOffset.UtcNow)
-                             || (StartsAt is not null && StartsAt > DateTimeOffset.UtcNow);
-    public bool CanAnswer => !IsDone && !IsExpired;
-}
-
-public record SurveyQuestion(int QuestionId, string Text, string Type, bool IsRequired, int? RatingMin, int? RatingMax);
-public record SurveyOption(int OptionId, int QuestionId, string Text);
-public record SurveyDetail(List<SurveyQuestion> Questions, List<SurveyOption> Options);
-
-public record Preference(int ProductId, string Name);
+// [CLEAN-04] Bỏ các kiểu chỉ app khách dùng (Profile, Voucher, Promotion, Survey…, Feedback, Preference, Checkout, MenuData, OrderHistoryItem).
 
 // ===== Thực đơn & đơn hàng =====
 
@@ -61,9 +25,7 @@ public record MenuResponse(Branch Branch, List<MenuProduct> Items, List<MenuModi
 
 public record MenuProduct(
     int ProductId, string Name, string? Description, int CategoryId, string Category,
-    int VariantId, string VariantName, decimal Price, bool IsAvailable = true, bool IsDemo = false, string? ImageUrl = null);
-
-public record MenuData(Branch Branch, List<MenuProduct> Items, bool IsDemo, List<MenuModifier>? Modifiers = null); // [BUG-01] thêm Modifiers
+    int VariantId, string VariantName, decimal Price, bool IsAvailable = true, string? ImageUrl = null);
 
 // [BUG-02] Dòng giỏ hàng có tùy chọn (đường, đá, topping); cùng món + cùng tùy chọn thì gộp số lượng.
 public record CartLine(MenuProduct Item, int Quantity, IReadOnlyList<MenuModifier>? Options = null)
@@ -78,19 +40,12 @@ public record CartLine(MenuProduct Item, int Quantity, IReadOnlyList<MenuModifie
 public record OrderLine(int ProductId, int VariantId, string Name, string VariantName, int Quantity, decimal UnitPrice,
     string? Options = null, decimal LineTotal = 0); // [BUG-02] thêm tùy chọn và thành tiền
 
-public record OrderHistoryItem(string? FromStatus, string ToStatus, string? Reason, DateTimeOffset CreatedAt, string? ChangedByName); // [BUG-02]
-
-/// <summary>[BUG-02] Thông tin khi đặt hàng: nhận tại quầy / giao hàng, trả trước / tiền mặt.</summary>
-public record Checkout(string Fulfillment, string PaymentMode, string? ContactName, string? ContactPhone,
-    string? DeliveryAddress, string? DeliveryNote, string? Note);
-
 // [BUG-02] Đơn hàng thật từ GET v1/me/orders (trước đây chỉ là đơn mô phỏng trong bộ nhớ app).
 public class Order
 {
     public int OrderId { get; set; }
     public string OrderCode { get; set; } = "";
     public int BranchId { get; set; }
-    public string BranchName { get; set; } = "";
     public string Status { get; set; } = "Pending";
     public string Fulfillment { get; set; } = "Pickup";
     public string PaymentMode { get; set; } = "Prepaid";
@@ -102,21 +57,15 @@ public class Order
     public decimal TotalAmount { get; set; }
     public decimal Total => TotalAmount;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-    public DateTimeOffset? PaymentDueAt { get; set; }
     public string? ContactName { get; set; }
     public string? ContactPhone { get; set; }
     public string? DeliveryAddress { get; set; }
-    public string? DeliveryStatus { get; set; }
     public string? CourierName { get; set; }
     public string? CourierPhone { get; set; }
     public string? Note { get; set; }
     public string? ItemsText { get; set; }
     public List<OrderLine> Lines { get; set; } = [];
-    public List<OrderHistoryItem> History { get; set; } = [];
-    public bool IsDemo { get; set; }
-    public bool FeedbackSent { get; set; }
     public bool IsPaid => PaymentStatus == "Succeeded";
-    public bool CanPay => Status == "AwaitingPayment" && PaymentMode == "Prepaid" && PaymentStatus != "Pending";
     public bool CanCancel => Status is "AwaitingPayment" or "Pending";
     public string Summary => Lines.Count > 0 ? string.Join(", ", Lines.Select(l => $"{l.Quantity}× {l.Name}")) : ItemsText ?? "";
 }

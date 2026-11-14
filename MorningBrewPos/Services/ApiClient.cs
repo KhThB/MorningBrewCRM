@@ -7,9 +7,7 @@ namespace MorningBrew.Pos.Services;
 
 public sealed class ApiException(int status, string message) : Exception(message)
 {
-    public int Status { get; } = status;
-    /// <summary>404/405: endpoint chưa có trên server (dùng để bật chế độ dữ liệu mẫu).</summary>
-    public bool IsMissingEndpoint => Status is 404 or 405;
+    public int Status { get; } = status; // [CLEAN-04] bỏ IsMissingEndpoint (không dùng)
 }
 
 public static class ApiSettings
@@ -111,11 +109,7 @@ public sealed class ApiClient(HttpClient http)
     private static string? Translate(string? message) => message switch
     {
         null => null,
-        "Survey is not open." => "Khảo sát đã đóng hoặc hết hạn.",
-        "Required question is missing." => "Bạn chưa trả lời hết các câu bắt buộc.",
-        "Answer type or rating bounds are invalid." => "Câu trả lời chưa hợp lệ.",
-        "Feedback cannot be blank." => "Nội dung phản hồi không được để trống.",
-        "Product does not occur in this order." => "Sản phẩm không có trong đơn này.",
+        // [CLEAN-04] bỏ các câu dịch của khảo sát / phản hồi (chỉ app khách gặp)
         _ => message
     };
 }

@@ -39,6 +39,72 @@ public static class RowDisplay
         ["Service"]="Dịch vụ",["Product"]="Sản phẩm",["Space"]="Không gian",["Earn"]="Tích điểm",["Redeem"]="Đổi điểm",["Reverse"]="Hoàn tác điểm",["Adjust"]="Điều chỉnh",
         ["Import"]="Nhập kho",["Export"]="Xuất dùng",["Waste"]="Hủy / hư hỏng" // [KHO]
     };
+    // [AUD-01] Nhật ký thao tác: ghi rõ mỗi mã thao tác làm gì (trước đây chỉ hiện mã kỹ thuật như "Account.Role").
+    // Mã gốc giữ trong ngoặc để vẫn tìm được bằng ô tìm kiếm của trang Nhật ký hệ thống.
+    private static readonly Dictionary<string,string> Actions=new()
+    {
+        ["Account.Create"]="Tạo tài khoản nội bộ mới",
+        ["Account.Role"]="Đổi vai trò của tài khoản",
+        ["Account.Status"]="Khóa / mở khóa tài khoản",
+        ["Account.ResetPassword"]="Đặt lại mật khẩu cho tài khoản (đăng xuất mọi thiết bị)",
+        ["Account.ChangePassword"]="Người dùng tự đổi mật khẩu",
+        ["Account.SoftDelete"]="Xóa tài khoản (ẩn danh dữ liệu cá nhân, giữ lịch sử đơn)",
+        ["Customer.Register"]="Khách tự đăng ký tài khoản trên app",
+        ["Customer.Status"]="Khóa / mở khóa tài khoản khách hàng",
+        ["Permission.Change"]="Cấp / thu hồi một quyền của vai trò",
+        ["Product.Create"]="Thêm sản phẩm mới vào thực đơn",
+        ["Product.Image"]="Cập nhật ảnh sản phẩm",
+        ["Product.Availability"]="Đánh dấu sản phẩm còn hàng / tạm hết",
+        ["Variant.Price"]="Đổi giá bán của một size (áp dụng cho đơn mới)",
+        ["Menu.Price"]="Đổi giá bán tại cửa hàng",
+        ["Order.Create"]="Tạo đơn hàng mới (app hoặc POS)",
+        ["Order.Advance"]="Chuyển đơn sang trạng thái tiếp theo",
+        ["Order.Cancel"]="Hủy đơn hàng",
+        ["Payment.Simulate"]="Ghi nhận kết quả thanh toán (mô phỏng / thu tiền mặt)",
+        ["Refund.Simulate"]="Ghi nhận kết quả hoàn tiền",
+        ["Delivery.Update"]="Cập nhật giao hàng (người giao, giao thất bại / giao lại)",
+        ["Loyalty.Adjust"]="Điều chỉnh điểm thành viên bằng tay",
+        ["Promotion.Create"]="Tạo chương trình ưu đãi",
+        ["Voucher.Issue"]="Phát voucher cho khách (tặng hoặc đổi điểm)",
+        ["Feedback.Handle"]="Trả lời / đổi trạng thái phản hồi của khách",
+        ["Survey.Create"]="Tạo khảo sát (bản nháp)",
+        ["Survey.Update"]="Sửa khảo sát bản nháp",
+        ["Survey.Delete"]="Xóa khảo sát bản nháp",
+        ["Survey.Publish"]="Phát hành khảo sát cho khách",
+        ["Survey.InviteBulk"]="Mời khách làm khảo sát theo nhóm",
+        ["Survey.Close"]="Đóng khảo sát",
+        ["Inventory.Transaction"]="Lập phiếu kho (nhập / xuất / hủy / kiểm kê), cập nhật tồn",
+        ["Database.Backup"]="Sao lưu cơ sở dữ liệu (tạo file .bak)",
+        ["Database.Restore"]="Phục hồi cơ sở dữ liệu từ file .bak",
+        ["Database.BackupDelete"]="Xóa một file sao lưu"
+    };
+    // [AUD-01] Bảng bị tác động, ghi tiếng Việt.
+    private static readonly Dictionary<string,string> Entities=new()
+    {
+        ["Users"]="Tài khoản",["Customers"]="Khách hàng",["RolePermissions"]="Phân quyền",["Products"]="Sản phẩm",
+        ["ProductVariants"]="Size / giá",["Orders"]="Đơn hàng",["PaymentAttempts"]="Thanh toán",["Refunds"]="Hoàn tiền",
+        ["Deliveries"]="Giao hàng",["Promotions"]="Chương trình ưu đãi",["CustomerPromotions"]="Voucher",["Feedbacks"]="Phản hồi",
+        ["Surveys"]="Khảo sát",["Ingredients"]="Nguyên liệu",["Database"]="Cơ sở dữ liệu"
+    };
+    // [AUD-01] Giá trị thường gặp trong cột Chi tiết của nhật ký.
+    private static readonly Dictionary<string,string> DetailWords=new()
+    {
+        ["True"]="cho phép",["False"]="thu hồi",["InStock"]="Còn hàng",["OutOfStock"]="Tạm hết",["Succeeded"]="Thành công",["Failed"]="Thất bại",
+        ["Pending"]="Chờ xử lý",["Confirmed"]="Đã xác nhận",["Preparing"]="Đang pha chế",["Ready"]="Sẵn sàng",["Delivering"]="Đang giao",
+        ["Completed"]="Hoàn tất",["Cancelled"]="Đã hủy",["Delivered"]="Đã giao",["Assigned"]="Đã có người giao"
+    };
+    private static string Word(string w)=>Values.TryGetValue(w,out var v)?v:DetailWords.GetValueOrDefault(w,w);
+    public static string Action(string code)=>Actions.TryGetValue(code,out var text)?$"{text} ({code})":code; // [AUD-01]
+    public static string Detail(string text) // [AUD-01]
+    {
+        var role=System.Text.RegularExpressions.Regex.Match(text,@"^(\w+)->(\w+)$");
+        if(role.Success)return $"{Word(role.Groups[1].Value)} → {Word(role.Groups[2].Value)}";
+        var perm=System.Text.RegularExpressions.Regex.Match(text,@"^(\w+):([\w.]+):(True|False)$");
+        if(perm.Success)return $"{Word(perm.Groups[1].Value)}: {Word(perm.Groups[3].Value)} quyền {perm.Groups[2].Value}";
+        var status=System.Text.RegularExpressions.Regex.Match(text,@"^(\w+): (.*)$");
+        if(status.Success&&DetailWords.ContainsKey(status.Groups[1].Value))return $"{Word(status.Groups[1].Value)}: {status.Groups[2].Value}";
+        return Word(text);
+    }
     public static string Label(string key)=>Names.GetValueOrDefault(key,key);
     public static string Value(string key,JsonElement value)
     {
@@ -53,6 +119,9 @@ public static class RowDisplay
         if((key.EndsWith("_time")||key.EndsWith("_at"))&&DateTimeOffset.TryParse(text,CultureInfo.InvariantCulture,DateTimeStyles.AssumeUniversal,out var time))
             return time.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss");
         if(key is "status" or "scope" or "role" or "gender" or "kind" or "type")return Values.GetValueOrDefault(text,text);
+        if(key=="action")return Action(text);                         // [AUD-01]
+        if(key=="entity_type")return Entities.GetValueOrDefault(text,text); // [AUD-01]
+        if(key=="details")return Detail(text);                         // [AUD-01]
         return text;
     }
 }

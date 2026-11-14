@@ -97,14 +97,21 @@
 else if (order?.CanCancel == true)
 {
     <div class="footer-bar">
-        <button class="btn btn-outline block" disabled="@busy" @onclick="Cancel">Hủy đơn</button>
+        @* [APP-03] Mở hộp xác nhận thay vì hủy ngay *@
+        <button class="btn btn-outline block" disabled="@busy" @onclick="() => confirmCancel = true">Hủy đơn</button>
     </div>
 }
+
+@* [APP-03] Xác nhận hủy đơn; đơn đã thanh toán thì báo trước sẽ tạo yêu cầu hoàn tiền *@
+<ConfirmSheet @bind-Open="confirmCancel" Title="@($"Hủy đơn {order?.OrderCode}?")" Danger="true" Busy="busy"
+              ConfirmText="Hủy đơn" CancelText="Giữ đơn" OnConfirm="Cancel"
+              Message="@(order?.IsPaid == true ? "Đơn đã thanh toán: cửa hàng sẽ tạo yêu cầu hoàn tiền cho bạn." : "Đơn sẽ bị hủy và không thể khôi phục.")" />
 
 @code {
     [Parameter] public int Id { get; set; }
     private Order? order;
     private bool loading = true, busy;
+    private bool confirmCancel; // [APP-03]
     private string? error;
     private System.Threading.Timer? timer;
 
@@ -142,9 +149,10 @@ else if (order?.CanCancel == true)
     private async Task Cancel()
     {
         busy = true;
-        try { order = await Shop.CancelAsync(Id, "Khách hủy trên app"); Toasts.Show("Đã hủy đơn."); }
+        try { order = await Shop.CancelAsync(Id, "Khách hủy trên app"); Toasts.Show(order.IsPaid ? "Đã hủy đơn. Yêu cầu hoàn tiền đã được gửi." : "Đã hủy đơn."); }
         catch (ApiException e) { Toasts.Error(e); await Reload(); }
         busy = false;
+        confirmCancel = false; // [APP-03]
     }
 
     public void Dispose() => timer?.Dispose();

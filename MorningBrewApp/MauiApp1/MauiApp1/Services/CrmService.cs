@@ -79,6 +79,16 @@ public sealed class CrmService(ApiClient api)
         Changed?.Invoke();
     }
 
+    // ----- [APP-05] Sổ địa chỉ giao hàng -----
+    public async Task<List<CustomerAddress>> GetAddressesAsync() => await api.All<CustomerAddress>("v1/me/addresses");
+
+    public Task SaveAddressAsync(string label, string recipientName, string phone, string addressText, string? note, bool isDefault) =>
+        api.Send(HttpMethod.Post, "v1/me/addresses", new
+        {
+            Label = label, RecipientName = recipientName.Trim(), Phone = PhoneRule.Normalize(phone), AddressText = addressText.Trim(),
+            Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim(), IsDefault = isDefault
+        });
+
     // ----- Sở thích (món yêu thích) -----
     public async Task<HashSet<int>> GetFavoritesAsync() =>
         (await api.All<Preference>("v1/me/preferences")) /* [BUG-15] mọi trang */.Select(x => x.ProductId).ToHashSet();

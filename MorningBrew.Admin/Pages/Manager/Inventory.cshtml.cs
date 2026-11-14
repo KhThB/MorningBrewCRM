@@ -29,7 +29,7 @@ public class InventoryModel(CrmApi api):WorkspaceBase(api)
     {
         "Import"=>"Nhập kho","Export"=>"Xuất dùng","Waste"=>"Hủy / hư hỏng","Adjust"=>"Kiểm kê",_=>kind??""
     };
-    public static string KindCss(string? kind)=>kind switch{"Import"=>"ok","Export"=>"info","Waste"=>"bad",_=>"warn"};
+    // [CLEAN-06] bỏ KindCss (trang Inventory.cshtml không dùng)
 
     public string Stat(string key)=>Summary.TryGetValue(key,out var v)?v.ToString():"0";
 

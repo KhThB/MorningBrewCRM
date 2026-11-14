@@ -1,18 +1,17 @@
 namespace MauiApp1.Services;
 
-/// <summary>
-/// Thực đơn, giỏ hàng và đơn hàng.
-/// Backend chưa có API đặt hàng cho khách (chỉ có stored procedure). Khi API trả 404,
-/// app chuyển sang DỮ LIỆU MẪU và hiện nhãn "Dữ liệu mẫu" để không nhầm với dữ liệu thật.
-/// </summary>
+/// <summary>Thực đơn, giỏ hàng và đơn hàng của khách (gọi MorningBrew.Api: /v1/me/menu, /v1/me/orders).</summary>
+// [CLEAN-02] Bỏ thực đơn mẫu (DemoMenu) khi mất kết nối: lỗi kết nối nay hiện ở trang Thực đơn kèm nút "Thử lại".
 public sealed class ShopService(ApiClient api)
 {
-    // Hệ thống chỉ có 1 cửa hàng (06_seed.sql, mã MB01).
+    // Hệ thống chỉ có 1 cửa hàng (06_seed.sql, mã MB01); dùng để hiện tên cửa hàng trước khi tải xong thực đơn.
     public static readonly Branch Store = new(1, "Morning Brew Thủ Đức", "12 Võ Văn Ngân, TP.HCM");
 
     public Branch CurrentBranch => menuCache?.Branch ?? Store; // [BUG-01] cửa hàng lấy từ API, Store chỉ để dự phòng
     public List<CartLine> Cart { get; } = [];
-    public int? VoucherId { get; set; }
+    // [APP-01] Giữ cả voucher đã chọn (không chỉ số tiền giảm lúc chọn) để tính lại khi đổi số lượng món.
+    public Voucher? SelectedVoucher { get; set; }
+    public int? VoucherId => SelectedVoucher?.CustomerPromotionId;
     /// <summary>[BUG-17] Hình thức nhận khách đã chọn (ô "Nhận tại quán" / "Giao hàng" ở trang chủ hoặc trong giỏ).
     /// Giỏ hàng mở ra với lựa chọn này thay vì luôn là "Nhận tại quầy".</summary>
     public string? PreferredFulfillment { get; set; } // [UI2-A2b] null = chưa chọn → Thực đơn hỏi khách khi mở
@@ -22,36 +21,29 @@ public sealed class ShopService(ApiClient api)
     public void ResetForSignOut()
     {
         Cart.Clear();
-        VoucherId = null;
-        VoucherDiscount = 0;
+        SelectedVoucher = null; // [APP-01]
         PreferredFulfillment = null; // [UI2-A2b]
         Changed?.Invoke();
     }
-    public decimal VoucherDiscount { get; set; }
+    // [APP-01] Tính lại mỗi lần đọc theo tạm tính hiện tại (trước đây lưu cố định lúc chọn voucher).
+    public decimal VoucherDiscount => SelectedVoucher?.DiscountFor(CartSubtotal) ?? 0;
+    // [APP-01] Đã chọn voucher nhưng giỏ chưa đủ giá trị tối thiểu → máy chủ sẽ từ chối đơn.
+    public bool VoucherBelowMinimum => SelectedVoucher is { } v && CartSubtotal < v.MinSubtotal;
     public event Action? Changed;
 
-    private MenuData? menuCache;
+    private MenuResponse? menuCache; // [CLEAN-02] dùng thẳng kết quả API, bỏ MenuData (chỉ thêm cờ IsDemo)
     private DateTime menuLoadedAt; // [BUG-01] tự tải lại sau 1 phút để thấy giá / món mới từ Admin
 
     public int CartCount => Cart.Sum(x => x.Quantity);
     public decimal CartSubtotal => Cart.Sum(x => x.Total);
 
     // ----- Thực đơn -----
-    // [BUG-01] Đọc thực đơn thật từ GET v1/me/menu. Dữ liệu mẫu chỉ dùng khi không kết nối được máy chủ
-    // (hoặc API cũ chưa có endpoint) và được đánh dấu IsDemo để không gửi ID món mẫu lên server.
-    public async Task<MenuData> GetMenuAsync(bool refresh = false)
+    // [BUG-01] Đọc thực đơn thật từ GET v1/me/menu, tự tải lại sau 1 phút để thấy giá / món mới từ Admin.
+    public async Task<MenuResponse> GetMenuAsync(bool refresh = false)
     {
-        if (menuCache is { IsDemo: false } && !refresh && DateTime.UtcNow - menuLoadedAt < TimeSpan.FromMinutes(1)) return menuCache;
-        try
-        {
-            var menu = await api.Get<MenuResponse>("v1/me/menu");
-            menuCache = new MenuData(menu.Branch, menu.Items, false, menu.Modifiers);
-            menuLoadedAt = DateTime.UtcNow;
-        }
-        catch (ApiException e) when (e.IsMissingEndpoint || e.Status == 503)
-        {
-            if (menuCache is not { IsDemo: false }) menuCache = new MenuData(Store, DemoMenu(), true, []);
-        }
+        if (menuCache is not null && !refresh && DateTime.UtcNow - menuLoadedAt < TimeSpan.FromMinutes(1)) return menuCache;
+        menuCache = await api.Get<MenuResponse>("v1/me/menu");
+        menuLoadedAt = DateTime.UtcNow;
         return menuCache;
     }
 
@@ -73,7 +65,7 @@ public sealed class ShopService(ApiClient api)
         var quantity = Cart[index].Quantity + delta;
         if (quantity <= 0) Cart.RemoveAt(index);
         else Cart[index] = Cart[index] with { Quantity = quantity };
-        if (Cart.Count == 0) { VoucherId = null; VoucherDiscount = 0; }
+        if (Cart.Count == 0) SelectedVoucher = null; // [APP-01]
         Changed?.Invoke();
     }
 
@@ -83,7 +75,6 @@ public sealed class ShopService(ApiClient api)
     public async Task<Order> PlaceOrderAsync(Checkout info, Guid requestKey)
     {
         if (Cart.Count == 0) throw new ApiException(400, "Giỏ hàng đang trống.");
-        if (menuCache is { IsDemo: true }) throw new ApiException(503, "Chưa kết nối được máy chủ nên chưa đặt hàng được.");
         var order = await api.Send<Order>(HttpMethod.Post, "v1/me/orders", new
         {
             info.Fulfillment,
@@ -98,8 +89,7 @@ public sealed class ShopService(ApiClient api)
             info.Note
         });
         Cart.Clear();
-        VoucherId = null;
-        VoucherDiscount = 0;
+        SelectedVoucher = null; // [APP-01]
         Changed?.Invoke();
         return order;
     }
@@ -127,24 +117,4 @@ public sealed class ShopService(ApiClient api)
         Changed?.Invoke();
         return order;
     }
-
-    public void MarkFeedbackSent(int orderId) { } // [BUG-02] đơn thật: API tự biết đơn đã có phản hồi (FeedbackSent)
-
-    // ===== Dữ liệu mẫu (chỉ khi không kết nối được máy chủ) =====
-    private static List<MenuProduct> DemoMenu() => DemoItems.Select(x => x with { IsDemo = true }).ToList(); // [BUG-01]
-    private static readonly List<MenuProduct> DemoItems =
-    [
-        // Trùng ProductID/VariantID với 06_seed.sql nên yêu thích và phản hồi lưu được vào database.
-        new(1, "Cà phê sữa", "Cà phê phin và sữa đặc", 1, "Cà phê", 1, "M", 30000),
-        new(1, "Cà phê sữa", "Cà phê phin và sữa đặc", 1, "Cà phê", 2, "L", 40000),
-        new(4, "Cà phê đen đá", "Đậm vị robusta", 1, "Cà phê", 5, "M", 29000),
-        new(5, "Bạc xỉu", "Nhiều sữa, ít cà phê", 1, "Cà phê", 6, "M", 32000),
-        new(6, "Cold brew cam sả", "Ủ lạnh 16 giờ", 1, "Cà phê", 7, "M", 45000),
-        new(2, "Trà đào", "Trà đào thơm mát", 2, "Trà", 3, "M", 35000),
-        new(7, "Trà vải lài", "Trà lài và vải tươi", 2, "Trà", 8, "M", 39000),
-        new(8, "Trà sen vàng", "Hạt sen, kem sữa", 2, "Trà", 9, "M", 45000, IsAvailable: false),
-        new(3, "Bánh tiramisu", "Bánh vị cà phê", 3, "Bánh", 4, "Standard", 45000),
-        new(9, "Bánh croissant bơ", "Nướng mỗi sáng", 3, "Bánh", 10, "Standard", 29000),
-        new(10, "Bánh mousse chanh dây", "Chua ngọt nhẹ", 3, "Bánh", 11, "Standard", 39000, IsAvailable: false),
-    ];
 }

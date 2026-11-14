@@ -30,7 +30,7 @@
                                 <small class="muted">@p.Description</small>
                                 <small class="muted">Đơn từ @Fmt.Money(p.MinSubtotal) · HSD @Fmt.Date(p.EndsAt)</small>
                                 <button class="btn btn-sm @(enough ? "btn-primary" : "btn-outline")" disabled="@(!enough || busyId == p.PromotionId)"
-                                        @onclick="() => Redeem(p)">
+                                        @onclick="() => pending = p"> @* [APP-04] hỏi xác nhận trước khi trừ điểm *@
                                     @(cost == 0 ? "Nhận miễn phí" : $"Đổi {cost} điểm")
                                 </button>
                             </div>
@@ -74,7 +74,13 @@
     </StateView>
 </div>
 
+@* [APP-04] Xác nhận đổi điểm: nêu rõ số điểm bị trừ và số điểm còn lại *@
+<ConfirmSheet Open="pending is not null" OpenChanged="v => { if (!v) pending = null; }" Busy="busyId is not null"
+              Title="@(pending is null ? "" : $"Đổi {pending.PointsCost ?? 0} điểm?")" ConfirmText="Đổi điểm" OnConfirm="ConfirmRedeem"
+              Message="@(pending is null ? "" : $"Nhận voucher “{pending.Name}”: {Fmt.Discount(pending.DiscountType, pending.DiscountValue, pending.MaxDiscount)}. Điểm còn lại: {(profile?.LoyaltyPoints ?? 0) - (pending.PointsCost ?? 0)}. Điểm đã đổi không hoàn lại.")" />
+
 @code {
+    private Promotion? pending; // [APP-04] ưu đãi đang chờ xác nhận
     private Profile? profile;
     private List<Promotion> promotions = [];
     private List<Voucher> vouchers = [];
@@ -98,6 +104,13 @@
         }
         catch (ApiException e) { error = e.Message; }
         loading = false;
+    }
+
+    private async Task ConfirmRedeem() // [APP-04]
+    {
+        if (pending is null) return;
+        await Redeem(pending);
+        pending = null;
     }
 
     private async Task Redeem(Promotion p)

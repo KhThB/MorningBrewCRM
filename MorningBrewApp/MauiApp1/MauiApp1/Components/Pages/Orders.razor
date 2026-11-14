@@ -35,11 +35,21 @@
     private List<Order> orders = [];
     private bool loading = true;
     private string? error;
+    private System.Threading.Timer? timer; // [APP-09]
 
     protected override async Task OnInitializedAsync()
     {
         Shop.Changed += Refresh;
         await Load();
+        // [APP-09] Tự tải lại mỗi 15 giây khi còn đơn đang xử lý (trước đây phải thoát ra vào lại mới thấy trạng thái mới).
+        timer = new System.Threading.Timer(_ => InvokeAsync(Poll), null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+    }
+
+    private async Task Poll() // [APP-09] tải lặng lẽ, không hiện vòng xoay
+    {
+        if (loading || error is not null || !orders.Any(o => o.Status is not ("Completed" or "Cancelled"))) return;
+        try { orders = await Shop.GetOrdersAsync(); StateHasChanged(); }
+        catch (ApiException) { }
     }
 
     private async Task Load()
@@ -51,5 +61,5 @@
     }
 
     private void Refresh() => InvokeAsync(StateHasChanged);
-    public void Dispose() => Shop.Changed -= Refresh;
+    public void Dispose() { Shop.Changed -= Refresh; timer?.Dispose(); } // [APP-09]
 }

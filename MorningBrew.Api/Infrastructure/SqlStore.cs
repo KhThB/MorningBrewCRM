@@ -9,8 +9,7 @@ public sealed class SqlStore(IConfiguration configuration)
         => Run(sql, CommandType.Text, values);
     public Task<List<Dictionary<string, object?>>> Procedure(string name, params (string, object?)[] values)
         => Run(name, CommandType.StoredProcedure, values);
-    public Task<List<List<Dictionary<string, object?>>>> ProcedureSets(string name, params (string, object?)[] values)
-        => RunSets(name, CommandType.StoredProcedure, values);
+    // [CLEAN-05] bỏ ProcedureSets (không nơi nào gọi)
     private async Task<List<Dictionary<string, object?>>> Run(string sql, CommandType type, (string, object?)[] values)
         => (await RunSets(sql, type, values)).FirstOrDefault() ?? [];
     private async Task<List<List<Dictionary<string, object?>>>> RunSets(string sql, CommandType type, (string, object?)[] values)

@@ -2,10 +2,11 @@
 @inject ShopService Shop
 @inject CrmService Crm
 @inject ToastService Toasts
+@inject NavigationManager Nav
 
 <header class="menu-header">
-    @* [UI2-A2b] Hình thức nhận đang chọn; bấm để đổi *@
-    <button class="branch-picker fulfil-pill" @onclick="() => chooser = true">
+    @* [UI2-A2b] Hình thức nhận đang chọn; bấm để đổi — [APP-15] mở trang chọn hình thức riêng *@
+    <button class="branch-picker fulfil-pill" @onclick='() => Nav.NavigateTo("/order-type?next=/menu")'>
         <Icon Name="@(Shop.PreferredFulfillment == "Delivery" ? "truck" : "pin")" Size="18" />
         <span class="store-name">@(Shop.PreferredFulfillment == "Delivery" ? "Giao hàng tận nơi" : $"Nhận tại quầy · {Shop.CurrentBranch.Name}")</span>
         <small>Đổi</small>
@@ -29,10 +30,6 @@
         <h1>Chọn món bạn thích.</h1>
         <p>Cà phê, trà &amp; bánh cho một ngày thật ngon.</p>
     </div>
-    @if (menu?.IsDemo == true)
-    {
-        <div class="demo-note"><Icon Name="info" Size="16" /> Dữ liệu mẫu — chưa kết nối được máy chủ, không đặt hàng được.</div>
-    }
     <StateView Loading="loading" Error="@error" OnRetry="Load" Empty="Visible.Count == 0" EmptyText="Không tìm thấy món phù hợp." EmptyIcon="cup">
         @foreach (var group in Visible.GroupBy(x => x.Category))
         {
@@ -117,27 +114,10 @@
     </div>
 }
 
-
-@* [UI2-A2b] Mở Thực đơn mà chưa chọn hình thức nhận → hỏi trước khi chọn món *@
-@if (chooser)
-{
-    <div class="sheet-backdrop" @onclick="CloseChooser"></div>
-    <div class="sheet" role="dialog" aria-label="Chọn hình thức nhận hàng">
-        <div class="sheet-handle"></div>
-        <h2>Bạn muốn nhận món thế nào?</h2>
-        <button class="fulfil-option @(Shop.PreferredFulfillment == "Pickup" ? "active" : "")" disabled="@(!Shop.CurrentBranch.PickupEnabled)" @onclick='() => Choose("Pickup")'>
-            <span class="quick-icon"><Icon Name="bag" Size="24" /></span>
-            <span><b>Nhận tại quầy</b><small>@Shop.CurrentBranch.Name · @Shop.CurrentBranch.Address</small></span>
-        </button>
-        <button class="fulfil-option @(Shop.PreferredFulfillment == "Delivery" ? "active" : "")" disabled="@(!Shop.CurrentBranch.DeliveryEnabled)" @onclick='() => Choose("Delivery")'>
-            <span class="quick-icon"><Icon Name="truck" Size="24" /></span>
-            <span><b>Giao hàng</b><small>@(Shop.CurrentBranch.DeliveryEnabled ? $"Phí giao {Fmt.Money(Shop.CurrentBranch.DeliveryFee)} · nhập địa chỉ ở giỏ hàng" : "Cửa hàng tạm ngưng giao hàng")</small></span>
-        </button>
-    </div>
-}
+@* [APP-15] Bảng nổi chọn hình thức nhận (bấm ra ngoài là tự chọn "Nhận tại quầy") đã thay bằng trang /order-type *@
 
 @code {
-    private MenuData? menu;
+    private MenuResponse? menu; // [CLEAN-02]
     private HashSet<int> favorites = [];
     private List<string> categories = [];
     private string? category;
@@ -145,12 +125,8 @@
     private bool loading = true;
     private string? error;
     private List<MenuProduct>? sheet;
-    private bool chooser; // [UI2-A2b]
     [SupplyParameterFromQuery] public int? Product { get; set; } // [UI2-A5] /menu?product=… mở ngay món đó (từ trang Yêu thích)
 
-    private void Choose(string value) { Shop.PreferredFulfillment = value; chooser = false; OpenRequested(); }
-    // Đóng mà chưa chọn → mặc định nhận tại quầy (giỏ hàng luôn cần một hình thức).
-    private void CloseChooser() { Shop.PreferredFulfillment ??= Shop.CurrentBranch.PickupEnabled ? "Pickup" : "Delivery"; chooser = false; }
     private MenuProduct? variant;
     private int quantity = 1;
     private HashSet<int> picked = []; // [BUG-02] tùy chọn đang chọn
@@ -176,7 +152,16 @@
         .Where(x => string.IsNullOrWhiteSpace(query) || x.Name.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase))
         .ToList();
 
-    protected override Task OnInitializedAsync() => Load();
+    protected override Task OnInitializedAsync()
+    {
+        // [APP-15] Chưa chọn hình thức nhận → chuyển sang trang chọn riêng (giữ ?product= nếu đến từ Yêu thích).
+        if (Shop.PreferredFulfillment is null)
+        {
+            Nav.NavigateTo("/order-type?next=/menu" + (Product is { } pid ? $"&product={pid}" : ""), replace: true);
+            return Task.CompletedTask;
+        }
+        return Load();
+    }
 
     private async Task Load()
     {
@@ -189,8 +174,7 @@
         catch (ApiException e) { error = e.Message; }
         try { favorites = await Crm.GetFavoritesAsync(); } catch (ApiException) { }
         loading = false;
-        if (Shop.PreferredFulfillment is null && menu?.IsDemo != true) chooser = true; // [UI2-A2b]
-        else OpenRequested();
+        OpenRequested(); // [APP-15] hình thức nhận đã được chọn ở /order-type trước khi vào trang này
     }
 
     // [UI2-A5] Mở ngay món được chọn từ trang Yêu thích (/menu?product=…).
@@ -221,7 +205,6 @@
 
     private async Task ToggleFavorite(MenuProduct item)
     {
-        if (item.IsDemo) { Toasts.Show("Món minh họa — chưa có trong cơ sở dữ liệu.", true); return; }
         var next = new HashSet<int>(favorites);
         if (!next.Add(item.ProductId)) next.Remove(item.ProductId);
         try

@@ -1,6 +1,17 @@
 -- 14_inventory.sql  – Kho nguyên liệu (chạy sau 13_ui_review.sql). Idempotent.
 -- Tạo 2 bảng: Ingredients (nguyên liệu) + InventoryTransactions (phiếu kho).
 -- Thêm quyền Inventory.Manage; seed dữ liệu mẫu để demo trơn tru ngay.
+-- [SQL-01] Chặn chạy nhầm database (ví dụ SSMS đang chọn master → lỗi Msg 1767/8197/208 và tạo bảng rác):
+-- file không có lệnh USE để giữ đúng database đang chọn; nếu database hiện tại chưa có các bảng MorningBrew
+-- (đã chạy 01–13) thì dừng cả file. Cài trọn bộ trong một lần: database/sql_ssms/morningbrew_fullscript.sql.
+SET NOEXEC OFF;
+DECLARE @db sysname = DB_NAME();
+IF OBJECT_ID(N'dbo.Permissions', N'U') IS NULL OR OBJECT_ID(N'dbo.Suppliers', N'U') IS NULL
+BEGIN
+    RAISERROR(N'>>> DỪNG: database đang chọn [%s] chưa phải MorningBrew CRM (đã chạy 01–13). Chọn đúng database (ví dụ MorningBrewCRM_Crm) rồi chạy lại.', 16, 1, @db);
+    SET NOEXEC ON;
+END
+GO
 SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
 BEGIN TRAN;
 
@@ -175,4 +186,6 @@ BEGIN
 END;
 
 COMMIT;
+GO
+SET NOEXEC OFF; -- [SQL-01] trả lại trạng thái bình thường cho cửa sổ SSMS
 GO

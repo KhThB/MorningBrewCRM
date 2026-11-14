@@ -84,7 +84,8 @@
     <div class="grid-2">
         @foreach (var item in suggestions)
         {
-            <a class="product-tile" href="/menu">
+            @* [APP-08] Mở thẳng món được bấm (trước đây chỉ mở trang Thực đơn) *@
+            <a class="product-tile" href="@($"/menu?product={item.ProductId}")">
                 <ProductThumb Category="@item.Category" ProductName="@item.Name" ImageUrl="@item.ImageUrl" Large="true" />
                 <b>@item.Name</b>
                 <span class="price">@Fmt.Money(item.Price)</span>

@@ -30,21 +30,38 @@
             <div class="card form">
                 @* [UI2-A2b] Hình thức nhận đã chọn ở trang chủ / khi mở Thực đơn → giỏ chỉ hiển thị, không hỏi lại *@
                 <div class="row-between"><label>Hình thức nhận hàng</label>
-                    <span class="chip @(fulfillment == "Delivery" ? "chip-info" : "chip-ok")"><Icon Name="@(fulfillment == "Delivery" ? "truck" : "bag")" Size="14" /> @(fulfillment == "Delivery" ? $"Giao hàng (+{Fmt.Money(Shop.CurrentBranch.DeliveryFee)})" : "Nhận tại quầy")</span></div>
+                    @* [APP-15] Bấm vào hình thức để đổi ở trang /order-type, xong quay lại giỏ *@
+                    <a class="chip @(fulfillment == "Delivery" ? "chip-info" : "chip-ok")" href="/order-type?next=/cart"><Icon Name="@(fulfillment == "Delivery" ? "truck" : "bag")" Size="14" /> @(fulfillment == "Delivery" ? $"Giao hàng (+{Fmt.Money(Shop.CurrentBranch.DeliveryFee)})" : "Nhận tại quầy") · Đổi</a></div>
                 @if (fulfillment == "Pickup")
                 {
                     <p class="muted small"><Icon Name="store" Size="16" /> @Shop.CurrentBranch.Name · @Shop.CurrentBranch.Address</p>
                 }
                 else
                 {
+                    @* [APP-05] Chọn địa chỉ đã lưu (tự điền địa chỉ mặc định) thay vì gõ lại mỗi lần *@
+                    @if (addresses.Count > 0)
+                    {
+                        <label for="saved">Địa chỉ đã lưu</label>
+                        <select id="saved" class="input" value="@(addressId?.ToString() ?? "")" @onchange="PickAddress">
+                            @foreach (var a in addresses)
+                            {
+                                <option value="@a.AddressId">@($"{a.Label} · {a.AddressText}")</option>
+                            }
+                            <option value="">+ Nhập địa chỉ mới</option>
+                        </select>
+                    }
                     <label for="name">Người nhận *</label>
                     <input id="name" class="input" @bind="contactName" maxlength="120" />
                     <label for="phone">Số điện thoại *</label>
                     <input id="phone" class="input" type="tel" @bind="contactPhone" maxlength="20" />
                     <label for="address">Địa chỉ giao *</label>
-                    <textarea id="address" class="input" rows="2" @bind="address" maxlength="500"></textarea>
+                    <textarea id="address" class="input" rows="2" @bind="address" @bind:event="oninput" maxlength="500"></textarea> @* [APP-05] cập nhật khi gõ để hiện ô "Lưu địa chỉ" ngay *@
                     <label for="dnote">Ghi chú cho người giao</label>
                     <input id="dnote" class="input" @bind="deliveryNote" maxlength="300" />
+                    @if (IsNewAddress)
+                    {
+                        <label class="check"><input type="checkbox" @bind="saveAddress" /> Lưu địa chỉ này cho lần sau</label> @* [APP-05] *@
+                    }
                 }
                 @* [UI2-A1] Một ô chọn xổ xuống: Tiền mặt / Chuyển khoản (Chuyển khoản = trả trước qua cổng thanh toán mô phỏng) *@
                 <label for="pay">Phương thức thanh toán</label>
@@ -67,9 +84,14 @@
                         <option value="">Không dùng voucher</option>
                         @foreach (var v in vouchers)
                         {
-                            <option value="@v.CustomerPromotionId">@v.Name · @Fmt.Discount(v.DiscountType, v.DiscountValue)</option>
+                            @* [APP-01] Ghi rõ mức tối đa và đơn tối thiểu của voucher *@
+                            <option value="@v.CustomerPromotionId">@v.Name · @Fmt.Discount(v.DiscountType, v.DiscountValue, v.MaxDiscount)@(v.MinSubtotal > 0 ? $" · đơn từ {Fmt.Money(v.MinSubtotal)}" : "")</option>
                         }
                     </select>
+                    @if (Shop.VoucherBelowMinimum)
+                    {
+                        <p class="alert small">Đơn cần từ @Fmt.Money(Shop.SelectedVoucher!.MinSubtotal) để dùng voucher này (còn thiếu @Fmt.Money(Shop.SelectedVoucher.MinSubtotal - Shop.CartSubtotal)).</p>
+                    }
                 }
             </div>
 
@@ -100,15 +122,25 @@
     private Guid requestKey = Guid.NewGuid();
     private string fulfillment = "Pickup", paymentMode = "COD"; // [UI2-A1] mặc định Tiền mặt
     private string? contactName, contactPhone, address, deliveryNote, note;
+    private List<CustomerAddress> addresses = []; // [APP-05]
+    private int? addressId;                        // [APP-05] địa chỉ đã lưu đang chọn (null = nhập mới)
+    private bool saveAddress = true;               // [APP-05]
+    // [APP-05] Địa chỉ đang nhập chưa có trong sổ (khác người nhận / SĐT / địa chỉ) → cho phép lưu.
+    private bool IsNewAddress => !string.IsNullOrWhiteSpace(address) && !addresses.Any(a =>
+        a.AddressText.Trim() == address.Trim() && a.RecipientName.Trim() == contactName?.Trim() && a.Phone == PhoneRule.Normalize(contactPhone));
 
-    private decimal Discount => Math.Min(Shop.VoucherDiscount, Shop.CartSubtotal);
+    private decimal Discount => Shop.VoucherDiscount; // [APP-01] tính lại theo tạm tính, đã áp MaxDiscount/MinSubtotal
     private decimal Fee => fulfillment == "Delivery" ? Shop.CurrentBranch.DeliveryFee : 0;
     private decimal Total => Shop.CartSubtotal - Discount + Fee;
 
     protected override async Task OnInitializedAsync()
     {
+        // [APP-15] Vào giỏ khi chưa chọn hình thức nhận → hỏi ở trang /order-type, không tự gán "Nhận tại quầy".
+        if (Shop.PreferredFulfillment is null && Shop.CartCount > 0) { Nav.NavigateTo("/order-type?next=/cart", replace: true); return; }
         try { vouchers = (await Crm.GetWalletAsync()).Where(v => v.Status == "Available").ToList(); }
         catch (ApiException) { }
+        // [APP-01] Voucher đã chọn trước đó không còn trong ví (đã dùng/hết hạn) → bỏ chọn.
+        if (Shop.SelectedVoucher is { } sv && vouchers.All(v => v.CustomerPromotionId != sv.CustomerPromotionId)) Shop.SelectedVoucher = null;
         try
         {
             await Shop.GetMenuAsync(); // để có thông tin cửa hàng (phí giao, hình thức nhận)
@@ -116,9 +148,12 @@
             contactName = p.FullName; contactPhone = p.Phone;
         }
         catch (ApiException) { }
+        // [APP-05] Tải sổ địa chỉ, điền sẵn địa chỉ mặc định (hoặc địa chỉ mới nhất).
+        try { addresses = await Crm.GetAddressesAsync(); } catch (ApiException) { }
+        if ((addresses.FirstOrDefault(a => a.IsDefault) ?? addresses.FirstOrDefault()) is { } def) UseAddress(def);
         // [BUG-17] Mở giỏ với hình thức khách đã chọn ở trang chủ ("Giao hàng" / "Nhận tại quán"); nếu cửa hàng
         // không hỗ trợ hình thức đó thì dùng hình thức còn lại. Trước đây luôn mặc định "Nhận tại quầy".
-        fulfillment = Shop.PreferredFulfillment ?? "Pickup"; // [UI2-A2b] chưa chọn (vào giỏ không qua Thực đơn) → nhận tại quầy
+        fulfillment = Shop.PreferredFulfillment ?? "Pickup"; // [APP-15] chỉ còn rơi vào "Pickup" khi giỏ trống (chưa đặt được gì)
         if (fulfillment == "Delivery" && !Shop.CurrentBranch.DeliveryEnabled) fulfillment = "Pickup";
         if (fulfillment == "Pickup" && !Shop.CurrentBranch.PickupEnabled && Shop.CurrentBranch.DeliveryEnabled) fulfillment = "Delivery";
     }
@@ -126,14 +161,28 @@
     private void PickVoucher(ChangeEventArgs e)
     {
         var id = int.TryParse(e.Value?.ToString(), out var x) ? x : (int?)null;
-        var v = vouchers.FirstOrDefault(item => item.CustomerPromotionId == id);
-        Shop.VoucherId = v?.CustomerPromotionId;
-        Shop.VoucherDiscount = v is null ? 0
-            : v.DiscountType == "Percent" ? Math.Floor(Shop.CartSubtotal * v.DiscountValue / 100) : v.DiscountValue;
+        // [APP-01] Chỉ lưu voucher đã chọn; số tiền giảm do Shop.VoucherDiscount tính lại theo giỏ.
+        Shop.SelectedVoucher = vouchers.FirstOrDefault(item => item.CustomerPromotionId == id);
+    }
+
+    // [APP-05] Điền người nhận / SĐT / địa chỉ / ghi chú từ địa chỉ đã lưu.
+    private void UseAddress(CustomerAddress a)
+    {
+        addressId = a.AddressId; contactName = a.RecipientName; contactPhone = a.Phone; address = a.AddressText; deliveryNote = a.Note;
+    }
+
+    private void PickAddress(ChangeEventArgs e) // [APP-05]
+    {
+        var id = int.TryParse(e.Value?.ToString(), out var x) ? x : (int?)null;
+        if (addresses.FirstOrDefault(a => a.AddressId == id) is { } a) { UseAddress(a); return; }
+        addressId = null; address = null; deliveryNote = null; // "+ Nhập địa chỉ mới": giữ tên, SĐT; xóa địa chỉ
+        contactName = Crm.CachedProfile?.FullName ?? contactName; contactPhone = Crm.CachedProfile?.Phone ?? contactPhone;
     }
 
     private async Task Place()
     {
+        // [APP-01] Chặn trước khi gửi: máy chủ từ chối đơn chưa đủ giá trị tối thiểu của voucher.
+        if (Shop.VoucherBelowMinimum) { Toasts.Show($"Đơn chưa đủ {Fmt.Money(Shop.SelectedVoucher!.MinSubtotal)} để dùng voucher. Thêm món hoặc bỏ voucher.", true); return; }
         if (fulfillment == "Delivery")
         {
             if (string.IsNullOrWhiteSpace(contactName) || string.IsNullOrWhiteSpace(address)) { Toasts.Show("Vui lòng nhập người nhận và địa chỉ giao.", true); return; }
@@ -146,8 +195,13 @@
                 fulfillment == "Delivery" ? contactName : null, fulfillment == "Delivery" ? contactPhone : null,
                 fulfillment == "Delivery" ? address : null, fulfillment == "Delivery" ? deliveryNote : null,
                 string.IsNullOrWhiteSpace(note) ? null : note.Trim());
+            var saveNew = fulfillment == "Delivery" && saveAddress && IsNewAddress; // [APP-05] xét trước khi giỏ bị xóa
             var order = await Shop.PlaceOrderAsync(info, requestKey);
             requestKey = Guid.NewGuid();
+            // [APP-05] Lưu địa chỉ mới làm mặc định cho lần sau; lỗi lưu địa chỉ không ảnh hưởng đơn vừa đặt.
+            if (saveNew)
+                try { await Crm.SaveAddressAsync(addresses.Count == 0 ? "Nhà" : $"Địa chỉ {addresses.Count + 1}", contactName!, contactPhone!, address!, deliveryNote, true); }
+                catch (ApiException) { }
             Toasts.Show(order.PaymentMode == "Prepaid" ? "Đã tạo đơn. Vui lòng thanh toán trong 15 phút." : "Đặt hàng thành công!");
             Nav.NavigateTo($"/orders/{order.OrderId}", replace: true);
         }

@@ -20,8 +20,9 @@
         <label for="email">Email *</label>
         <input id="email" class="input" type="email" @bind="email" maxlength="254" autocomplete="email" required />
 
-        <label for="phone">Số điện thoại</label>
-        <input id="phone" class="input" type="tel" @bind="phone" maxlength="20" autocomplete="tel" />
+        @* [APP-06] Bắt buộc: thu ngân tra khách theo SĐT để tích điểm khi mua tại quầy (POS) *@
+        <label for="phone">Số điện thoại * <small class="muted">(dùng để tích điểm tại quầy)</small></label>
+        <input id="phone" class="input" type="tel" @bind="phone" maxlength="20" autocomplete="tel" required />
 
         @* [BUG-03] ngày sinh, giới tính (không bắt buộc) cho báo cáo độ tuổi / giới tính *@
         <label for="dob">Ngày sinh</label>
@@ -75,6 +76,7 @@
     {
         if (fullName.Trim().Length < 2) return "Họ tên cần ít nhất 2 ký tự.";
         if (!Regex.IsMatch(email.Trim(), @"^[^@\s]+@[^@\s]+\.[^@\s]+$")) return "Email không hợp lệ.";
+        if (string.IsNullOrWhiteSpace(phone)) return "Vui lòng nhập số điện thoại."; // [APP-06]
         if (!PhoneRule.IsValid(phone)) return PhoneRule.Message; // [BUG-04] dùng chung quy tắc với API
         if (birthday > DateOnly.FromDateTime(DateTime.Today)) return "Ngày sinh không được ở tương lai."; // [BUG-03]
         if (password.Length < 10) return "Mật khẩu cần ít nhất 10 ký tự.";

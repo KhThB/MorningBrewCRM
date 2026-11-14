@@ -1,5 +1,3 @@
-using Microsoft.Maui.Storage;
-
 namespace MauiApp1.Services;
 
 /// <summary>Đăng nhập/đăng ký/đăng xuất và lưu token phiên trên thiết bị.</summary>
@@ -67,22 +65,14 @@ public sealed class AuthService
         Changed?.Invoke();
     }
 
-    /// <summary>
-    /// Đăng ký khách hàng (yêu cầu 4.3.1). Cần API POST /v1/auth/register — xem API_CAN_BO_SUNG.md.
-    /// </summary>
+    /// <summary>Đăng ký khách hàng (yêu cầu 4.3.1) qua POST v1/auth/register rồi đăng nhập luôn.</summary>
+    // [CLEAN-03] Bỏ comment lỗi thời (API đăng ký đã có) và nhánh bắt lỗi 404 "máy chủ chưa hỗ trợ đăng ký".
     // [BUG-03] gửi thêm ngày sinh, giới tính (API register đã hỗ trợ, trước đây app không gửi)
     public async Task RegisterAsync(string fullName, string email, string? phone, string password, DateOnly? birthday = null, string? gender = null)
     {
-        try
-        {
-            await api.Send(HttpMethod.Post, "v1/auth/register",
-                new { FullName = fullName.Trim(), Email = email.Trim(), Phone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim(), Password = password,
-                      DateOfBirth = birthday?.ToString("yyyy-MM-dd"), Gender = gender is null or "Undisclosed" ? null : gender });
-        }
-        catch (ApiException e) when (e.IsMissingEndpoint)
-        {
-            throw new ApiException(404, "Máy chủ chưa hỗ trợ đăng ký (cần thêm API /v1/auth/register).");
-        }
+        await api.Send(HttpMethod.Post, "v1/auth/register",
+            new { FullName = fullName.Trim(), Email = email.Trim(), Phone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim(), Password = password,
+                  DateOfBirth = birthday?.ToString("yyyy-MM-dd"), Gender = gender is null or "Undisclosed" ? null : gender });
         await LoginAsync(email, password);
     }
 

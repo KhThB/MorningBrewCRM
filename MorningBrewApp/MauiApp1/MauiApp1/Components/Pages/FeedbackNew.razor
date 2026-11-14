@@ -43,12 +43,14 @@
         <label for="content">Nội dung *</label>
         <textarea id="content" class="input" rows="5" maxlength="4000" @bind="content" @bind:event="oninput"
                   placeholder="Chia sẻ trải nghiệm của bạn: hương vị, nhiệt độ, thái độ phục vụ..."></textarea>
+        @* [APP-07] Báo lỗi tiếng Việt ngay trên form thay cho lỗi kỹ thuật từ máy chủ *@
+        @if (touched && ContentError is { } msg) { <small class="req block">@msg</small> }
         <small class="muted right">@content.Length/4000</small>
     </div>
 </div>
 
 <div class="footer-bar">
-    <button class="btn btn-primary block" @onclick="Send" disabled="@(busy || string.IsNullOrWhiteSpace(content))">
+    <button class="btn btn-primary block" @onclick="Send" disabled="@busy"> @* [APP-07] luôn bấm được để hiện lý do khi nội dung chưa hợp lệ *@
         @(busy ? "Đang gửi..." : "Gửi phản hồi")
     </button>
 </div>
@@ -64,21 +66,27 @@
     private int? rating; // [BUG-10] trước đây mặc định 5 sao → khách không chạm vẫn gửi 5 sao
     private string content = "";
     private bool busy;
-    private HashSet<int> demoIds = [];
+    private bool touched; // [APP-07]
+    private const int MinContent = 10; // [APP-07] tối thiểu 10 ký tự để phản hồi có nội dung
+    private string? ContentError => content.Trim().Length switch
+    {
+        0 => "Vui lòng nhập nội dung phản hồi.",
+        < MinContent => $"Nội dung quá ngắn, vui lòng viết ít nhất {MinContent} ký tự.",
+        _ => null
+    };
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             var menu = await Shop.GetMenuAsync();
-            demoIds = menu.Items.Where(x => x.IsDemo).Select(x => x.ProductId).ToHashSet();
             if (OrderId is not null)
             {
                 order = await Shop.GetOrderAsync(OrderId.Value);
                 products = order?.Lines.GroupBy(l => l.ProductId).Select(g => (Id: g.Key, Name: g.First().Name)).ToList() ?? new();
             }
             if (products.Count == 0)
-                products = menu.Items.Where(x => !x.IsDemo).GroupBy(x => x.ProductId).Select(g => (Id: g.Key, Name: g.First().Name)).ToList();
+                products = menu.Items.GroupBy(x => x.ProductId).Select(g => (Id: g.Key, Name: g.First().Name)).ToList();
         }
         catch (ApiException e) { Toasts.Error(e); }
         productId = ProductId ?? products.FirstOrDefault().Id;
@@ -86,15 +94,15 @@
 
     private async Task Send()
     {
+        touched = true; // [APP-07]
+        if (ContentError is { } err) { Toasts.Show(err, true); return; }
         if (type == "Product" && productId == 0) { Toasts.Show("Vui lòng chọn sản phẩm.", true); return; }
         busy = true;
         try
         {
-            // Đơn/sản phẩm mẫu không tồn tại trong database → không gửi ID của chúng.
-            int? realOrder = order is { IsDemo: false } ? order.OrderId : null;
-            int? realProduct = type == "Product" && productId > 0 && !demoIds.Contains(productId) ? productId : null;
-            await Crm.SendFeedbackAsync(type, rating, content, realProduct, order?.BranchId ?? Shop.CurrentBranch.BranchId, realOrder);
-            if (order is not null) Shop.MarkFeedbackSent(order.OrderId);
+            // [CLEAN-02] Bỏ lọc ID món/đơn mẫu và lời gọi MarkFeedbackSent rỗng (không còn dữ liệu mẫu).
+            int? product = type == "Product" && productId > 0 ? productId : null;
+            await Crm.SendFeedbackAsync(type, rating, content, product, order?.BranchId ?? Shop.CurrentBranch.BranchId, order?.OrderId);
             Toasts.Show("Cảm ơn bạn! Phản hồi đã được gửi tới Morning Brew.");
             Nav.NavigateTo("/account/feedbacks", replace: true);
         }

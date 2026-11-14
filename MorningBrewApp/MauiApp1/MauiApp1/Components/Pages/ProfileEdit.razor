@@ -17,7 +17,7 @@
                 <input id="email" class="input" value="@profile.Email" readonly />
                 <small class="muted">Email dùng để đăng nhập nên không thể thay đổi.</small>
 
-                <label for="phone">Số điện thoại</label>
+                <label for="phone">Số điện thoại *</label> @* [APP-06] không cho xóa SĐT (cần để tích điểm tại quầy) *@
                 <input id="phone" class="input" type="tel" @bind="phone" maxlength="20" placeholder="Ví dụ 0901234567" />
 
                 <label for="dob">Ngày sinh</label>
@@ -76,6 +76,7 @@
         if (string.IsNullOrWhiteSpace(fullName) || fullName.Trim().Length < 2)
         { Toasts.Show("Họ tên cần ít nhất 2 ký tự.", true); return; }
         // [BUG-04] trước đây không kiểm tra SĐT khi sửa hồ sơ
+        if (string.IsNullOrWhiteSpace(phone)) { Toasts.Show("Vui lòng nhập số điện thoại.", true); return; } // [APP-06]
         if (!PhoneRule.IsValid(phone)) { Toasts.Show(PhoneRule.Message, true); return; }
         if (birthday > DateOnly.FromDateTime(DateTime.Today))
         { Toasts.Show("Ngày sinh không được ở tương lai.", true); return; }

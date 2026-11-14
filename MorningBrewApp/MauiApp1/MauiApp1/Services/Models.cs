@@ -20,7 +20,19 @@ public record LoyaltyTransaction(int LoyaltyTransactionId, string Kind, int Poin
 
 public record Voucher(
     int CustomerPromotionId, string Name, string? Code, string Status, string DiscountType,
-    decimal DiscountValue, int? PointsSpent, DateTimeOffset? ExpiresAt);
+    decimal DiscountValue, int? PointsSpent, DateTimeOffset? ExpiresAt,
+    decimal? MaxDiscount = null, decimal MinSubtotal = 0) // [APP-01] điều kiện giảm (khớp dbo.CreateOrder)
+{
+    /// <summary>[APP-01] Tiền giảm cho một tạm tính, tính giống dbo.CreateOrder (03_orders.sql):
+    /// chưa đủ đơn tối thiểu → 0; % → làm tròn xuống rồi chặn ở MaxDiscount; không vượt tạm tính.</summary>
+    public decimal DiscountFor(decimal subtotal)
+    {
+        if (subtotal <= 0 || subtotal < MinSubtotal) return 0;
+        var d = DiscountType == "Percent" ? Math.Floor(subtotal * DiscountValue / 100) : DiscountValue;
+        if (MaxDiscount is { } cap && d > cap) d = cap;
+        return Math.Min(d, subtotal);
+    }
+}
 
 public record Promotion(
     int PromotionId, string Name, string? Description, string? Scope, string DiscountType,
@@ -57,6 +69,9 @@ public record SurveyDetail(List<SurveyQuestion> Questions, List<SurveyOption> Op
 
 public record Preference(int ProductId, string Name);
 
+/// <summary>[APP-05] Địa chỉ giao hàng đã lưu (GET v1/me/addresses).</summary>
+public record CustomerAddress(int AddressId, string Label, string RecipientName, string Phone, string AddressText, string? Note, bool IsDefault);
+
 // ===== Thực đơn & đơn hàng =====
 
 // [BUG-01] Thêm phí giao hàng / hình thức nhận hàng của cửa hàng (đọc từ GET v1/me/menu).
@@ -72,9 +87,7 @@ public record MenuResponse(Branch Branch, List<MenuProduct> Items, List<MenuModi
 
 public record MenuProduct(
     int ProductId, string Name, string? Description, int CategoryId, string Category,
-    int VariantId, string VariantName, decimal Price, bool IsAvailable = true, bool IsDemo = false, string? ImageUrl = null);
-
-public record MenuData(Branch Branch, List<MenuProduct> Items, bool IsDemo, List<MenuModifier>? Modifiers = null); // [BUG-01] thêm Modifiers
+    int VariantId, string VariantName, decimal Price, bool IsAvailable = true, string? ImageUrl = null); // [CLEAN-02] bỏ IsDemo (không còn thực đơn mẫu)
 
 // [BUG-02] Dòng giỏ hàng có tùy chọn (đường, đá, topping); cùng món + cùng tùy chọn thì gộp số lượng.
 public record CartLine(MenuProduct Item, int Quantity, IReadOnlyList<MenuModifier>? Options = null)
@@ -124,10 +137,8 @@ public class Order
     public string? ItemsText { get; set; }
     public List<OrderLine> Lines { get; set; } = [];
     public List<OrderHistoryItem> History { get; set; } = [];
-    public bool IsDemo { get; set; }
-    public bool FeedbackSent { get; set; }
+    public bool FeedbackSent { get; set; } // [CLEAN-02] bỏ IsDemo (không còn đơn mô phỏng)
     public bool IsPaid => PaymentStatus == "Succeeded";
-    public bool CanPay => Status == "AwaitingPayment" && PaymentMode == "Prepaid" && PaymentStatus != "Pending";
     public bool CanCancel => Status is "AwaitingPayment" or "Pending";
     public string Summary => Lines.Count > 0 ? string.Join(", ", Lines.Select(l => $"{l.Quantity}× {l.Name}")) : ItemsText ?? "";
 }

@@ -7,9 +7,7 @@ namespace MauiApp1.Services;
 
 public sealed class ApiException(int status, string message) : Exception(message)
 {
-    public int Status { get; } = status;
-    /// <summary>404/405: endpoint chưa có trên server (dùng để bật chế độ dữ liệu mẫu).</summary>
-    public bool IsMissingEndpoint => Status is 404 or 405;
+    public int Status { get; } = status; // [CLEAN-02] bỏ IsMissingEndpoint (chỉ dùng cho dữ liệu mẫu)
 }
 
 public static class ApiSettings

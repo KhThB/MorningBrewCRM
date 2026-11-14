@@ -65,7 +65,8 @@ public sealed class CustomerController(SqlStore db, PageReader pages):Controller
     public async Task<ApiPage> Wallet([FromQuery] PageRequest page)=>await Page("""
         SELECT cp.CustomerPromotionID,p.Name,cp.Code,
         CASE WHEN cp.Status='Available' AND cp.ExpiresAt<=SYSUTCDATETIME() THEN 'Expired' ELSE cp.Status END AS Status,
-        cp.DiscountType,cp.DiscountValue,cp.PointsSpent,cp.ExpiresAt
+        cp.DiscountType,cp.DiscountValue,cp.PointsSpent,cp.ExpiresAt,
+        cp.MaxDiscount,cp.MinSubtotal /* [APP-01] app cần mức giảm tối đa + đơn tối thiểu để tính đúng tiền giảm ở giỏ */
         FROM dbo.CustomerPromotions cp JOIN dbo.Promotions p ON p.PromotionID=cp.PromotionID
         WHERE cp.CustomerID=@id
         ""","CustomerPromotionID",page,"vouchers",await CustomerId());
@@ -101,6 +102,23 @@ public sealed class CustomerController(SqlStore db, PageReader pages):Controller
             ("@Content",input.Content),("@Type",input.Type),("@Rating",input.Rating),("@OrderID",input.OrderId),("@BranchID",input.BranchId),("@ProductID",input.ProductId));
         var id = (int)rows.Single()["FeedbackID"]!;
         return Created($"/v1/me/feedbacks/{id}",await Feedback(id));
+    }
+    // [APP-05] Sổ địa chỉ giao hàng của khách: dùng bảng CustomerAddresses + dbo.SaveAddress (04_crm.sql) đã có sẵn
+    // nhưng trước đây chưa có API nên app bắt khách gõ lại địa chỉ mỗi lần đặt giao hàng.
+    [HttpGet("addresses")]
+    public async Task<ApiPage> Addresses([FromQuery] PageRequest page)=>await Page(
+        "SELECT AddressID,Label,RecipientName,Phone,AddressText,Note,IsDefault FROM dbo.CustomerAddresses WHERE CustomerID=@id AND IsActive=1",
+        "AddressID",page,"addresses",await CustomerId());
+    public record AddressInput([Required,StringLength(50,MinimumLength=1)] string Label,[Required,StringLength(120,MinimumLength=1)] string RecipientName,
+        [Required,StringLength(20,MinimumLength=1)] string Phone,[Required,StringLength(500,MinimumLength=1)] string AddressText,
+        [MaxLength(300)] string? Note,bool IsDefault=false,int? AddressId=null);
+    [HttpPost("addresses")]
+    public async Task<object> SaveAddress(AddressInput input)
+    {
+        var rows = await db.Procedure("dbo.SaveAddress",("@ActorID",Actor),("@CustomerID",await CustomerId()),("@Label",input.Label.Trim()),
+            ("@RecipientName",input.RecipientName.Trim()),("@Phone",PhoneRule.Normalize(input.Phone)),("@AddressText",input.AddressText.Trim()),
+            ("@IsDefault",input.IsDefault),("@AddressID",input.AddressId),("@Note",string.IsNullOrWhiteSpace(input.Note)?null:input.Note.Trim()));
+        return new { AddressId=(int)rows.Single()["AddressID"]! };
     }
     [HttpGet("surveys")]
     public async Task<ApiPage> Surveys([FromQuery] PageRequest page)=>await Page("""

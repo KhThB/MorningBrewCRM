@@ -1,0 +1,47 @@
+@model WorkspaceBase
+@* [WEB-10][WEB-12] Danh bạ nhà cung cấp dùng chung cho Admin server (/Admin/Suppliers) và Quản lý CRM (/Manager/Suppliers):
+   tìm kiếm, thêm, sửa, tạm ngưng / hợp tác lại. Quyền: Inventory.Manage (chủ cửa hàng, quản lý). *@
+@{
+    Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
+        @{var active=item["is_active"].ValueKind==JsonValueKind.True;
+          string F(string k)=>item.TryGetValue(k,out var v)&&v.ValueKind!=JsonValueKind.Null?v.ToString():"";
+          var fill=JsonSerializer.Serialize(new{id=item["supplier_id"].ToString(),display_name=item["display_name"].ToString(),
+              code=F("code"),name=item["display_name"].ToString(),phone=F("phone"),email=F("email"),productGroup=F("product_group")});}
+        <button type="button" class="btn-sm" data-open="m-edit" data-fill="@fill">Sửa</button> @* [WEB-12] *@
+        <button type="button" class="btn-sm @(active?"danger-text":null)" data-open="@(active?"m-stop":"m-start")" data-fill="@fill">@(active?"Tạm ngưng":"Hợp tác lại")</button>
+    </div>;
+}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel">
+    <div class="list-toolbar">
+        <form method="get"><input name="q" type="search" value="@Model.Q" placeholder="Tìm theo mã, tên, nhóm sản phẩm" aria-label="Tìm nhà cung cấp"><button class="secondary">Tìm</button>@if(!string.IsNullOrEmpty(Model.Q)){<a class="btn-sm" href="?">Bỏ lọc</a>}</form>
+        <button type="button" class="primary add-btn" data-open="m-add">+ Thêm nhà cung cấp</button>
+    </div>
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,RowDetail=true,DetailTitle="Chi tiết nhà cung cấp",ActiveLabels=("Đang hợp tác","Tạm ngưng")})" />
+    <partial name="_Pager" model="Model" />
+</section>
+@foreach(var (id,op,title,button) in new[]{("m-add","supplier","Thêm nhà cung cấp","Lưu nhà cung cấp"),("m-edit","supplier-update","Sửa nhà cung cấp","Lưu thay đổi")})
+{
+<dialog class="modal" id="@id"><form method="post">
+    <input type="hidden" name="operation" value="@op"><input type="hidden" name="modal" value="@id">@if(op=="supplier-update"){<input type="hidden" name="id">}
+    <header><h2>@title</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <div class="two"><div><label>Mã nhà cung cấp *</label><input name="code" maxlength="30" required placeholder="VD: NCC-CF02"></div><div><label>Tên *</label><input name="name" maxlength="150" required></div>
+        <div><label>Điện thoại</label><input name="phone" maxlength="20"></div><div><label>Email</label><input name="email" type="email" maxlength="254"></div></div>
+        <label>Nhóm sản phẩm</label><input name="productGroup" maxlength="150" placeholder="VD: Cà phê hạt, sữa…">
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">@button</button></footer>
+</form></dialog>
+}
+<dialog class="modal" id="m-stop"><form method="post">
+    <input type="hidden" name="operation" value="supplier-active"><input type="hidden" name="modal" value="m-stop"><input type="hidden" name="id"><input type="hidden" name="active" value="false">
+    <header><h2>Tạm ngưng hợp tác</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Tạm ngưng hợp tác với <b data-text="display_name"></b>? Nhà cung cấp sẽ không còn trong ô chọn khi nhập kho.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Tạm ngưng</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-start"><form method="post">
+    <input type="hidden" name="operation" value="supplier-active"><input type="hidden" name="modal" value="m-start"><input type="hidden" name="id"><input type="hidden" name="active" value="true">
+    <header><h2>Hợp tác lại</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Chuyển <b data-text="display_name"></b> về trạng thái đang hợp tác?</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Hợp tác lại</button></footer>
+</form></dialog>

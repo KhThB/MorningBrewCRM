@@ -8,7 +8,7 @@ public class CustomersModel(CrmApi api):WorkspaceBase(api)
     public override string Subtitle=>"Thêm, khóa, xóa khách hàng và điều chỉnh điểm (yêu cầu 4.1.1–4.1.3).";
     protected override string ListPath=>"v1/customers";
     protected override bool Searchable=>true;
-    protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"customer","customer-active","customer-delete","points"};
+    protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"customer","customer-active","customer-delete","points","customer-update"} /* [WEB-04] */;
 
     // [UI-05] HTML cho ngăn chi tiết khách hàng: hồ sơ, đơn gần đây, phản hồi, giao dịch điểm.
     public async Task<IActionResult> OnGetDetailAsync(int id)

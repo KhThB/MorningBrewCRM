@@ -138,3 +138,17 @@ dialog.modal .modal-shell{display:flex;flex-direction:column;max-height:90vh}dia
 .img-preview,.img-current{display:block;width:140px;height:140px;object-fit:cover;border-radius:12px;border:1px solid var(--border);background:#f5f5f4;margin:6px 0 10px}
 .img-compare{display:flex;gap:16px;flex-wrap:wrap}.img-compare figure{margin:0}.img-compare figcaption{font-size:11px;color:var(--muted);max-width:160px}
 .img-preview[hidden],.img-current[hidden]{display:none}
+/* [WEB-02] Các dòng size + ô tích trong form */
+.variant-rows .two{margin-bottom:6px}.variant-rows input{margin:0}
+label.check-line{display:flex;align-items:center;gap:8px;font-weight:500;margin:10px 0}label.check-line input{width:auto;margin:0}
+/* [WEB-07] ô ẩn theo vai trò: thắng display:grid của .two */
+.modal-body [hidden]{display:none!important}
+/* [WEB-05] trang Đổi mật khẩu + link ở thanh bên */
+.narrow-panel{max-width:520px}
+.side-link{display:block;margin:10px 4px 0;padding:8px 12px;border-radius:11px;color:#e7e5e4;text-decoration:none;font-size:12px;font-weight:700}.side-link:hover{background:rgba(255,255,255,.08)}
+/* [WEB-09] Chọn kỳ báo cáo */
+.period-form{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin:8px 0 14px}.period-form input{width:auto;margin:0}.period-form .presets{display:flex;gap:6px;flex-wrap:wrap}
+.period-form .presets .current{background:var(--accent-ink);color:#fff;border-color:var(--accent-ink)}
+details.daily-revenue{margin-top:14px}details.daily-revenue summary{cursor:pointer;font-weight:700;margin-bottom:8px}
+/* [WEB-03] form thêm danh mục */
+.category-add{display:flex;gap:8px;margin-bottom:12px}.category-add input{margin:0}

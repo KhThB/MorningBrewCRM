@@ -40,7 +40,19 @@
         "supplier_name"=>r[k].ValueKind==JsonValueKind.Null?"—":null,
         _=>null};
 
+    // [WEB-14] Thao tác dòng định mức
+    Func<Dictionary<string,JsonElement>,object> recipeActions=@<div class="row-actions">
+        @{var rf=JsonSerializer.Serialize(new{variantId=item["variant_id"].ToString(),ingredientId=item["ingredient_id"].ToString(),
+            quantity=item["recipe_quantity"].ToString(),display_name=$"{item["product_name"]} · {item["variant_name"]} – {item["ingredient_name"]}"});}
+        <button type="button" class="btn-sm" data-open="m-recipe" data-fill="@rf">Sửa</button>
+        <button type="button" class="btn-sm danger-text" data-open="m-recipe-delete" data-fill="@rf">Xóa</button>
+    </div>;
+    string? RecipeFormat(string k,Dictionary<string,JsonElement> r)=>k switch{
+        "recipe_quantity"=>Qty(r,k)+" "+Unit(r),
+        _=>null};
+
     string? HistoryFormat(string k,Dictionary<string,JsonElement> r)=>k switch{
+        "actor_name"=>r[k].ValueKind==JsonValueKind.Null?"Tự động (bán hàng)":null, // [WEB-14] phiếu do trigger ghi khi đơn hoàn tất
         "kind"=>InventoryModel.KindName(r[k].ToString()),
         "quantity_change"=>(r[k].ValueKind==JsonValueKind.Number && r[k].GetDecimal()>0?"+":"")+Qty(r,k)+" "+Unit(r),
         "balance_after"=>Qty(r,k)+" "+Unit(r),
@@ -55,15 +67,32 @@
     <div class="stat"><span>Sắp hết (dưới mức tối thiểu)</span><b>@Model.Stat("low_stock")</b></div>
     <div class="stat"><span>Tiền nhập hàng 30 ngày</span><b class="stat-text">@(cost30.ToString("#,##0",vi)) ₫</b></div>
     <div class="stat"><span>Phiếu kho 24 giờ qua</span><b>@Model.Stat("recent_transactions")</b></div>
+    <div class="stat"><span>Phiếu tự trừ kho khi bán (30 ngày)</span><b>@Model.Stat("auto_exports")</b></div> @* [WEB-14] *@
 </div>
 
 <section class="panel">
     <div class="tabs-filter">
         <a href="?tab=stock" class="@(Model.History?null:"current")">Tồn kho</a>
         <a href="?tab=history" class="@(Model.History?"current":null)">Lịch sử nhập / xuất</a>
+        <a href="?tab=recipes" class="@(Model.Recipes?"current":null)">Định mức theo món</a> @* [WEB-14] *@
     </div>
 
-    @if(!Model.History)
+    @if(Model.Recipes) // [WEB-14] định mức: đơn hoàn tất tự trừ kho theo bảng này
+    {
+        <div class="list-toolbar">
+            <form method="get">
+                <input type="hidden" name="tab" value="recipes">
+                <input name="q" type="search" value="@Model.Q" placeholder="Tìm theo món hoặc nguyên liệu" aria-label="Tìm định mức">
+                <button class="secondary">Lọc</button>
+                @if(!string.IsNullOrEmpty(Model.Q)){<a class="btn-sm" href="?tab=recipes">Bỏ lọc</a>}
+            </form>
+            <button type="button" class="primary add-btn" data-open="m-recipe">+ Định mức</button>
+        </div>
+        <p class="list-count">@Model.Rows.Count dòng định mức · khi đơn chuyển sang "Hoàn tất" (web hoặc POS), hệ thống tự lập phiếu "Xuất dùng" theo số lượng món × định mức. Thiếu hàng thì trừ về 0 và ghi chú "cần kiểm kê".</p>
+        <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=recipeActions,Hide=new HashSet<string>{"variant_id","ingredient_id","unit"},
+            ActiveLabels=("Đang áp dụng","Không áp dụng"),Format=RecipeFormat,EmptyText="Chưa có định mức. Bấm “+ Định mức” để khai báo mỗi size dùng bao nhiêu nguyên liệu."})" />
+    }
+    else if(!Model.History)
     {
         <div class="list-toolbar">
             <form method="get">
@@ -167,7 +196,7 @@
             <div><label>Số lượng nhập *</label><input name="quantity" type="number" min="0.001" step="0.001" required></div>
             <div><label>Đơn giá (VND / đơn vị)</label><input name="unitCost" type="number" min="0" step="1"></div>
         </div>
-        <label>Nhà cung cấp</label>
+        <label>Nhà cung cấp <a class="muted" href="/Manager/Suppliers" style="font-weight:400">(thêm nhà cung cấp mới)</a></label> @* [WEB-10] *@
         <select name="supplierId"><option value="">Không ghi</option>@foreach(var s in Model.SupplierOptions){<option value="@s["id"]">@s["display_name"]</option>}</select>
         <label>Ghi chú</label><input name="note" maxlength="300" placeholder="Số hóa đơn, người giao…">
     </div>
@@ -222,6 +251,27 @@
         <label>Lý do *</label><input name="note" required maxlength="300" placeholder="VD: kiểm kê cuối tháng">
     </div>
     <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Ghi kiểm kê</button></footer>
+</form></dialog>
+
+@* [WEB-14] Đặt định mức: chọn size món + nguyên liệu + lượng dùng cho 1 phần *@
+<dialog class="modal" id="m-recipe"><form method="post">
+    <input type="hidden" name="operation" value="recipe"><input type="hidden" name="modal" value="m-recipe"><input type="hidden" name="tab" value="recipes">
+    <header><h2>Định mức nguyên liệu</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <label>Món · size *</label>
+        <select name="variantId" required><option value="">Chọn món và size</option>@foreach(var v in Model.VariantOptions){<option value="@v["id"]">@v["display_name"]</option>}</select>
+        <label>Nguyên liệu *</label>
+        <select name="ingredientId" required><option value="">Chọn nguyên liệu</option>@foreach(var x in Model.IngredientOptions){<option value="@x["id"]">@x["display_name"]</option>}</select>
+        <label>Lượng dùng cho 1 ly / 1 cái * (theo đơn vị của nguyên liệu)</label><input name="quantity" type="number" min="0.001" step="0.001" required placeholder="VD: 0.02 (kg)">
+        <p class="muted">Chọn lại cùng món · size và nguyên liệu thì lượng cũ được thay bằng lượng mới.</p>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Lưu định mức</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-recipe-delete"><form method="post">
+    <input type="hidden" name="operation" value="recipe-delete"><input type="hidden" name="modal" value="m-recipe-delete"><input type="hidden" name="variantId"><input type="hidden" name="ingredientId"><input type="hidden" name="tab" value="recipes">
+    <header><h2>Xóa định mức</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Xóa dòng <b data-text="display_name"></b>? Đơn hoàn tất sau này sẽ không trừ nguyên liệu này nữa.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Xóa</button></footer>
 </form></dialog>
 
 @* Ngừng dùng / dùng lại *@

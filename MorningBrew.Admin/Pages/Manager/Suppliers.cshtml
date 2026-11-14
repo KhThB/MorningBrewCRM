@@ -1,0 +1,5 @@
+@page
+@model SuppliersModel
+@{ ViewData["Title"]=Model.Title; }
+@* [WEB-10] Quản lý tự thêm / sửa nhà cung cấp khi nhập kho (trước đây chỉ chủ cửa hàng ở Admin server). *@
+<partial name="_Suppliers" model="Model" />

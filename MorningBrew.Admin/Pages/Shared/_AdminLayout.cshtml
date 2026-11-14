@@ -26,6 +26,7 @@
             <a asp-page="/Admin/Suppliers">Nhà cung cấp</a>
         </nav>
         <a class="area-switch" href="@(Portals.Manager.BaseUrl + Portals.Manager.Home)" target="_blank" rel="noopener">Mở Quản lý CRM (cổng riêng, đăng nhập riêng) ↗</a> @* [SEP-06] *@
+        <a class="side-link" asp-page="/Password">Đổi mật khẩu</a> @* [WEB-05] *@
         <form method="post" asp-page="/Logout" class="logout-form"><button>Đăng xuất</button></form>
     </aside>
     <main class="content">

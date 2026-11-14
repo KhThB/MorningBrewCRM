@@ -16,6 +16,9 @@ namespace MorningBrew.Api.Controllers;
 //   PUT  v1/inventory/ingredients/{id}/active – bật/tắt nguyên liệu
 //   GET  v1/inventory/transactions     – lịch sử phiếu kho (phân trang)
 //   POST v1/inventory/transactions     – ghi phiếu nhập/xuất/hủy/kiểm kê
+//   GET  v1/inventory/recipes          – [WEB-14] định mức nguyên liệu theo size
+//   PUT  v1/inventory/recipes          – [WEB-14] đặt định mức (thêm hoặc sửa)
+//   DELETE v1/inventory/recipes/{variantId}/{ingredientId} – [WEB-14] xóa một dòng định mức
 // Quyền: Owner + BranchManager có Inventory.Manage.
 [ApiController, Route("v1/inventory"), Authorize(Roles = "Owner,BranchManager")]
 public sealed class InventoryController(SqlStore db, PageReader pages) : ControllerBase
@@ -63,6 +66,17 @@ public sealed class InventoryController(SqlStore db, PageReader pages) : Control
             FROM dbo.Suppliers WHERE IsActive=1 ORDER BY Name
             """);
 
+        // [WEB-14] Size đang bán để chọn khi đặt định mức + số phiếu tự trừ kho 30 ngày.
+        var variantOptions = await db.Query("""
+            SELECT v.VariantID AS id, CONCAT(p.Name,N' · ',v.Name) AS display_name
+            FROM dbo.ProductVariants v JOIN dbo.Products p ON p.ProductID=v.ProductID
+            WHERE p.IsActive=1 AND v.IsActive=1 ORDER BY p.Name, v.DisplayOrder, v.VariantID
+            """);
+        var autoExports = (await db.Query("""
+            SELECT COUNT(*) AS n FROM dbo.InventoryTransactions
+            WHERE ActorID IS NULL AND Kind='Export' AND Note LIKE N'Bán hàng%' AND CreatedAt >= DATEADD(day,-30,SYSUTCDATETIME())
+            """)).Single()["n"];
+
         return new
         {
             ingredients         = stats["ingredients"],
@@ -70,7 +84,9 @@ public sealed class InventoryController(SqlStore db, PageReader pages) : Control
             import_cost         = stats["import_cost"],
             recent_transactions = stats["recent_transactions"],
             ingredient_options  = ingredientOptions,
-            supplier_options    = supplierOptions
+            supplier_options    = supplierOptions,
+            variant_options     = variantOptions,  // [WEB-14]
+            auto_exports        = autoExports      // [WEB-14]
         };
     }
 
@@ -302,6 +318,59 @@ public sealed class InventoryController(SqlStore db, PageReader pages) : Control
             balance_after   = row["balance_after"],
             quantity_change = row["quantity_change"]
         });
+    }
+
+    // ──────────────────────── [WEB-14] ĐỊNH MỨC ─────────────────────────────
+    // Mỗi size của món dùng bao nhiêu nguyên liệu. Đơn hoàn tất → trigger TR_Orders_Inventory trừ kho theo bảng này.
+    [HttpGet("recipes")]
+    public async Task<ApiPage> ListRecipes(string? q = null)
+    {
+        await RequireInventory();
+        var rows = await db.Query("""
+            SELECT r.VariantID AS variant_id, r.IngredientID AS ingredient_id,
+                   p.Name AS product_name, v.Name AS variant_name,
+                   CONCAT('[',i.Code,'] ',i.Name) AS ingredient_name, i.Unit AS unit,
+                   r.Quantity AS recipe_quantity,
+                   CAST(CASE WHEN p.IsActive=1 AND v.IsActive=1 AND i.IsActive=1 THEN 1 ELSE 0 END AS bit) AS is_active
+            FROM dbo.RecipeItems r
+            JOIN dbo.ProductVariants v ON v.VariantID=r.VariantID
+            JOIN dbo.Products p ON p.ProductID=v.ProductID
+            JOIN dbo.Ingredients i ON i.IngredientID=r.IngredientID
+            WHERE (@q='' OR p.Name LIKE @search OR i.Name LIKE @search OR i.Code LIKE @search)
+            ORDER BY p.Name, v.DisplayOrder, v.VariantID, i.Name
+            """, ("@q", q ?? ""), ("@search", "%" + (q ?? "") + "%"));
+        return new ApiPage(rows, null);
+    }
+
+    public record RecipeInput([Range(1, int.MaxValue)] int VariantId, [Range(1, int.MaxValue)] int IngredientId,
+        [Range(0.001, 1000000)] decimal Quantity);
+    [HttpPut("recipes")]
+    public async Task<IActionResult> SetRecipe(RecipeInput input)
+    {
+        await RequireInventory();
+        await db.Query("""
+            SET XACT_ABORT ON; BEGIN TRAN;
+            IF NOT EXISTS(SELECT 1 FROM dbo.ProductVariants WHERE VariantID=@variant) THROW 51104,N'Không tìm thấy size của món.',1;
+            IF NOT EXISTS(SELECT 1 FROM dbo.Ingredients WHERE IngredientID=@ingredient AND IsActive=1) THROW 51124,N'Nguyên liệu không tồn tại hoặc đã ngừng dùng.',1;
+            IF EXISTS(SELECT 1 FROM dbo.RecipeItems WITH(UPDLOCK,HOLDLOCK) WHERE VariantID=@variant AND IngredientID=@ingredient)
+                UPDATE dbo.RecipeItems SET Quantity=@qty WHERE VariantID=@variant AND IngredientID=@ingredient;
+            ELSE INSERT dbo.RecipeItems(VariantID,IngredientID,Quantity) VALUES(@variant,@ingredient,@qty);
+            INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details) VALUES(@actor,'Recipe.Set','RecipeItems',@variant,CONCAT(@ingredient,':',@qty));
+            COMMIT;
+            """, ("@variant", input.VariantId), ("@ingredient", input.IngredientId), ("@qty", input.Quantity), ("@actor", Actor));
+        return NoContent();
+    }
+
+    [HttpDelete("recipes/{variantId:int}/{ingredientId:int}")]
+    public async Task<IActionResult> DeleteRecipe(int variantId, int ingredientId)
+    {
+        await RequireInventory();
+        await db.Query("""
+            DELETE dbo.RecipeItems WHERE VariantID=@variant AND IngredientID=@ingredient;
+            IF @@ROWCOUNT=0 THROW 51104,N'Không tìm thấy dòng định mức.',1;
+            INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details) VALUES(@actor,'Recipe.Delete','RecipeItems',@variant,CONVERT(varchar(20),@ingredient));
+            """, ("@variant", variantId), ("@ingredient", ingredientId), ("@actor", Actor));
+        return NoContent();
     }
 
     // ──────────────────────── HELPER ────────────────────────────────────────

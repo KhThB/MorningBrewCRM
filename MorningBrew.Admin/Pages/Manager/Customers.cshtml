@@ -6,6 +6,11 @@
     Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
         @{var id=item["customer_id"].GetInt32(); var name=item["full_name"].ToString(); var active=item["is_active"].ValueKind==JsonValueKind.True;}
         <button type="button" class="btn-sm" data-detail="?handler=Detail&id=@id" data-detail-title="Chi tiết khách hàng">Xem</button>
+        @* [WEB-04] Sửa thông tin khách *@
+        <button type="button" class="btn-sm" data-open="m-edit" data-fill="@(JsonSerializer.Serialize(new{id,full_name=name,fullName=name,
+            phone=item["phone"].ValueKind==JsonValueKind.Null?"":item["phone"].ToString(),
+            dateOfBirth=item["date_of_birth"].ValueKind==JsonValueKind.Null?"":item["date_of_birth"].ToString(),
+            gender=item["gender"].ValueKind==JsonValueKind.Null||item["gender"].ToString()=="Undisclosed"?"":item["gender"].ToString()}))">Sửa</button>
         <button type="button" class="btn-sm" data-open="@(active?"m-lock":"m-unlock")" data-fill="@(JsonSerializer.Serialize(new{id,full_name=name}))">@(active?"Khóa":"Mở khóa")</button>
         @if(Model.IsOwner){<button type="button" class="btn-sm" data-open="m-points" data-fill="@(JsonSerializer.Serialize(new{id,full_name=name,current=item["loyalty_points"].ToString()}))">Điểm</button>}
         <button type="button" class="btn-sm danger-text" data-open="m-delete" data-fill="@(JsonSerializer.Serialize(new{id,full_name=name}))">Xóa</button>
@@ -32,16 +37,32 @@
         <label>Họ tên *</label><input name="fullName" maxlength="120" required>
         <div class="two">
             <div><label>Email *</label><input name="email" type="email" required></div>
-            <div><label>Điện thoại</label>@* [BUG-04] kiểm tra trên trình duyệt; API kiểm tra lại bằng PhoneRule *@<input name="phone" maxlength="20" pattern="^0[0-9 .\-]{9,14}$" title="10–11 số, bắt đầu bằng 0"></div>
+            <div><label>Điện thoại *</label>@* [BUG-04] kiểm tra trên trình duyệt; API kiểm tra lại bằng PhoneRule. [WEB-06] bắt buộc như đăng ký trên app *@<input name="phone" maxlength="20" pattern="^0[0-9 .\-]{9,14}$" title="10–11 số, bắt đầu bằng 0" required></div>
         </div>
         <label>Mật khẩu ban đầu * (ít nhất 10 ký tự)</label><input name="password" type="password" minlength="10" required autocomplete="new-password">
         @* [BUG-03] ngày sinh, giới tính để khách mới vào đúng nhóm trong báo cáo độ tuổi / giới tính *@
         <div class="two">
-            <div><label>Ngày sinh</label><input name="dateOfBirth" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")"></div>
+            <div><label>Ngày sinh</label><input name="dateOfBirth" type="date" min="1900-01-01" max="@DateTime.Today.ToString("yyyy-MM-dd")"></div>
             <div><label>Giới tính</label><select name="gender"><option value="">Chưa cung cấp</option><option value="Female">Nữ</option><option value="Male">Nam</option><option value="Other">Khác</option></select></div>
         </div>
     </div>
     <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Thêm khách hàng</button></footer>
+</form></dialog>
+
+@* [WEB-04] Sửa thông tin khách hàng *@
+<dialog class="modal" id="m-edit"><form method="post">
+    <input type="hidden" name="operation" value="customer-update"><input type="hidden" name="modal" value="m-edit"><input type="hidden" name="id">
+    <header><h2>Sửa thông tin khách hàng</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <label>Họ tên *</label><input name="fullName" minlength="2" maxlength="120" required>
+        <label>Điện thoại *</label><input name="phone" maxlength="20" pattern="^0[0-9 .\-]{9,14}$" title="10–11 số, bắt đầu bằng 0" required>
+        <div class="two">
+            <div><label>Ngày sinh</label><input name="dateOfBirth" type="date" min="1900-01-01" max="@DateTime.Today.ToString("yyyy-MM-dd")"></div>
+            <div><label>Giới tính</label><select name="gender"><option value="">Chưa cung cấp</option><option value="Female">Nữ</option><option value="Male">Nam</option><option value="Other">Khác</option></select></div>
+        </div>
+        <p class="muted">Email là tên đăng nhập nên không đổi ở đây. Điểm thành viên chỉnh bằng nút "Điểm".</p>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Lưu thay đổi</button></footer>
 </form></dialog>
 
 @* [UI-01] Khóa / mở khóa *@

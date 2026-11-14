@@ -20,9 +20,11 @@
             <a asp-page="/Manager/Surveys">Khảo sát</a>
             <a asp-page="/Manager/Promotions">Ưu đãi</a>
             <a asp-page="/Manager/Inventory">Kho nguyên liệu</a> @* [KHO] *@
+            <a asp-page="/Manager/Suppliers">Nhà cung cấp</a> @* [WEB-10] *@
             <a asp-page="/Manager/Reports">Báo cáo</a>
         </nav>
         @if(User.IsInRole("Owner")){<a class="area-switch" href="@(Portals.Admin.BaseUrl + Portals.Admin.Home)" target="_blank" rel="noopener">Mở Admin server (cổng riêng, đăng nhập riêng) ↗</a>} @* [SEP-06] *@
+        <a class="side-link" asp-page="/Password">Đổi mật khẩu</a> @* [WEB-05] *@
         <form method="post" asp-page="/Logout" class="logout-form"><button>Đăng xuất</button></form>
     </aside>
     <main class="content">

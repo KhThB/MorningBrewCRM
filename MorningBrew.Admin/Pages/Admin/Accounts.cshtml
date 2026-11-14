@@ -5,7 +5,9 @@
     // [UI-02] Thao tác theo dòng; không thao tác trên chính tài khoản đang đăng nhập.
     Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
         @{var id=item["user_id"].ToString(); var name=item["full_name"].ToString(); var role=item["role"].ToString(); var active=item["is_active"].ValueKind==JsonValueKind.True;
-          var fill=JsonSerializer.Serialize(new{id,full_name=name,role,role_name=RowDisplay.Value("role",item["role"])});}
+          var fill=JsonSerializer.Serialize(new{id,full_name=name,role,role_name=RowDisplay.Value("role",item["role"]),
+              fullName=name,phone=item["phone"].ValueKind==JsonValueKind.Null?"":item["phone"].ToString()});} @* [WEB-04] fullName, phone cho form Sửa *@
+        <button type="button" class="btn-sm" data-open="m-edit" data-fill="@fill">Sửa</button> @* [WEB-04] *@
         @if(id==me){<span class="muted" style="font-size:12px">Tài khoản của bạn</span>}
         else{
             if(role!="Customer"){<button type="button" class="btn-sm" data-open="m-role" data-fill="@fill">Đổi vai trò</button>}
@@ -38,12 +40,28 @@
     <div class="modal-body">
         <label>Họ tên *</label><input name="fullName" maxlength="120" required>
         <div class="two"><div><label>Email *</label><input name="email" type="email" required></div>
-            <div><label>Điện thoại</label>@* [BUG-04] kiểm tra trên trình duyệt; API kiểm tra lại bằng PhoneRule *@<input name="phone" maxlength="20" pattern="^0[0-9 .\-]{9,14}$" title="10–11 số, bắt đầu bằng 0"></div></div>
+            <div><label>Điện thoại <span data-show-when="role=Customer">*</span></label>@* [BUG-04] kiểm tra trên trình duyệt; API kiểm tra lại bằng PhoneRule. [WEB-06] bắt buộc với khách hàng *@<input name="phone" maxlength="20" pattern="^0[0-9 .\-]{9,14}$" title="10–11 số, bắt đầu bằng 0" data-required-if="role=Customer"></div></div>
         <label>Mật khẩu ban đầu * (ít nhất 10 ký tự)</label><input name="password" type="password" minlength="10" required autocomplete="new-password">
         <label>Vai trò</label><select name="role"><option value="BranchManager">Quản lý cửa hàng</option><option value="Staff">Thu ngân</option><option value="Customer">Khách hàng</option><option value="Owner">Chủ cửa hàng</option></select>
-        <p class="muted">Quản lý và thu ngân được gán vào cửa hàng duy nhất của hệ thống. Có thể có nhiều quản lý.</p>
+        @* [WEB-07] Tài khoản khách hàng: nhập thêm ngày sinh, giới tính như form Thêm khách hàng (báo cáo độ tuổi / giới tính) *@
+        <div class="two" data-show-when="role=Customer" hidden>
+            <div><label>Ngày sinh</label><input name="dateOfBirth" type="date" min="1900-01-01" max="@DateTime.Today.ToString("yyyy-MM-dd")"></div>
+            <div><label>Giới tính</label><select name="gender"><option value="">Chưa cung cấp</option><option value="Female">Nữ</option><option value="Male">Nam</option><option value="Other">Khác</option></select></div>
+        </div>
+        <p class="muted">Quản lý và thu ngân được gán vào cửa hàng duy nhất của hệ thống. Có thể có nhiều quản lý. Khách hàng nên thêm ở Quản lý CRM → Khách hàng.</p>
     </div>
     <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Tạo tài khoản</button></footer>
+</form></dialog>
+
+@* [WEB-04] Sửa họ tên, điện thoại (email là tên đăng nhập, không đổi) *@
+<dialog class="modal" id="m-edit"><form method="post">
+    <input type="hidden" name="operation" value="account-update"><input type="hidden" name="modal" value="m-edit"><input type="hidden" name="id">
+    <header><h2>Sửa thông tin tài khoản</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p class="muted">Vai trò: <b data-text="role_name"></b></p>
+        <label>Họ tên *</label><input name="fullName" minlength="2" maxlength="120" required>
+        <label>Điện thoại</label><input name="phone" maxlength="20" pattern="^0[0-9 .\-]{9,14}$" title="10–11 số, bắt đầu bằng 0">
+        <p class="muted">Email là tên đăng nhập nên không đổi ở đây. Tài khoản khách hàng sửa đầy đủ (ngày sinh, giới tính) ở Quản lý CRM → Khách hàng.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Lưu thay đổi</button></footer>
 </form></dialog>
 
 <dialog class="modal" id="m-role"><form method="post">

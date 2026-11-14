@@ -57,23 +57,25 @@ Token được mã hóa và xác thực bằng ASP.NET Data Protection, hết h�
 
 | Chức năng | Endpoint |
 |---|---|
-| Xác thực | `POST /v1/auth/login`, `GET /v1/auth/me`, `POST /v1/auth/logout` |
-| Khách hàng, tài khoản | `GET /v1/customers`, `GET/POST /v1/accounts`, `GET /v1/accounts/{id}` |
-| Danh mục chung | `GET/POST /v1/products`, `GET /v1/products/{id}`, `GET /v1/variants`, `GET /v1/variants/{id}` |
+| Xác thực | `POST /v1/auth/login`, `GET /v1/auth/me`, `POST /v1/auth/logout`, `POST /v1/auth/password` (tự đổi mật khẩu: `current_password`, `new_password`) |
+| Khách hàng, tài khoản | `GET /v1/customers?q=`, `PUT /v1/customers/{id}` (`full_name`, `phone`, `date_of_birth`, `gender`), `GET/POST /v1/accounts` (khách hàng bắt buộc `phone`), `GET/PUT /v1/accounts/{id}` (`full_name`, `phone`) |
+| Danh mục chung | `GET/POST /v1/products` (POST: `variants` `[{"display_name":"M","price":45000}]`, `has_temperature`), `GET/PUT /v1/products/{id}`, `POST /v1/products/{id}/variants`, `GET /v1/variants?q=`, `GET /v1/variants/{id}`, `PUT /v1/variants/{id}/active` |
+| Danh mục sản phẩm | `GET/POST /v1/categories`, `PUT /v1/categories/{id}` (đổi tên), `PUT /v1/categories/{id}/active` |
 | Giá chung | `GET/PUT /v1/variants/{id}/price` |
-| Nhà cung cấp | `GET/POST /v1/suppliers`; GET chi tiết theo ID |
+| Nhà cung cấp | `GET /v1/suppliers?q=`, `POST /v1/suppliers`, `GET/PUT /v1/suppliers/{id}`; quyền `Inventory.Manage` (chủ cửa hàng, quản lý) |
 | Kho nguyên liệu | `GET /v1/inventory/summary`, `GET/POST /v1/inventory/ingredients`, `PUT .../{id}`, `PUT .../{id}/active`, `GET/POST /v1/inventory/transactions` |
+| Định mức (trừ kho khi bán) | `GET /v1/inventory/recipes?q=`, `PUT /v1/inventory/recipes` (`variant_id`, `ingredient_id`, `quantity`), `DELETE /v1/inventory/recipes/{variantId}/{ingredientId}` |
 | Đơn hàng (quản lý) | `GET /v1/orders`, `GET /v1/orders/{id}`, `POST /v1/orders/{id}:{advance|cancel|collect|delivery|refund}`, `POST /v1/refunds/{id}:complete` |
 | POS | `GET /v1/pos/menu`, `GET /v1/pos/customers?phone=`, `GET/POST /v1/pos/orders`, `GET /v1/pos/orders/{id}`, `POST ...:{advance|collect|cancel}` |
 | Khảo sát | `GET/POST /v1/surveys`, `GET /v1/surveys/{id}`, `POST ...:publish`, `...:close`, `...:invite` |
 | Kết quả khảo sát | `GET /v1/surveys/{id}/results?pageSize=50&pageToken=...` |
-| Khuyến mãi | `GET/POST /v1/promotions`, `GET /v1/promotions/{id}`, `POST ...:issue` |
+| Khuyến mãi | `GET /v1/promotions?q=`, `POST /v1/promotions`, `GET/PUT /v1/promotions/{id}`, `POST ...:issue`, `POST ...:issueBulk` (`customer_ids` hoặc `all` / `age_group` / `gender` / `product_id`) |
 | Voucher | `GET /v1/vouchers/{id}`; cấp/đổi voucher trả tài nguyên này, kể cả khi retry cùng `request_key` |
 | Phản hồi | `GET /v1/feedbacks`, `POST /v1/feedbacks/{id}:reply` |
 | Điểm | `POST /v1/customers/{id}:adjustPoints` |
 | Trạng thái | `PUT /v1/{accounts|products|promotions|suppliers}/{id}/active`, body `{"is_active":false}` |
 | Phân quyền | `GET /v1/permissions`, `PUT /v1/roles/{role}/permissions/{code}`, body `{"allowed":true}` |
-| Dashboard, báo cáo | `GET /v1/dashboard/overview`, `GET /v1/reports/revenue?fromTime=...&toTime=...&branchId=...` |
+| Dashboard, báo cáo | `GET /v1/dashboard/overview`, `GET /v1/reports/revenue?fromTime=...&toTime=...&branchId=...`, `GET /v1/reports/revenue/daily?fromTime=...&toTime=...` (theo ngày giờ VN, tối đa 366 ngày) |
 | Hồ sơ bản thân | `GET/PATCH /v1/me/profile` |
 | Dữ liệu bản thân | `GET /v1/me/{loyalty|wallet|promotions|feedbacks|surveys|preferences}`; `wallet` có `max_discount`, `min_subtotal` |
 | Thực đơn, đơn của khách | `GET /v1/me/menu`, `GET/POST /v1/me/orders`, `GET /v1/me/orders/{id}`, `POST ...:{pay|cancel}` |
@@ -133,7 +135,7 @@ Lỗi validation, JSON sai, xác thực, routing và rate limit dùng cùng enve
 
 ## Nâng cấp database đã có
 
-Chạy `database/sql_ssms/morningbrew_fullscript.sql` trong SSMS: file tự sao lưu rồi áp dụng `08`–`14`. Giá dùng chung (`09`) lấy `ProductVariants.BasePrice` và `ModifierOptions.ExtraPrice`; **không sửa giá snapshot trên đơn hàng đã tạo.**
+Chạy `database/sql_ssms/morningbrew_fullscript.sql` trong SSMS: file tự sao lưu rồi áp dụng `08`–`15`. Giá dùng chung (`09`) lấy `ProductVariants.BasePrice` và `ModifierOptions.ExtraPrice`; **không sửa giá snapshot trên đơn hàng đã tạo.**
 
 ## Cấu hình và kiểm thử
 

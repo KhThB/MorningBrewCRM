@@ -105,12 +105,15 @@ else
  const syncMode=()=>{op.value=mode.value==='one'?'invite':'invite-bulk';one.classList.toggle('hidden',mode.value!=='one');seg.classList.toggle('hidden',mode.value!=='segment');list.classList.toggle('hidden',mode.value!=='list')};
  mode.onchange=syncMode; document.getElementById('m-invite').addEventListener('toggle',syncMode); document.addEventListener('DOMContentLoaded',()=>setTimeout(syncMode,0));
  // [UI2-W5] Cùng một cửa sổ cho Tạo và Sửa nháp.
- const op=document.getElementById('survey-op'),sid=document.getElementById('survey-id'),head=document.getElementById('survey-head'),submit=document.getElementById('survey-submit');
+ // [WEB-SV1] Đổi tên biến thành "sop": trước đây khai báo trùng "const op" (đã dùng cho ô Mời khách) → lỗi cú pháp
+ // làm cả đoạn script không chạy: nút "+ Thêm câu hỏi" không hoạt động, ô "Lựa chọn" của câu Chọn một / Chọn nhiều
+ // luôn bị ẩn nên không tạo được khảo sát có câu lựa chọn, và ô Mời khách gửi nhầm "invite-bulk" khi chọn "Một khách hàng".
+ const sop=document.getElementById('survey-op'),sid=document.getElementById('survey-id'),head=document.getElementById('survey-head'),submit=document.getElementById('survey-submit');
  const setMode=edit=>{head.textContent=edit?'Sửa khảo sát (bản nháp)':'Tạo khảo sát (bản nháp)';submit.textContent=edit?'Lưu thay đổi':'Tạo bản nháp';};
  const fillRows=qs=>{box.innerHTML='';(qs.length?qs:[{}]).forEach(q=>{const r=tpl.cloneNode(true);r.querySelector('[name=q_text]').value=q.text??'';r.querySelector('.q-type').value=q.type||'Rating';r.querySelector('[name=q_required]').value=q.required===false?'false':'true';r.querySelector('textarea').value=q.options??'';box.append(r);sync(r)});};
- document.querySelector('[data-open=m-add]')?.addEventListener('click',()=>{setMode(false);fillRows([]);});
+ document.querySelector('[data-open=m-add]')?.addEventListener('click',()=>{sop.value='survey';sid.value='';setMode(false);fillRows([]);}); // [WEB-SV1] về chế độ Tạo mới, không ghi đè bản nháp vừa sửa
  const ed=document.getElementById('survey-edit');
- if(ed){const d=JSON.parse(ed.textContent);window.addEventListener('load',()=>{mbOpenModal('m-add');op.value='survey-update';sid.value=d.id;setMode(true);
+ if(ed){const d=JSON.parse(ed.textContent);window.addEventListener('load',()=>{mbOpenModal('m-add');sop.value='survey-update';sid.value=d.id;setMode(true);
    const el=document.getElementById('survey-form').elements;el['title'].value=d.title;el['description'].value=d.description;el['startsAt'].value=d.startsAt;el['endsAt'].value=d.endsAt;fillRows(d.questions);
    const u=new URL(location.href);u.searchParams.delete('edit');history.replaceState(null,'',u);});}
  // Mở lại modal Tạo khảo sát sau lỗi: dựng lại đủ số dòng câu hỏi theo dữ liệu đã nhập

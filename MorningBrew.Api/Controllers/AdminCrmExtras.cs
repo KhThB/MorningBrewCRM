@@ -33,6 +33,20 @@ public sealed partial class AdminController
     [HttpPost("surveys/{id:int}:inviteBulk")]
     public async Task<object> InviteBulk(int id, BulkInviteInput input)
     {
+        var targets = await BulkTargets(input); // [WEB-11] tách ra dùng chung với cấp voucher hàng loạt
+        if (targets.Count == 0) return new { matched = 0, invited = 0, alreadyInvited = 0 };
+        var before = await InvitedCount(id);
+        foreach (var customer in targets)
+            await db.Procedure("dbo.InviteSurvey", ("@ActorID", Actor), ("@SurveyID", id), ("@CustomerID", customer));
+        var invited = await InvitedCount(id) - before;
+        await db.Query("INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details) VALUES(@actor,'Survey.InviteBulk','Surveys',@id,@details)",
+            ("@actor", Actor), ("@id", id), ("@details", $"matched={targets.Count};invited={invited}"));
+        return new { matched = targets.Count, invited, alreadyInvited = targets.Count - invited };
+    }
+
+    // Danh sách khách cần xử lý: theo CustomerIds, hoặc theo nhóm (tất cả / nhóm tuổi / giới tính / thích một món).
+    private async Task<List<int>> BulkTargets(BulkInviteInput input)
+    {
         List<int> targets;
         if (input.CustomerIds is { Length: > 0 })
         {
@@ -57,14 +71,7 @@ public sealed partial class AdminController
                 """, ("@actor", Actor), ("@today", today), ("@age", input.AgeGroup), ("@gender", input.Gender ?? ""), ("@product", input.ProductId));
             targets = rows.Select(r => (int)r["CustomerID"]!).ToList();
         }
-        if (targets.Count == 0) return new { matched = 0, invited = 0, alreadyInvited = 0 };
-        var before = await InvitedCount(id);
-        foreach (var customer in targets)
-            await db.Procedure("dbo.InviteSurvey", ("@ActorID", Actor), ("@SurveyID", id), ("@CustomerID", customer));
-        var invited = await InvitedCount(id) - before;
-        await db.Query("INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details) VALUES(@actor,'Survey.InviteBulk','Surveys',@id,@details)",
-            ("@actor", Actor), ("@id", id), ("@details", $"matched={targets.Count};invited={invited}"));
-        return new { matched = targets.Count, invited, alreadyInvited = targets.Count - invited };
+        return targets;
     }
     private async Task<int> InvitedCount(int survey)
         => (int)(await db.Query("SELECT COUNT(*) AS N FROM dbo.SurveyRecipients WHERE SurveyID=@id", ("@id", survey))).Single()["N"]!;

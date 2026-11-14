@@ -53,6 +53,11 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
     protected decimal Money(string key)=>decimal.Parse(Text(key),CultureInfo.InvariantCulture);
     protected DateTime Date(string key)=>DateTimeOffset.Parse(Text(key),CultureInfo.InvariantCulture).UtcDateTime;
     protected Guid Key()=>Guid.Parse(Text("requestKey"));
+    protected string? Blank(string key)=>string.IsNullOrWhiteSpace(Text(key))?null:Text(key); // [WEB-04] ô để trống = null
+    // [WEB-11] Dữ liệu form ưu đãi dùng chung cho Tạo và Sửa.
+    private object PromotionBody()=>new {name=Text("name"),description=Text("description"),discountType=Text("discountType"),discountValue=Money("discountValue"),
+        maxDiscount=string.IsNullOrWhiteSpace(Text("maxDiscount"))?(decimal?)null:Money("maxDiscount"),minSubtotal=Money("minSubtotal"),startsAt=Date("startsAt"),endsAt=Date("endsAt"),
+        pointsCost=Optional("pointsCost"),totalLimit=Number("totalLimit"),perCustomerLimit=Number("perCustomerLimit")};
 
     public async Task<IActionResult> OnPostAsync(string operation)
     {
@@ -61,12 +66,18 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
         {
             var redirect=await ExecuteAsync(operation);
             if(redirect is not null) return redirect;
-            TempData["Success"]??="Đã lưu thay đổi.";
+            // [WEB-TD] Không đọc TempData["Success"] ở đây: đọc TempData trong cùng request sẽ đánh dấu "đã đọc" và xóa luôn,
+            // nên trước đây mọi thông báo riêng ("Đã tạo tài khoản."…) không bao giờ hiện. ContainsKey không đánh dấu đã đọc.
+            if(!TempData.ContainsKey("Success")) TempData["Success"]="Đã lưu thay đổi.";
         }
         catch(CrmApiException e) { TempData["Error"]=e.Message; SaveModalState(); }
         catch(Exception e) when(e is FormatException or OverflowException) { TempData["Error"]="Vui lòng nhập đầy đủ các trường và kiểm tra số, ngày tháng."; SaveModalState(); }
-        return RedirectToPage(new {q=Q,pageToken=PageToken});
+        return BackToList();
     }
+
+    // [WEB-15] Quay lại đúng trang danh sách với mọi bộ lọc đang dùng (q, role, active, tab…). Form không ghi action
+    // nên trình duyệt gửi POST tới chính địa chỉ trang kèm query string; trước đây chỉ giữ q và pageToken.
+    protected IActionResult BackToList()=>LocalRedirect(Request.PathBase+Request.Path+Request.QueryString);
 
     // [UI-01] Form gửi từ cửa sổ (modal) có trường ẩn "modal" = id cửa sổ. Khi API báo lỗi, ghi lại id và dữ liệu
     // đã nhập để trang mở lại đúng cửa sổ đó (ui.js đọc #modal-state). Không giữ mật khẩu, token chống giả mạo, requestKey.
@@ -105,6 +116,21 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
         return list.ToArray();
     }
 
+    // [WEB-02] Các dòng size của form sản phẩm: variantName[i] + variantPrice[i]; bỏ dòng không có tên.
+    // Dòng có tên mà thiếu giá → FormatException → báo "kiểm tra số".
+    protected object[] Variants()
+    {
+        var names=Request.Form["variantName"]; var prices=Request.Form["variantPrice"];
+        var list=new List<object>();
+        for(var i=0;i<names.Count;i++)
+        {
+            var name=(names[i]??"").Trim();
+            if(name.Length==0) continue;
+            list.Add(new {name,price=decimal.Parse((i<prices.Count?prices[i]:null)??"",CultureInfo.InvariantCulture)});
+        }
+        return list.ToArray();
+    }
+
     // Toàn bộ thao tác ghi của hai giao diện; trang nào được dùng thao tác nào do Operations quyết định.
     protected virtual async Task<IActionResult?> ExecuteAsync(string operation)
     {
@@ -112,28 +138,40 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
         {
             // ----- Quản trị -----
             case "account":
-                await Api.Send(HttpMethod.Post,"v1/accounts",new {email=Text("email"),fullName=Text("fullName"),password=Text("password"),phone=Text("phone"),role=Text("role")});
+                // [WEB-07] vai trò Khách hàng: gửi thêm ngày sinh, giới tính (ô chỉ hiện khi chọn Khách hàng)
+                await Api.Send(HttpMethod.Post,"v1/accounts",new {email=Text("email"),fullName=Text("fullName"),password=Text("password"),phone=Text("phone"),role=Text("role"),
+                    dateOfBirth=Text("role")=="Customer"?Blank("dateOfBirth"):null,gender=Text("role")=="Customer"?Blank("gender"):null});
                 TempData["Success"]="Đã tạo tài khoản."; break;
             case "account-role":
                 await Api.Send(HttpMethod.Put,$"v1/accounts/{Number("id")}/role",new {role=Text("role")});
                 TempData["Success"]="Đã đổi vai trò. Tài khoản này phải đăng nhập lại để nhận quyền mới."; break;
             case "account-password": // [BUG-05] chủ cửa hàng đặt lại mật khẩu
-                if(Text("password")!=Text("confirm")) { TempData["Error"]="Mật khẩu nhập lại không khớp."; return RedirectToPage(); }
+                // [WEB-15] báo lỗi như lỗi API: giữ bộ lọc danh sách và mở lại đúng cửa sổ (trước đây về trang đầu, mất bộ lọc)
+                if(Text("password")!=Text("confirm")) throw new CrmApiException(400,"Mật khẩu nhập lại không khớp.");
                 await Api.Send(HttpMethod.Post,$"v1/accounts/{Number("id")}:resetPassword",new {newPassword=Text("password")});
                 TempData["Success"]="Đã đặt lại mật khẩu. Tài khoản đó bị đăng xuất khỏi mọi thiết bị."; break;
             case "account-active":
                 await Api.Send(HttpMethod.Put,$"v1/accounts/{Number("id")}/active",new {isActive=Text("active")=="true"}); break;
             case "account-delete":
                 await Api.Send(HttpMethod.Delete,$"v1/accounts/{Number("id")}");
-                TempData["Success"]="Đã xóa tài khoản. Lịch sử giao dịch vẫn được giữ."; return RedirectToPage();
+                TempData["Success"]="Đã xóa tài khoản. Lịch sử giao dịch vẫn được giữ."; break; // [WEB-15] giữ bộ lọc
+            case "account-update": // [WEB-04] sửa họ tên, điện thoại
+                await Api.Send(HttpMethod.Put,$"v1/accounts/{Number("id")}",new {fullName=Text("fullName"),phone=Blank("phone")});
+                TempData["Success"]="Đã cập nhật thông tin tài khoản."; break;
             case "permission":
                 await Api.Send(HttpMethod.Put,$"v1/roles/{Uri.EscapeDataString(Text("role"))}/permissions/{Uri.EscapeDataString(Text("code"))}",new {allowed=Text("allowed")=="true"}); break;
             case "supplier":
-                await Api.Send(HttpMethod.Post,"v1/suppliers",new {code=Text("code"),name=Text("name"),phone=Text("phone"),email=string.IsNullOrEmpty(Text("email"))?null:Text("email"),productGroup=Text("productGroup")}); break;
+                await Api.Send(HttpMethod.Post,"v1/suppliers",new {code=Text("code"),name=Text("name"),phone=Text("phone"),email=string.IsNullOrEmpty(Text("email"))?null:Text("email"),productGroup=Text("productGroup")});
+                TempData["Success"]="Đã thêm nhà cung cấp."; break;
+            case "supplier-update": // [WEB-12]
+                await Api.Send(HttpMethod.Put,$"v1/suppliers/{Number("id")}",new {code=Text("code"),name=Text("name"),phone=Blank("phone"),email=Blank("email"),productGroup=Blank("productGroup")});
+                TempData["Success"]="Đã cập nhật nhà cung cấp."; break;
             case "supplier-active":
                 await Api.Send(HttpMethod.Put,$"v1/suppliers/{Number("id")}/active",new {isActive=Text("active")=="true"}); break;
             case "product":
-                var product=await Api.Post<JsonElement>("v1/products",new {name=Text("name"),description=Text("description"),categoryId=Number("categoryId"),size=Text("size"),price=Money("price")});
+                // [WEB-02] nhiều size (mỗi dòng: tên size + giá; dòng để trống bị bỏ qua) và tùy chọn Đá / Nóng
+                var product=await Api.Post<JsonElement>("v1/products",new {name=Text("name"),description=Text("description"),categoryId=Number("categoryId"),
+                    variants=Variants(),hasTemperature=Request.Form["hasTemperature"].Contains("true")});
                 // [UI2-IMG] Có chọn ảnh thì tải lên ngay sau khi tạo sản phẩm.
                 if(Request.Form.Files.GetFile("image") is { Length: >0 } image && product.TryGetProperty("product_id",out var pid))
                 {
@@ -142,7 +180,7 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
                 }
                 TempData["Success"]="Đã tạo sản phẩm."; break;
             case "product-image": // [UI2-IMG] đổi ảnh sản phẩm có sẵn
-                if(Request.Form.Files.GetFile("image") is not { Length: >0 } newImage) { TempData["Error"]="Vui lòng chọn file ảnh."; return RedirectToPage(); }
+                if(Request.Form.Files.GetFile("image") is not { Length: >0 } newImage) throw new CrmApiException(400,"Vui lòng chọn file ảnh."); // [WEB-15]
                 await using(var s=newImage.OpenReadStream()) { await Api.Upload($"v1/products/{Number("id")}/image",s,newImage.FileName,newImage.ContentType); }
                 TempData["Success"]="Đã cập nhật ảnh sản phẩm. App khách thấy ảnh mới sau khoảng 1 phút."; break;
             case "product-active":
@@ -152,17 +190,40 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
                 TempData["Success"]=Text("available")=="true"?"Đã chuyển sang Còn hàng.":"Đã chuyển sang Tạm hết – app hiện nhãn Tạm hết và không cho đặt món này."; break;
             case "price":
                 await Api.Send(HttpMethod.Put,$"v1/variants/{Number("variantId")}/price",new {price=Money("price")}); break;
+            // ----- [WEB-03] sửa sản phẩm, thêm / ẩn size, danh mục -----
+            case "product-update":
+                await Api.Send(HttpMethod.Put,$"v1/products/{Number("id")}",new {name=Text("name"),description=Blank("description"),categoryId=Number("categoryId"),
+                    hasTemperature=Request.Form["hasTemperature"].Contains("true")});
+                TempData["Success"]="Đã cập nhật sản phẩm. App khách thấy thay đổi sau khoảng 1 phút."; break;
+            case "variant-add":
+                await Api.Send(HttpMethod.Post,$"v1/products/{Number("id")}/variants",new {name=Text("size"),price=Money("price")});
+                TempData["Success"]=$"Đã thêm size {Text("size")}."; break;
+            case "variant-active":
+                await Api.Send(HttpMethod.Put,$"v1/variants/{Number("variantId")}/active",new {isActive=Text("active")=="true"});
+                TempData["Success"]=Text("active")=="true"?"Đã bán lại size này.":"Đã ẩn size này khỏi thực đơn."; break;
+            case "category":
+                await Api.Send(HttpMethod.Post,"v1/categories",new {name=Text("categoryName")});
+                TempData["Success"]="Đã thêm danh mục."; break;
+            case "category-update":
+                await Api.Send(HttpMethod.Put,$"v1/categories/{Number("categoryId")}",new {name=Text("categoryName")});
+                TempData["Success"]="Đã đổi tên danh mục."; break;
+            case "category-active":
+                await Api.Send(HttpMethod.Put,$"v1/categories/{Number("categoryId")}/active",new {isActive=Text("active")=="true"});
+                TempData["Success"]=Text("active")=="true"?"Đã hiện lại danh mục.":"Đã ẩn danh mục – các món trong danh mục không hiện trên thực đơn."; break;
             // ----- Quản lý CRM -----
             case "customer":
                 // [BUG-03] gửi thêm ngày sinh, giới tính (để trống = null)
                 await Api.Send(HttpMethod.Post,"v1/accounts",new {email=Text("email"),fullName=Text("fullName"),password=Text("password"),phone=Text("phone"),role="Customer",
                     dateOfBirth=string.IsNullOrEmpty(Text("dateOfBirth"))?null:Text("dateOfBirth"),gender=string.IsNullOrEmpty(Text("gender"))?null:Text("gender")});
                 TempData["Success"]="Đã thêm khách hàng."; break;
+            case "customer-update": // [WEB-04] sửa họ tên, điện thoại, ngày sinh, giới tính
+                await Api.Send(HttpMethod.Put,$"v1/customers/{Number("id")}",new {fullName=Text("fullName"),phone=Text("phone"),dateOfBirth=Blank("dateOfBirth"),gender=Blank("gender")});
+                TempData["Success"]="Đã cập nhật thông tin khách hàng."; break;
             case "customer-active":
                 await Api.Send(HttpMethod.Put,$"v1/customers/{Number("id")}/active",new {isActive=Text("active")=="true"}); break;
             case "customer-delete":
                 await Api.Send(HttpMethod.Delete,$"v1/customers/{Number("id")}");
-                TempData["Success"]="Đã xóa khách hàng. Đơn hàng, phản hồi và khảo sát vẫn được giữ cho báo cáo."; return RedirectToPage();
+                TempData["Success"]="Đã xóa khách hàng. Đơn hàng, phản hồi và khảo sát vẫn được giữ cho báo cáo."; break; // [WEB-15] giữ bộ lọc
             case "points":
                 await Api.Send(HttpMethod.Post,$"v1/customers/{Number("id")}:adjustPoints",new {delta=Number("delta"),note=Text("note"),requestKey=Key()}); break;
             case "feedback":
@@ -196,7 +257,22 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
             case "results":
                 return RedirectToPage(new {surveyId=Number("id")});
             case "promotion":
-                await Api.Send(HttpMethod.Post,"v1/promotions",new {name=Text("name"),description=Text("description"),discountType=Text("discountType"),discountValue=Money("discountValue"),maxDiscount=string.IsNullOrWhiteSpace(Text("maxDiscount"))?(decimal?)null:Money("maxDiscount"),minSubtotal=Money("minSubtotal"),startsAt=Date("startsAt"),endsAt=Date("endsAt"),pointsCost=Optional("pointsCost"),totalLimit=Number("totalLimit"),perCustomerLimit=Number("perCustomerLimit")}); break;
+                await Api.Send(HttpMethod.Post,"v1/promotions",PromotionBody()); break;
+            case "promotion-update": // [WEB-11] sửa ưu đãi (voucher đã cấp giữ điều kiện cũ)
+                await Api.Send(HttpMethod.Put,$"v1/promotions/{Number("id")}",PromotionBody());
+                TempData["Success"]="Đã cập nhật ưu đãi. Voucher đã cấp trước đó giữ nguyên điều kiện lúc cấp."; break;
+            case "issue-bulk": // [WEB-11] cấp voucher hàng loạt: chọn nhiều khách / theo nhóm / tất cả
+                var issueIds=Request.Form["customerIds"].Select(x=>int.Parse(x!,CultureInfo.InvariantCulture)).ToArray();
+                var issueMode=Text("mode");
+                if(issueMode=="list" && issueIds.Length==0) throw new FormatException();
+                object issueBody=issueMode=="list"
+                    ? new {customerIds=issueIds}
+                    : new {all=issueMode=="all",ageGroup=Optional("ageGroup"),gender=Blank("gender"),productId=Optional("productId")};
+                var issued=await Api.Post<JsonElement>($"v1/promotions/{Number("id")}:issueBulk",issueBody);
+                var skippedText=issued.GetProperty("skipped").GetInt32()>0
+                    ? $" · bỏ qua {issued.GetProperty("skipped")} ({(issued.TryGetProperty("reason",out var why)&&why.ValueKind==JsonValueKind.String?why.GetString():"không đủ điều kiện")})" : "";
+                TempData["Success"]=$"Khớp {issued.GetProperty("matched")} khách · đã cấp {issued.GetProperty("issued")} voucher{skippedText}.";
+                break;
             case "issue":
                 await Api.Send(HttpMethod.Post,$"v1/promotions/{Number("id")}:issue",new {customerId=Number("customerId"),requestKey=Key()}); break;
             case "promotion-active":

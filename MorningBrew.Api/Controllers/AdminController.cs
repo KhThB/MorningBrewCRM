@@ -35,17 +35,17 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
     [HttpGet("surveys")]
     public Task<ApiPage> ListSurveys([FromQuery] PageRequest page) => List("surveys", page);
     [HttpGet("promotions")]
-    public Task<ApiPage> ListPromotions([FromQuery] PageRequest page) => List("promotions", page);
+    public Task<ApiPage> ListPromotions([FromQuery] PageRequest page, string? q = null) => List("promotions", page, q); // [WEB-11] tìm ưu đãi
     [HttpGet("products")]
     public Task<ApiPage> ListProducts([FromQuery] PageRequest page) => pages.Read(
         "SELECT ProductID,CategoryID,Name,Description,ImageURL,IsActive FROM dbo.Products",
         ["ProductID"],true,page,$"{Actor}:productResources",[],"products","ProductID");
     [HttpGet("variants")]
-    public Task<ApiPage> ListVariants([FromQuery] PageRequest page) => List("products", page);
+    public Task<ApiPage> ListVariants([FromQuery] PageRequest page, string? q = null) => List("products", page, q); // [WEB-13] tìm theo tên món / danh mục / size
     [HttpGet("permissions")]
     public Task<ApiPage> ListPermissions([FromQuery] PageRequest page) => List("permissions", page);
     [HttpGet("suppliers")]
-    public Task<ApiPage> ListSuppliers([FromQuery] PageRequest page) => List("suppliers", page);
+    public Task<ApiPage> ListSuppliers([FromQuery] PageRequest page, string? q = null) => List("suppliers", page, q); // [WEB-12] tìm nhà cung cấp
 
     private async Task<ApiPage> List(string section, PageRequest page, string? q = null)
     {
@@ -53,8 +53,12 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
         switch (section.ToLowerInvariant())
         {
             case "suppliers":
-                await RequireOwner();
-                sql = "SELECT SupplierID,Code,Name,Phone,Email,ProductGroup,IsActive FROM dbo.Suppliers ";
+                await RequirePermission("Inventory.Manage"); // [WEB-10] quản lý có quyền kho cũng xem / thêm nhà cung cấp (trước đây chỉ chủ cửa hàng)
+                sql = """
+                    SELECT SupplierID,Code,Name,Phone,Email,ProductGroup,IsActive FROM dbo.Suppliers
+                    WHERE (@q='' OR Code LIKE @search OR Name LIKE @search OR ProductGroup LIKE @search) -- [WEB-12]
+
+                    """;
                 break;
             case "customers":
                 sql = $"""
@@ -81,15 +85,22 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
                     """; break;
             case "promotions":
                 sql = """
-                    SELECT PromotionID,Name,Scope,AreaID,BranchID,DiscountType,DiscountValue,PointsCost,StartsAt,EndsAt,IsActive
-                    FROM dbo.Promotions WHERE dbo.CanScope(@actor,Scope,AreaID,BranchID,'Promotions.Manage')=1
+                    SELECT PromotionID,Name,Scope,AreaID,BranchID,DiscountType,DiscountValue,PointsCost,StartsAt,EndsAt,IsActive,
+                    Description,MaxDiscount,MinSubtotal,TotalLimit,PerCustomerLimit, -- [WEB-11] để mở form Sửa ưu đãi
+                    (SELECT COUNT(*) FROM dbo.CustomerPromotions cp WHERE cp.PromotionID=p.PromotionID) AS Issued -- [WEB-11] đã cấp
+                    FROM dbo.Promotions p WHERE dbo.CanScope(@actor,Scope,AreaID,BranchID,'Promotions.Manage')=1
+                    AND (@q='' OR p.Name LIKE @search OR p.Description LIKE @search) -- [WEB-11]
 
                     """; break;
             case "products":
                 sql = """
                     SELECT p.ProductID,p.Name,c.Name AS Category,v.VariantID,v.Name AS Size,v.BasePrice,p.IsActive,p.ImageURL, -- [UI2-IMG]
-                    CAST(COALESCE((SELECT MIN(CONVERT(int,bp.IsAvailable)) FROM dbo.BranchProducts bp WHERE bp.ProductID=p.ProductID),0) AS bit) AS InStock -- [UI2-A4a] còn hàng / tạm hết
+                    CAST(COALESCE((SELECT MIN(CONVERT(int,bp.IsAvailable)) FROM dbo.BranchProducts bp WHERE bp.ProductID=p.ProductID),0) AS bit) AS InStock, -- [UI2-A4a] còn hàng / tạm hết
+                    p.CategoryID,p.Description,v.IsActive AS SizeActive, -- [WEB-03] để mở form Sửa sản phẩm / ẩn size
+                    CAST(CASE WHEN EXISTS(SELECT 1 FROM dbo.ProductModifierGroups pg JOIN dbo.ModifierGroups g ON g.ModifierGroupID=pg.ModifierGroupID
+                        WHERE pg.ProductID=p.ProductID AND g.Kind='Ice' AND g.IsActive=1) THEN 1 ELSE 0 END AS bit) AS HasTemperature -- [WEB-02] có chọn Đá / Nóng
                     FROM dbo.Products p JOIN dbo.Categories c ON c.CategoryID=p.CategoryID JOIN dbo.ProductVariants v ON v.ProductID=p.ProductID
+                    WHERE (@q='' OR p.Name LIKE @search OR c.Name LIKE @search OR v.Name LIKE @search) -- [WEB-13]
 
                     """; break;
             case "accounts":
@@ -137,6 +148,28 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
         => new(await db.Procedure("dbo.RevenueReport", ("@ActorID", Actor), ("@FromUTC", fromTime?.UtcDateTime ?? DateTime.UtcNow.Date.AddDays(-30)),
             ("@ToUTC", toTime?.UtcDateTime ?? DateTime.UtcNow.Date.AddDays(1)), ("@BranchID", branchId)), null);
 
+    // [WEB-09] Doanh thu theo từng ngày (giờ Việt Nam) trong kỳ do người xem chọn; cùng cách tính với dbo.RevenueReport:
+    // doanh thu ghi vào ngày đơn hoàn tất, khoản hoàn tiền ghi vào ngày hoàn tiền thành công. Kỳ tối đa 366 ngày.
+    [HttpGet("reports/revenue/daily")]
+    public async Task<ApiPage> RevenueDaily(DateTimeOffset fromTime, DateTimeOffset toTime)
+    {
+        if (toTime <= fromTime) throw new ApiException(400, "Ngày kết thúc phải sau ngày bắt đầu.");
+        if (toTime - fromTime > TimeSpan.FromDays(366)) throw new ApiException(400, "Kỳ báo cáo tối đa 366 ngày.");
+        await RequirePermission("Reports.Read");
+        return new(await db.Query("""
+            WITH ledger AS (
+                SELECT o.CompletedAt AS EventAt,1 AS CompletedOrders,o.TotalAmount AS Gross,CONVERT(decimal(18,2),0) AS Refunded
+                FROM dbo.Orders o WHERE o.CompletedAt IS NOT NULL
+                UNION ALL
+                SELECT r.CompletedAt,0,0,r.Amount FROM dbo.Refunds r JOIN dbo.Orders o ON o.OrderID=r.OrderID
+                WHERE r.Status='Succeeded' AND o.CompletedAt IS NOT NULL)
+            SELECT CONVERT(date,DATEADD(hour,7,EventAt)) AS Day,SUM(CompletedOrders) AS CompletedOrders,
+                SUM(Gross) AS GrossRevenue,SUM(Refunded) AS RefundedRevenue,SUM(Gross-Refunded) AS NetRevenue
+            FROM ledger WHERE EventAt>=@from AND EventAt<@to
+            GROUP BY CONVERT(date,DATEADD(hour,7,EventAt)) ORDER BY Day
+            """, ("@from", fromTime.UtcDateTime), ("@to", toTime.UtcDateTime)), null);
+    }
+
     [HttpGet("lookups/options")]
     // [BUG-12] customerQ: tìm khách theo tên / email / SĐT để chọn trong các ô Mời khảo sát, Cấp voucher
     // (trước đây chỉ có 200 khách mới nhất, không tìm được khách cũ hơn).
@@ -171,6 +204,9 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
             throw new ApiException(400, "Ngày sinh không hợp lệ.", [new("FIELD_INVALID", "date_of_birth")]);
         if (input.Gender is not (null or "" or "Male" or "Female" or "Other" or "Undisclosed"))
             throw new ApiException(400, "Giới tính không hợp lệ.", [new("FIELD_INVALID", "gender")]);
+        // [WEB-06] Khách tạo từ web phải có số điện thoại giống đăng ký trên app (APP-06): thu ngân tra khách bằng SĐT.
+        if (input.Role == "Customer" && string.IsNullOrWhiteSpace(input.Phone))
+            throw new ApiException(400, "Cần nhập số điện thoại của khách hàng.", [new("FIELD_REQUIRED", "phone")]);
         var created = await db.Query("""
             SET XACT_ABORT ON; BEGIN TRAN;
             DECLARE @role int=(SELECT RoleID FROM dbo.Roles WHERE Code=@code);
@@ -191,7 +227,7 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
             INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID) VALUES(@actor,'Account.Create','Users',@id);
             COMMIT; SELECT @id AS UserID;
             """, ("@code", input.Role), ("@email", input.Email.Trim()), ("@name", input.FullName.Trim()), ("@phone", PhoneRule.Normalize(input.Phone)), // [BUG-04] chuẩn hóa + kiểm tra SĐT
-            ("@birth", input.DateOfBirth?.ToDateTime(TimeOnly.MinValue)), ("@gender", string.IsNullOrEmpty(input.Gender) ? null : input.Gender), // [BUG-03]
+            ("@birth", input.DateOfBirth?.ToDateTime(TimeOnly.MinValue)), ("@gender", string.IsNullOrEmpty(input.Gender) ? (input.Role == "Customer" ? "Undisclosed" : null) : input.Gender), // [BUG-03] [WEB-07] trống = "Không muốn nêu" như app
             ("@hash", new PasswordHasher<string>().HashPassword(input.Email, input.Password)), ("@actor", Actor));
         var id = (int)created.Single()["UserID"]!;
         return Created($"/v1/accounts/{id}", await ReadResource("accounts", id));
@@ -221,21 +257,51 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
         return NoContent();
     }
 
+    // [WEB-02] Tạo sản phẩm với nhiều size (M, L…) và tùy chọn Đá / Nóng (nhóm "Nhiệt độ") ngay từ đầu.
+    // Size/Price (một size) vẫn nhận để tương thích client cũ; có Variants thì dùng Variants.
+    public record VariantInput([Required, MaxLength(50)] string Name, [Range(0,100000000)] decimal Price);
     public record ProductInput([Required, MaxLength(150)] string Name, [MaxLength(2000)] string? Description,
-        [Range(1,int.MaxValue)] int CategoryId, [Required, MaxLength(60)] string Size, [Range(0,100000000)] decimal Price);
+        [Range(1,int.MaxValue)] int CategoryId, [MaxLength(50)] string? Size = null, [Range(0,100000000)] decimal? Price = null,
+        VariantInput[]? Variants = null, bool HasTemperature = false);
+    private static List<VariantInput> CheckVariants(VariantInput[]? variants, string? size = null, decimal? price = null)
+    {
+        var list = (variants ?? []).Where(v => v is not null && !string.IsNullOrWhiteSpace(v.Name))
+            .Select(v => v with { Name = v.Name.Trim() }).ToList();
+        if (list.Count == 0 && !string.IsNullOrWhiteSpace(size) && price is not null) list.Add(new(size.Trim(), price.Value));
+        if (list.Count == 0) throw new ApiException(400, "Cần ít nhất một size và giá bán.", [new("FIELD_REQUIRED", "variants")]);
+        if (list.Count > 5) throw new ApiException(400, "Tối đa 5 size cho một sản phẩm.", [new("FIELD_INVALID", "variants")]);
+        if (list.Any(v => v.Name.Length > 50 || v.Price < 0 || v.Price > 100000000))
+            throw new ApiException(400, "Tên size tối đa 50 ký tự, giá từ 0 đến 100.000.000.", [new("FIELD_INVALID", "variants")]);
+        if (list.Select(v => v.Name.ToUpperInvariant()).Distinct().Count() != list.Count)
+            throw new ApiException(400, "Tên size bị trùng.", [new("FIELD_INVALID", "variants")]);
+        return list;
+    }
+    // Nhóm tùy chọn "Nhiệt độ" (Đá / Nóng) do 13_ui_review.sql tạo: bắt buộc chọn đúng 1.
+    private const string TemperatureSql = """
+        DECLARE @temp int=(SELECT TOP(1) ModifierGroupID FROM dbo.ModifierGroups WHERE Kind='Ice' AND IsActive=1 ORDER BY ModifierGroupID);
+        IF @hasTemp=1 AND @temp IS NULL THROW 51100,N'Chưa có nhóm tùy chọn Nhiệt độ (Đá / Nóng). Chạy database/sql/13_ui_review.sql.',1;
+        IF @hasTemp=1 AND NOT EXISTS(SELECT 1 FROM dbo.ProductModifierGroups WHERE ProductID=@id AND ModifierGroupID=@temp)
+            INSERT dbo.ProductModifierGroups(ProductID,ModifierGroupID,MinSelections,MaxSelections) VALUES(@id,@temp,1,1);
+        IF @hasTemp=0 AND @temp IS NOT NULL DELETE dbo.ProductModifierGroups WHERE ProductID=@id AND ModifierGroupID=@temp;
+        """;
     [HttpPost("products")]
     public async Task<IActionResult> CreateProduct(ProductInput input)
     {
         await RequireOwner();
-        var created = await db.Query("""
+        var variants = CheckVariants(input.Variants, input.Size, input.Price); // [WEB-02]
+        var created = await db.Query($"""
             SET XACT_ABORT ON; BEGIN TRAN;
+            IF NOT EXISTS(SELECT 1 FROM dbo.Categories WHERE CategoryID=@category AND IsActive=1) THROW 51100,N'Danh mục không tồn tại hoặc đã ẩn.',1;
             INSERT dbo.Products(CategoryID,Name,Description) VALUES(@category,@name,@description);
             DECLARE @id int=SCOPE_IDENTITY();
-            INSERT dbo.ProductVariants(ProductID,Name,BasePrice,DisplayOrder) VALUES(@id,@size,@price,0);
+            INSERT dbo.ProductVariants(ProductID,Name,BasePrice,DisplayOrder)
+            SELECT @id,name,price,position+1 FROM OPENJSON(@variants) WITH(name nvarchar(50),price decimal(18,2),position int); -- [WEB-02] nhiều size
+            {TemperatureSql}
             INSERT dbo.BranchProducts(BranchID,ProductID) SELECT BranchID,@id FROM dbo.Branches WHERE IsActive=1;
             INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID) VALUES(@actor,'Product.Create','Products',@id);
             COMMIT; SELECT @id AS ProductID;
-            """, ("@category",input.CategoryId), ("@name",input.Name), ("@description",input.Description), ("@size",input.Size), ("@price",input.Price), ("@actor",Actor));
+            """, ("@category",input.CategoryId), ("@name",input.Name.Trim()), ("@description",input.Description),
+            ("@variants",JsonSerializer.Serialize(variants.Select((v,i)=>new{name=v.Name,price=v.Price,position=i}))), ("@hasTemp",input.HasTemperature), ("@actor",Actor));
         var id = (int)created.Single()["ProductID"]!;
         return Created($"/v1/products/{id}", await ReadResource("products", id));
     }

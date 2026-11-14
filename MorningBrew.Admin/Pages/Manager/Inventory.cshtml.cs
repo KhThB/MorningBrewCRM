@@ -10,9 +10,9 @@ public class InventoryModel(CrmApi api):WorkspaceBase(api)
     public override string Title=>"Kho nguyên liệu";
     public override string Subtitle=>"Tồn kho, nhập hàng từ nhà cung cấp, xuất dùng, hủy hỏng và kiểm kê.";
     protected override bool Searchable=>true;
-    protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"ingredient","ingredient-update","ingredient-active","stock"};
+    protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"ingredient","ingredient-update","ingredient-active","stock","recipe","recipe-delete"} /* [WEB-14] */;
 
-    // tab = stock (tồn kho) | history (lịch sử phiếu)
+    // tab = stock (tồn kho) | history (lịch sử phiếu) | recipes ([WEB-14] định mức nguyên liệu theo size)
     [BindProperty(SupportsGet=true)] public string Tab {get;set;}="stock";
     [BindProperty(SupportsGet=true)] public bool Low {get;set;}
     [BindProperty(SupportsGet=true)] public int? IngredientId {get;set;}
@@ -23,7 +23,9 @@ public class InventoryModel(CrmApi api):WorkspaceBase(api)
     public Dictionary<string,JsonElement> Summary {get;set;}=[];
     public List<Dictionary<string,JsonElement>> IngredientOptions {get;set;}=[];
     public List<Dictionary<string,JsonElement>> SupplierOptions {get;set;}=[];
+    public List<Dictionary<string,JsonElement>> VariantOptions {get;set;}=[]; // [WEB-14]
     public bool History=>Tab=="history";
+    public bool Recipes=>Tab=="recipes"; // [WEB-14]
 
     public static string KindName(string? kind)=>kind switch
     {
@@ -38,8 +40,13 @@ public class InventoryModel(CrmApi api):WorkspaceBase(api)
         Summary=await Api.Get<Dictionary<string,JsonElement>>("v1/inventory/summary");
         IngredientOptions=List(Summary,"ingredient_options");
         SupplierOptions=List(Summary,"supplier_options");
+        VariantOptions=List(Summary,"variant_options"); // [WEB-14]
 
-        if(History)
+        if(Recipes) // [WEB-14]
+        {
+            Rows=(await Api.Get<ApiPage>($"v1/inventory/recipes?q={Uri.EscapeDataString(Q??"")}")).Items;
+        }
+        else if(History)
         {
             var query=$"pageSize=50&pageToken={Uri.EscapeDataString(PageToken??"")}&kind={Uri.EscapeDataString(Kind??"")}";
             if(IngredientId is int ingredient) query+=$"&ingredientId={ingredient}";
@@ -63,7 +70,7 @@ public class InventoryModel(CrmApi api):WorkspaceBase(api)
     private static List<Dictionary<string,JsonElement>> List(Dictionary<string,JsonElement> source,string key)
         => source.TryGetValue(key,out var v) && v.ValueKind==JsonValueKind.Array ? v.Deserialize<List<Dictionary<string,JsonElement>>>() ?? new() : new();
 
-    private string? Blank(string key)=>string.IsNullOrWhiteSpace(Text(key))?null:Text(key);
+    // [WEB-04] Blank(key) chuyển lên WorkspaceBase để các trang dùng chung
     private decimal? OptionalMoney(string key)=>string.IsNullOrWhiteSpace(Text(key))?null:Money(key);
 
     protected override async Task<IActionResult?> ExecuteAsync(string operation)
@@ -89,6 +96,12 @@ public class InventoryModel(CrmApi api):WorkspaceBase(api)
                 var balance=result.TryGetProperty("balance_after",out var b)?b.GetDecimal().ToString("0.###",CultureInfo.InvariantCulture):"?";
                 TempData["Success"]=$"Đã ghi phiếu {KindName(kind).ToLowerInvariant()}. Tồn kho mới: {balance}.";
                 break;
+            case "recipe": // [WEB-14] đặt định mức (thêm mới hoặc sửa lượng)
+                await Api.Send(HttpMethod.Put,"v1/inventory/recipes",new{variantId=Number("variantId"),ingredientId=Number("ingredientId"),quantity=Money("quantity")});
+                TempData["Success"]="Đã lưu định mức. Đơn hoàn tất từ bây giờ sẽ trừ kho theo định mức này."; break;
+            case "recipe-delete": // [WEB-14]
+                await Api.Send(HttpMethod.Delete,$"v1/inventory/recipes/{Number("variantId")}/{Number("ingredientId")}");
+                TempData["Success"]="Đã xóa dòng định mức."; break;
         }
         return RedirectToPage(new{tab=Text("tab") is { Length: >0 } t ? t : Tab,q=Q,low=Low});
     }

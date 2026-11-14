@@ -4,7 +4,14 @@
     ViewData["Title"]=Model.Title;
     // [UI-02] Thao tác theo dòng: cấp voucher (khi đang hoạt động), dừng / mở lại chương trình.
     Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
-        @{var id=item["promotion_id"].ToString(); var name=item["display_name"].ToString(); var active=item["is_active"].ValueKind==JsonValueKind.True;}
+        @{var id=item["promotion_id"].ToString(); var name=item["display_name"].ToString(); var active=item["is_active"].ValueKind==JsonValueKind.True;
+          // [WEB-11] dữ liệu cho form Sửa ưu đãi (thời gian đổi sang giờ máy để điền ô datetime-local)
+          string F(string k)=>item.TryGetValue(k,out var v)&&v.ValueKind!=JsonValueKind.Null?v.ToString():"";
+          string Local(string k)=>DateTimeOffset.TryParse(F(k),System.Globalization.CultureInfo.InvariantCulture,System.Globalization.DateTimeStyles.AssumeUniversal,out var t)?t.ToLocalTime().ToString("yyyy-MM-ddTHH:mm"):"";
+          var edit=JsonSerializer.Serialize(new{id,display_name=name,name,description=F("description"),discountType=F("discount_type"),discountValue=F("discount_value"),
+              maxDiscount=F("max_discount"),minSubtotal=F("min_subtotal"),pointsCost=F("points_cost"),totalLimit=F("total_limit"),perCustomerLimit=F("per_customer_limit"),
+              startsAt=Local("start_time"),endsAt=Local("end_time"),issued=F("issued")});}
+        <button type="button" class="btn-sm" data-open="m-edit" data-fill="@edit">Sửa</button> @* [WEB-11] *@
         @if(active){<button type="button" class="btn-sm" data-open="m-issue" data-fill="@(JsonSerializer.Serialize(new{id,display_name=name}))">Cấp voucher</button>}
         <button type="button" class="btn-sm @(active?"danger-text":null)" data-open="@(active?"m-stop":"m-start")" data-fill="@(JsonSerializer.Serialize(new{id,display_name=name}))">@(active?"Dừng cấp":"Mở lại")</button>
     </div>;
@@ -12,21 +19,30 @@
         "discount_type"=>r[k].ToString()=="Percent"?"Phần trăm":"Số tiền",
         "discount_value"=>r["discount_type"].ToString()=="Percent"?$"{ReportView.Number(ReportView.Decimal(r,k))}%":OrderView.Money(r,k),
         "points_cost"=>r[k].ValueKind==JsonValueKind.Null?"Chỉ quản lý tặng":$"{r[k]} điểm",
+        "issued"=>$"{r[k]} / {(r.TryGetValue("total_limit",out var l)?l.ToString():"?")}", // [WEB-11] đã cấp / tổng số lượng
         _=>null};
 }
 <div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
 <section class="panel">
-    <div class="list-toolbar"><div></div><button type="button" class="primary add-btn" data-open="m-add">+ Tạo ưu đãi</button></div>
+    @* [WEB-11] tìm ưu đãi theo tên / mô tả *@
+    <div class="list-toolbar">
+        <form method="get"><input name="q" type="search" value="@Model.Q" placeholder="Tìm theo tên, mô tả ưu đãi" aria-label="Tìm ưu đãi"><button class="secondary">Tìm</button>@if(!string.IsNullOrEmpty(Model.Q)){<a class="btn-sm" href="?">Bỏ lọc</a>}</form>
+        <button type="button" class="primary add-btn" data-open="m-add">+ Tạo ưu đãi</button>
+    </div>
     <p class="list-count">@Model.Rows.Count chương trình · bấm vào một dòng để xem chi tiết</p>
-    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,RowDetail=true,DetailTitle="Chi tiết ưu đãi",Hide=new HashSet<string>{"scope","area_id","branch_id"},ActiveLabels=("Đang cấp","Đã dừng"),Format=Format})" />
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,RowDetail=true,DetailTitle="Chi tiết ưu đãi",
+        Hide=new HashSet<string>{"scope","area_id","branch_id","description","max_discount","min_subtotal","total_limit","per_customer_limit"},ActiveLabels=("Đang cấp","Đã dừng"),Format=Format})" />
     <partial name="_Pager" model="Model" />
 </section>
 
-@* [UI-01] Tạo ưu đãi *@
-<dialog class="modal wide" id="m-add"><form method="post">
-    <input type="hidden" name="operation" value="promotion"><input type="hidden" name="modal" value="m-add">
-    <header><h2>Tạo ưu đãi</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+@* [UI-01] Tạo ưu đãi; [WEB-11] cùng form cho Sửa ưu đãi *@
+@foreach(var (mid,op,title,button) in new[]{("m-add","promotion","Tạo ưu đãi","Tạo ưu đãi"),("m-edit","promotion-update","Sửa ưu đãi","Lưu thay đổi")})
+{
+<dialog class="modal wide" id="@mid"><form method="post">
+    <input type="hidden" name="operation" value="@op"><input type="hidden" name="modal" value="@mid">@if(op=="promotion-update"){<input type="hidden" name="id">}
+    <header><h2>@title</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
     <div class="modal-body">
+        @if(op=="promotion-update"){<div class="modal-warn">Đã cấp <span data-text="issued"></span> voucher. Voucher đã cấp giữ nguyên điều kiện lúc cấp; thay đổi chỉ áp dụng cho voucher cấp sau.</div>}
         <label>Tên *</label><input name="name" required maxlength="150">
         <label>Mô tả</label><textarea name="description" maxlength="2000" rows="2"></textarea>
         <div class="two">
@@ -40,8 +56,9 @@
         </div>
         <partial name="_Scope" model="Model" />
     </div>
-    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Tạo ưu đãi</button></footer>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">@button</button></footer>
 </form></dialog>
+}
 
 @* [UI-01] Cấp voucher cho một khách (có ô tìm khách – BUG-12) *@
 <dialog class="modal" id="m-issue"><div class="modal-shell">
@@ -49,8 +66,15 @@
     <div class="modal-body">
         <p>Ưu đãi: <b data-text="display_name"></b></p>
         <partial name="_ModalCustomerSearch" model="Model" />
-        <form method="post" id="f-issue"><input type="hidden" name="operation" value="issue"><input type="hidden" name="modal" value="m-issue"><input type="hidden" name="id"><input type="hidden" name="requestKey" value="@Guid.NewGuid()">
-            <label>Khách hàng *</label><select name="customerId" required>@foreach(var x in Model.Choices("customers")){<option value="@x["id"]">@x["display_name"]</option>}</select>
+        <form method="post" id="f-issue"><input type="hidden" name="operation" value="issue" id="issue-op"><input type="hidden" name="modal" value="m-issue"><input type="hidden" name="id"><input type="hidden" name="requestKey" value="@Guid.NewGuid()">
+            @* [WEB-11] cấp hàng loạt: chọn nhiều khách / theo nhóm / tất cả (giống mời khảo sát) *@
+            <label>Cách chọn khách</label><select name="mode" id="issue-mode"><option value="one">Một khách hàng</option><option value="list">Chọn nhiều khách</option><option value="segment">Theo nhóm khách</option><option value="all">Tất cả khách đang hoạt động</option></select>
+            <div data-show-when="mode=one"><label>Khách hàng *</label><select name="customerId" required>@foreach(var x in Model.Choices("customers")){<option value="@x["id"]">@x["display_name"]</option>}</select></div>
+            <div data-show-when="mode=list" hidden><label>Khách hàng (200 khách mới nhất hoặc kết quả tìm ở trên)</label><div class="check-list">@foreach(var x in Model.Choices("customers")){<label><input type="checkbox" name="customerIds" value="@x["id"]"> @x["display_name"]</label>}</div></div>
+            <div data-show-when="mode=segment" hidden><div class="two"><div><label>Nhóm tuổi</label><select name="ageGroup"><option value="">Mọi nhóm tuổi</option>@foreach(var a in MorningBrew.Admin.Pages.ManagerArea.SurveysModel.AgeGroups){<option value="@a.Id">@a.Name</option>}</select></div>
+                <div><label>Giới tính</label><select name="gender"><option value="">Mọi giới tính</option><option value="Male">Nam</option><option value="Female">Nữ</option><option value="Other">Khác</option><option value="Undisclosed">Chưa cung cấp</option></select></div></div>
+                <label>Thích sản phẩm</label><select name="productId"><option value="">Không lọc theo sở thích</option>@foreach(var p in Model.Choices("products")){<option value="@p["id"]">@p["display_name"]</option>}</select></div>
+            <p class="muted">Mỗi khách nhận tối đa theo "Số lượt mỗi khách"; khách đã đủ lượt hoặc chương trình hết lượt sẽ được bỏ qua và báo lại.</p>
         </form>
     </div>
     <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary" form="f-issue">Cấp voucher</button></footer>

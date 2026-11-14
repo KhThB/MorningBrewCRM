@@ -26,7 +26,11 @@ public static class RowDisplay
         // [KHO] kho nguyên liệu
         ["ingredient_id"]="Mã nguyên liệu",["unit"]="Đơn vị",["quantity"]="Tồn kho",["min_stock"]="Tồn tối thiểu",["is_low"]="Cảnh báo",
         ["supplier_name"]="Nhà cung cấp",["last_unit_cost"]="Giá nhập gần nhất",["stock_updated_at"]="Cập nhật tồn",
-        ["transaction_id"]="Mã phiếu",["quantity_change"]="Số lượng",["balance_after"]="Tồn sau phiếu",["unit_cost"]="Đơn giá",["total_cost"]="Thành tiền"
+        ["transaction_id"]="Mã phiếu",["quantity_change"]="Số lượng",["balance_after"]="Tồn sau phiếu",["unit_cost"]="Đơn giá",["total_cost"]="Thành tiền",
+        // [WEB-02][WEB-03][WEB-11][WEB-14]
+        ["has_temperature"]="Đá / Nóng",["size_active"]="Size",["category_id"]="Mã danh mục",["issued"]="Đã cấp",["total_limit"]="Số lượng",
+        ["per_customer_limit"]="Lượt mỗi khách",["active_products"]="Món đang bán",["ingredient_name"]="Nguyên liệu",["actor_name"]="Người lập",
+        ["product_name"]="Món",["variant_name"]="Size",["recipe_quantity"]="Định mức / 1 phần"
     };
     private static readonly Dictionary<string,string> Values=new()
     {
@@ -76,7 +80,23 @@ public static class RowDisplay
         ["Inventory.Transaction"]="Lập phiếu kho (nhập / xuất / hủy / kiểm kê), cập nhật tồn",
         ["Database.Backup"]="Sao lưu cơ sở dữ liệu (tạo file .bak)",
         ["Database.Restore"]="Phục hồi cơ sở dữ liệu từ file .bak",
-        ["Database.BackupDelete"]="Xóa một file sao lưu"
+        ["Database.BackupDelete"]="Xóa một file sao lưu",
+        // [WEB-03..14] thao tác mới của đợt sửa web Admin
+        ["Product.Update"]="Sửa thông tin sản phẩm (tên, mô tả, danh mục, Đá / Nóng)",
+        ["Variant.Create"]="Thêm size cho sản phẩm",
+        ["Variant.Status"]="Ẩn / bán lại một size",
+        ["Category.Create"]="Thêm danh mục sản phẩm",
+        ["Category.Update"]="Đổi tên danh mục",
+        ["Category.Status"]="Ẩn / hiện danh mục",
+        ["Customer.Update"]="Sửa thông tin khách hàng",
+        ["Account.Update"]="Sửa thông tin tài khoản",
+        ["Supplier.Create"]="Thêm nhà cung cấp",
+        ["Supplier.Update"]="Sửa nhà cung cấp",
+        ["Supplier.Status"]="Tạm ngưng / hợp tác lại với nhà cung cấp",
+        ["Promotion.Update"]="Sửa chương trình ưu đãi",
+        ["Promotion.IssueBulk"]="Cấp voucher hàng loạt",
+        ["Recipe.Set"]="Đặt định mức nguyên liệu cho một size",
+        ["Recipe.Delete"]="Xóa một dòng định mức nguyên liệu"
     };
     // [AUD-01] Bảng bị tác động, ghi tiếng Việt.
     private static readonly Dictionary<string,string> Entities=new()
@@ -84,14 +104,16 @@ public static class RowDisplay
         ["Users"]="Tài khoản",["Customers"]="Khách hàng",["RolePermissions"]="Phân quyền",["Products"]="Sản phẩm",
         ["ProductVariants"]="Size / giá",["Orders"]="Đơn hàng",["PaymentAttempts"]="Thanh toán",["Refunds"]="Hoàn tiền",
         ["Deliveries"]="Giao hàng",["Promotions"]="Chương trình ưu đãi",["CustomerPromotions"]="Voucher",["Feedbacks"]="Phản hồi",
-        ["Surveys"]="Khảo sát",["Ingredients"]="Nguyên liệu",["Database"]="Cơ sở dữ liệu"
+        ["Surveys"]="Khảo sát",["Ingredients"]="Nguyên liệu",["Database"]="Cơ sở dữ liệu",
+        ["Categories"]="Danh mục",["Suppliers"]="Nhà cung cấp",["RecipeItems"]="Định mức nguyên liệu" // [WEB-03][WEB-10][WEB-14]
     };
     // [AUD-01] Giá trị thường gặp trong cột Chi tiết của nhật ký.
     private static readonly Dictionary<string,string> DetailWords=new()
     {
         ["True"]="cho phép",["False"]="thu hồi",["InStock"]="Còn hàng",["OutOfStock"]="Tạm hết",["Succeeded"]="Thành công",["Failed"]="Thất bại",
         ["Pending"]="Chờ xử lý",["Confirmed"]="Đã xác nhận",["Preparing"]="Đang pha chế",["Ready"]="Sẵn sàng",["Delivering"]="Đang giao",
-        ["Completed"]="Hoàn tất",["Cancelled"]="Đã hủy",["Delivered"]="Đã giao",["Assigned"]="Đã có người giao"
+        ["Completed"]="Hoàn tất",["Cancelled"]="Đã hủy",["Delivered"]="Đã giao",["Assigned"]="Đã có người giao",
+        ["Active"]="Đang dùng",["Hidden"]="Đã ẩn",["Inactive"]="Tạm ngưng" // [WEB-03][WEB-12]
     };
     private static string Word(string w)=>Values.TryGetValue(w,out var v)?v:DetailWords.GetValueOrDefault(w,w);
     public static string Action(string code)=>Actions.TryGetValue(code,out var text)?$"{text} ({code})":code; // [AUD-01]

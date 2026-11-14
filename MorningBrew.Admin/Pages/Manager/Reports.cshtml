@@ -7,15 +7,33 @@
     var orders=(int)Sum("completed_orders"); var net=Sum("net_revenue");
 }
 <div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
-@* [UI2-W4] Doanh thu 30 ngày đưa lên đầu trang, hiển thị dạng thẻ số liệu có định dạng tiền *@
+@* [UI2-W4] Doanh thu đưa lên đầu trang, hiển thị dạng thẻ số liệu có định dạng tiền. [WEB-09] chọn kỳ báo cáo *@
 <section class="panel">
-    <div class="dash-head"><h2>Doanh thu 30 ngày gần nhất</h2><a class="btn-sm" href="/Manager">Xem biểu đồ theo tháng →</a></div>
-    <p class="muted">Từ @Model.From.ToString("dd/MM/yyyy") đến @Model.To.ToString("dd/MM/yyyy") (giờ Việt Nam). Doanh thu thuần = đơn hoàn tất trừ khoản đã hoàn tiền trong kỳ.</p>
+    <div class="dash-head"><h2>Doanh thu theo kỳ</h2><a class="btn-sm" href="/Manager">Xem biểu đồ theo tháng →</a></div>
+    <form method="get" class="period-form">
+        <div><label for="from">Từ ngày</label><input id="from" name="from" type="date" value="@ReportsModel.Day(Model.From)" max="@ReportsModel.Day(Model.Today)" required></div>
+        <div><label for="to">Đến ngày</label><input id="to" name="to" type="date" value="@ReportsModel.Day(Model.To)" max="@ReportsModel.Day(Model.Today)" required></div>
+        <button class="secondary">Xem</button>
+        <div class="presets">@foreach(var p in Model.Presets()){<a class="btn-sm @(p.From==Model.From&&p.To==Model.To?"current":null)" href="?from=@ReportsModel.Day(p.From)&to=@ReportsModel.Day(p.To)">@p.Label</a>}</div>
+    </form>
+    @if(Model.PeriodError is not null){<div class="modal-warn" role="alert">@Model.PeriodError</div>}
+    <p class="muted">Từ @Model.From.ToString("dd/MM/yyyy") đến @Model.To.ToString("dd/MM/yyyy") (@((Model.To-Model.From).Days+1) ngày, giờ Việt Nam). Doanh thu thuần = đơn hoàn tất trừ khoản đã hoàn tiền trong kỳ.</p>
     <div class="cards" style="margin-bottom:0">
         <div class="stat"><span>Đơn hoàn tất</span><b>@orders</b></div>
         <div class="stat"><span>Doanh thu</span><b class="stat-text">@Money(Sum("gross_revenue"))</b></div>
         <div class="stat"><span>Đã hoàn tiền</span><b class="stat-text">@Money(Sum("refunded_revenue"))</b></div>
         <div class="stat"><span>Doanh thu thuần</span><b class="stat-text">@Money(net)</b><small>@(orders>0?$"Trung bình {Money(Math.Round(net/orders))} / đơn":"Chưa có đơn hoàn tất")</small></div>
     </div>
+    @* [WEB-09] Doanh thu từng ngày trong kỳ (chỉ ngày có phát sinh) *@
+    @if(Model.Daily.Count>0)
+    {
+        <details class="daily-revenue"><summary>Chi tiết theo ngày (@Model.Daily.Count ngày có phát sinh)</summary>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Ngày</th><th>Đơn hoàn tất</th><th>Doanh thu</th><th>Đã hoàn tiền</th><th>Doanh thu thuần</th></tr></thead><tbody>
+        @foreach(var d in Model.Daily){
+            <tr><td>@(DateTime.TryParse(d["day"].ToString(),out var day)?day.ToString("dd/MM/yyyy"):d["day"].ToString())</td><td>@d["completed_orders"]</td>
+            <td>@Money(ReportView.Decimal(d,"gross_revenue")??0)</td><td>@Money(ReportView.Decimal(d,"refunded_revenue")??0)</td><td><b>@Money(ReportView.Decimal(d,"net_revenue")??0)</b></td></tr>
+        }
+        </tbody></table></div></details>
+    }
 </section>
 @if(Model.Report is not null){<partial name="_CustomerReport" model="Model.Report" />}

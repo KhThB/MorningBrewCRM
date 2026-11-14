@@ -19,14 +19,15 @@ function mbOpenModal(id,fill){
  const d=document.getElementById(id); if(!d||typeof d.showModal!=='function') return;
  d.querySelectorAll('form').forEach(f=>f.reset()); d.querySelectorAll('.modal-error').forEach(e=>e.remove()); d.querySelectorAll('img.img-preview').forEach(i=>{i.hidden=true;i.removeAttribute('src')}); // [UI2-IMG]
  if(fill) for(const [k,v] of Object.entries(fill)){
-  d.querySelectorAll('[name="'+k+'"]').forEach(el=>{
+  d.querySelectorAll('[name="'+k+'"]').forEach((el,i)=>{
    if(el.type==='checkbox'||el.type==='radio') el.checked=Array.isArray(v)?v.includes(el.value):String(v)===el.value||v===true;
-   else if(!(el.type==='hidden'&&k==='modal')) el.value=Array.isArray(v)?v[0]:(v??'');
+   else if(!(el.type==='hidden'&&k==='modal')) el.value=Array.isArray(v)?(v[i]??''):(v??''); // [WEB-02] nhiều ô cùng tên (các dòng size): mỗi ô một giá trị
   });
   d.querySelectorAll('[data-text="'+k+'"]').forEach(el=>el.textContent=v??'');
   d.querySelectorAll('[data-src="'+k+'"]').forEach(el=>{el.src=v||'';el.hidden=!v;}); // [UI2-IMG] ảnh hiện tại
  }
  d.querySelectorAll('[data-show-if]').forEach(el=>{const [k,val]=el.dataset.showIf.split('=');el.hidden=!(fill&&String(fill[k])===val)});
+ d.querySelectorAll('form').forEach(mbToggleWhen); // [WEB-07]
  d.showModal();
  d.querySelector('input:not([type=hidden]):not([readonly]),select,textarea')?.focus();
 }
@@ -42,6 +43,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(m.error){const b=document.querySelector('#'+m.id+' .modal-body');if(b){const e=document.createElement('div');e.className='modal-error';e.setAttribute('role','alert');e.textContent=m.error;b.prepend(e);}}
  }catch(_){}}
 });
+
+// ===== [WEB-07] Ô phụ thuộc giá trị một ô chọn khác trong cùng form =====
+// <div data-show-when="role=Customer"> chỉ hiện (và chỉ gửi) khi ô role = Customer; <input data-required-if="role=Customer"> bắt buộc khi đó.
+function mbToggleWhen(form){
+ const on=spec=>{const [k,v]=spec.split('=');const src=form.elements[k];return !!src&&src.value===v;};
+ form.querySelectorAll('[data-show-when]').forEach(el=>{const show=on(el.dataset.showWhen);el.hidden=!show;el.querySelectorAll('input,select,textarea').forEach(i=>i.disabled=!show);});
+ form.querySelectorAll('[data-required-if]').forEach(el=>el.required=on(el.dataset.requiredIf));
+}
+document.addEventListener('change',e=>{const f=e.target.form;if(f&&f.querySelector('[data-show-when],[data-required-if]'))mbToggleWhen(f);});
+document.addEventListener('DOMContentLoaded',()=>document.querySelectorAll('form').forEach(f=>{if(f.querySelector('[data-show-when],[data-required-if]'))mbToggleWhen(f);}));
 
 // ===== [UI-04] Thông báo nổi: thành công tự ẩn sau 4 giây, lỗi giữ tới khi bấm × (hoặc 10 giây) =====
 document.addEventListener('DOMContentLoaded',()=>{

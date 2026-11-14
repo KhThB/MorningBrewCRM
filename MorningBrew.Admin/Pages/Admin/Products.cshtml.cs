@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MorningBrew.Admin.Services;
 namespace MorningBrew.Admin.Pages.AdminArea;
 public class ProductsModel(CrmApi api,IConfiguration config):WorkspaceBase(api)
@@ -7,5 +8,13 @@ public class ProductsModel(CrmApi api,IConfiguration config):WorkspaceBase(api)
     public override string Title=>"Sản phẩm & giá";
     public override string Subtitle=>"Danh mục sản phẩm dùng chung và giá bán toàn cửa hàng.";
     protected override string ListPath=>"v1/variants";
-    protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"product","product-active","price","product-stock","product-image"} /* [UI2-A4a], [UI2-IMG] */;
+    protected override bool Searchable=>true; // [WEB-13]
+    protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"product","product-active","price","product-stock","product-image", /* [UI2-A4a], [UI2-IMG] */
+        "product-update","variant-add","variant-active","category","category-update","category-active"} /* [WEB-03] */;
+    public List<Dictionary<string,JsonElement>> Categories {get;set;}=[]; // [WEB-03] cả danh mục đang ẩn
+    protected override async Task LoadAsync()
+    {
+        await base.LoadAsync();
+        Categories=(await Api.Get<ApiPage>("v1/categories")).Items;
+    }
 }

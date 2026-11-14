@@ -20,7 +20,8 @@ public sealed partial class AdminController
 
     private async Task<Dictionary<string, object?>> ReadResource(string collection, int id)
     {
-        if (collection is "accounts" or "suppliers") await RequireOwner();
+        if (collection is "accounts") await RequireOwner();
+        if (collection is "suppliers") await RequirePermission("Inventory.Manage"); // [WEB-10]
         var (sql, key) = collection switch
         {
             "accounts" => ("SELECT u.UserID,u.Email,u.FullName,u.Phone,u.IsActive,u.CreatedAt,r.Code AS Role FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE u.UserID=@id", "UserID"),

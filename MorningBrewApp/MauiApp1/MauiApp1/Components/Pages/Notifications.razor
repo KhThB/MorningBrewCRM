@@ -86,7 +86,8 @@
         : null;
 
     private static (string Icon, string Css) Look(NotificationItem n) =>
-        n.Title.Contains("Hoàn tiền") ? ("coin", "ok")
+        n.Title.Contains("chưa thành công") ? ("close", "bad") // [WEB-08] giao hàng / hoàn tiền chưa thành công
+        : n.Title.Contains("Hoàn tiền") ? ("coin", "ok")
         : n.Title.Contains("hủy") ? ("close", "bad")
         : n.OrderId is not null ? (n.Body.Contains("Đang giao") ? "truck" : "receipt", "warn")
         : n.CustomerPromotionId is not null ? ("ticket", "gift")

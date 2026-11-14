@@ -5,8 +5,15 @@
     // [UI-02] Mỗi dòng là một kích cỡ: sửa giá kích cỡ đó; ngừng / mở bán áp dụng cho cả sản phẩm.
     Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
         @{var active=item["is_active"].ValueKind==JsonValueKind.True;
-          var fill=JsonSerializer.Serialize(new{id=item["product_id"].ToString(),variantId=item["variant_id"].ToString(),display_name=item["display_name"].ToString(),size=item["size"].ToString(),current=OrderView.Money(item,"base_price"),price=ReportView.Number(ReportView.Decimal(item,"base_price"))});}
+          var fill=JsonSerializer.Serialize(new{id=item["product_id"].ToString(),variantId=item["variant_id"].ToString(),display_name=item["display_name"].ToString(),size=item["size"].ToString(),current=OrderView.Money(item,"base_price"),price=ReportView.Number(ReportView.Decimal(item,"base_price"))});
+          // [WEB-03] dữ liệu cho form Sửa sản phẩm
+          var edit=JsonSerializer.Serialize(new{id=item["product_id"].ToString(),display_name=item["display_name"].ToString(),name=item["display_name"].ToString(),
+              description=ReportView.Text(item,"description")??"",categoryId=item["category_id"].ToString(),hasTemperature=item["has_temperature"].ValueKind==JsonValueKind.True});
+          var sizeOn=item["size_active"].ValueKind==JsonValueKind.True;}
+        <button type="button" class="btn-sm" data-open="m-edit" data-fill="@edit">Sửa</button> @* [WEB-03] *@
         <button type="button" class="btn-sm" data-open="m-price" data-fill="@fill">Sửa giá</button>
+        <button type="button" class="btn-sm" data-open="m-variant" data-fill="@fill">+ Size</button> @* [WEB-03] *@
+        <button type="button" class="btn-sm" data-open="@(sizeOn?"m-vstop":"m-vstart")" data-fill="@fill">@(sizeOn?"Ẩn size":"Hiện size")</button> @* [WEB-03] *@
         @* [UI2-IMG] Đổi ảnh sản phẩm (ảnh từ máy) *@
         <button type="button" class="btn-sm" data-open="m-image" data-fill="@(JsonSerializer.Serialize(new{id=item["product_id"].ToString(),display_name=item["display_name"].ToString(),current=Model.ImageSrc(ReportView.Text(item,"image_url"))}))">Ảnh</button>
         @* [UI2-A4a] Còn hàng / Tạm hết – áp dụng cho cả sản phẩm *@
@@ -17,9 +24,14 @@
 }
 <div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
 <section class="panel">
-    <div class="list-toolbar"><div></div><button type="button" class="primary add-btn" data-open="m-add">+ Thêm sản phẩm</button></div>
-    <p class="list-count">@Model.Rows.Count dòng (mỗi kích cỡ một dòng)</p>
-    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,Hide=new HashSet<string>{"variant_id","image_url"},ActiveLabels=("Đang bán","Ngừng bán"),Format=(k,r)=>k=="base_price"?OrderView.Money(r,k):null})" />
+    @* [WEB-13] Tìm sản phẩm; [WEB-03] quản lý danh mục *@
+    <div class="list-toolbar">
+        <form method="get"><input name="q" type="search" value="@Model.Q" placeholder="Tìm theo tên món, danh mục, size" aria-label="Tìm sản phẩm"><button class="secondary">Tìm</button>@if(!string.IsNullOrEmpty(Model.Q)){<a class="btn-sm" href="?">Bỏ lọc</a>}</form>
+        <div class="row-actions"><button type="button" class="secondary" data-open="m-categories">Danh mục</button><button type="button" class="primary add-btn" data-open="m-add">+ Thêm sản phẩm</button></div>
+    </div>
+    <p class="list-count">@Model.Rows.Count dòng (mỗi kích cỡ một dòng)@(string.IsNullOrEmpty(Model.Q)?"":$" khớp “{Model.Q}”")</p>
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,Hide=new HashSet<string>{"variant_id","image_url","category_id","description"},ActiveLabels=("Đang bán","Ngừng bán"),
+        Format=(k,r)=>k switch{"base_price"=>OrderView.Money(r,k),"size_active"=>r[k].ValueKind==JsonValueKind.True?"Đang bán":"Đã ẩn","has_temperature"=>r[k].ValueKind==JsonValueKind.True?"Đá / Nóng":"—",_=>null}})" />
     <partial name="_Pager" model="Model" />
 </section>
 
@@ -30,7 +42,14 @@
         <label>Tên sản phẩm *</label><input name="name" maxlength="150" required>
         <label>Mô tả</label><textarea name="description" maxlength="2000" rows="2"></textarea>
         <label>Danh mục</label><select name="categoryId">@foreach(var x in Model.Choices("categories")){<option value="@x["id"]">@x["display_name"]</option>}</select>
-        <div class="two"><div><label>Kích cỡ *</label><input name="size" value="M" maxlength="60" required></div><div><label>Giá cơ bản (VND) *</label><input name="price" type="number" min="0" required></div></div>
+        @* [WEB-02] Nhiều size ngay khi tạo (dòng để trống tên thì bỏ qua) + tùy chọn Đá / Nóng *@
+        <label>Size và giá bán (VND) * <small class="muted">– để trống tên size nếu không dùng</small></label>
+        <div class="variant-rows">
+            <div class="two"><input name="variantName" value="M" maxlength="50" required aria-label="Size 1"><input name="variantPrice" type="number" min="0" required placeholder="Giá size 1" aria-label="Giá size 1"></div>
+            <div class="two"><input name="variantName" value="L" maxlength="50" aria-label="Size 2"><input name="variantPrice" type="number" min="0" placeholder="Giá size 2" aria-label="Giá size 2"></div>
+            <div class="two"><input name="variantName" maxlength="50" placeholder="Size 3 (không bắt buộc)" aria-label="Size 3"><input name="variantPrice" type="number" min="0" placeholder="Giá size 3" aria-label="Giá size 3"></div>
+        </div>
+        <label class="check-line"><input type="checkbox" name="hasTemperature" value="true" checked> Khách chọn Đá / Nóng (đồ uống – bắt buộc chọn 1)</label>
         @* [UI2-IMG] Ảnh sản phẩm lấy từ máy (không bắt buộc) *@
         <label>Ảnh sản phẩm (JPG, PNG, WEBP – tối đa 2 MB)</label>
         <input name="image" type="file" accept="image/jpeg,image/png,image/webp" data-preview="add-preview">
@@ -57,6 +76,60 @@
     <div class="modal-body"><p>Mở bán lại <b data-text="display_name"></b>?</p></div>
     <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Mở bán</button></footer>
 </form></dialog>
+
+@* [WEB-03] Sửa thông tin sản phẩm *@
+<dialog class="modal" id="m-edit"><form method="post">
+    <input type="hidden" name="operation" value="product-update"><input type="hidden" name="modal" value="m-edit"><input type="hidden" name="id">
+    <header><h2>Sửa sản phẩm</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <label>Tên sản phẩm *</label><input name="name" maxlength="150" required>
+        <label>Mô tả</label><textarea name="description" maxlength="2000" rows="2"></textarea>
+        <label>Danh mục</label><select name="categoryId">@foreach(var x in Model.Choices("categories")){<option value="@x["id"]">@x["display_name"]</option>}</select>
+        <label class="check-line"><input type="checkbox" name="hasTemperature" value="true"> Khách chọn Đá / Nóng (bắt buộc chọn 1)</label>
+        <p class="muted">Giá từng size sửa bằng nút "Sửa giá"; thêm size bằng "+ Size". Đơn cũ giữ nguyên tên món lúc đặt.</p>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Lưu thay đổi</button></footer>
+</form></dialog>
+@* [WEB-03] Thêm size *@
+<dialog class="modal" id="m-variant"><form method="post">
+    <input type="hidden" name="operation" value="variant-add"><input type="hidden" name="modal" value="m-variant"><input type="hidden" name="id">
+    <header><h2>Thêm size</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p><b data-text="display_name"></b></p>
+        <div class="two"><div><label>Tên size *</label><input name="size" maxlength="50" required placeholder="VD: L"></div><div><label>Giá bán (VND) *</label><input name="price" type="number" min="0" required></div></div></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Thêm size</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-vstop"><form method="post">
+    <input type="hidden" name="operation" value="variant-active"><input type="hidden" name="modal" value="m-vstop"><input type="hidden" name="variantId"><input type="hidden" name="active" value="false">
+    <header><h2>Ẩn size</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Ẩn size <b data-text="size"></b> của <b data-text="display_name"></b> khỏi thực đơn? Các size khác vẫn bán bình thường.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Ẩn size</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-vstart"><form method="post">
+    <input type="hidden" name="operation" value="variant-active"><input type="hidden" name="modal" value="m-vstart"><input type="hidden" name="variantId"><input type="hidden" name="active" value="true">
+    <header><h2>Bán lại size</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Bán lại size <b data-text="size"></b> của <b data-text="display_name"></b>?</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Bán lại</button></footer>
+</form></dialog>
+@* [WEB-03] Danh mục: thêm, đổi tên, ẩn / hiện *@
+<dialog class="modal wide" id="m-categories"><div class="modal-shell">
+    <header><h2>Danh mục sản phẩm</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <form method="post" class="inline-form category-add"><input type="hidden" name="operation" value="category">@* không gửi "modal": lỗi thì báo bằng thông báo nổi (ô tên ở nhiều dòng trùng name) *@
+            <input name="categoryName" minlength="2" maxlength="100" required placeholder="Tên danh mục mới" aria-label="Tên danh mục mới"><button class="primary">Thêm</button></form>
+        <table class="data-table"><thead><tr><th>Danh mục</th><th>Món đang bán</th><th>Trạng thái</th><th class="actions-col">Thao tác</th></tr></thead><tbody>
+        @foreach(var c in Model.Categories){
+            var on=c["is_active"].ValueKind==JsonValueKind.True;
+            <tr><td><form method="post" class="inline-form"><input type="hidden" name="operation" value="category-update"><input type="hidden" name="categoryId" value="@c["category_id"]">
+                <input name="categoryName" value="@c["display_name"]" minlength="2" maxlength="100" required aria-label="Tên danh mục"><button class="btn-sm">Đổi tên</button></form></td>
+            <td>@c["active_products"]</td><td><span class="badge @(on?"ok":"bad")">@(on?"Đang hiện":"Đã ẩn")</span></td>
+            <td class="actions-col"><form method="post" class="inline-form"><input type="hidden" name="operation" value="category-active"><input type="hidden" name="categoryId" value="@c["category_id"]"><input type="hidden" name="active" value="@(on?"false":"true")">
+                <button class="btn-sm @(on?"danger-text":null)">@(on?"Ẩn":"Hiện lại")</button></form></td></tr>
+        }
+        </tbody></table>
+        <p class="muted">Ẩn danh mục thì mọi món trong danh mục không hiện trên app và POS (trạng thái từng món giữ nguyên).</p>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Đóng</button></footer>
+</div></dialog>
 
 @* [UI2-IMG] Đổi ảnh sản phẩm *@
 <dialog class="modal" id="m-image"><form method="post" enctype="multipart/form-data">

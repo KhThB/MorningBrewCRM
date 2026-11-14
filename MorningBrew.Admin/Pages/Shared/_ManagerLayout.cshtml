@@ -19,13 +19,13 @@
             <a asp-page="/Manager/Feedbacks">Phản hồi</a>
             <a asp-page="/Manager/Surveys">Khảo sát</a>
             <a asp-page="/Manager/Promotions">Ưu đãi</a>
+            <a asp-page="/Manager/Inventory">Kho nguyên liệu</a> @* [KHO] *@
             <a asp-page="/Manager/Reports">Báo cáo</a>
         </nav>
-        @if(User.IsInRole("Owner")){<a class="area-switch" href="@(Portals.Admin.BaseUrl + Portals.Admin.Home)" target="_blank" rel="noopener">Mở Admin server (cổng riêng, đăng nhập riêng) ↗</a>} @* [SEP-06] *@
+        @if(User.IsInRole("Owner")){<a class="area-switch" asp-page="/Admin/Index">← Về giao diện Quản trị</a>}
         <form method="post" asp-page="/Logout" class="logout-form"><button>Đăng xuất</button></form>
     </aside>
     <main class="content">
-        <div class="area-banner">Quản lý CRM · @Portals.Manager.BaseUrl</div> @* [SEP-06] *@
         <partial name="_UiShell" /> @* [UI-01][UI-04][UI-05] toast, mở lại modal khi lỗi, ngăn chi tiết *@
         @RenderBody()
         <footer class="footer">Morning Brew CRM</footer>

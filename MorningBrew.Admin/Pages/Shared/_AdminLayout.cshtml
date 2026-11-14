@@ -25,11 +25,11 @@
             <a asp-page="/Admin/Products">Sản phẩm &amp; giá</a>
             <a asp-page="/Admin/Suppliers">Nhà cung cấp</a>
         </nav>
-        <a class="area-switch" href="@(Portals.Manager.BaseUrl + Portals.Manager.Home)" target="_blank" rel="noopener">Mở Quản lý CRM (cổng riêng, đăng nhập riêng) ↗</a> @* [SEP-06] *@
+        <a class="area-switch" asp-page="/Manager/Index">Mở giao diện Quản lý CRM →</a>
         <form method="post" asp-page="/Logout" class="logout-form"><button>Đăng xuất</button></form>
     </aside>
     <main class="content">
-        <div class="area-banner">Admin server · @Portals.Admin.BaseUrl · chỉ chủ cửa hàng</div> @* [SEP-06] *@
+        <div class="area-banner">Khu vực quản trị · chỉ chủ cửa hàng truy cập</div>
         <partial name="_UiShell" /> @* [UI-01][UI-04][UI-05] toast, mở lại modal khi lỗi, ngăn chi tiết *@
         @RenderBody()
         <footer class="footer">Morning Brew · Admin server</footer>

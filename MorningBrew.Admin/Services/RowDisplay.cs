@@ -22,7 +22,11 @@ public static class RowDisplay
         ["loyalty_transaction_id"]="Mã giao dịch điểm",["kind"]="Loại giao dịch",["points"]="Số điểm",
         ["note"]="Ghi chú",["customer_promotion_id"]="Mã voucher",["points_spent"]="Điểm đã dùng",
         ["expire_time"]="Hết hạn",["complete_time"]="Hoàn thành",["max_discount"]="Giảm tối đa",["min_subtotal"]="Đơn tối thiểu",
-        ["file_name"]="Tên file",["backup_type"]="Loại bản sao lưu",["in_stock"]="Tình trạng",["size_mb"]="Dung lượng (MB)",["audit_id"]="Mã nhật ký",["actor"]="Người thực hiện",["action"]="Thao tác",["entity_type"]="Đối tượng",["entity_id"]="Mã đối tượng",["details"]="Chi tiết",["email"]="Email"
+        ["file_name"]="Tên file",["backup_type"]="Loại bản sao lưu",["in_stock"]="Tình trạng",["size_mb"]="Dung lượng (MB)",["audit_id"]="Mã nhật ký",["actor"]="Người thực hiện",["action"]="Thao tác",["entity_type"]="Đối tượng",["entity_id"]="Mã đối tượng",["details"]="Chi tiết",["email"]="Email",
+        // [KHO] kho nguyên liệu
+        ["ingredient_id"]="Mã nguyên liệu",["unit"]="Đơn vị",["quantity"]="Tồn kho",["min_stock"]="Tồn tối thiểu",["is_low"]="Cảnh báo",
+        ["supplier_name"]="Nhà cung cấp",["last_unit_cost"]="Giá nhập gần nhất",["stock_updated_at"]="Cập nhật tồn",
+        ["transaction_id"]="Mã phiếu",["quantity_change"]="Số lượng",["balance_after"]="Tồn sau phiếu",["unit_cost"]="Đơn giá",["total_cost"]="Thành tiền"
     };
     private static readonly Dictionary<string,string> Values=new()
     {
@@ -32,7 +36,8 @@ public static class RowDisplay
         ["Staff"]="Thu ngân",["Customer"]="Khách hàng",["Male"]="Nam",["Female"]="Nữ",["Other"]="Khác",
         ["Undisclosed"]="Chưa cung cấp",["Available"]="Có thể dùng",["Reserved"]="Đang giữ cho đơn",
         ["Used"]="Đã dùng",["Expired"]="Hết hạn",["Rating"]="Chấm điểm",["SingleChoice"]="Chọn một",["MultipleChoice"]="Chọn nhiều",["Text"]="Tự luận",
-        ["Service"]="Dịch vụ",["Product"]="Sản phẩm",["Space"]="Không gian",["Earn"]="Tích điểm",["Redeem"]="Đổi điểm",["Reverse"]="Hoàn tác điểm",["Adjust"]="Điều chỉnh"
+        ["Service"]="Dịch vụ",["Product"]="Sản phẩm",["Space"]="Không gian",["Earn"]="Tích điểm",["Redeem"]="Đổi điểm",["Reverse"]="Hoàn tác điểm",["Adjust"]="Điều chỉnh",
+        ["Import"]="Nhập kho",["Export"]="Xuất dùng",["Waste"]="Hủy / hư hỏng" // [KHO]
     };
     public static string Label(string key)=>Names.GetValueOrDefault(key,key);
     public static string Value(string key,JsonElement value)

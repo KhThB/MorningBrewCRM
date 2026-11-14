@@ -14,8 +14,8 @@
         {
             <div class="user-box"><div class="avatar">@(User.Identity.Name?.FirstOrDefault())</div><div class="user-info"><b>@User.Identity.Name</b><small>@User.FindFirstValue(ClaimTypes.Role)</small></div></div>
             <nav>
-            @{ var portal=Portals.Of(Context) ?? Portals.Manager; } @* [SEP-06] chỉ link trong giao diện của cổng này *@
-            <a href="@portal.Home">Về @portal.Title</a>
+            @if(User.IsInRole("Owner")){<a asp-page="/Admin/Index">Giao diện Quản trị</a>}
+            @if(User.IsInRole("Owner") || User.IsInRole("BranchManager")){<a asp-page="/Manager/Index">Giao diện Quản lý CRM</a>}
             </nav>
             <form method="post" asp-page="/Logout" class="logout-form"><button>Đăng xuất</button></form>
         }

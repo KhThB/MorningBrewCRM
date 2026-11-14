@@ -30,6 +30,7 @@ public sealed class TableView
     {
         if(key=="is_active" && value.ValueKind is JsonValueKind.True or JsonValueKind.False) return value.GetBoolean()?"ok":"bad";
         if(key=="in_stock" && value.ValueKind is JsonValueKind.True or JsonValueKind.False) return value.GetBoolean()?"ok":"warn"; // [UI2-A4a]
+        if(key=="is_low" && value.ValueKind is JsonValueKind.True or JsonValueKind.False) return value.GetBoolean()?"bad":"ok"; // [KHO] cảnh báo đỏ khi dưới mức tối thiểu
         if(key!="status" || value.ValueKind!=JsonValueKind.String) return null;
         return value.GetString() switch
         {
@@ -42,6 +43,7 @@ public sealed class TableView
     }
     public static string BadgeText(string key,JsonElement value)
         => key=="in_stock" && value.ValueKind is JsonValueKind.True or JsonValueKind.False ? (value.GetBoolean()?"Còn hàng":"Tạm hết") // [UI2-A4a]
+        : key=="is_low" && value.ValueKind is JsonValueKind.True or JsonValueKind.False ? (value.GetBoolean()?"Sắp hết":"Đủ hàng") // [KHO]
         : key=="is_active" && value.ValueKind is JsonValueKind.True or JsonValueKind.False
             ? (value.GetBoolean()?"Hoạt động":"Đang khóa") : RowDisplay.Value(key,value);
 }

@@ -10,7 +10,7 @@ public class LogoutModel(CrmApi api):PageModel
     {
         try { await api.Send(HttpMethod.Post,"v1/auth/logout"); }
         catch(CrmApiException) { }
-        await HttpContext.SignOutAsync((Portals.Of(HttpContext) ?? Portals.Manager).Scheme); // [SEP-04] chỉ đăng xuất giao diện của cổng này
+        await HttpContext.SignOutAsync();
         return RedirectToPage("/Login");
     }
 }

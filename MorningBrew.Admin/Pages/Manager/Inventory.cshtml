@@ -1,0 +1,212 @@
+@page
+@model InventoryModel
+@* [KHO] Kho nguyên liệu: tồn kho + phiếu nhập / xuất / hủy hỏng / kiểm kê + lịch sử *@
+@{
+    ViewData["Title"]=Model.Title;
+    string Qty(Dictionary<string,JsonElement> r,string k)
+        => r.TryGetValue(k,out var v) && v.ValueKind==JsonValueKind.Number ? v.GetDecimal().ToString("#,##0.###",System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) : "—";
+    string Vnd(Dictionary<string,JsonElement> r,string k)
+        => r.TryGetValue(k,out var v) && v.ValueKind==JsonValueKind.Number ? v.GetDecimal().ToString("#,##0",System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))+" ₫" : "—";
+    string Unit(Dictionary<string,JsonElement> r)=>r.TryGetValue("unit",out var u)?u.ToString():"";
+    var vi=System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+    var cost30=decimal.TryParse(Model.Stat("import_cost"),System.Globalization.NumberStyles.Any,System.Globalization.CultureInfo.InvariantCulture,out var c)?c:0;
+
+    // Thao tác theo dòng (tab Tồn kho)
+    Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
+        @{
+            var active=item["is_active"].ValueKind==JsonValueKind.True;
+            var fill=JsonSerializer.Serialize(new{
+                id=item["ingredient_id"].ToString(),ingredientId=item["ingredient_id"].ToString(),
+                display_name=item["display_name"].ToString(),code=item["code"].ToString(),name=item["display_name"].ToString(),
+                unit=item["unit"].ToString(),minStock=item["min_stock"].ToString(),
+                supplierId=item["supplier_id"].ValueKind==JsonValueKind.Null?"":item["supplier_id"].ToString(),
+                unitCost=item["last_unit_cost"].ValueKind==JsonValueKind.Null?"":item["last_unit_cost"].ToString(),
+                current=Qty(item,"quantity")+" "+item["unit"].ToString()});
+        }
+        @if(active)
+        {
+            <button type="button" class="btn-sm" data-open="m-import" data-fill="@fill">Nhập</button>
+            <button type="button" class="btn-sm" data-open="m-export" data-fill="@fill">Xuất / hủy</button>
+            <button type="button" class="btn-sm" data-open="m-adjust" data-fill="@fill">Kiểm kê</button>
+        }
+        <button type="button" class="btn-sm" data-open="m-edit" data-fill="@fill">Sửa</button>
+        <button type="button" class="btn-sm @(active?"danger-text":null)" data-open="@(active?"m-stop":"m-start")" data-fill="@fill">@(active?"Ngừng dùng":"Dùng lại")</button>
+    </div>;
+
+    string? StockFormat(string k,Dictionary<string,JsonElement> r)=>k switch{
+        "quantity"=>Qty(r,k)+" "+Unit(r),
+        "min_stock"=>Qty(r,k)+" "+Unit(r),
+        "last_unit_cost"=>Vnd(r,k),
+        "supplier_name"=>r[k].ValueKind==JsonValueKind.Null?"—":null,
+        _=>null};
+
+    string? HistoryFormat(string k,Dictionary<string,JsonElement> r)=>k switch{
+        "kind"=>InventoryModel.KindName(r[k].ToString()),
+        "quantity_change"=>(r[k].ValueKind==JsonValueKind.Number && r[k].GetDecimal()>0?"+":"")+Qty(r,k)+" "+Unit(r),
+        "balance_after"=>Qty(r,k)+" "+Unit(r),
+        "unit_cost" or "total_cost"=>Vnd(r,k),
+        "supplier_name" or "note"=>r[k].ValueKind==JsonValueKind.Null?"—":null,
+        _=>null};
+}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+
+<div class="cards">
+    <div class="stat"><span>Nguyên liệu đang dùng</span><b>@Model.Stat("ingredients")</b></div>
+    <div class="stat"><span>Sắp hết (dưới mức tối thiểu)</span><b>@Model.Stat("low_stock")</b></div>
+    <div class="stat"><span>Tiền nhập hàng 30 ngày</span><b class="stat-text">@(cost30.ToString("#,##0",vi)) ₫</b></div>
+    <div class="stat"><span>Phiếu kho 24 giờ qua</span><b>@Model.Stat("recent_transactions")</b></div>
+</div>
+
+<section class="panel">
+    <div class="tabs-filter">
+        <a href="?tab=stock" class="@(Model.History?null:"current")">Tồn kho</a>
+        <a href="?tab=history" class="@(Model.History?"current":null)">Lịch sử nhập / xuất</a>
+    </div>
+
+    @if(!Model.History)
+    {
+        <div class="list-toolbar">
+            <form method="get">
+                <input type="hidden" name="tab" value="stock">
+                <input name="q" type="search" value="@Model.Q" placeholder="Tìm theo mã hoặc tên nguyên liệu" aria-label="Tìm nguyên liệu">
+                <label style="display:inline-flex;align-items:center;gap:6px;margin:0"><input type="checkbox" name="low" value="true" checked="@Model.Low" style="width:auto"> Chỉ hàng sắp hết</label>
+                <button class="secondary">Lọc</button>
+                @if(!string.IsNullOrEmpty(Model.Q) || Model.Low){<a class="btn-sm" href="?tab=stock">Bỏ lọc</a>}
+            </form>
+            <div class="row-actions">
+                <button type="button" class="secondary" data-open="m-import" data-fill="@(JsonSerializer.Serialize(new{current="chọn nguyên liệu để xem"}))">Nhập kho</button>
+                <button type="button" class="secondary" data-open="m-export" data-fill="@(JsonSerializer.Serialize(new{current="chọn nguyên liệu để xem"}))">Xuất / hủy</button>
+                <button type="button" class="secondary" data-open="m-adjust" data-fill="@(JsonSerializer.Serialize(new{current="chọn nguyên liệu để xem"}))">Kiểm kê</button>
+                <button type="button" class="primary add-btn" data-open="m-ingredient">+ Nguyên liệu</button>
+            </div>
+        </div>
+        <p class="list-count">@Model.Rows.Count nguyên liệu · hàng sắp hết (nhãn đỏ) hiện đầu danh sách · bấm vào một dòng để xem chi tiết</p>
+        <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,RowDetail=true,DetailTitle="Chi tiết nguyên liệu",
+            Hide=new HashSet<string>{"ingredient_id","supplier_id","stock_updated_at"},ActiveLabels=("Đang dùng","Ngừng dùng"),Format=StockFormat})" />
+    }
+    else
+    {
+        <div class="list-toolbar">
+            <form method="get">
+                <input type="hidden" name="tab" value="history">
+                <select name="ingredientId" aria-label="Nguyên liệu">
+                    <option value="">Tất cả nguyên liệu</option>
+                    @foreach(var x in Model.IngredientOptions){<option value="@x["id"]" selected="@(Model.IngredientId?.ToString()==x["id"].ToString())">@x["display_name"]</option>}
+                </select>
+                <select name="kind" aria-label="Loại phiếu">
+                    <option value="">Tất cả loại phiếu</option>
+                    @foreach(var k in new[]{"Import","Export","Waste","Adjust"}){<option value="@k" selected="@(Model.Kind==k)">@InventoryModel.KindName(k)</option>}
+                </select>
+                <input type="date" name="from" value="@Model.From" aria-label="Từ ngày">
+                <input type="date" name="to" value="@Model.To" aria-label="Đến ngày">
+                <button class="secondary">Lọc</button>
+                <a class="btn-sm" href="?tab=history">Bỏ lọc</a>
+            </form>
+        </div>
+        <p class="list-count">@Model.Rows.Count phiếu trên trang này · mới nhất trước · lịch sử kho không sửa / xóa được, sai sót thì lập phiếu kiểm kê</p>
+        <partial name="_Table" model="@(new TableView{Rows=Model.Rows,RowDetail=true,DetailTitle="Chi tiết phiếu kho",
+            Hide=new HashSet<string>{"unit"},Format=HistoryFormat})" />
+        <partial name="_Pager" model="Model" />
+    }
+</section>
+
+@* Thêm nguyên liệu *@
+<dialog class="modal" id="m-ingredient"><form method="post">
+    <input type="hidden" name="operation" value="ingredient"><input type="hidden" name="modal" value="m-ingredient"><input type="hidden" name="tab" value="stock">
+    <header><h2>Thêm nguyên liệu</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <div class="two">
+            <div><label>Mã *</label><input name="code" required maxlength="30" placeholder="VD: NL011"></div>
+            <div><label>Đơn vị *</label><input name="unit" required maxlength="20" placeholder="kg, lít, hộp, cái…"></div>
+        </div>
+        <label>Tên nguyên liệu *</label><input name="name" required maxlength="150">
+        <div class="two">
+            <div><label>Mức tồn tối thiểu</label><input name="minStock" type="number" min="0" step="0.001" value="0"></div>
+            <div><label>Nhà cung cấp chính</label><select name="supplierId"><option value="">Chưa chọn</option>@foreach(var s in Model.SupplierOptions){<option value="@s["id"]">@s["display_name"]</option>}</select></div>
+        </div>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Thêm nguyên liệu</button></footer>
+</form></dialog>
+
+@* Sửa nguyên liệu *@
+<dialog class="modal" id="m-edit"><form method="post">
+    <input type="hidden" name="operation" value="ingredient-update"><input type="hidden" name="modal" value="m-edit"><input type="hidden" name="id"><input type="hidden" name="tab" value="stock">
+    <header><h2>Sửa nguyên liệu</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <div class="two">
+            <div><label>Mã *</label><input name="code" required maxlength="30"></div>
+            <div><label>Đơn vị *</label><input name="unit" required maxlength="20"></div>
+        </div>
+        <label>Tên nguyên liệu *</label><input name="name" required maxlength="150">
+        <div class="two">
+            <div><label>Mức tồn tối thiểu</label><input name="minStock" type="number" min="0" step="0.001"></div>
+            <div><label>Nhà cung cấp chính</label><select name="supplierId"><option value="">Chưa chọn</option>@foreach(var s in Model.SupplierOptions){<option value="@s["id"]">@s["display_name"]</option>}</select></div>
+        </div>
+        <p class="muted">Muốn sửa số lượng tồn thì dùng "Kiểm kê".</p>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Lưu thay đổi</button></footer>
+</form></dialog>
+
+@* Phiếu nhập kho *@
+<dialog class="modal" id="m-import"><form method="post">
+    <input type="hidden" name="operation" value="stock"><input type="hidden" name="modal" value="m-import"><input type="hidden" name="kind" value="Import"><input type="hidden" name="tab" value="stock">
+    <header><h2>Nhập kho</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <label>Nguyên liệu *</label>
+        <select name="ingredientId" required><option value="">Chọn nguyên liệu</option>@foreach(var x in Model.IngredientOptions){<option value="@x["id"]">@x["display_name"]</option>}</select>
+        <div class="two">
+            <div><label>Số lượng nhập *</label><input name="quantity" type="number" min="0.001" step="0.001" required></div>
+            <div><label>Đơn giá (VND / đơn vị)</label><input name="unitCost" type="number" min="0" step="1"></div>
+        </div>
+        <label>Nhà cung cấp</label>
+        <select name="supplierId"><option value="">Không ghi</option>@foreach(var s in Model.SupplierOptions){<option value="@s["id"]">@s["display_name"]</option>}</select>
+        <label>Ghi chú</label><input name="note" maxlength="300" placeholder="Số hóa đơn, người giao…">
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Ghi phiếu nhập</button></footer>
+</form></dialog>
+
+@* Phiếu xuất dùng / hủy hỏng *@
+<dialog class="modal" id="m-export"><form method="post">
+    <input type="hidden" name="operation" value="stock"><input type="hidden" name="modal" value="m-export"><input type="hidden" name="tab" value="stock">
+    <header><h2>Xuất dùng / hủy hỏng</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <p class="muted">Tồn hiện tại: <b data-text="current">—</b></p>
+        <label>Nguyên liệu *</label>
+        <select name="ingredientId" required><option value="">Chọn nguyên liệu</option>@foreach(var x in Model.IngredientOptions){<option value="@x["id"]">@x["display_name"]</option>}</select>
+        <div class="two">
+            <div><label>Loại phiếu *</label><select name="kind"><option value="Export">Xuất dùng (pha chế, quầy)</option><option value="Waste">Hủy / hư hỏng</option></select></div>
+            <div><label>Số lượng *</label><input name="quantity" type="number" min="0.001" step="0.001" required></div>
+        </div>
+        <label>Ghi chú (bắt buộc khi hủy hỏng)</label><input name="note" maxlength="300" placeholder="VD: sữa hết hạn, đổ vỡ…">
+        <p class="muted">Không thể xuất quá số đang tồn.</p>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Ghi phiếu</button></footer>
+</form></dialog>
+
+@* Kiểm kê: nhập số đếm thực tế *@
+<dialog class="modal" id="m-adjust"><form method="post">
+    <input type="hidden" name="operation" value="stock"><input type="hidden" name="modal" value="m-adjust"><input type="hidden" name="kind" value="Adjust"><input type="hidden" name="tab" value="stock">
+    <header><h2>Kiểm kê</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <p class="muted">Tồn trên hệ thống: <b data-text="current">—</b>. Nhập số đếm thực tế, hệ thống tự tính chênh lệch.</p>
+        <label>Nguyên liệu *</label>
+        <select name="ingredientId" required><option value="">Chọn nguyên liệu</option>@foreach(var x in Model.IngredientOptions){<option value="@x["id"]">@x["display_name"]</option>}</select>
+        <label>Số lượng thực tế *</label><input name="quantity" type="number" min="0" step="0.001" required>
+        <label>Lý do *</label><input name="note" required maxlength="300" placeholder="VD: kiểm kê cuối tháng">
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Ghi kiểm kê</button></footer>
+</form></dialog>
+
+@* Ngừng dùng / dùng lại *@
+<dialog class="modal" id="m-stop"><form method="post">
+    <input type="hidden" name="operation" value="ingredient-active"><input type="hidden" name="modal" value="m-stop"><input type="hidden" name="id"><input type="hidden" name="active" value="false"><input type="hidden" name="tab" value="stock">
+    <header><h2>Ngừng dùng nguyên liệu</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Ngừng dùng <b data-text="display_name"></b>? Nguyên liệu sẽ không còn trong các phiếu mới, lịch sử vẫn giữ.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Ngừng dùng</button></footer>
+</form></dialog>
+<dialog class="modal" id="m-start"><form method="post">
+    <input type="hidden" name="operation" value="ingredient-active"><input type="hidden" name="modal" value="m-start"><input type="hidden" name="id"><input type="hidden" name="active" value="true"><input type="hidden" name="tab" value="stock">
+    <header><h2>Dùng lại nguyên liệu</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Dùng lại <b data-text="display_name"></b>?</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Dùng lại</button></footer>
+</form></dialog>

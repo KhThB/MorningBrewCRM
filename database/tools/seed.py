@@ -1,4 +1,4 @@
-"""Export historical multi-branch demo records; not the current CRM seed. The public demo password is not for production."""
+"""Generate deterministic demo records. The public demo password is not for production."""
 from pathlib import Path
 import base64,hashlib,struct
 ROOT=Path(__file__).resolve().parents[1]
@@ -58,7 +58,5 @@ INSERT dbo.SurveyQuestionOptions(QuestionID,Text,DisplayOrder) VALUES(1,N'Cà ph
 COMMIT;
 GO
 """
-output = ROOT/'.local/design-export'
-output.mkdir(parents=True, exist_ok=True)
-(output/'06_seed.sql').write_text(sql,encoding='utf-8')
+(ROOT/'sql/06_seed.sql').write_text(sql,encoding='utf-8')
 print('Generated seed; public demo password: MorningBrew!2026')

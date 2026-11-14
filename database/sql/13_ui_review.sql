@@ -1,6 +1,3 @@
--- DB-TEST PACKAGE: Preserves the original SQL batch order. See database/README.md.
-GO
--- DB-TEST SOURCE: 13_ui_review.sql (historical filename)
 -- 13_ui_review.sql – đợt góp ý giao diện 09/11/2026 (chạy sau 12_bugfix.sql). Chạy lại nhiều lần không sao.
 --   [UI2-A3]  Chọn món chỉ còn Size + Đá/Nóng: tắt nhóm Đường, Topping; nhóm "Đá" thành "Nhiệt độ" (Đá / Nóng, bắt buộc)
 --             cho mọi đồ uống; thêm size L (= giá M + 10.000đ) cho đồ uống chỉ có size M.
@@ -61,6 +58,4 @@ INSERT dbo.Suppliers(Code,Name,Phone,Email,ProductGroup,IsActive) VALUES
 ('NCC-BB01',N'Bao bì Minh Phát','028 3754 2299','minhphat.pack@mail.test',N'Ly nhựa, ống hút, túi giấy',0);
 
 COMMIT;
-GO
-
 GO

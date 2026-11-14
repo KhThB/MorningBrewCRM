@@ -49,9 +49,9 @@
                 @if (o.Status == "Ready" && o.Fulfillment == "Pickup") { <button class="btn btn-primary" disabled="@(busy || !o.IsPaid)" @onclick='() => Run(() => Pos.AdvanceAsync(o.OrderId, "Completed"))'>Khách đã nhận – hoàn tất</button> }
                 @if (o.Status == "Ready" && o.Fulfillment == "Delivery")
                 {
-                    <input class="input" placeholder="Tên người giao" @bind="courierName" />
-                    <input class="input" placeholder="SĐT người giao" @bind="courierPhone" />
-                    <button class="btn btn-primary" disabled="@busy" @onclick='() => Run(() => Pos.AdvanceAsync(o.OrderId, "Delivering", courierName, courierPhone))'>Giao cho shipper</button>
+                    <input class="input" placeholder="Tên người giao *" @bind="courierName" @bind:event="oninput" />
+                    <input class="input" placeholder="SĐT người giao *" @bind="courierPhone" @bind:event="oninput" />
+                    <button class="btn btn-primary" disabled="@(busy || string.IsNullOrWhiteSpace(courierName) || string.IsNullOrWhiteSpace(courierPhone))" @onclick='() => Run(() => Pos.AdvanceAsync(o.OrderId, "Delivering", courierName, courierPhone))'>Giao cho shipper</button>
                 }
                 @if (o.Status == "Delivering") { <button class="btn btn-primary" disabled="@(busy || !o.IsPaid)" @onclick='() => Run(() => Pos.AdvanceAsync(o.OrderId, "Completed"))'>Đã giao – hoàn tất</button> }
                 @if (active && Auth.CanCancel) { <button class="btn btn-ghost" disabled="@busy" @onclick='() => Run(() => Pos.CancelAsync(o.OrderId, "Hủy tại quầy"))'>Hủy đơn</button> }
@@ -101,7 +101,13 @@
     private async Task Run(Func<Task<Order>> action)
     {
         busy = true;
-        try { selected = await action(); Toasts.Show($"Đơn {selected.OrderCode}: {Fmt.OrderStatus(selected.Status)}"); orders = await Pos.QueueAsync(status); }
+        try
+        {
+            selected = await action();
+            courierName = courierPhone = null;
+            Toasts.Show($"Đơn {selected.OrderCode}: {Fmt.OrderStatus(selected.Status)}");
+            orders = await Pos.QueueAsync(status);
+        }
         catch (ApiException e) { Toasts.Error(e); }
         busy = false;
     }

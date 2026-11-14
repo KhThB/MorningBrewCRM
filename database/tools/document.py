@@ -238,7 +238,7 @@ def make():
     doc_table(doc,['Bảng mới','Lý do cần có'],[(t['name'],t['purpose']) for t in TABLES if not t['original']],[1.65,5.3])
     doc.add_page_break(); doc.add_heading('Từ điển dữ liệu chi tiết',1)
     doc.add_paragraph('Cột Quy tắc ghi tính bắt buộc, khóa và mặc định. UNIQUE ghép nghĩa là tổ hợp các trường duy nhất, không phải từng trường riêng. Ràng buộc CHECK, FK ghép và index được liệt kê sau bảng. Ví dụ chỉ minh họa định dạng, không luôn là giá trị hiện có trong dữ liệu mẫu.')
-    md=['> **Tài liệu thiết kế lịch sử trước migration một cửa hàng.** Số bảng, vai trò và phạm vi bên dưới không đại diện đầy đủ cho bản hiện hành. Dùng [hướng dẫn database](../README.md) và bộ `database/sql/01–04` để cài đặt; xem [nhật ký db-test](../../docs/DB_TEST_CHANGES.md).', '# Từ điển dữ liệu Morning Brew CRM','',f'41 bảng, {sum(len(t["columns"]) for t in TABLES)} trường. Sinh từ tools/schema.py.','']
+    md=['# Từ điển dữ liệu Morning Brew CRM','',f'41 bảng, {sum(len(t["columns"]) for t in TABLES)} trường. Sinh từ tools/schema.py.','']
     for i,t in enumerate(TABLES,1):
         doc.add_heading(f'{i} {t["name"]}',2)
         purpose=f'{t["group"]} • '+('Điều chỉnh bảng gốc. ' if t['original'] else 'Bảng bổ sung. ')+t['purpose']
@@ -269,7 +269,7 @@ def make():
     testpath=ROOT/'qa/test-results.json'
     if testpath.exists():
         tests=json.loads(testpath.read_text(encoding='utf-8'))
-        doc.add_paragraph(f'Đã thực thi {tests["passed"]} kiểm tra đạt trên database riêng {tests["database"]}. Các kiểm tra dùng SQL Server thực, có hai kết nối chạy đồng thời cho voucher, điểm và địa chỉ mặc định. Đây là kết quả kiểm thử lịch sử từ qa/test-results.json, không xác nhận bản hiện hành.')
+        doc.add_paragraph(f'Đã thực thi {tests["passed"]} kiểm tra đạt trên database riêng {tests["database"]}. Các kiểm tra dùng SQL Server thực, có hai kết nối chạy đồng thời cho voucher, điểm và địa chỉ mặc định. Kết quả chi tiết nằm trong verification.md.')
     doc.add_paragraph('Các bài kiểm tra bao gồm đặt pickup/delivery, COD/trả trước, khách vãng lai, retry thanh toán, tổng tiền và điểm, quyền theo chi nhánh/khách, lịch sử giá/địa chỉ, tranh chấp voucher/điểm, hủy/hoàn, khảo sát và doanh thu. Đây là kiểm thử tầng database; chưa phải kiểm thử UI, HTTP API, cổng thanh toán thật hoặc tải thực tế của chuỗi quán.')
     doc.add_paragraph('Dữ liệu mẫu và mật khẩu demo chỉ phục vụ đồ án. Trước khi dùng cho vận hành cần triển khai xác thực backend, cấu hình phân quyền kết nối, lịch xử lý đơn hết hạn, lưu trữ backup và tích hợp thanh toán thực tế theo hướng dẫn README.')
     doc.core_properties.title='Thiết kế cơ sở dữ liệu Morning Brew CRM'

@@ -4,7 +4,7 @@ namespace MorningBrew.Api.Infrastructure;
 
 // [BUG-02] Đơn hàng thật (trước đây app chỉ mô phỏng, không lưu database). Dùng chung cho app khách (/v1/me/orders),
 // trang Đơn hàng của quản lý (/v1/orders) và app POS. Mọi kiểm tra nghiệp vụ nằm trong stored procedure
-// của 01_core.sql (CreateOrder, StartPayment, SimulatePayment, AdvanceOrder, CancelOrder, RequestRefund…).
+// của 03_orders.sql (CreateOrder, StartPayment, SimulatePayment, AdvanceOrder, CancelOrder, RequestRefund…).
 public static class OrderQueries
 {
     public static readonly string[] Fulfillments = ["Pickup", "Delivery"];

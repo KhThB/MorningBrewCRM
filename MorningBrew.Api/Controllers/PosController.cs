@@ -64,8 +64,15 @@ public sealed class PosController(SqlStore db, PageReader pages) : ControllerBas
         await RequireOrder(id);
         if (input.NextStatus is not ("Confirmed" or "Preparing" or "Ready" or "Delivering" or "Completed"))
             throw new ApiException(400, "Trạng thái tiếp theo không hợp lệ.");
+        if (input.NextStatus == "Delivering")
+        {
+            if (string.IsNullOrWhiteSpace(input.CourierName))
+                throw new ApiException(400, "Cần nhập tên người giao hàng.", [new("FIELD_REQUIRED", "courier_name")]);
+            if (string.IsNullOrWhiteSpace(input.CourierPhone))
+                throw new ApiException(400, "Cần nhập số điện thoại người giao hàng.", [new("FIELD_REQUIRED", "courier_phone")]);
+        }
         await db.Procedure("dbo.AdvanceOrder", ("@ActorID", Actor), ("@OrderID", id), ("@NextStatus", input.NextStatus), ("@Reason", null),
-            ("@CourierName", input.CourierName), ("@CourierPhone", PhoneRule.Normalize(input.CourierPhone, "courier_phone")));
+            ("@CourierName", input.CourierName?.Trim()), ("@CourierPhone", PhoneRule.Normalize(input.CourierPhone, "courier_phone")));
         return await OrderResource(id);
     }
 

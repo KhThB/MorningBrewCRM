@@ -36,7 +36,10 @@ public sealed class PageReader(SqlStore db, IDataProtectionProvider provider)
                     throw new FormatException();
                 for (var i = 0; i < keys.Length; i++)
                     values.Add(($"@cursor{i}", cursor.Keys[i].ValueKind == JsonValueKind.Number
-                        ? cursor.Keys[i].GetInt64() : cursor.Keys[i].GetString()));
+                        ? cursor.Keys[i].GetInt64()
+                        : cursor.Keys[i].ValueKind is JsonValueKind.True or JsonValueKind.False
+                            ? (object)(cursor.Keys[i].GetBoolean() ? 1 : 0)
+                            : cursor.Keys[i].GetString()));
                 var op = descending ? "<" : ">";
                 predicate = string.Join(" OR ", keys.Select((key, i) => "(" +
                     string.Join(" AND ", keys.Take(i).Select((previous, j) => $"[{previous}]=@cursor{j}")

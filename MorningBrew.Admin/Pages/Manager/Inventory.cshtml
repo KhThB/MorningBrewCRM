@@ -153,7 +153,16 @@
     <header><h2>Nhập kho</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
     <div class="modal-body">
         <label>Nguyên liệu *</label>
-        <select name="ingredientId" required><option value="">Chọn nguyên liệu</option>@foreach(var x in Model.IngredientOptions){<option value="@x["id"]">@x["display_name"]</option>}</select>
+        <select name="ingredientId" required>
+            <option value="">Chọn nguyên liệu</option>
+            @foreach(var x in Model.IngredientOptions){
+                var s = x.TryGetValue("supplier_id", out var sv) && sv.ValueKind != JsonValueKind.Null ? sv.ToString() : "";
+                var c = x.TryGetValue("last_unit_cost", out var cv) && cv.ValueKind != JsonValueKind.Null ? cv.ToString() : "";
+                var u = x.TryGetValue("unit", out var uv) ? uv.ToString() : "";
+                var q = x.TryGetValue("quantity", out var qv) && qv.ValueKind == JsonValueKind.Number ? qv.GetDecimal().ToString("#,##0.###", vi) : "0";
+                <option value="@x["id"]" data-supplier="@s" data-cost="@c" data-unit="@u" data-qty="@q">@x["display_name"]</option>
+            }
+        </select>
         <div class="two">
             <div><label>Số lượng nhập *</label><input name="quantity" type="number" min="0.001" step="0.001" required></div>
             <div><label>Đơn giá (VND / đơn vị)</label><input name="unitCost" type="number" min="0" step="1"></div>
@@ -172,7 +181,16 @@
     <div class="modal-body">
         <p class="muted">Tồn hiện tại: <b data-text="current">—</b></p>
         <label>Nguyên liệu *</label>
-        <select name="ingredientId" required><option value="">Chọn nguyên liệu</option>@foreach(var x in Model.IngredientOptions){<option value="@x["id"]">@x["display_name"]</option>}</select>
+        <select name="ingredientId" required>
+            <option value="">Chọn nguyên liệu</option>
+            @foreach(var x in Model.IngredientOptions){
+                var s = x.TryGetValue("supplier_id", out var sv) && sv.ValueKind != JsonValueKind.Null ? sv.ToString() : "";
+                var c = x.TryGetValue("last_unit_cost", out var cv) && cv.ValueKind != JsonValueKind.Null ? cv.ToString() : "";
+                var u = x.TryGetValue("unit", out var uv) ? uv.ToString() : "";
+                var q = x.TryGetValue("quantity", out var qv) && qv.ValueKind == JsonValueKind.Number ? qv.GetDecimal().ToString("#,##0.###", vi) : "0";
+                <option value="@x["id"]" data-supplier="@s" data-cost="@c" data-unit="@u" data-qty="@q">@x["display_name"]</option>
+            }
+        </select>
         <div class="two">
             <div><label>Loại phiếu *</label><select name="kind"><option value="Export">Xuất dùng (pha chế, quầy)</option><option value="Waste">Hủy / hư hỏng</option></select></div>
             <div><label>Số lượng *</label><input name="quantity" type="number" min="0.001" step="0.001" required></div>
@@ -190,7 +208,16 @@
     <div class="modal-body">
         <p class="muted">Tồn trên hệ thống: <b data-text="current">—</b>. Nhập số đếm thực tế, hệ thống tự tính chênh lệch.</p>
         <label>Nguyên liệu *</label>
-        <select name="ingredientId" required><option value="">Chọn nguyên liệu</option>@foreach(var x in Model.IngredientOptions){<option value="@x["id"]">@x["display_name"]</option>}</select>
+        <select name="ingredientId" required>
+            <option value="">Chọn nguyên liệu</option>
+            @foreach(var x in Model.IngredientOptions){
+                var s = x.TryGetValue("supplier_id", out var sv) && sv.ValueKind != JsonValueKind.Null ? sv.ToString() : "";
+                var c = x.TryGetValue("last_unit_cost", out var cv) && cv.ValueKind != JsonValueKind.Null ? cv.ToString() : "";
+                var u = x.TryGetValue("unit", out var uv) ? uv.ToString() : "";
+                var q = x.TryGetValue("quantity", out var qv) && qv.ValueKind == JsonValueKind.Number ? qv.GetDecimal().ToString("#,##0.###", vi) : "0";
+                <option value="@x["id"]" data-supplier="@s" data-cost="@c" data-unit="@u" data-qty="@q">@x["display_name"]</option>
+            }
+        </select>
         <label>Số lượng thực tế *</label><input name="quantity" type="number" min="0" step="0.001" required>
         <label>Lý do *</label><input name="note" required maxlength="300" placeholder="VD: kiểm kê cuối tháng">
     </div>
@@ -210,3 +237,32 @@
     <div class="modal-body"><p>Dùng lại <b data-text="display_name"></b>?</p></div>
     <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Dùng lại</button></footer>
 </form></dialog>
+
+@section Scripts {
+<script>
+document.querySelectorAll('dialog.modal').forEach(d => {
+    const sel = d.querySelector('select[name="ingredientId"]');
+    if (!sel) return;
+    sel.addEventListener('change', () => {
+        const opt = sel.selectedOptions[0];
+        if (!opt || !opt.value) return;
+        const sup = opt.dataset.supplier || '';
+        const cost = opt.dataset.cost || '';
+        const unit = opt.dataset.unit || '';
+        const qty = opt.dataset.qty || '0';
+
+        // Tự động chọn nhà cung cấp trong modal nhập kho
+        const supSel = d.querySelector('select[name="supplierId"]');
+        if (supSel && sup) supSel.value = sup;
+
+        // Tự động điền đơn giá nhập gần nhất nếu ô đơn giá chưa nhập
+        const costInput = d.querySelector('input[name="unitCost"]');
+        if (costInput && cost && !costInput.value) costInput.value = cost;
+
+        // Tự động cập nhật tồn kho hiện tại trong modal xuất kho / kiểm kê
+        const curEl = d.querySelector('[data-text="current"]');
+        if (curEl) curEl.textContent = qty + ' ' + unit;
+    });
+});
+</script>
+}

@@ -1,9 +1,9 @@
 # Từ điển dữ liệu Morning Brew CRM
 
-41 bảng, 314 trường. Sinh từ tools/schema.py.
+40 bảng lõi, 310 trường. Sinh từ tools/schema.py.
 
 ## 1. Roles
-Tài khoản • Điều chỉnh bảng gốc. Năm vai trò nghiệp vụ dùng chung cho ba ứng dụng.
+Tài khoản • Điều chỉnh bảng gốc. Bốn vai trò nghiệp vụ dùng chung cho ba ứng dụng.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
 |---|---|---|
@@ -11,7 +11,7 @@ Tài khoản • Điều chỉnh bảng gốc. Năm vai trò nghiệp vụ dùng
 | Code<br>varchar(30) | Bắt buộc<br>UNIQUE | Mã ổn định dùng trong phân quyền.<br>Nguồn: Quản trị/backend ghi trong phạm vi được cấp quyền.<br>Ví dụ: Owner |
 | Name<br>nvarchar(100) | Bắt buộc | Tên hiển thị tiếng Việt.<br>Nguồn: Quản trị/backend ghi trong phạm vi được cấp quyền.<br>Ví dụ: Chủ doanh nghiệp |
 - UNIQUE (Code)
-- CHECK Code IN ('Owner','AreaManager','BranchManager','Staff','Customer')
+- CHECK Code IN ('Owner','BranchManager','Staff','Customer')
 
 ## 2. Permissions
 Tài khoản • Bảng bổ sung. Tách quyền thao tác khỏi tên vai trò để cấp quyền rõ ràng.
@@ -100,17 +100,7 @@ Tổ chức • Điều chỉnh bảng gốc. Cấu hình vận hành và nhận
 - CHECK OpeningTime < ClosingTime
 - CHECK DeliveryFee >= 0
 
-## 8. AreaManagers
-Tổ chức • Điều chỉnh bảng gốc. Phân công quản lý vào nhiều khu vực.
-
-| Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
-|---|---|---|
-| AreaID<br>int | Bắt buộc<br>PK ghép<br>FK → Areas.<br>AreaID | Liên kết tới Areas; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.<br>Nguồn: Quản trị/backend ghi trong phạm vi được cấp quyền.<br>Ví dụ: 1 |
-| UserID<br>int | Bắt buộc<br>PK ghép<br>FK → Users.<br>UserID | Liên kết tới Users; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.<br>Nguồn: Quản trị/backend ghi trong phạm vi được cấp quyền.<br>Ví dụ: 1 |
-| AssignedAt<br>datetime2(3) | Bắt buộc<br>Mặc định: SYSUTCDATETIME() | Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.<br>Nguồn: Backend/SQL Server ghi khi sự kiện tương ứng xảy ra.<br>Ví dụ: 2026-09-17T03:00:00Z |
-| IsActive<br>bit | Bắt buộc<br>Mặc định: 1 | Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.<br>Nguồn: Quản trị/backend ghi trong phạm vi được cấp quyền.<br>Ví dụ: 1 |
-
-## 9. StaffBranches
+## 8. StaffBranches
 Tổ chức • Điều chỉnh bảng gốc. Phân công nhân viên POS; giữ bản ghi khi ngừng phân công.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -120,7 +110,7 @@ Tổ chức • Điều chỉnh bảng gốc. Phân công nhân viên POS; giữ
 | AssignedAt<br>datetime2(3) | Bắt buộc<br>Mặc định: SYSUTCDATETIME() | Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.<br>Nguồn: Backend/SQL Server ghi khi sự kiện tương ứng xảy ra.<br>Ví dụ: 2026-09-17T03:00:00Z |
 | IsActive<br>bit | Bắt buộc<br>Mặc định: 1 | Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.<br>Nguồn: Quản trị/backend ghi trong phạm vi được cấp quyền.<br>Ví dụ: 1 |
 
-## 10. Customers
+## 9. Customers
 CRM • Điều chỉnh bảng gốc. Hồ sơ CRM gắn một tài khoản Customer; tên và liên hệ đọc từ Users.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -136,7 +126,7 @@ CRM • Điều chỉnh bảng gốc. Hồ sơ CRM gắn một tài khoản Cust
 - CHECK Gender IS NULL OR Gender IN ('Male','Female','Other','Undisclosed')
 - Index  (DateOfBirth,Gender)
 
-## 11. CustomerAddresses
+## 10. CustomerAddresses
 CRM • Bảng bổ sung. Nhiều địa chỉ giao hàng của khách; không dùng làm địa chỉ động cho đơn cũ.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -154,7 +144,7 @@ CRM • Bảng bổ sung. Nhiều địa chỉ giao hàng của khách; không d
 - CHECK IsDefault = 0 OR IsActive = 1
 - Index UNIQUE (CustomerID) WHERE IsDefault=1
 
-## 12. Categories
+## 11. Categories
 Thực đơn • Điều chỉnh bảng gốc. Nhóm món để duyệt menu và phân tích sở thích.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -164,7 +154,7 @@ Thực đơn • Điều chỉnh bảng gốc. Nhóm món để duyệt menu và
 | IsActive<br>bit | Bắt buộc<br>Mặc định: 1 | Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.<br>Nguồn: Quản trị/backend ghi trong phạm vi được cấp quyền.<br>Ví dụ: 1 |
 - UNIQUE (Name)
 
-## 13. Products
+## 12. Products
 Thực đơn • Điều chỉnh bảng gốc. Thông tin món dùng toàn chuỗi; giá nằm ở phiên bản.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -177,7 +167,7 @@ Thực đơn • Điều chỉnh bảng gốc. Thông tin món dùng toàn chu�
 | IsActive<br>bit | Bắt buộc<br>Mặc định: 1 | Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.<br>Nguồn: Quản trị/backend ghi trong phạm vi được cấp quyền.<br>Ví dụ: 1 |
 | Version<br>rowversion | Bắt buộc<br>SQL tự sinh | Dấu phiên bản để phát hiện ghi đè dữ liệu khi hai người cùng sửa; không phải thời gian.<br>Nguồn: SQL Server tự cập nhật mỗi lần ghi.<br>Ví dụ: 0x00000000000007D1 |
 
-## 14. ProductVariants
+## 13. ProductVariants
 Thực đơn • Bảng bổ sung. Mỗi size là một phiên bản có giá cơ sở; món không size có phiên bản Standard.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -193,7 +183,7 @@ Thực đơn • Bảng bổ sung. Mỗi size là một phiên bản có giá c�
 - CHECK BasePrice >= 0
 - CHECK DisplayOrder >= 0
 
-## 15. BranchProducts
+## 14. BranchProducts
 Thực đơn • Điều chỉnh bảng gốc. Chỉ các món được phân phối tới chi nhánh mới xuất hiện trên menu.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -202,7 +192,7 @@ Thực đơn • Điều chỉnh bảng gốc. Chỉ các món được phân ph
 | ProductID<br>int | Bắt buộc<br>PK ghép<br>FK → Products.<br>ProductID | Liên kết tới Products; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.<br>Nguồn: Quản trị/backend ghi trong phạm vi được cấp quyền.<br>Ví dụ: 1 |
 | IsAvailable<br>bit | Bắt buộc<br>Mặc định: 1 | Quán bật/tắt món mà không xóa phân phối.<br>Nguồn: Quản trị/backend ghi trong phạm vi được cấp quyền.<br>Ví dụ: 1 |
 
-## 16. BranchProductVariants
+## 15. BranchProductVariants
 Thực đơn • Bảng bổ sung. Ghi đè giá và tình trạng bán size tại chi nhánh.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -216,7 +206,7 @@ Thực đơn • Bảng bổ sung. Ghi đè giá và tình trạng bán size t�
 - FK ghép (BranchID,ProductID) → BranchProducts(BranchID,ProductID).
 - FK ghép (VariantID,ProductID) → ProductVariants(VariantID,ProductID).
 
-## 17. ModifierGroups
+## 16. ModifierGroups
 Thực đơn • Bảng bổ sung. Định nghĩa nhóm lựa chọn đường, đá, topping.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -227,7 +217,7 @@ Thực đơn • Bảng bổ sung. Định nghĩa nhóm lựa chọn đường, 
 | IsActive<br>bit | Bắt buộc<br>Mặc định: 1 | Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.<br>Nguồn: Quản trị/backend ghi trong phạm vi được cấp quyền.<br>Ví dụ: 1 |
 - CHECK Kind IN ('Sugar','Ice','Topping')
 
-## 18. ModifierOptions
+## 17. ModifierOptions
 Thực đơn • Bảng bổ sung. Các lựa chọn có phụ phí trong từng nhóm.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -243,7 +233,7 @@ Thực đơn • Bảng bổ sung. Các lựa chọn có phụ phí trong từng
 - CHECK ExtraPrice >= 0
 - CHECK DisplayOrder >= 0
 
-## 19. ProductModifierGroups
+## 18. ProductModifierGroups
 Thực đơn • Bảng bổ sung. Giới hạn số lựa chọn theo từng món; không gắn topping vô điều kiện cho mọi món.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -254,7 +244,7 @@ Thực đơn • Bảng bổ sung. Giới hạn số lựa chọn theo từng m�
 | MaxSelections<br>int | Bắt buộc | Số lựa chọn khác nhau tối đa; mỗi topping một phần trên mỗi ly.<br>Nguồn: Quản trị/backend ghi trong phạm vi được cấp quyền.<br>Ví dụ: 1 |
 - CHECK MinSelections >= 0 AND MaxSelections >= MinSelections AND MaxSelections > 0
 
-## 20. BranchModifierOptions
+## 19. BranchModifierOptions
 Thực đơn • Bảng bổ sung. Ghi đè phụ phí hoặc tạm hết topping/tùy chọn tại chi nhánh.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -265,7 +255,7 @@ Thực đơn • Bảng bổ sung. Ghi đè phụ phí hoặc tạm hết toppin
 | IsAvailable<br>bit | Bắt buộc<br>Mặc định: 1 | Tạm ngừng lựa chọn tại chi nhánh.<br>Nguồn: Quản trị/backend ghi trong phạm vi được cấp quyền.<br>Ví dụ: 1 |
 - CHECK ExtraPrice >= 0
 
-## 21. CustomerPreferences
+## 20. CustomerPreferences
 CRM • Điều chỉnh bảng gốc. Danh sách món yêu thích của khách dùng cho app và phân nhóm.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -274,7 +264,7 @@ CRM • Điều chỉnh bảng gốc. Danh sách món yêu thích của khách d
 | ProductID<br>int | Bắt buộc<br>PK ghép<br>FK → Products.<br>ProductID | Liên kết tới Products; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.<br>Nguồn: Khách cập nhật qua backend sau kiểm tra quyền sở hữu.<br>Ví dụ: 1 |
 | CreatedAt<br>datetime2(3) | Bắt buộc<br>Mặc định: SYSUTCDATETIME() | Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.<br>Nguồn: Backend/SQL Server ghi khi sự kiện tương ứng xảy ra.<br>Ví dụ: 2026-09-17T03:00:00Z |
 
-## 22. LoyaltyPolicies
+## 21. LoyaltyPolicies
 Điểm và ưu đãi • Bảng bổ sung. Quy tắc tính điểm có thời gian hiệu lực; chọn quy tắc tại lúc tạo đơn.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -287,7 +277,7 @@ CRM • Điều chỉnh bảng gốc. Danh sách món yêu thích của khách d
 - CHECK AmountPerPoint > 0
 - CHECK EffectiveTo IS NULL OR EffectiveTo > EffectiveFrom
 
-## 23. Promotions
+## 22. Promotions
 Điểm và ưu đãi • Điều chỉnh bảng gốc. Chương trình phát hành voucher; không đồng nghĩa với voucher đã cấp.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -320,7 +310,7 @@ CRM • Điều chỉnh bảng gốc. Danh sách món yêu thích của khách d
 - CHECK PointsCost IS NULL OR PointsCost >= 0
 - CHECK TotalLimit > 0 AND PerCustomerLimit > 0 AND PerCustomerLimit <= TotalLimit
 
-## 24. CustomerPromotions
+## 23. CustomerPromotions
 Điểm và ưu đãi • Điều chỉnh bảng gốc. Một voucher đã cấp; giữ riêng hạn và điều kiện để không thay đổi quyền lợi sau khi cấp.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -355,7 +345,7 @@ CRM • Điều chỉnh bảng gốc. Danh sách món yêu thích của khách d
 - CHECK MinSubtotal >= 0
 - Index  (CustomerID,Status,ExpiresAt)
 
-## 25. Orders
+## 24. Orders
 Bán hàng • Điều chỉnh bảng gốc. Đơn thuộc một chi nhánh; trạng thái vận hành độc lập với thanh toán.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -404,7 +394,7 @@ Bán hàng • Điều chỉnh bảng gốc. Đơn thuộc một chi nhánh; tr�
 - Index  (BranchID,Status,CreatedAt)
 - Index  (CustomerID,CreatedAt)
 
-## 26. OrderDetails
+## 25. OrderDetails
 Bán hàng • Điều chỉnh bảng gốc. Một dòng tương ứng món, size và một bộ tùy chọn giống nhau.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -426,7 +416,7 @@ Bán hàng • Điều chỉnh bảng gốc. Một dòng tương ứng món, siz
 - FK ghép (VariantID,ProductID) → ProductVariants(VariantID,ProductID).
 - Index  (OrderID)
 
-## 27. OrderItemModifiers
+## 26. OrderItemModifiers
 Bán hàng • Bảng bổ sung. Lưu những tùy chọn đã đặt và giá chốt, không đọc giá hiện tại cho đơn cũ.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -438,7 +428,7 @@ Bán hàng • Bảng bổ sung. Lưu những tùy chọn đã đặt và giá c
 | ExtraPrice<br>decimal(18,2) | Bắt buộc | Phụ phí một lựa chọn trên một ly tại lúc đặt. Số thập phân chính xác tránh sai số cộng tiền.<br>Nguồn: CreateOrder chụp từ menu sau kiểm tra.<br>Ví dụ: 35000 |
 - CHECK ExtraPrice >= 0
 
-## 28. OrderStatusHistory
+## 27. OrderStatusHistory
 Bán hàng • Bảng bổ sung. Dòng thời gian đơn và người chịu trách nhiệm cho mỗi chuyển trạng thái.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -452,7 +442,7 @@ Bán hàng • Bảng bổ sung. Dòng thời gian đơn và người chịu tr�
 | CreatedAt<br>datetime2(3) | Bắt buộc<br>Mặc định: SYSUTCDATETIME() | Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.<br>Nguồn: Backend/SQL Server ghi khi sự kiện tương ứng xảy ra.<br>Ví dụ: 2026-09-17T03:00:00Z |
 - Index  (OrderID,CreatedAt)
 
-## 29. Deliveries
+## 28. Deliveries
 Bán hàng • Bảng bổ sung. Một đơn giao hàng có một hồ sơ giao; lưu địa chỉ bất biến và cập nhật giao thủ công.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -473,7 +463,7 @@ Bán hàng • Bảng bổ sung. Một đơn giao hàng có một hồ sơ giao;
 - CHECK Status IN ('Pending','Delivering','Failed','Delivered','Cancelled')
 - CHECK AttemptCount >= 0
 
-## 30. PaymentAttempts
+## 29. PaymentAttempts
 Thanh toán • Bảng bổ sung. Một dòng cho mỗi lần thanh toán; hỗ trợ thử lại, COD và đối soát sau này.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -498,7 +488,7 @@ Thanh toán • Bảng bổ sung. Một dòng cho mỗi lần thanh toán; hỗ 
 - Index UNIQUE (OrderID) WHERE Status='Pending'
 - Index UNIQUE (Provider,ProviderReference) WHERE ProviderReference IS NOT NULL
 
-## 31. Refunds
+## 30. Refunds
 Thanh toán • Bảng bổ sung. Yêu cầu hoàn toàn bộ một giao dịch; trạng thái độc lập việc hủy đơn.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -522,7 +512,7 @@ Thanh toán • Bảng bổ sung. Yêu cầu hoàn toàn bộ một giao dịch;
 - CHECK Amount >= 0 AND AttemptCount >= 0
 - FK ghép (PaymentID,OrderID) → PaymentAttempts(PaymentID,OrderID).
 
-## 32. LoyaltyTransactions
+## 31. LoyaltyTransactions
 Điểm và ưu đãi • Điều chỉnh bảng gốc. Sổ điểm bất biến: cộng, đổi voucher, điều chỉnh, thu hồi; dùng để đối chiếu số dư.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -544,7 +534,7 @@ Thanh toán • Bảng bổ sung. Yêu cầu hoàn toàn bộ một giao dịch;
 - Index UNIQUE (CustomerPromotionID) WHERE Kind='Redeem'
 - Index  (CustomerID,CreatedAt)
 
-## 33. Feedbacks
+## 32. Feedbacks
 CRM • Điều chỉnh bảng gốc. Phản hồi của khách, có thể liên quan đơn/món/quán; quản lý trả lời chính thức.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -568,7 +558,7 @@ CRM • Điều chỉnh bảng gốc. Phản hồi của khách, có thể liên
 - FK ghép (OrderID,CustomerID) → Orders(OrderID,CustomerID).
 - Index  (BranchID,Status,CreatedAt)
 
-## 34. Surveys
+## 33. Surveys
 Khảo sát • Điều chỉnh bảng gốc. Đợt khảo sát có phạm vi quản trị, thời gian mở và người tạo.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -588,7 +578,7 @@ Khảo sát • Điều chỉnh bảng gốc. Đợt khảo sát có phạm vi q
 - CHECK EndsAt IS NOT NULL AND EndsAt > StartsAt
 - CHECK Status IN ('Draft','Open','Closed')
 
-## 35. SurveyQuestions
+## 34. SurveyQuestions
 Khảo sát • Điều chỉnh bảng gốc. Câu hỏi có kiểu trả lời, thứ tự và tính bắt buộc.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -607,7 +597,7 @@ Khảo sát • Điều chỉnh bảng gốc. Câu hỏi có kiểu trả lời,
 - CHECK DisplayOrder >= 0
 - CHECK (Type='Rating' AND RatingMin IS NOT NULL AND RatingMax IS NOT NULL AND RatingMin < RatingMax) OR (Type<>'Rating' AND RatingMin IS NULL AND RatingMax IS NULL)
 
-## 36. SurveyQuestionOptions
+## 35. SurveyQuestionOptions
 Khảo sát • Bảng bổ sung. Đáp án có định danh để kiểm tra và thống kê chính xác.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -620,7 +610,7 @@ Khảo sát • Bảng bổ sung. Đáp án có định danh để kiểm tra v�
 - UNIQUE (OptionID, QuestionID)
 - CHECK DisplayOrder >= 0
 
-## 37. SurveyRecipients
+## 36. SurveyRecipients
 Khảo sát • Điều chỉnh bảng gốc. Khách thực sự được mời và tình trạng hoàn thành; không phụ thuộc bộ lọc thay đổi sau đó.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -631,7 +621,7 @@ Khảo sát • Điều chỉnh bảng gốc. Khách thực sự được mời 
 | CompletedAt<br>datetime2(3) | Được trống | Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.<br>Nguồn: Backend/SQL Server ghi khi sự kiện tương ứng xảy ra.<br>Ví dụ: 2026-09-17T03:00:00Z |
 - Index  (CustomerID,CompletedAt)
 
-## 38. SurveyResponses
+## 37. SurveyResponses
 Khảo sát • Điều chỉnh bảng gốc. Một câu trả lời cho mỗi câu hỏi/khách; lựa chọn lưu ở bảng con.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -648,7 +638,7 @@ Khảo sát • Điều chỉnh bảng gốc. Một câu trả lời cho mỗi c
 - FK ghép (QuestionID,SurveyID) → SurveyQuestions(QuestionID,SurveyID).
 - FK ghép (SurveyID,CustomerID) → SurveyRecipients(SurveyID,CustomerID).
 
-## 39. SurveyAnswerOptions
+## 38. SurveyAnswerOptions
 Khảo sát • Bảng bổ sung. Các đáp án được chọn; khóa ghép ngăn chọn lặp một đáp án.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -659,7 +649,7 @@ Khảo sát • Bảng bổ sung. Các đáp án được chọn; khóa ghép ng
 - FK ghép (ResponseID,QuestionID) → SurveyResponses(ResponseID,QuestionID).
 - FK ghép (OptionID,QuestionID) → SurveyQuestionOptions(OptionID,QuestionID).
 
-## 40. Notifications
+## 39. Notifications
 CRM • Bảng bổ sung. Hộp thông báo trong app; chưa tích hợp push/SMS/email.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
@@ -675,7 +665,7 @@ CRM • Bảng bổ sung. Hộp thông báo trong app; chưa tích hợp push/SM
 | ReadAt<br>datetime2(3) | Được trống | Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.<br>Nguồn: Backend/SQL Server ghi khi sự kiện tương ứng xảy ra.<br>Ví dụ: 2026-09-17T03:00:00Z |
 - Index  (UserID,ReadAt,CreatedAt)
 
-## 41. AuditLogs
+## 40. AuditLogs
 Tài khoản • Bảng bổ sung. Nhật ký ai làm gì; không ghi mật khẩu, refresh token hoặc bí mật thanh toán.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |

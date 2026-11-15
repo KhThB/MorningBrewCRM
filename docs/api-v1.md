@@ -73,6 +73,7 @@ Token được mã hóa và xác thực bằng ASP.NET Data Protection, hết h�
 | Voucher | `GET /v1/vouchers/{id}`; cấp/đổi voucher trả tài nguyên này, kể cả khi retry cùng `request_key` |
 | Phản hồi | `GET /v1/feedbacks`, `POST /v1/feedbacks/{id}:reply` |
 | Điểm | `POST /v1/customers/{id}:adjustPoints` (quyền `Loyalty.Adjust`) |
+| Hạng thành viên | `GET/POST /v1/tiers`, `PUT/DELETE /v1/tiers/{id}` (`display_name`, `min_spent`, `benefit`; quyền `Promotions.Manage`); `GET /v1/customers?tier=Gold`; `issueBulk` / `inviteBulk` nhận `tier`; `GET /v1/me/profile` có `tier_name`, `tier_benefit`, `spent_last_year`, `next_tier_name`, `next_tier_spent` |
 | Trạng thái | `PUT /v1/{accounts|products|promotions|suppliers}/{id}/active`, body `{"is_active":false}` |
 | Phân quyền | `GET /v1/permissions`, `PUT /v1/roles/{role}/permissions/{code}`, body `{"allowed":true}` |
 | Dashboard, báo cáo | `GET /v1/dashboard/overview`, `GET /v1/reports/revenue?fromTime=...&toTime=...&branchId=...`, `GET /v1/reports/revenue/daily?fromTime=...&toTime=...` (theo ngày giờ VN, tối đa 366 ngày), `GET /v1/reports/promotions` (đã cấp / đã dùng / tiền giảm / doanh thu theo ưu đãi); `GET /v1/lookups/options` có thêm `permissions` của người đang đăng nhập |

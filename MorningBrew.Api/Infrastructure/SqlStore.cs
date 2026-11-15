@@ -49,6 +49,12 @@ public sealed class ApiException(int status, string message, ErrorDetail[]? deta
 }
 public sealed class ApiErrors(RequestDelegate next, ILogger<ApiErrors> logger)
 {
+    // "Invalid object name 'dbo.CustomerTiers'." → "thiếu dbo.CustomerTiers" [DB-01]
+    private static string MissingObject(string message)
+    {
+        var start = message.IndexOf('\''); var end = start < 0 ? -1 : message.IndexOf('\'', start + 1);
+        return end > start ? "thiếu " + message[(start + 1)..end] : "thiếu bảng hoặc thủ tục";
+    }
     public async Task InvokeAsync(HttpContext context)
     {
         try { await next(context); }
@@ -69,6 +75,8 @@ public sealed class ApiErrors(RequestDelegate next, ILogger<ApiErrors> logger)
                 SqlException e when e.Number is 2601 or 2627 => (409, "Dữ liệu đã tồn tại hoặc yêu cầu đã được xử lý."),
                 SqlException e when e.Number is 547 or 515 or 2628 => (400, "Dữ liệu không hợp lệ hoặc đang được sử dụng."),
                 SqlException e when e.Number >= 51000 && e.Number < 52000 => (400, OrderQueries.Translate(e.Message)), // [BUG-02]
+                // [DB-01] Thiếu bảng / view / thủ tục: database chưa chạy script mới nhất (trước đây báo nhầm là không truy cập được SQL Server).
+                SqlException e when e.Number is 208 or 2812 => (500, $"Database chưa được nâng cấp lên bản mới nhất ({MissingObject(e.Message)}). Hãy đóng API rồi chạy database/sql_ssms/morningbrew_fullscript.sql."),
                 SqlException => (503, "Không thể truy cập SQL Server. Kiểm tra cấu hình và database."),
                 _ => (500, "Không thể xử lý yêu cầu. Vui lòng thử lại.")
             };

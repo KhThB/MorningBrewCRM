@@ -1,3 +1,9 @@
-@* [CRM-02] Ô chọn nhóm hành vi mua (dbo.CustomerStats) cho mời khảo sát / cấp voucher theo nhóm *@
-<label>Nhóm hành vi mua</label>
-<select name="segment"><option value="">Mọi nhóm</option>@foreach(var s in RowDisplay.Segments){<option value="@s.Code">@s.Name – @s.Hint</option>}</select>
+@model WorkspaceBase
+@* [CRM-02] Ô chọn nhóm hành vi mua (dbo.CustomerStats) cho mời khảo sát / cấp voucher theo nhóm.
+   [CRM-01] Thêm ô chọn hạng thành viên (dbo.MemberTiers). *@
+<div class="two">
+    <div><label>Nhóm hành vi mua</label>
+        <select name="segment"><option value="">Mọi nhóm</option>@foreach(var s in RowDisplay.Segments){<option value="@s.Code" title="@s.Hint">@s.Name</option>}</select></div>
+    <div><label>Hạng thành viên</label>
+        <select name="tier"><option value="">Mọi hạng</option>@foreach(var t in Model.Choices("tiers")){<option value="@t["id"]">@t["display_name"]</option>}</select></div>
+</div>

@@ -29,11 +29,12 @@ public sealed partial class AdminController
     }
 
     public record BulkIssueInput(int[]? CustomerIds, bool All = false, int? AgeGroup = null, string? Gender = null, int? ProductId = null,
-        string? Segment = null); // [CRM-02] cấp theo nhóm hành vi mua (vd khách lâu không quay lại)
+        string? Segment = null, // [CRM-02] cấp theo nhóm hành vi mua (vd khách lâu không quay lại)
+        string? Tier = null); // [CRM-01] cấp theo hạng thành viên (vd tặng voucher cho hạng Vàng)
     [HttpPost("promotions/{id:int}:issueBulk")]
     public async Task<object> IssueBulk(int id, BulkIssueInput input)
     {
-        var targets = await BulkTargets(new BulkInviteInput(input.CustomerIds, input.All, input.AgeGroup, input.Gender, input.ProductId, input.Segment));
+        var targets = await BulkTargets(new BulkInviteInput(input.CustomerIds, input.All, input.AgeGroup, input.Gender, input.ProductId, input.Segment, input.Tier));
         int issued = 0, skipped = 0;
         string? reason = null;
         foreach (var customer in targets)

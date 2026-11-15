@@ -11,6 +11,9 @@
 <div class="kpi-row">
     <div><span>Điểm hiện có</span><b>@ReportView.Int(p,"loyalty_points")</b></div>
     <div><span>Đơn hoàn tất · đã chi</span><b>@ReportView.Int(p,"completed_orders") · @OrderView.Money(p,"total_spent")</b></div>
+    @* [CRM-01] hạng thành viên theo chi tiêu 12 tháng *@
+    <div><span>Hạng · chi tiêu 12 tháng</span><b>@ReportView.Text(p,"tier_name") · @OrderView.Money(p,"spent_last_year")</b>
+        @if(!string.IsNullOrEmpty(ReportView.Text(p,"next_tier_name"))){<small class="muted">Còn @((Math.Max(0,(ReportView.Decimal(p,"next_tier_spent")??0)-(ReportView.Decimal(p,"spent_last_year")??0))).ToString("#,0",System.Globalization.CultureInfo.GetCultureInfo("vi-VN")))đ để lên @ReportView.Text(p,"next_tier_name")</small>}</div>
 </div>
 <dl class="detail-list">
     <dt>Email</dt><dd>@V(p,"email")</dd><dt>Điện thoại</dt><dd>@V(p,"phone")</dd>

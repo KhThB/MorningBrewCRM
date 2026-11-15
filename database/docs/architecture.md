@@ -4,7 +4,7 @@
 
 Morning Brew Coffee được giả định là chuỗi quán cà phê tại Thành phố Hồ Chí Minh, phục vụ đồ uống, bánh và món ăn nhẹ. Đối tượng khách hàng chủ yếu là sinh viên, nhân viên văn phòng và người trẻ. Hệ thống tập trung hóa dữ liệu của các chi nhánh, hỗ trợ bán hàng cơ bản và lấy quản lý quan hệ khách hàng làm trọng tâm.
 
-Thiết kế này phát triển từ tài liệu Task_2_3_He_thong_quan_ly_chuoi_quan_ca_phe_CRM.docx và erd.drawio. Hai tệp nguồn có 21 bảng thực tế. Bản cập nhật có 41 bảng, gồm 21 bảng được điều chỉnh và 20 bảng mới để đáp ứng app đặt hàng, thực đơn có tùy chọn, thanh toán, hoàn tiền và kiểm soát dữ liệu. Số lượng này đã tính các bảng trung gian; không cộng thêm bảng chỉ vì có đường nối trên ERD.
+Thiết kế này phát triển từ tài liệu Task_2_3_He_thong_quan_ly_chuoi_quan_ca_phe_CRM.docx và erd.drawio. Hai tệp nguồn có 21 bảng thực tế. Bản cập nhật có 40 bảng lõi, gồm 20 bảng gốc được điều chỉnh (bảng AreaManagers đã bỏ khi chuyển sang mô hình một cửa hàng) và 20 bảng mới để đáp ứng app đặt hàng, thực đơn có tùy chọn, thanh toán, hoàn tiền và kiểm soát dữ liệu. Số lượng này đã tính các bảng trung gian; không cộng thêm bảng chỉ vì có đường nối trên ERD.
 
 Mục tiêu là phục vụ ba giao diện: web Admin cho cấp quản lý, web POS cho nhân viên và app khách hàng. Các giao diện gọi backend ASP.NET Core; backend là thành phần duy nhất giữ thông tin kết nối SQL Server. Phần bàn giao này xây dựng cơ sở dữ liệu, thao tác nghiệp vụ, dữ liệu mẫu và tài liệu; giao diện và các endpoint HTTP được triển khai ở giai đoạn tiếp theo.
 

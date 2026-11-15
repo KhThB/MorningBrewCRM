@@ -173,6 +173,7 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
         products = await db.Query("SELECT ProductID AS Id,Name FROM dbo.Products WHERE IsActive=1 ORDER BY Name"),
         // [CRM-09] quyền của người đang đăng nhập – web ẩn / hiện nút theo quyền (vd Điều chỉnh điểm)
         permissions = await db.Query("SELECT Code AS Id,Code AS Name FROM dbo.Permissions WHERE dbo.CanScope(@actor,'Chain',NULL,NULL,Code)=1", ("@actor", Actor)),
+        tiers = await db.Query("SELECT Code AS Id,Name FROM dbo.MemberTiers ORDER BY MinSpent"), // [CRM-01] ô chọn hạng thành viên
         customers = await db.Query($"""
             SELECT TOP(200) c.CustomerID AS Id,CONCAT(u.FullName,N' · ',COALESCE(u.Phone,u.Email)) AS Name FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID
             WHERE u.IsActive=1 AND u.DeletedAt IS NULL AND {CustomerScope}

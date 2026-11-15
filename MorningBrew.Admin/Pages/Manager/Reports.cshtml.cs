@@ -68,6 +68,7 @@ public class ReportsModel(CrmApi api):WorkspaceBase(api)
         if(Report is not null)
         {
             sheets.Add(XlsxSheet.From("Nhóm hành vi mua",ReportView.Rows(Report,"segments"),[("segment","Nhóm khách"),("customers","Số khách"),("completed_orders","Đơn hoàn tất"),("total_spent","Tổng chi tiêu (đ)"),("average_spent","Chi tiêu TB / khách (đ)")]));
+            sheets.Add(XlsxSheet.From("Hạng thành viên",ReportView.Rows(Report,"tiers"),[("tier_name","Hạng"),("min_spent","Chi tiêu 12 tháng tối thiểu (đ)"),("customers","Số khách"),("spent_last_year","Tổng chi tiêu 12 tháng (đ)")])); // [CRM-01]
             sheets.Add(XlsxSheet.From("Độ tuổi",ReportView.Rows(Report,"age_groups"),[("age_group","Nhóm tuổi"),("customers","Số khách")]));
             sheets.Add(XlsxSheet.From("Giới tính",ReportView.Rows(Report,"genders"),[("gender","Giới tính"),("customers","Số khách")]));
             sheets.Add(XlsxSheet.From("Món yêu thích",ReportView.Rows(Report,"products"),[("product","Món"),("category","Danh mục"),("customers","Số khách thích")]));

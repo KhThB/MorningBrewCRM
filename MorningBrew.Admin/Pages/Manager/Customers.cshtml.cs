@@ -10,9 +10,11 @@ public class CustomersModel(CrmApi api):WorkspaceBase(api)
     protected override bool Searchable=>true;
     // [CRM-02] lọc theo nhóm hành vi mua; [CRM-08] "Duplicate" = SĐT đang dùng chung cho nhiều khách
     [BindProperty(SupportsGet=true)] public string? Segment {get;set;}
+    [BindProperty(SupportsGet=true)] public string? Tier {get;set;} // [CRM-01] lọc theo hạng thành viên
+    private string Filter=>$"&q={Uri.EscapeDataString(Q??"")}&segment={Uri.EscapeDataString(Segment??"")}&tier={Uri.EscapeDataString(Tier??"")}";
     protected override async Task LoadAsync()
     {
-        var page=await Api.Get<ApiPage>($"v1/customers?pageSize=50&pageToken={Uri.EscapeDataString(PageToken??"")}&q={Uri.EscapeDataString(Q??"")}&segment={Uri.EscapeDataString(Segment??"")}");
+        var page=await Api.Get<ApiPage>($"v1/customers?pageSize=50&pageToken={Uri.EscapeDataString(PageToken??"")}{Filter}");
         Rows=page.Items; NextPageToken=page.NextPageToken;
     }
 
@@ -22,12 +24,12 @@ public class CustomersModel(CrmApi api):WorkspaceBase(api)
         var rows=new List<Dictionary<string,JsonElement>>(); string? token="";
         for(var i=0;i<100 && token is not null;i++)
         {
-            var page=await Api.Get<ApiPage>($"v1/customers?pageSize=100&pageToken={Uri.EscapeDataString(token)}&q={Uri.EscapeDataString(Q??"")}&segment={Uri.EscapeDataString(Segment??"")}");
+            var page=await Api.Get<ApiPage>($"v1/customers?pageSize=100&pageToken={Uri.EscapeDataString(token)}{Filter}");
             rows.AddRange(page.Items); token=string.IsNullOrEmpty(page.NextPageToken)?null:page.NextPageToken;
         }
         var sheet=XlsxSheet.From("Khách hàng",rows,[("customer_id","Mã khách"),("full_name","Họ tên"),("email","Email"),("phone","Điện thoại"),
             ("date_of_birth","Ngày sinh"),("gender","Giới tính"),("loyalty_points","Điểm"),("completed_orders","Đơn hoàn tất"),("total_spent","Tổng chi tiêu (đ)"),
-            ("last_order_at","Mua gần nhất"),("segment","Nhóm khách"),("is_active","Đang hoạt động")]);
+            ("last_order_at","Mua gần nhất"),("segment","Nhóm khách"),("tier_name","Hạng thành viên"),("spent_last_year","Chi tiêu 12 tháng (đ)"),("is_active","Đang hoạt động")]);
         return File(XlsxExport.Build([sheet]),XlsxExport.ContentType,XlsxExport.FileName("KhachHang"));
     }
     protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"customer","customer-active","customer-delete","points","customer-update"} /* [WEB-04] */;

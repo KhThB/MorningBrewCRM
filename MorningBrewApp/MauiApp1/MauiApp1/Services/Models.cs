@@ -10,7 +10,9 @@ public record LoginResponse(string Token, DateTimeOffset ExpiresAt, IdentityInfo
 
 public record Profile(
     int CustomerId, string FullName, string Email, string? Phone, string? DateOfBirth,
-    string? Gender, int LoyaltyPoints, DateTimeOffset? CreatedAt, string Etag)
+    string? Gender, int LoyaltyPoints, DateTimeOffset? CreatedAt, string Etag,
+    // [CRM-01] hạng thành viên do database tính (dbo.CustomerTiers) theo chi tiêu 12 tháng
+    string? TierName = null, string? TierBenefit = null, decimal SpentLastYear = 0, string? NextTierName = null, decimal? NextTierSpent = null)
 {
     public DateOnly? Birthday =>
         DateOfBirth is { Length: >= 10 } && DateOnly.TryParse(DateOfBirth[..10], out var d) ? d : null;

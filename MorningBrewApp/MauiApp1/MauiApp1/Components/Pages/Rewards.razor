@@ -4,7 +4,7 @@
 
 <section class="hero compact">
     <h1 class="hero-title">Ưu đãi</h1>
-    <MemberCard Name="@(profile?.FullName ?? "")" Points="@(profile?.LoyaltyPoints ?? 0)" />
+    <MemberCard Profile="profile" /> @* [CRM-01] *@
 </section>
 
 <div class="page-body overlap">

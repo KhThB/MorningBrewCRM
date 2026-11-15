@@ -120,6 +120,7 @@ h1:focus { outline: none; }
 .member-points b { font-size: 30px; color: #fff; line-height: 1; }
 .member-points span { color: #d6d3d1; font-size: 13px; }
 .member-card small { color: #a8a29e; font-size: 12px; }
+.member-card .tier-benefit { display: block; margin-top: 4px; color: #d6d3d1; } /* [CRM-01] quyền lợi của hạng */
 .progress { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, .15); overflow: hidden; }
 .progress i { display: block; height: 100%; background: var(--caramel); border-radius: 99px; transition: width .3s; }
 .progress.thin { height: 4px; background: var(--line); position: sticky; top: 56px; z-index: 5; }

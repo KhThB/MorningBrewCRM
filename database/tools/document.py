@@ -19,7 +19,6 @@ CHANGE={
  'Users':'Dùng email đăng nhập và NormalizedEmail duy nhất; bỏ Username; mật khẩu băm, thêm Version và IsActive.',
  'Areas':'Chuẩn hóa tên và trạng thái; phục vụ phạm vi khu vực.',
  'Branches':'Thêm giờ phục vụ, công tắc nhận đơn/pickup/delivery, phí giao và Version; quản lý phải đúng vai trò.',
- 'AreaManagers':'Giữ phân công N–N, thêm IsActive để ngừng phân công mà giữ lịch sử.',
  'StaffBranches':'Giữ phân công N–N; kiểm tra nhân viên chỉ lập/xử lý đơn tại nơi đang hoạt động.',
  'Categories':'Giữ danh mục và trạng thái dùng chung.',
  'Products':'Chuyển BasePrice sang ProductVariants; Products tập trung mô tả món. Thêm Version.',
@@ -74,7 +73,7 @@ def relationship_list():
 
 def drawio():
     root=ET.Element('mxfile',host='app.diagrams.net',version='26.0.0')
-    diag=ET.SubElement(root,'diagram',name='ERD 41 bang',id='morningbrew-41')
+    diag=ET.SubElement(root,'diagram',name=f'ERD {len(TABLES)} bang',id=f'morningbrew-{len(TABLES)}') # [AREA-01] không viết cứng số bảng
     model=ET.SubElement(diag,'mxGraphModel',grid='1',gridSize='10',page='0',pageScale='1')
     rt=ET.SubElement(model,'root'); ET.SubElement(rt,'mxCell',id='0'); ET.SubElement(rt,'mxCell',id='1',parent='0')
     palette={'Tài khoản':'#e9eef5','Tổ chức':'#edf3e7','Thực đơn':'#fff1dd','CRM':'#efe9f8','Điểm và ưu đãi':'#fff8d9','Bán hàng':'#e4f1f5','Thanh toán':'#f8e9e8','Khảo sát':'#e6f1e9'}
@@ -107,11 +106,19 @@ def drawio():
         m.append(f'    {parent} {"|o" if optional else "||"}--{"o|" if one else "o{"} {child} : "{col}"')
     (DOCS/'MorningBrewCRM.mmd').write_text('\n'.join(m),encoding='utf-8')
 
+def _font(size,bold=False):
+    # [AREA-01] Arial trên Windows; máy khác dùng DejaVu Sans để công cụ vẫn chạy được.
+    for path in (('C:/Windows/Fonts/arialbd.ttf' if bold else 'C:/Windows/Fonts/arial.ttf'),
+                 ('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf' if bold else '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf')):
+        try: return ImageFont.truetype(path,size)
+        except OSError: pass
+    return ImageFont.load_default()
+
 def diagram_png(filename,names,links,title):
     # Deliberately uncluttered relationship excerpts; the drawio file carries every field and FK.
     w,h=1500,900
     im=Image.new('RGB',(w,h),'white'); d=ImageDraw.Draw(im)
-    font=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',25); small=ImageFont.truetype('C:/Windows/Fonts/arial.ttf',21); bold=ImageFont.truetype('C:/Windows/Fonts/arialbd.ttf',28)
+    font=_font(25); small=_font(21); bold=_font(28,True)
     d.text((40,20),title,font=bold,fill='#182532')
     pos={n:(60+(i%3)*490,105+(i//3)*230) for i,n in enumerate(names)}
     for a,b in links:
@@ -216,7 +223,7 @@ def make():
         edge=OxmlElement('w:'+side); edge.set(qn('w:val'),'nil'); border.append(edge)
     title._p.get_or_add_pPr().append(border)
     doc.add_paragraph('Thiết kế cơ sở dữ liệu cho web Admin web POS và app khách hàng',style='Subtitle')
-    doc.add_paragraph(f'Bản cập nhật triển khai • 41 bảng • {sum(len(t["columns"]) for t in TABLES)} trường dữ liệu • SQL Server 2022 trở lên')
+    doc.add_paragraph(f'Bản cập nhật triển khai • {len(TABLES)} bảng lõi • {sum(len(t["columns"]) for t in TABLES)} trường dữ liệu • SQL Server 2022 trở lên')
     doc.add_paragraph('Tài liệu giải thích phạm vi nghiệp vụ, các quan hệ và từng trường dữ liệu để dùng làm nền tảng cho đồ án. Thiết kế mở rộng 21 bảng gốc thành 41 bảng; kèm script có thể chạy, dữ liệu mẫu, ERD chỉnh sửa được và bộ kiểm thử nghiệp vụ.')
     doc.add_heading('Cách đọc tài liệu',1)
     doc.add_paragraph('Phần đầu mô tả nghiệp vụ và quy tắc. Tiếp theo là sơ đồ quan hệ, đối chiếu với Word gốc và từ điển chi tiết theo từng bảng. Phần cuối ghi các điểm cần nối với backend và kết quả kiểm thử. File README.md hướng dẫn cài đặt và chạy thử trên máy.')
@@ -227,7 +234,7 @@ def make():
         if line.startswith('## '): doc.add_heading(line[3:],1)
         elif line.strip(): doc.add_paragraph(line)
     doc.add_page_break(); doc.add_heading('Sơ đồ quan hệ dữ liệu',1)
-    doc.add_paragraph('Các hình dưới đây tóm tắt các cụm quan hệ quan trọng. File MorningBrewCRM.drawio chứa đủ 41 bảng, toàn bộ trường và các khóa ngoại đơn; ràng buộc khóa ngoại ghép được mô tả trong từng bảng và script SQL. Dấu hỏi sau kiểu dữ liệu trên ERD biểu thị trường cho phép NULL.')
+    doc.add_paragraph(f'Các hình dưới đây tóm tắt các cụm quan hệ quan trọng. File MorningBrewCRM.drawio chứa đủ {len(TABLES)} bảng lõi, toàn bộ trường và các khóa ngoại đơn; ràng buộc khóa ngoại ghép được mô tả trong từng bảng và script SQL. Dấu hỏi sau kiểu dữ liệu trên ERD biểu thị trường cho phép NULL.')
     for i,path in enumerate(paths):
         if i==2: doc.add_page_break()
         doc.add_heading(diagrams[i][3],2); doc.add_picture(str(path),width=Inches(6.95))
@@ -238,7 +245,7 @@ def make():
     doc_table(doc,['Bảng mới','Lý do cần có'],[(t['name'],t['purpose']) for t in TABLES if not t['original']],[1.65,5.3])
     doc.add_page_break(); doc.add_heading('Từ điển dữ liệu chi tiết',1)
     doc.add_paragraph('Cột Quy tắc ghi tính bắt buộc, khóa và mặc định. UNIQUE ghép nghĩa là tổ hợp các trường duy nhất, không phải từng trường riêng. Ràng buộc CHECK, FK ghép và index được liệt kê sau bảng. Ví dụ chỉ minh họa định dạng, không luôn là giá trị hiện có trong dữ liệu mẫu.')
-    md=['# Từ điển dữ liệu Morning Brew CRM','',f'41 bảng, {sum(len(t["columns"]) for t in TABLES)} trường. Sinh từ tools/schema.py.','']
+    md=['# Từ điển dữ liệu Morning Brew CRM','',f'{len(TABLES)} bảng lõi, {sum(len(t["columns"]) for t in TABLES)} trường. Sinh từ tools/schema.py.','']
     for i,t in enumerate(TABLES,1):
         doc.add_heading(f'{i} {t["name"]}',2)
         purpose=f'{t["group"]} • '+('Điều chỉnh bảng gốc. ' if t['original'] else 'Bảng bổ sung. ')+t['purpose']
@@ -273,7 +280,7 @@ def make():
     doc.add_paragraph('Các bài kiểm tra bao gồm đặt pickup/delivery, COD/trả trước, khách vãng lai, retry thanh toán, tổng tiền và điểm, quyền theo chi nhánh/khách, lịch sử giá/địa chỉ, tranh chấp voucher/điểm, hủy/hoàn, khảo sát và doanh thu. Đây là kiểm thử tầng database; chưa phải kiểm thử UI, HTTP API, cổng thanh toán thật hoặc tải thực tế của chuỗi quán.')
     doc.add_paragraph('Dữ liệu mẫu và mật khẩu demo chỉ phục vụ đồ án. Trước khi dùng cho vận hành cần triển khai xác thực backend, cấu hình phân quyền kết nối, lịch xử lý đơn hết hạn, lưu trữ backup và tích hợp thanh toán thực tế theo hướng dẫn README.')
     doc.core_properties.title='Thiết kế cơ sở dữ liệu Morning Brew CRM'
-    doc.core_properties.subject='41 bảng cho Admin POS và app khách hàng'
+    doc.core_properties.subject=f'{len(TABLES)} bảng lõi cho Admin POS và app khách hàng'
     doc.core_properties.author='Morning Brew CRM'
     dest=DOCS/'MorningBrewCRM_Thiet_ke_database_cap_nhat.docx'
     doc.save(dest)

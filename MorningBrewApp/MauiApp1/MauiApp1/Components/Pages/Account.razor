@@ -12,7 +12,7 @@
         </div>
         <a class="icon-btn light" href="/account/profile" aria-label="Sửa hồ sơ"><Icon Name="edit" /></a>
     </div>
-    <MemberCard Name="@(profile?.FullName ?? "")" Points="@(profile?.LoyaltyPoints ?? 0)" />
+    <MemberCard Profile="profile" /> @* [CRM-01] *@
 </section>
 
 <div class="page-body overlap">

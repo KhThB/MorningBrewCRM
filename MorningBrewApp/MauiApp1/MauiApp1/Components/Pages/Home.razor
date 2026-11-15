@@ -15,7 +15,7 @@
             <Icon Name="bell" />@if (Crm.UnreadNotifications > 0){<i class="badge">@(Crm.UnreadNotifications > 99 ? "99+" : Crm.UnreadNotifications.ToString())</i>}
         </a>
     </div>
-    <MemberCard Name="@(profile?.FullName ?? "")" Points="@(profile?.LoyaltyPoints ?? 0)" />
+    <MemberCard Profile="profile" /> @* [CRM-01] *@
 </section>
 
 <div class="page-body overlap">

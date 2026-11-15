@@ -3,7 +3,7 @@
     {
       "name": "Roles",
       "group": "Tài khoản",
-      "purpose": "Năm vai trò nghiệp vụ dùng chung cho ba ứng dụng.",
+      "purpose": "Bốn vai trò nghiệp vụ dùng chung cho ba ứng dụng.",
       "columns": [
         {
           "name": "RoleID",
@@ -40,7 +40,7 @@
         "RoleID"
       ],
       "checks": [
-        "Code IN ('Owner','AreaManager','BranchManager','Staff','Customer')"
+        "Code IN ('Owner','BranchManager','Staff','Customer')"
       ],
       "uniques": [
         [
@@ -554,60 +554,6 @@
           "Code"
         ]
       ],
-      "original": true
-    },
-    {
-      "name": "AreaManagers",
-      "group": "Tổ chức",
-      "purpose": "Phân công quản lý vào nhiều khu vực.",
-      "columns": [
-        {
-          "name": "AreaID",
-          "type": "int",
-          "why": "Liên kết tới Areas; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
-          "example": "1",
-          "nullable": false,
-          "default": null,
-          "ref": "Areas.AreaID",
-          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
-        },
-        {
-          "name": "UserID",
-          "type": "int",
-          "why": "Liên kết tới Users; khóa ngoại ngăn tham chiếu bản ghi không tồn tại.",
-          "example": "1",
-          "nullable": false,
-          "default": null,
-          "ref": "Users.UserID",
-          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
-        },
-        {
-          "name": "AssignedAt",
-          "type": "datetime2(3)",
-          "why": "Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.",
-          "example": "2026-09-17T03:00:00Z",
-          "nullable": false,
-          "default": "SYSUTCDATETIME()",
-          "ref": null,
-          "source": "Backend/SQL Server ghi khi sự kiện tương ứng xảy ra."
-        },
-        {
-          "name": "IsActive",
-          "type": "bit",
-          "why": "Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.",
-          "example": "1",
-          "nullable": false,
-          "default": "1",
-          "ref": null,
-          "source": "Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng."
-        }
-      ],
-      "pk": [
-        "AreaID",
-        "UserID"
-      ],
-      "checks": [],
-      "uniques": [],
       "original": true
     },
     {
@@ -4077,4 +4023,4 @@
       ""
     ]
   ]
-}
+}

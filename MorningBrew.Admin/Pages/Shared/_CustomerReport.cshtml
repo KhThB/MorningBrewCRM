@@ -9,6 +9,7 @@
     var categories=ReportView.Rows(Model,"categories");
     var favorites=ReportView.Rows(Model,"favorite_by_age");
     var segments=ReportView.Rows(Model,"segments"); // [CRM-02]
+    var tiers=ReportView.Rows(Model,"tiers"); // [CRM-01]
     string Vnd(decimal? v)=>(v??0).ToString("#,0",System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))+"đ";
     var largest=ages.Where(a=>ReportView.Int(a,"group_order")<6).OrderByDescending(a=>ReportView.Int(a,"customers")).FirstOrDefault();
 }
@@ -19,6 +20,15 @@
     <div class="stat"><span>Nhóm tuổi đông nhất</span><b>@(largest is null || ReportView.Int(largest,"customers")==0 ? "—" : ReportView.Text(largest,"age_group"))</b><small>@(largest is null ? "" : ReportView.Pct(ReportView.Percent(ReportView.Int(largest,"customers"),total))+" khách hàng")</small></div>
     <div class="stat"><span>Có khai báo sở thích</span><b>@withPrefs</b><small>@ReportView.Pct(ReportView.Percent(withPrefs,total)) khách hàng</small></div>
 </div>
+@* [CRM-01] Khách theo hạng thành viên – bấm tên hạng để xem danh sách khách *@
+@if(tiers.Count>0)
+{
+<section class="panel"><div class="dash-head"><h2>Khách theo hạng thành viên</h2><a class="btn-sm" href="/Manager/Tiers">Sửa mức hạng →</a></div>
+    <p class="muted">Hạng tính theo chi tiêu 12 tháng gần nhất (đơn hoàn tất, đã trừ tiền hoàn).</p>
+    @foreach(var t in tiers){ var n=ReportView.Int(t,"customers");
+        <text>@ReportView.Bar(ReportView.Text(t,"tier_name"),n,ReportView.Percent(n,total),$"từ {Vnd(ReportView.Decimal(t,"min_spent"))} · chi tiêu {Vnd(ReportView.Decimal(t,"spent_last_year"))}")</text> }
+</section>
+}
 @* [CRM-02] Nhóm theo hành vi mua – bấm tên nhóm để xem danh sách khách *@
 @if(segments.Count>0)
 {

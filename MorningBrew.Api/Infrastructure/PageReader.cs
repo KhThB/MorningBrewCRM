@@ -49,8 +49,9 @@ public sealed class PageReader(SqlStore db, IDataProtectionProvider provider)
             { throw new ApiException(400, "pageToken không hợp lệ, đã hết hạn hoặc không khớp bộ lọc.", [new("INVALID_PAGE_TOKEN", "pageToken")]); }
         }
         values.Add(("@take", page.PageSize + 1));
+        // [DB-02] xuống dòng trước ")" để chú thích "--" ở dòng SQL cuối không nuốt mất dấu đóng ngoặc.
         var order = string.Join(",", keys.Select(x => $"[{x}] {(descending ? "DESC" : "ASC")}"));
-        var rows = await db.Query($"WITH page_source AS ({sql}) SELECT TOP(@take) * FROM page_source WHERE {predicate} ORDER BY {order}", values.ToArray());
+        var rows = await db.Query($"WITH page_source AS ({sql}\n) SELECT TOP(@take) * FROM page_source WHERE {predicate} ORDER BY {order}", values.ToArray());
         string? next = null;
         if (rows.Count > page.PageSize)
         {

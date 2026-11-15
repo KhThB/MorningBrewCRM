@@ -21,8 +21,9 @@ public sealed class CustomerController(SqlStore db, PageReader pages):Controller
     {
         var row = (await db.Query("""
             SELECT c.CustomerID,u.FullName,u.Email,u.Phone,c.DateOfBirth,c.Gender,c.LoyaltyPoints,
-            c.CreatedAt,u.Version AS UserVersion,c.Version AS CustomerVersion
-            FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID WHERE c.CustomerID=@id
+            c.CreatedAt,u.Version AS UserVersion,c.Version AS CustomerVersion,
+            t.TierName,t.TierBenefit,t.Spent12M AS SpentLastYear,t.NextTierName,t.NextTierSpent -- [CRM-01] hạng thành viên lấy từ database (trước đây app tự tính theo điểm)
+            FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID JOIN dbo.CustomerTiers t ON t.CustomerID=c.CustomerID WHERE c.CustomerID=@id
             """,("@id",await CustomerId()))).Single();
         var etag = "\"" + Convert.ToHexString((byte[])row["UserVersion"]!) + "." + Convert.ToHexString((byte[])row["CustomerVersion"]!) + "\"";
         row.Remove("UserVersion"); row.Remove("CustomerVersion");

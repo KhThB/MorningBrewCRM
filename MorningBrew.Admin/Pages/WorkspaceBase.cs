@@ -252,7 +252,7 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
                 object body=mode=="list"
                     ? new {customerIds=ids}
                     : new {all=mode=="all",ageGroup=Optional("ageGroup"),gender=string.IsNullOrEmpty(Text("gender"))?null:Text("gender"),productId=Optional("productId"),
-                        segment=Blank("segment")}; // [CRM-02] nhóm hành vi mua
+                        segment=Blank("segment"),tier=Blank("tier")}; // [CRM-02] nhóm hành vi mua; [CRM-01] hạng thành viên
                 if(mode=="list" && ids.Length==0) throw new FormatException();
                 var result=await Api.Post<JsonElement>($"v1/surveys/{Number("id")}:inviteBulk",body);
                 TempData["Success"]=$"Khớp {result.GetProperty("matched")} khách · mời mới {result.GetProperty("invited")} · đã mời trước đó {result.GetProperty("already_invited")}.";
@@ -270,7 +270,7 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
                 if(issueMode=="list" && issueIds.Length==0) throw new FormatException();
                 object issueBody=issueMode=="list"
                     ? new {customerIds=issueIds}
-                    : new {all=issueMode=="all",ageGroup=Optional("ageGroup"),gender=Blank("gender"),productId=Optional("productId"),segment=Blank("segment")}; // [CRM-02]
+                    : new {all=issueMode=="all",ageGroup=Optional("ageGroup"),gender=Blank("gender"),productId=Optional("productId"),segment=Blank("segment"),tier=Blank("tier")}; // [CRM-02][CRM-01]
                 var issued=await Api.Post<JsonElement>($"v1/promotions/{Number("id")}:issueBulk",issueBody);
                 var skippedText=issued.GetProperty("skipped").GetInt32()>0
                     ? $" · bỏ qua {issued.GetProperty("skipped")} ({(issued.TryGetProperty("reason",out var why)&&why.ValueKind==JsonValueKind.String?why.GetString():"không đủ điều kiện")})" : "";

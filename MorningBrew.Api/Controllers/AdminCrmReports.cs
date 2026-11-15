@@ -116,7 +116,14 @@ public sealed partial class AdminController
             """, args);
         var segments = CustomerSegments.Select(code => segmentRows.FirstOrDefault(r => (string)r["Segment"]! == code)
             ?? new Dictionary<string, object?> { ["Segment"] = code, ["Customers"] = 0, ["TotalSpent"] = 0m, ["AverageSpent"] = 0m, ["CompletedOrders"] = 0 }).ToList();
-        return new { totals, ageGroups, genders, products, categories, favoriteByAge, segments };
+        // [CRM-01] Số khách theo hạng thành viên (kể cả hạng chưa có ai).
+        var tiers = await db.Query($"""
+            {ScopedCustomers}
+            SELECT mt.Code AS TierCode,mt.Name AS TierName,mt.MinSpent,COUNT(t.CustomerID) AS Customers,COALESCE(SUM(t.Spent12M),0) AS SpentLastYear
+            FROM dbo.MemberTiers mt LEFT JOIN (SELECT ct.* FROM dbo.CustomerTiers ct JOIN grouped x ON x.CustomerID=ct.CustomerID) t ON t.TierID=mt.TierID
+            GROUP BY mt.Code,mt.Name,mt.MinSpent ORDER BY mt.MinSpent
+            """, args);
+        return new { totals, ageGroups, genders, products, categories, favoriteByAge, segments, tiers };
     }
 
     [HttpGet("surveys/{id:int}/summary")]

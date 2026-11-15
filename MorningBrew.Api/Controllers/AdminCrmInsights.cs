@@ -12,22 +12,26 @@ public sealed partial class AdminController
     internal static readonly string[] CustomerSegments = ["None", "New", "Active", "Loyal", "Lapsed"];
 
     [HttpGet("customers")]
-    public Task<ApiPage> ListCustomers([FromQuery] PageRequest page, string? q = null, string? segment = null)
+    public Task<ApiPage> ListCustomers([FromQuery] PageRequest page, string? q = null, string? segment = null, string? tier = null) // [CRM-01] tier = MemberTiers.Code
     {
         if (segment is not (null or "" or "Duplicate") && !CustomerSegments.Contains(segment))
             throw new ApiException(400, "Nhóm khách hàng không hợp lệ.");
         var sql = $"""
             SELECT c.CustomerID,u.FullName,u.Email,u.Phone,c.DateOfBirth,c.Gender,c.LoyaltyPoints,
-            s.CompletedOrders,s.TotalSpent,s.LastOrderAt,s.Segment,u.IsActive
+            s.CompletedOrders,s.TotalSpent,s.LastOrderAt,s.Segment,
+            t.TierName,t.TierCode,t.Spent12M AS SpentLastYear, -- [CRM-01] hạng thành viên (chi tiêu 12 tháng)
+            u.IsActive
             FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID JOIN dbo.CustomerStats s ON s.CustomerID=c.CustomerID
+            JOIN dbo.CustomerTiers t ON t.CustomerID=c.CustomerID
             WHERE u.DeletedAt IS NULL AND {CustomerScope}
             AND (@q='' OR u.FullName LIKE @search OR u.Email LIKE @search OR u.Phone LIKE @search)
             AND (@segment='' OR s.Segment=@segment OR (@segment='Duplicate' AND u.Phone IS NOT NULL AND EXISTS(
                 SELECT 1 FROM dbo.Users d WHERE d.Phone=u.Phone AND d.UserID<>u.UserID AND d.RoleID=u.RoleID AND d.DeletedAt IS NULL)))
-            """;
+            AND (@tier='' OR t.TierCode=@tier)
+            """; // [CRM-01] lọc hạng. [DB-02] không đặt chú thích "--" ở dòng SQL cuối: PageReader bọc SQL thành "WITH page_source AS ({sql})" nên ")" sẽ bị comment mất -> lỗi cú pháp (API báo nhầm "Không thể truy cập SQL Server").
         return pages.Read(sql, ["CustomerID"], true, page,
-            JsonSerializer.Serialize(new { Actor, section = "customers", q = q ?? "", segment = segment ?? "" }),
-            [("@actor", Actor), ("@q", q ?? ""), ("@search", "%" + (q ?? "") + "%"), ("@segment", segment ?? "")],
+            JsonSerializer.Serialize(new { Actor, section = "customers", q = q ?? "", segment = segment ?? "", tier = tier ?? "" }),
+            [("@actor", Actor), ("@q", q ?? ""), ("@search", "%" + (q ?? "") + "%"), ("@segment", segment ?? ""), ("@tier", tier ?? "")],
             "customers", "CustomerID");
     }
 

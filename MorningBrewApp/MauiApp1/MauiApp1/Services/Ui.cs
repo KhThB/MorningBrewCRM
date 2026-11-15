@@ -67,14 +67,7 @@ public static class Fmt
         "Completed" => "chip-ok", "Cancelled" => "chip-bad", "Ready" => "chip-info", _ => "chip-warn"
     };
 
-    /// <summary>Hạng thành viên chỉ để hiển thị theo mốc điểm — database không lưu hạng.</summary>
-    public static (string Name, int Next) Tier(int points) => points switch
-    {
-        >= 1000 => ("Kim cương", 0),
-        >= 500 => ("Vàng", 1000),
-        >= 200 => ("Bạc", 500),
-        _ => ("Thành viên", 200)
-    };
+    // [CRM-01] bỏ Tier(points): hạng thành viên nay lấy từ database (Profile.TierName…), tính theo chi tiêu 12 tháng.
 }
 
 /// <summary>Thông báo ngắn (toast) ở đáy màn hình.</summary>

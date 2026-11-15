@@ -34,7 +34,9 @@ public static class RowDisplay
         // [CRM-02][CRM-04]
         ["total_spent"]="Tổng chi tiêu",["last_order_at"]="Mua gần nhất",["segment"]="Nhóm khách",["used"]="Đã dùng",["unused"]="Chưa dùng",
         ["expired"]="Hết hạn chưa dùng",["total_discount"]="Tổng tiền giảm",["revenue"]="Doanh thu đơn có voucher",["points_spent"]="Điểm đã đổi",
-        ["average_spent"]="Chi tiêu TB / khách"
+        ["average_spent"]="Chi tiêu TB / khách",
+        // [CRM-01]
+        ["tier_name"]="Hạng",["spent_last_year"]="Chi tiêu 12 tháng",["min_spent"]="Chi tiêu 12 tháng tối thiểu",["benefit"]="Quyền lợi"
     };
     private static readonly Dictionary<string,string> Values=new()
     {
@@ -104,7 +106,8 @@ public static class RowDisplay
         ["Promotion.Update"]="Sửa chương trình ưu đãi",
         ["Promotion.IssueBulk"]="Cấp voucher hàng loạt",
         ["Recipe.Set"]="Đặt định mức nguyên liệu cho một size",
-        ["Recipe.Delete"]="Xóa một dòng định mức nguyên liệu"
+        ["Recipe.Delete"]="Xóa một dòng định mức nguyên liệu",
+        ["Tier.Create"]="Thêm hạng thành viên",["Tier.Update"]="Sửa hạng thành viên (tên, mức chi tiêu, quyền lợi)",["Tier.Delete"]="Xóa hạng thành viên" // [CRM-01]
     };
     // [AUD-01] Bảng bị tác động, ghi tiếng Việt.
     private static readonly Dictionary<string,string> Entities=new()
@@ -113,7 +116,8 @@ public static class RowDisplay
         ["ProductVariants"]="Size / giá",["Orders"]="Đơn hàng",["PaymentAttempts"]="Thanh toán",["Refunds"]="Hoàn tiền",
         ["Deliveries"]="Giao hàng",["Promotions"]="Chương trình ưu đãi",["CustomerPromotions"]="Voucher",["Feedbacks"]="Phản hồi",
         ["Surveys"]="Khảo sát",["Ingredients"]="Nguyên liệu",["Database"]="Cơ sở dữ liệu",
-        ["Categories"]="Danh mục",["Suppliers"]="Nhà cung cấp",["RecipeItems"]="Định mức nguyên liệu" // [WEB-03][WEB-10][WEB-14]
+        ["Categories"]="Danh mục",["Suppliers"]="Nhà cung cấp",["RecipeItems"]="Định mức nguyên liệu", // [WEB-03][WEB-10][WEB-14]
+        ["MemberTiers"]="Hạng thành viên" // [CRM-01]
     };
     // [AUD-01] Giá trị thường gặp trong cột Chi tiết của nhật ký.
     private static readonly Dictionary<string,string> DetailWords=new()

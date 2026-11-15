@@ -9,7 +9,8 @@ BEGIN
  JOIN dbo.RolePermissions rp ON rp.RoleID=u.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
  JOIN dbo.Branches b ON b.BranchID=@BranchID
  WHERE u.UserID=@UserID AND u.IsActive=1 AND p.Code=@Permission AND
- (r.Code='Owner' OR (r.Code='AreaManager' AND EXISTS(SELECT 1 FROM dbo.AreaManagers a WHERE a.UserID=u.UserID AND a.AreaID=b.AreaID AND a.IsActive=1))
+ -- [AREA-01] bỏ nhánh AreaManager (không còn vai trò quản lý khu vực)
+ (r.Code='Owner'
  OR (r.Code='BranchManager' AND b.ManagerID=u.UserID) OR (r.Code='Staff' AND EXISTS(SELECT 1 FROM dbo.StaffBranches s WHERE s.UserID=u.UserID AND s.BranchID=b.BranchID AND s.IsActive=1)))) SET @ok=1;
  RETURN @ok;
 END;
@@ -27,7 +28,7 @@ BEGIN
  RETURN CASE WHEN EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
  JOIN dbo.RolePermissions rp ON rp.RoleID=r.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
  WHERE u.UserID=@UserID AND u.IsActive=1 AND p.Code=@Permission AND
- (r.Code='Owner' OR (@Scope='Area' AND r.Code='AreaManager' AND EXISTS(SELECT 1 FROM dbo.AreaManagers am WHERE am.AreaID=@AreaID AND am.UserID=@UserID AND am.IsActive=1)))) THEN 1 ELSE 0 END;
+ r.Code='Owner') THEN 1 ELSE 0 END; -- [AREA-01] bỏ nhánh AreaManager; 11_single_store.sql định nghĩa lại hàm này
 END;
 GO
 CREATE OR ALTER FUNCTION dbo.CustomerInScope(@CustomerID int,@Scope varchar(10),@AreaID int,@BranchID int)
@@ -43,12 +44,7 @@ BEGIN
  IF EXISTS(SELECT 1 FROM inserted WHERE DateOfBirth>CONVERT(date,SYSUTCDATETIME())) THROW 51001,N'Date of birth cannot be in the future.',1;
 END;
 GO
-CREATE OR ALTER TRIGGER dbo.TR_AreaManagers_Role ON dbo.AreaManagers AFTER INSERT,UPDATE AS
-BEGIN
- SET NOCOUNT ON;
- IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.Users u ON u.UserID=i.UserID JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE r.Code<>'AreaManager') THROW 51001,N'Assignment requires AreaManager role.',1;
-END;
-GO
+-- [AREA-01] bỏ trigger TR_AreaManagers_Role (không còn bảng AreaManagers)
 CREATE OR ALTER TRIGGER dbo.TR_StaffBranches_Role ON dbo.StaffBranches AFTER INSERT,UPDATE AS
 BEGIN
  SET NOCOUNT ON;
@@ -65,7 +61,7 @@ CREATE OR ALTER TRIGGER dbo.TR_Users_Role ON dbo.Users AFTER UPDATE AS
 BEGIN
  SET NOCOUNT ON;
  IF UPDATE(RoleID) AND EXISTS(SELECT 1 FROM inserted i JOIN deleted d ON d.UserID=i.UserID WHERE i.RoleID<>d.RoleID AND
- (EXISTS(SELECT 1 FROM dbo.Customers WHERE UserID=i.UserID) OR EXISTS(SELECT 1 FROM dbo.AreaManagers WHERE UserID=i.UserID) OR EXISTS(SELECT 1 FROM dbo.StaffBranches WHERE UserID=i.UserID) OR EXISTS(SELECT 1 FROM dbo.Branches WHERE ManagerID=i.UserID)))
+ (EXISTS(SELECT 1 FROM dbo.Customers WHERE UserID=i.UserID) OR EXISTS(SELECT 1 FROM dbo.StaffBranches WHERE UserID=i.UserID) OR EXISTS(SELECT 1 FROM dbo.Branches WHERE ManagerID=i.UserID)))
  THROW 51001,N'Remove incompatible assignments/profile before changing role.',1;
 END;
 GO

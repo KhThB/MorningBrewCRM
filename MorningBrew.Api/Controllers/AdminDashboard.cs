@@ -89,8 +89,9 @@ public sealed partial class AdminController
         var profile = (await db.Query($"""
             SELECT c.CustomerID,u.FullName,u.Email,u.Phone,c.DateOfBirth,c.Gender,c.LoyaltyPoints,u.IsActive,u.CreatedAt,
                    (SELECT COUNT(*) FROM dbo.Orders o WHERE o.CustomerID=c.CustomerID AND o.Status='Completed') CompletedOrders,
-                   (SELECT COALESCE(SUM(o.TotalAmount),0) FROM dbo.Orders o WHERE o.CustomerID=c.CustomerID AND o.Status='Completed') TotalSpent
-            FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID
+                   (SELECT COALESCE(SUM(o.TotalAmount),0) FROM dbo.Orders o WHERE o.CustomerID=c.CustomerID AND o.Status='Completed') TotalSpent,
+                   t.TierName,t.Spent12M AS SpentLastYear,t.NextTierName,t.NextTierSpent -- [CRM-01] hạng thành viên
+            FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID JOIN dbo.CustomerTiers t ON t.CustomerID=c.CustomerID
             WHERE c.CustomerID=@id AND u.DeletedAt IS NULL AND {CustomerScope}
             """, ("@actor", Actor), ("@id", id))).SingleOrDefault() ?? throw new ApiException(404, "Không tìm thấy khách hàng.");
         var orders = await db.Query("""

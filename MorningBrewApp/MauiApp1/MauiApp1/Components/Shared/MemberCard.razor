@@ -1,31 +1,34 @@
-@* Thẻ thành viên Morning Brew: điểm + hạng hiển thị theo mốc điểm. *@
+@* Thẻ thành viên Morning Brew: điểm + hạng thành viên.
+   [CRM-01] Hạng lấy từ database (Quản lý CRM → Hạng thành viên), tính theo chi tiêu 12 tháng gần nhất –
+   trước đây app tự suy ra hạng từ điểm nên web và app không khớp nhau. *@
 <div class="member-card">
     <div class="member-top">
         <div>
             <span class="eyebrow">MORNING BREW CARD</span>
-            <strong class="member-name">@Name</strong>
+            <strong class="member-name">@Profile?.FullName</strong>
         </div>
-        <span class="tier">@tier.Name</span>
+        <span class="tier">@(Profile?.TierName ?? "Thành viên")</span>
     </div>
     <div class="member-points">
         <Icon Name="coin" Size="22" />
-        <b>@Points.ToString("#,0")</b><span>điểm</span>
+        <b>@((Profile?.LoyaltyPoints ?? 0).ToString("#,0"))</b><span>điểm</span>
     </div>
-    @if (tier.Next > 0)
+    @if (Profile?.NextTierSpent is decimal next && next > 0)
     {
-        var percent = Math.Clamp(Points * 100 / tier.Next, 0, 100);
+        var percent = (int)Math.Clamp(Profile.SpentLastYear * 100 / next, 0, 100);
         <div class="progress" aria-label="Tiến độ lên hạng"><i style="width:@(percent)%"></i></div>
-        <small>Còn @(tier.Next - Points) điểm để lên hạng tiếp theo</small>
+        <small>Chi tiêu 12 tháng @Fmt.Money(Profile.SpentLastYear) · còn @Fmt.Money(next - Profile.SpentLastYear) để lên hạng @Profile.NextTierName</small>
     }
-    else
+    else if (Profile is not null)
     {
         <small>Bạn đang ở hạng cao nhất</small>
+    }
+    @if (!string.IsNullOrEmpty(Profile?.TierBenefit))
+    {
+        <small class="tier-benefit">@Profile.TierBenefit</small>
     }
 </div>
 
 @code {
-    [Parameter] public string Name { get; set; } = "";
-    [Parameter] public int Points { get; set; }
-    private (string Name, int Next) tier;
-    protected override void OnParametersSet() => tier = Fmt.Tier(Points);
+    [Parameter] public Profile? Profile { get; set; }
 }

@@ -26,16 +26,19 @@
             <select name="segment" aria-label="Nhóm khách" onchange="this.form.submit()"><option value="">Mọi nhóm khách</option>
                 @foreach(var s in RowDisplay.Segments){<option value="@s.Code" selected="@(Model.Segment==s.Code)" title="@s.Hint">@s.Name</option>}
                 <option value="Duplicate" selected="@(Model.Segment=="Duplicate")">Trùng số điện thoại</option></select>
-            <button class="secondary">Tìm</button>@if(!string.IsNullOrEmpty(Model.Q+Model.Segment)){<a class="btn-sm" href="?">Bỏ lọc</a>}</form>
+            @* [CRM-01] lọc theo hạng *@
+            <select name="tier" aria-label="Hạng thành viên" onchange="this.form.submit()"><option value="">Mọi hạng</option>
+                @foreach(var t in Model.Choices("tiers")){<option value="@t["id"]" selected="@(Model.Tier==t["id"].ToString())">@t["display_name"]</option>}</select>
+            <button class="secondary">Tìm</button>@if(!string.IsNullOrEmpty(Model.Q+Model.Segment+Model.Tier)){<a class="btn-sm" href="?">Bỏ lọc</a>}</form>
         <div class="row-actions">
-            <a class="secondary" href="?handler=Export&q=@Uri.EscapeDataString(Model.Q??"")&segment=@Uri.EscapeDataString(Model.Segment??"")">Xuất Excel</a> @* [CRM-07] *@
+            <a class="secondary" href="?handler=Export&q=@Uri.EscapeDataString(Model.Q??"")&segment=@Uri.EscapeDataString(Model.Segment??"")&tier=@Uri.EscapeDataString(Model.Tier??"")">Xuất Excel</a> @* [CRM-07] *@
             <button type="button" class="primary add-btn" data-open="m-add">+ Thêm khách hàng</button>
         </div>
     </div>
     <p class="list-count">@Model.Rows.Count khách trên trang này@(Model.Segment=="Duplicate"?" · các tài khoản dùng chung SĐT: khóa hoặc xóa tài khoản thừa, hoặc sửa SĐT cho đúng":"") · bấm vào một dòng để xem chi tiết</p>
     @* [CRM-02] thêm cột số đơn, tổng chi tiêu, mua gần nhất, nhóm khách; ẩn ngày sinh / giới tính (vẫn có trong Sửa và file Excel) *@
     <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,DetailUrl=r=>$"?handler=Detail&id={r["customer_id"]}",DetailTitle="Chi tiết khách hàng",
-        Hide=new HashSet<string>{"date_of_birth","gender"},
+        Hide=new HashSet<string>{"date_of_birth","gender","tier_code","spent_last_year"}, // [CRM-01] hiện tên hạng; chi tiêu 12 tháng xem trong Chi tiết / Excel
         Format=(k,r)=>k switch{"total_spent"=>OrderView.Money(r,k),"segment"=>RowDisplay.SegmentName(r[k].ToString()),"last_order_at"=>r[k].ValueKind==JsonValueKind.Null?"—":null,_=>null}})" />
     <partial name="_Pager" model="Model" />
 </section>

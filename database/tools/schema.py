@@ -4,7 +4,7 @@ import json
 
 ROOT = Path(__file__).resolve().parents[1]
 TABLES = []
-ORIGINAL = set('Roles Users Areas Branches AreaManagers StaffBranches Categories Products BranchProducts Customers CustomerPreferences Orders OrderDetails LoyaltyTransactions Promotions CustomerPromotions Feedbacks Surveys SurveyQuestions SurveyRecipients SurveyResponses'.split())
+ORIGINAL = set('Roles Users Areas Branches StaffBranches Categories Products BranchProducts Customers CustomerPreferences Orders OrderDetails LoyaltyTransactions Promotions CustomerPromotions Feedbacks Surveys SurveyQuestions SurveyRecipients SurveyResponses'.split())
 
 def c(name, typ, why, example='', nullable=False, default=None, ref=None, source='Backend kiểm tra và ghi từ dữ liệu người dùng hoặc nghiệp vụ tương ứng.'):
     return dict(name=name, type=typ, why=why, example=str(example), nullable=nullable, default=default, ref=ref, source=source)
@@ -30,8 +30,8 @@ def rv():
 def t(name, group, purpose, cols, pk, checks=(), uniques=()):
     TABLES.append(dict(name=name,group=group,purpose=purpose,columns=cols,pk=pk.split(','),checks=list(checks),uniques=[x.split(',') for x in uniques],original=name in ORIGINAL))
 
-t('Roles','Tài khoản','Năm vai trò nghiệp vụ dùng chung cho ba ứng dụng.',[
- idc('RoleID'),c('Code','varchar(30)','Mã ổn định dùng trong phân quyền.','Owner'),c('Name','nvarchar(100)','Tên hiển thị tiếng Việt.','Chủ doanh nghiệp')], 'RoleID',uniques=['Code'],checks=["Code IN ('Owner','AreaManager','BranchManager','Staff','Customer')"])
+t('Roles','Tài khoản','Bốn vai trò nghiệp vụ dùng chung cho ba ứng dụng.',[
+ idc('RoleID'),c('Code','varchar(30)','Mã ổn định dùng trong phân quyền.','Owner'),c('Name','nvarchar(100)','Tên hiển thị tiếng Việt.','Chủ doanh nghiệp')], 'RoleID',uniques=['Code'],checks=["Code IN ('Owner','BranchManager','Staff','Customer')"])
 t('Permissions','Tài khoản','Tách quyền thao tác khỏi tên vai trò để cấp quyền rõ ràng.',[
  idc('PermissionID'),c('Code','varchar(80)','Mã chức năng được backend kiểm tra.','Orders.Manage'),c('Description','nvarchar(250)','Giải thích hành động được cho phép.','Xử lý đơn hàng trong phạm vi phụ trách')],'PermissionID',uniques=['Code'])
 t('RolePermissions','Tài khoản','Liên kết vai trò với các quyền được cấp.',[fk('RoleID','Roles'),fk('PermissionID','Permissions')],'RoleID,PermissionID')
@@ -42,7 +42,7 @@ t('UserSessions','Tài khoản','Lưu phiên và hash refresh token để thu h�
 t('Areas','Tổ chức','Phân vùng chuỗi để giới hạn dữ liệu của quản lý khu vực.',[idc('AreaID'),c('Name','nvarchar(120)','Tên khu vực quản lý.','Khu vực Đông'),flag()],'AreaID',uniques=['Name'])
 t('Branches','Tổ chức','Cấu hình vận hành và nhận đơn của từng quán.',[
  idc('BranchID'),fk('AreaID','Areas'),c('ManagerID','int','Quản lý chi nhánh; backend/trigger kiểm tra đúng vai trò.',2,True,ref='Users.UserID'),c('Code','varchar(30)','Mã quán ngắn dùng trên đơn và báo cáo.','MB01'),c('Name','nvarchar(150)','Tên chi nhánh.','Morning Brew Thủ Đức'),c('Address','nvarchar(500)','Địa chỉ khách đến nhận hàng.','12 Võ Văn Ngân, TP.HCM'),c('Phone','varchar(20)','Điện thoại quán.','02812345678'),c('OpeningTime','time(0)','Giờ mở cửa hằng ngày theo giờ Việt Nam.','07:00'),c('ClosingTime','time(0)','Giờ đóng cửa; bản đầu không mở xuyên nửa đêm.','22:00'),flag(),flag('AcceptingOrders','Công tắc tạm dừng nhận đơn mới.'),flag('PickupEnabled','Cho phép nhận tại quán.'),flag('DeliveryEnabled','Cho phép giao hàng; có thể tắt để chỉ còn pickup.'),money('DeliveryFee','Phí giao cố định của chi nhánh.'),rv()],'BranchID',uniques=['Code'],checks=['OpeningTime < ClosingTime','DeliveryFee >= 0'])
-t('AreaManagers','Tổ chức','Phân công quản lý vào nhiều khu vực.',[fk('AreaID','Areas'),fk('UserID','Users'),at('AssignedAt'),flag()],'AreaID,UserID')
+# [AREA-01] Bỏ bảng AreaManagers (vai trò quản lý khu vực của mô hình nhiều chi nhánh; 11_single_store.sql đã xóa ở database cũ).
 t('StaffBranches','Tổ chức','Phân công nhân viên POS; giữ bản ghi khi ngừng phân công.',[fk('UserID','Users'),fk('BranchID','Branches'),at('AssignedAt'),flag()],'UserID,BranchID')
 t('Customers','CRM','Hồ sơ CRM gắn một tài khoản Customer; tên và liên hệ đọc từ Users.',[
  idc('CustomerID'),fk('UserID','Users'),c('DateOfBirth','date','Tính tuổi tại thời điểm thống kê, không lưu tuổi bị cũ.','2002-05-12',True),c('Gender','varchar(15)','Phân nhóm tự nguyện; NULL là chưa cung cấp.','Female',True),c('LoyaltyPoints','int','Số dư cache đối chiếu sổ điểm; có thể âm khi thu hồi điểm đã tiêu.',0,default='0',source='Chỉ nghiệp vụ điểm cập nhật cùng transaction với LoyaltyTransactions.'),at(),rv()],'CustomerID',uniques=['UserID'],checks=["Gender IS NULL OR Gender IN ('Male','Female','Other','Undisclosed')"])
@@ -131,10 +131,10 @@ INDEXES = [
  ('UserSessions','UserID,ExpiresAt','',''),('Customers','DateOfBirth,Gender','','')]
 
 def generate():
-    assert len(TABLES)==41 and sum(not x['original'] for x in TABLES)==20
+    assert len(TABLES)==40 and sum(not x['original'] for x in TABLES)==20 # [AREA-01] 41 → 40 (bỏ AreaManagers)
     (ROOT/'sql').mkdir(parents=True,exist_ok=True)
     (ROOT/'docs').mkdir(exist_ok=True)
-    sql=['-- Generated by tools/schema.py. SQL Server 2022+. Run only in a NEW empty database.',
+    sql=['-- Generated by tools/schema.py. SQL Server 2022+. Run only in a NEW empty database.\n-- [AREA-01] Không còn vai trò / bảng AreaManager (mô hình một cửa hàng).',
          'SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;','IF EXISTS (SELECT 1 FROM sys.tables) THROW 51000, N\'Database must be empty; no objects were changed.\', 1;','BEGIN TRANSACTION;']
     for tab in TABLES:
         name=tab['name']; lines=[]

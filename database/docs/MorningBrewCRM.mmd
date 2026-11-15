@@ -56,12 +56,6 @@ erDiagram
         decimal DeliveryFee
         rowversion Version
     }
-    AreaManagers {
-        int AreaID PK
-        int UserID PK
-        datetime2 AssignedAt
-        bit IsActive
-    }
     StaffBranches {
         int UserID PK
         int BranchID PK
@@ -401,8 +395,6 @@ erDiagram
     Users ||--o{ UserSessions : "UserID"
     Areas ||--o{ Branches : "AreaID"
     Users |o--o{ Branches : "ManagerID"
-    Areas ||--o{ AreaManagers : "AreaID"
-    Users ||--o{ AreaManagers : "UserID"
     Users ||--o{ StaffBranches : "UserID"
     Branches ||--o{ StaffBranches : "BranchID"
     Users ||--o| Customers : "UserID"
@@ -471,4 +463,4 @@ erDiagram
     CustomerPromotions |o--o{ Notifications : "CustomerPromotionID"
     Surveys |o--o{ Notifications : "SurveyID"
     Users |o--o{ AuditLogs : "ActorID"
-    Branches |o--o{ AuditLogs : "BranchID"
+    Branches |o--o{ AuditLogs : "BranchID"

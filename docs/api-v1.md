@@ -58,7 +58,7 @@ Token được mã hóa và xác thực bằng ASP.NET Data Protection, hết h�
 | Chức năng | Endpoint |
 |---|---|
 | Xác thực | `POST /v1/auth/login`, `GET /v1/auth/me`, `POST /v1/auth/logout`, `POST /v1/auth/password` (tự đổi mật khẩu: `current_password`, `new_password`) |
-| Khách hàng, tài khoản | `GET /v1/customers?q=`, `PUT /v1/customers/{id}` (`full_name`, `phone`, `date_of_birth`, `gender`), `GET/POST /v1/accounts` (khách hàng bắt buộc `phone`), `GET/PUT /v1/accounts/{id}` (`full_name`, `phone`) |
+| Khách hàng, tài khoản | `GET /v1/customers?q=&segment=` (kèm `completed_orders`, `total_spent`, `last_order_at`, `segment`: None/New/Active/Loyal/Lapsed; `segment=Duplicate` = SĐT dùng chung), `PUT /v1/customers/{id}` (`full_name`, `phone`, `date_of_birth`, `gender`), `GET/POST /v1/accounts` (khách hàng bắt buộc `phone`), `GET/PUT /v1/accounts/{id}` (`full_name`, `phone`) |
 | Danh mục chung | `GET/POST /v1/products` (POST: `variants` `[{"display_name":"M","price":45000}]`, `has_temperature`), `GET/PUT /v1/products/{id}`, `POST /v1/products/{id}/variants`, `GET /v1/variants?q=`, `GET /v1/variants/{id}`, `PUT /v1/variants/{id}/active` |
 | Danh mục sản phẩm | `GET/POST /v1/categories`, `PUT /v1/categories/{id}` (đổi tên), `PUT /v1/categories/{id}/active` |
 | Giá chung | `GET/PUT /v1/variants/{id}/price` |
@@ -69,13 +69,13 @@ Token được mã hóa và xác thực bằng ASP.NET Data Protection, hết h�
 | POS | `GET /v1/pos/menu`, `GET /v1/pos/customers?phone=`, `GET/POST /v1/pos/orders`, `GET /v1/pos/orders/{id}`, `POST ...:{advance|collect|cancel}` |
 | Khảo sát | `GET/POST /v1/surveys`, `GET /v1/surveys/{id}`, `POST ...:publish`, `...:close`, `...:invite` |
 | Kết quả khảo sát | `GET /v1/surveys/{id}/results?pageSize=50&pageToken=...` |
-| Khuyến mãi | `GET /v1/promotions?q=`, `POST /v1/promotions`, `GET/PUT /v1/promotions/{id}`, `POST ...:issue`, `POST ...:issueBulk` (`customer_ids` hoặc `all` / `age_group` / `gender` / `product_id`) |
+| Khuyến mãi | `GET /v1/promotions?q=`, `POST /v1/promotions`, `GET/PUT /v1/promotions/{id}`, `POST ...:issue`, `POST ...:issueBulk` (`customer_ids` hoặc `all` / `age_group` / `gender` / `product_id` / `segment`); mời khảo sát hàng loạt cũng nhận `segment` |
 | Voucher | `GET /v1/vouchers/{id}`; cấp/đổi voucher trả tài nguyên này, kể cả khi retry cùng `request_key` |
 | Phản hồi | `GET /v1/feedbacks`, `POST /v1/feedbacks/{id}:reply` |
-| Điểm | `POST /v1/customers/{id}:adjustPoints` |
+| Điểm | `POST /v1/customers/{id}:adjustPoints` (quyền `Loyalty.Adjust`) |
 | Trạng thái | `PUT /v1/{accounts|products|promotions|suppliers}/{id}/active`, body `{"is_active":false}` |
 | Phân quyền | `GET /v1/permissions`, `PUT /v1/roles/{role}/permissions/{code}`, body `{"allowed":true}` |
-| Dashboard, báo cáo | `GET /v1/dashboard/overview`, `GET /v1/reports/revenue?fromTime=...&toTime=...&branchId=...`, `GET /v1/reports/revenue/daily?fromTime=...&toTime=...` (theo ngày giờ VN, tối đa 366 ngày) |
+| Dashboard, báo cáo | `GET /v1/dashboard/overview`, `GET /v1/reports/revenue?fromTime=...&toTime=...&branchId=...`, `GET /v1/reports/revenue/daily?fromTime=...&toTime=...` (theo ngày giờ VN, tối đa 366 ngày), `GET /v1/reports/promotions` (đã cấp / đã dùng / tiền giảm / doanh thu theo ưu đãi); `GET /v1/lookups/options` có thêm `permissions` của người đang đăng nhập |
 | Hồ sơ bản thân | `GET/PATCH /v1/me/profile` |
 | Dữ liệu bản thân | `GET /v1/me/{loyalty|wallet|promotions|feedbacks|surveys|preferences}`; `wallet` có `max_discount`, `min_subtotal` |
 | Thực đơn, đơn của khách | `GET /v1/me/menu`, `GET/POST /v1/me/orders`, `GET /v1/me/orders/{id}`, `POST ...:{pay|cancel}` |

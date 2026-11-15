@@ -12,7 +12,7 @@
             dateOfBirth=item["date_of_birth"].ValueKind==JsonValueKind.Null?"":item["date_of_birth"].ToString(),
             gender=item["gender"].ValueKind==JsonValueKind.Null||item["gender"].ToString()=="Undisclosed"?"":item["gender"].ToString()}))">Sửa</button>
         <button type="button" class="btn-sm" data-open="@(active?"m-lock":"m-unlock")" data-fill="@(JsonSerializer.Serialize(new{id,full_name=name}))">@(active?"Khóa":"Mở khóa")</button>
-        @if(Model.IsOwner){<button type="button" class="btn-sm" data-open="m-points" data-fill="@(JsonSerializer.Serialize(new{id,full_name=name,current=item["loyalty_points"].ToString()}))">Điểm</button>}
+        @if(Model.Can("Loyalty.Adjust")){<button type="button" class="btn-sm" data-open="m-points" data-fill="@(JsonSerializer.Serialize(new{id,full_name=name,current=item["loyalty_points"].ToString()}))">Điểm</button>} @* [CRM-09] theo quyền Loyalty.Adjust *@
         <button type="button" class="btn-sm danger-text" data-open="m-delete" data-fill="@(JsonSerializer.Serialize(new{id,full_name=name}))">Xóa</button>
     </div>;
 }
@@ -21,11 +21,22 @@
 <section class="panel">
     @* [UI-03] Thanh công cụ: tìm kiếm bên trái, nút Thêm bên phải *@
     <div class="list-toolbar">
-        <form method="get"><input name="q" type="search" value="@Model.Q" placeholder="Tìm theo họ tên, email, số điện thoại" aria-label="Tìm khách hàng"><button class="secondary">Tìm</button>@if(!string.IsNullOrEmpty(Model.Q)){<a class="btn-sm" href="?">Bỏ lọc</a>}</form>
-        <button type="button" class="primary add-btn" data-open="m-add">+ Thêm khách hàng</button>
+        <form method="get"><input name="q" type="search" value="@Model.Q" placeholder="Tìm theo họ tên, email, số điện thoại" aria-label="Tìm khách hàng">
+            @* [CRM-02] nhóm hành vi mua; [CRM-08] SĐT trùng *@
+            <select name="segment" aria-label="Nhóm khách" onchange="this.form.submit()"><option value="">Mọi nhóm khách</option>
+                @foreach(var s in RowDisplay.Segments){<option value="@s.Code" selected="@(Model.Segment==s.Code)" title="@s.Hint">@s.Name</option>}
+                <option value="Duplicate" selected="@(Model.Segment=="Duplicate")">Trùng số điện thoại</option></select>
+            <button class="secondary">Tìm</button>@if(!string.IsNullOrEmpty(Model.Q+Model.Segment)){<a class="btn-sm" href="?">Bỏ lọc</a>}</form>
+        <div class="row-actions">
+            <a class="secondary" href="?handler=Export&q=@Uri.EscapeDataString(Model.Q??"")&segment=@Uri.EscapeDataString(Model.Segment??"")">Xuất Excel</a> @* [CRM-07] *@
+            <button type="button" class="primary add-btn" data-open="m-add">+ Thêm khách hàng</button>
+        </div>
     </div>
-    <p class="list-count">@Model.Rows.Count khách trên trang này · bấm vào một dòng để xem chi tiết</p>
-    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,DetailUrl=r=>$"?handler=Detail&id={r["customer_id"]}",DetailTitle="Chi tiết khách hàng"})" />
+    <p class="list-count">@Model.Rows.Count khách trên trang này@(Model.Segment=="Duplicate"?" · các tài khoản dùng chung SĐT: khóa hoặc xóa tài khoản thừa, hoặc sửa SĐT cho đúng":"") · bấm vào một dòng để xem chi tiết</p>
+    @* [CRM-02] thêm cột số đơn, tổng chi tiêu, mua gần nhất, nhóm khách; ẩn ngày sinh / giới tính (vẫn có trong Sửa và file Excel) *@
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,DetailUrl=r=>$"?handler=Detail&id={r["customer_id"]}",DetailTitle="Chi tiết khách hàng",
+        Hide=new HashSet<string>{"date_of_birth","gender"},
+        Format=(k,r)=>k switch{"total_spent"=>OrderView.Money(r,k),"segment"=>RowDisplay.SegmentName(r[k].ToString()),"last_order_at"=>r[k].ValueKind==JsonValueKind.Null?"—":null,_=>null}})" />
     <partial name="_Pager" model="Model" />
 </section>
 
@@ -79,8 +90,8 @@
     <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Mở khóa</button></footer>
 </form></dialog>
 
-@if(Model.IsOwner){
-@* [UI-01] Điều chỉnh điểm (chỉ chủ cửa hàng) *@
+@if(Model.Can("Loyalty.Adjust")){ @* [CRM-09] *@
+@* [UI-01] Điều chỉnh điểm (người có quyền Loyalty.Adjust) *@
 <dialog class="modal" id="m-points"><form method="post">
     <input type="hidden" name="operation" value="points"><input type="hidden" name="modal" value="m-points"><input type="hidden" name="id"><input type="hidden" name="requestKey" value="@Guid.NewGuid()">
     <header><h2>Điều chỉnh điểm</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>

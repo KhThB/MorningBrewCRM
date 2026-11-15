@@ -1,0 +1,3 @@
+@* [CRM-02] Ô chọn nhóm hành vi mua (dbo.CustomerStats) cho mời khảo sát / cấp voucher theo nhóm *@
+<label>Nhóm hành vi mua</label>
+<select name="segment"><option value="">Mọi nhóm</option>@foreach(var s in RowDisplay.Segments){<option value="@s.Code">@s.Name – @s.Hint</option>}</select>

@@ -107,7 +107,16 @@ public sealed partial class AdminController
             SELECT g.GroupOrder,g.AgeGroup,r.Product,r.Customers FROM {AgeGroupNames}
             JOIN ranked r ON r.GroupOrder=g.GroupOrder AND r.Position=1 ORDER BY g.GroupOrder
             """, args);
-        return new { totals, ageGroups, genders, products, categories, favoriteByAge };
+        // [CRM-02] Nhóm theo hành vi mua (dbo.CustomerStats): số khách, tổng và trung bình chi tiêu.
+        var segmentRows = await db.Query($"""
+            {ScopedCustomers}
+            SELECT s.Segment,COUNT(*) AS Customers,SUM(s.TotalSpent) AS TotalSpent,CAST(AVG(s.TotalSpent) AS decimal(18,0)) AS AverageSpent,
+            SUM(s.CompletedOrders) AS CompletedOrders
+            FROM grouped x JOIN dbo.CustomerStats s ON s.CustomerID=x.CustomerID GROUP BY s.Segment
+            """, args);
+        var segments = CustomerSegments.Select(code => segmentRows.FirstOrDefault(r => (string)r["Segment"]! == code)
+            ?? new Dictionary<string, object?> { ["Segment"] = code, ["Customers"] = 0, ["TotalSpent"] = 0m, ["AverageSpent"] = 0m, ["CompletedOrders"] = 0 }).ToList();
+        return new { totals, ageGroups, genders, products, categories, favoriteByAge, segments };
     }
 
     [HttpGet("surveys/{id:int}/summary")]

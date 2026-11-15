@@ -1,14 +1,15 @@
 ﻿-- morningbrew_fullscript.sql – CÀI MỚI hoặc NÂNG CẤP database MorningBrew CRM lên bản mới nhất (nhánh lmt_v2)
 -- =====================================================================================
--- Gồm 15 file database/sql: 01–05 lõi, 06–07 dữ liệu mẫu, 08–13 cập nhật CRM + góp ý giao diện 09/11,
+-- Gồm 16 file database/sql: 01–05 lõi, 06–07 dữ liệu mẫu, 08–13 cập nhật CRM + góp ý giao diện 09/11,
 -- 14 kho nguyên liệu (Ingredients, InventoryTransactions, quyền Inventory.Manage, dữ liệu kho mẫu),
--- 15 sửa web Admin 15/11 (thông báo giao / hoàn tiền chưa thành công, định mức RecipeItems + tự trừ kho khi đơn hoàn tất).
+-- 15 sửa web Admin 15/11 (thông báo giao / hoàn tiền chưa thành công, định mức RecipeItems + tự trừ kho khi đơn hoàn tất),
+-- 16 nâng cấp CRM (view CustomerStats, SĐT khách không trùng, quyền Loyalty.Adjust, bỏ quyền Organization.Manage).
 -- KHÔNG cần PowerShell. SSMS: kết nối (localdb)\MSSQLLocalDB → File → Open file này → Execute (F5).
 -- Không cần chọn database trước (đang ở master cũng được): file tự chuyển sang [MorningBrewCRM_Crm].
 -- File tự nhận biết tình trạng database [MorningBrewCRM_Crm]:
---   * Chưa có database / database trống → CÀI MỚI: tạo database, chạy 01 → 15.
+--   * Chưa có database / database trống → CÀI MỚI: tạo database, chạy 01 → 16.
 --   * Database MorningBrew đang dùng     → NÂNG CẤP: kiểm tra, SAO LƯU (.bak có CHECKSUM + VERIFYONLY),
---                                          rồi chạy 08 → 15. KHÔNG chạy lại 01–07, không xóa dữ liệu.
+--                                          rồi chạy 08 → 16. KHÔNG chạy lại 01–07, không xóa dữ liệu.
 --                                          Nhớ ĐÓNG API, web Admin, app, POS trước khi chạy.
 -- Kết quả: tab Messages có "=== HOÀN TẤT ..." và bảng kiểm tra (SoBang = 44). Thấy ">>> DỪNG" thì
 -- các lệnh sau không chạy; đọc lỗi đỏ đầu tiên. Nâng cấp lỗi giữa chừng: phục hồi từ file .bak đã in ra.
@@ -65,12 +66,12 @@ END
 IF NOT EXISTS (SELECT 1 FROM sys.tables)
 BEGIN
     EXEC sp_set_session_context N'mb_mode', N'install';
-    PRINT N'>>> Database trống: CÀI MỚI (01 → 15).';
+    PRINT N'>>> Database trống: CÀI MỚI (01 → 16).';
 END
 ELSE IF OBJECT_ID(N'dbo.CreateOrder', N'P') IS NOT NULL AND OBJECT_ID(N'dbo.GetMenu', N'P') IS NOT NULL
 BEGIN
     EXEC sp_set_session_context N'mb_mode', N'upgrade';
-    PRINT N'>>> Database đã có dữ liệu: NÂNG CẤP (sao lưu → 08 → 15). Bỏ qua 01–07.';
+    PRINT N'>>> Database đã có dữ liệu: NÂNG CẤP (sao lưu → 08 → 16). Bỏ qua 01–07.';
 END
 ELSE
 BEGIN
@@ -2039,10 +2040,11 @@ IF EXISTS(SELECT 1 FROM dbo.Roles) THROW 51000,N'Seed requires empty tables.',1;
 BEGIN TRAN;
 -- Vai trò AreaManager đã bị bỏ trong 11_single_store.sql (chỉ có 1 cửa hàng).
 INSERT dbo.Roles(Code,Name) VALUES('Owner',N'Chủ cửa hàng'),('BranchManager',N'Quản lý cửa hàng'),('Staff',N'Nhân viên thu ngân'),('Customer',N'Khách hàng');
+-- [CRM-00] Không còn quyền Organization.Manage (thừa từ mô hình nhiều chi nhánh).
 INSERT dbo.Permissions(Code,Description) VALUES
 ('Orders.Create',N'Tạo đơn tại POS'),('Orders.Manage',N'Cập nhật xử lý đơn'),('Orders.Cancel',N'Hủy đơn sau xác nhận'),('Orders.Read',N'Xem lịch sử đơn'),
-('Payments.Manage',N'Ghi nhận tiền đã thu'),('Refunds.Manage',N'Xử lý hoàn tiền'),('Menu.Manage',N'Quản lý thực đơn'),('Customers.Lookup',N'Tra cứu thành viên bằng số điện thoại'),('Customers.Read',N'Xem và phân nhóm khách hàng'),('Promotions.Manage',N'Quản lý và cấp ưu đãi'),('Surveys.Manage',N'Quản lý khảo sát'),('Feedbacks.Manage',N'Xử lý phản hồi'),('Reports.Read',N'Xem báo cáo'),('Organization.Manage',N'Quản lý tổ chức'),('Security.Manage',N'Quản lý tài khoản và quyền'),('Catalog.Manage',N'Quản lý danh mục dùng chung');
-INSERT dbo.RolePermissions SELECT r.RoleID,p.PermissionID FROM dbo.Roles r CROSS JOIN dbo.Permissions p WHERE r.Code='Owner' OR (r.Code='BranchManager' AND p.Code NOT IN ('Organization.Manage','Security.Manage','Catalog.Manage')) OR (r.Code='Staff' AND p.Code IN ('Orders.Create','Orders.Manage','Orders.Read','Payments.Manage','Customers.Lookup'));
+('Payments.Manage',N'Ghi nhận tiền đã thu'),('Refunds.Manage',N'Xử lý hoàn tiền'),('Menu.Manage',N'Quản lý thực đơn'),('Customers.Lookup',N'Tra cứu thành viên bằng số điện thoại'),('Customers.Read',N'Xem và phân nhóm khách hàng'),('Promotions.Manage',N'Quản lý và cấp ưu đãi'),('Surveys.Manage',N'Quản lý khảo sát'),('Feedbacks.Manage',N'Xử lý phản hồi'),('Reports.Read',N'Xem báo cáo'),('Security.Manage',N'Quản lý tài khoản và quyền'),('Catalog.Manage',N'Quản lý danh mục dùng chung');
+INSERT dbo.RolePermissions SELECT r.RoleID,p.PermissionID FROM dbo.Roles r CROSS JOIN dbo.Permissions p WHERE r.Code='Owner' OR (r.Code='BranchManager' AND p.Code NOT IN ('Security.Manage','Catalog.Manage')) OR (r.Code='Staff' AND p.Code IN ('Orders.Create','Orders.Manage','Orders.Read','Payments.Manage','Customers.Lookup'));
 DECLARE @hash varchar(512)='AQAAAAIAAYagAAAAEE8G2F5hjA72TxlV9NrR092YRGzNf1+QMFGndUjRlWxuS/DMviEjHdzD5daFtHJW2w==';
 INSERT dbo.Users(RoleID,Email,NormalizedEmail,PasswordHash,FullName,Phone)
 SELECT r.RoleID,v.Email,UPPER(v.Email),@hash,v.FullName,v.Phone FROM (VALUES
@@ -3319,14 +3321,107 @@ BEGIN
     SET NOEXEC ON;
 END
 GO
-PRINT CONCAT(N'=== HOÀN TẤT ', CASE SESSION_CONTEXT(N'mb_mode') WHEN N'install' THEN N'CÀI MỚI' ELSE N'NÂNG CẤP' END, N' database [MorningBrewCRM_Crm] (01–15, gồm kho nguyên liệu và định mức). Có thể chạy API, Admin, app, POS.');
+PRINT N'--- 16_crm.sql ---';
+GO
+SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
+BEGIN TRAN;
+-- ===== [CRM-00] Bỏ quyền Organization.Manage =====
+DELETE rp FROM dbo.RolePermissions rp JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID WHERE p.Code='Organization.Manage';
+DELETE dbo.Permissions WHERE Code='Organization.Manage';
+-- ===== [CRM-09] Quyền điều chỉnh điểm =====
+IF NOT EXISTS(SELECT 1 FROM dbo.Permissions WHERE Code='Loyalty.Adjust')
+    INSERT dbo.Permissions(Code,Description) VALUES('Loyalty.Adjust',N'Điều chỉnh điểm thành viên bằng tay');
+INSERT dbo.RolePermissions(RoleID,PermissionID)
+SELECT r.RoleID,p.PermissionID FROM dbo.Roles r CROSS JOIN dbo.Permissions p
+WHERE r.Code='Owner' AND p.Code='Loyalty.Adjust'
+  AND NOT EXISTS(SELECT 1 FROM dbo.RolePermissions x WHERE x.RoleID=r.RoleID AND x.PermissionID=p.PermissionID);
+-- ===== [CRM-08] Index tra khách theo SĐT =====
+IF NOT EXISTS(SELECT 1 FROM sys.indexes WHERE name='IX_Users_Phone' AND object_id=OBJECT_ID('dbo.Users'))
+    CREATE INDEX IX_Users_Phone ON dbo.Users(Phone); -- không dùng filtered index: tránh lỗi SET option khi thủ tục cũ ghi Users
+COMMIT;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- ===== [CRM-02] Thống kê mua hàng và nhóm hành vi của từng khách =====
+-- Ngưỡng: Khách mới = đơn hoàn tất đầu tiên trong 30 ngày; Lâu không quay lại = lần mua cuối quá 60 ngày;
+-- Thân thiết = từ 5 đơn hoàn tất và còn mua trong 60 ngày; Đang mua = còn lại. Tổng chi tiêu đã trừ tiền hoàn.
+CREATE OR ALTER VIEW dbo.CustomerStats AS
+SELECT x.CustomerID,x.CompletedOrders,x.TotalSpent,x.FirstOrderAt,x.LastOrderAt,
+    CASE WHEN x.CompletedOrders=0 THEN 'None'
+         WHEN x.FirstOrderAt>=DATEADD(day,-30,SYSUTCDATETIME()) THEN 'New'
+         WHEN x.LastOrderAt<DATEADD(day,-60,SYSUTCDATETIME()) THEN 'Lapsed'
+         WHEN x.CompletedOrders>=5 THEN 'Loyal'
+         ELSE 'Active' END AS Segment
+FROM (
+    SELECT c.CustomerID,COUNT(o.OrderID) AS CompletedOrders,
+        CAST(COALESCE(SUM(o.TotalAmount-COALESCE(r.Refunded,0)),0) AS decimal(18,2)) AS TotalSpent,
+        MIN(o.CompletedAt) AS FirstOrderAt,MAX(o.CompletedAt) AS LastOrderAt
+    FROM dbo.Customers c LEFT JOIN dbo.Orders o ON o.CustomerID=c.CustomerID AND o.Status='Completed'
+    -- tiền đã hoàn gộp sẵn theo đơn (SUM không được chứa truy vấn con – lỗi Msg 130)
+    LEFT JOIN (SELECT OrderID,SUM(Amount) AS Refunded FROM dbo.Refunds WHERE Status='Succeeded' GROUP BY OrderID) r ON r.OrderID=o.OrderID
+    GROUP BY c.CustomerID) x;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- ===== [CRM-08] Một SĐT chỉ thuộc một khách hàng chưa xóa =====
+-- Áp dụng cho mọi đường ghi: đăng ký app, sửa hồ sơ app, tạo / sửa khách trên web. Nhân viên không bị ràng buộc.
+CREATE OR ALTER TRIGGER dbo.TR_Users_CustomerPhone ON dbo.Users AFTER INSERT,UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF NOT (UPDATE(Phone) OR UPDATE(RoleID) OR UPDATE(DeletedAt)) RETURN;
+    DECLARE @customer int=(SELECT RoleID FROM dbo.Roles WHERE Code='Customer');
+    IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.Users u ON u.Phone=i.Phone AND u.UserID<>i.UserID
+              WHERE i.Phone IS NOT NULL AND i.RoleID=@customer AND u.RoleID=@customer AND i.DeletedAt IS NULL AND u.DeletedAt IS NULL)
+        THROW 51120,N'Số điện thoại này đã được dùng cho một khách hàng khác.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- Báo dữ liệu trùng có sẵn (không sửa tự động).
+DECLARE @dups int=(SELECT COUNT(*) FROM (SELECT u.Phone FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
+    WHERE r.Code='Customer' AND u.DeletedAt IS NULL AND u.Phone IS NOT NULL GROUP BY u.Phone HAVING COUNT(*)>1) d);
+IF @dups>0 PRINT CONCAT(N'Lưu ý: có ',@dups,N' số điện thoại đang dùng chung cho nhiều khách. Xem ở Quản lý CRM → Khách hàng → lọc "Trùng SĐT".');
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+PRINT CONCAT(N'=== HOÀN TẤT ', CASE SESSION_CONTEXT(N'mb_mode') WHEN N'install' THEN N'CÀI MỚI' ELSE N'NÂNG CẤP' END, N' database [MorningBrewCRM_Crm] (01–16). Có thể chạy API, Admin, app, POS.');
 SELECT (SELECT COUNT(*) FROM sys.tables) AS SoBang,
        (SELECT COUNT(*) FROM dbo.Users) AS SoTaiKhoan,
        (SELECT COUNT(*) FROM dbo.Suppliers) AS SoNhaCungCap,
        (SELECT COUNT(*) FROM dbo.Ingredients) AS SoNguyenLieu,
        (SELECT COUNT(*) FROM dbo.InventoryTransactions) AS SoPhieuKho,
        (SELECT COUNT(*) FROM dbo.Permissions WHERE Code = 'Inventory.Manage') AS CoQuyenKho,
-       (SELECT COUNT(*) FROM dbo.RecipeItems) AS SoDinhMuc;
+       (SELECT COUNT(*) FROM dbo.RecipeItems) AS SoDinhMuc,
+       (SELECT COUNT(*) FROM dbo.Permissions WHERE Code = 'Organization.Manage') AS QuyenToChucConLai;
 GO
 SET NOEXEC OFF;
 IF SESSION_CONTEXT(N'mb_failed') = 1 PRINT N'>>> KẾT QUẢ: CHƯA HOÀN TẤT – xem dòng lỗi màu đỏ đầu tiên phía trên.';

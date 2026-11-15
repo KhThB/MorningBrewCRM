@@ -26,6 +26,8 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
     public Dictionary<string,List<Dictionary<string,JsonElement>>> Options {get;set;}=[];
     public List<Dictionary<string,JsonElement>> Choices(string name)=>Options.GetValueOrDefault(name)??[];
     public bool IsOwner=>User.IsInRole("Owner");
+    // [CRM-09] Người đang đăng nhập có quyền này không (danh sách quyền lấy từ v1/lookups/options) – để ẩn / hiện nút.
+    public bool Can(string code)=>Choices("permissions").Any(x=>x.TryGetValue("id",out var v)&&v.ValueKind==JsonValueKind.String&&v.GetString()==code);
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -249,7 +251,8 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
                 var mode=Text("mode");
                 object body=mode=="list"
                     ? new {customerIds=ids}
-                    : new {all=mode=="all",ageGroup=Optional("ageGroup"),gender=string.IsNullOrEmpty(Text("gender"))?null:Text("gender"),productId=Optional("productId")};
+                    : new {all=mode=="all",ageGroup=Optional("ageGroup"),gender=string.IsNullOrEmpty(Text("gender"))?null:Text("gender"),productId=Optional("productId"),
+                        segment=Blank("segment")}; // [CRM-02] nhóm hành vi mua
                 if(mode=="list" && ids.Length==0) throw new FormatException();
                 var result=await Api.Post<JsonElement>($"v1/surveys/{Number("id")}:inviteBulk",body);
                 TempData["Success"]=$"Khớp {result.GetProperty("matched")} khách · mời mới {result.GetProperty("invited")} · đã mời trước đó {result.GetProperty("already_invited")}.";
@@ -267,7 +270,7 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
                 if(issueMode=="list" && issueIds.Length==0) throw new FormatException();
                 object issueBody=issueMode=="list"
                     ? new {customerIds=issueIds}
-                    : new {all=issueMode=="all",ageGroup=Optional("ageGroup"),gender=Blank("gender"),productId=Optional("productId")};
+                    : new {all=issueMode=="all",ageGroup=Optional("ageGroup"),gender=Blank("gender"),productId=Optional("productId"),segment=Blank("segment")}; // [CRM-02]
                 var issued=await Api.Post<JsonElement>($"v1/promotions/{Number("id")}:issueBulk",issueBody);
                 var skippedText=issued.GetProperty("skipped").GetInt32()>0
                     ? $" · bỏ qua {issued.GetProperty("skipped")} ({(issued.TryGetProperty("reason",out var why)&&why.ValueKind==JsonValueKind.String?why.GetString():"không đủ điều kiện")})" : "";

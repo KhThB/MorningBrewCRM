@@ -20,6 +20,7 @@
         "discount_value"=>r["discount_type"].ToString()=="Percent"?$"{ReportView.Number(ReportView.Decimal(r,k))}%":OrderView.Money(r,k),
         "points_cost"=>r[k].ValueKind==JsonValueKind.Null?"Chỉ quản lý tặng":$"{r[k]} điểm",
         "issued"=>$"{r[k]} / {(r.TryGetValue("total_limit",out var l)?l.ToString():"?")}", // [WEB-11] đã cấp / tổng số lượng
+        "used"=>r.TryGetValue("issued",out var iss)&&iss.GetInt32()>0?$"{r[k]} ({r[k].GetInt32()*100/iss.GetInt32()}%)":r[k].ToString(), // [CRM-04] đã dùng (tỷ lệ dùng)
         _=>null};
 }
 <div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
@@ -73,7 +74,8 @@
             <div data-show-when="mode=list" hidden><label>Khách hàng (200 khách mới nhất hoặc kết quả tìm ở trên)</label><div class="check-list">@foreach(var x in Model.Choices("customers")){<label><input type="checkbox" name="customerIds" value="@x["id"]"> @x["display_name"]</label>}</div></div>
             <div data-show-when="mode=segment" hidden><div class="two"><div><label>Nhóm tuổi</label><select name="ageGroup"><option value="">Mọi nhóm tuổi</option>@foreach(var a in MorningBrew.Admin.Pages.ManagerArea.SurveysModel.AgeGroups){<option value="@a.Id">@a.Name</option>}</select></div>
                 <div><label>Giới tính</label><select name="gender"><option value="">Mọi giới tính</option><option value="Male">Nam</option><option value="Female">Nữ</option><option value="Other">Khác</option><option value="Undisclosed">Chưa cung cấp</option></select></div></div>
-                <label>Thích sản phẩm</label><select name="productId"><option value="">Không lọc theo sở thích</option>@foreach(var p in Model.Choices("products")){<option value="@p["id"]">@p["display_name"]</option>}</select></div>
+                <label>Thích sản phẩm</label><select name="productId"><option value="">Không lọc theo sở thích</option>@foreach(var p in Model.Choices("products")){<option value="@p["id"]">@p["display_name"]</option>}</select>
+                <partial name="_SegmentSelect" /></div> @* [CRM-02] vd cấp voucher cho khách lâu không quay lại *@
             <p class="muted">Mỗi khách nhận tối đa theo "Số lượt mỗi khách"; khách đã đủ lượt hoặc chương trình hết lượt sẽ được bỏ qua và báo lại.</p>
         </form>
     </div>

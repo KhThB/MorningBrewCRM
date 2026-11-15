@@ -13,6 +13,7 @@
 <div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
 @if(Model.SurveyId.HasValue)
 {
+    <div class="list-toolbar"><div></div><a class="secondary" href="?handler=Export&surveyId=@Model.SurveyId">Xuất Excel</a></div> @* [CRM-07] *@
     @if(Model.Summary is not null){<partial name="_SurveySummary" model="Model.Summary" />}
     <section class="panel"><h2>Câu trả lời chi tiết</h2><partial name="_Rows" model="Model.Rows" />
     <div class="flow">@if(!string.IsNullOrEmpty(Model.NextPageToken)){<a asp-route-surveyId="@Model.SurveyId" asp-route-pageToken="@Model.NextPageToken">Trang tiếp →</a>}</div></section>
@@ -84,7 +85,8 @@ else
         <div class="bulk-one"><label>Khách hàng</label><select name="customerId">@foreach(var x in Model.Choices("customers")){<option value="@x["id"]">@x["display_name"]</option>}</select></div>
         <div class="bulk-segment hidden"><div class="two"><div><label>Nhóm tuổi</label><select name="ageGroup"><option value="">Mọi nhóm tuổi</option>@foreach(var a in SurveysModel.AgeGroups){<option value="@a.Id">@a.Name</option>}</select></div>
         <div><label>Giới tính</label><select name="gender"><option value="">Mọi giới tính</option><option value="Male">Nam</option><option value="Female">Nữ</option><option value="Other">Khác</option><option value="Undisclosed">Chưa cung cấp</option></select></div></div>
-        <label>Thích sản phẩm</label><select name="productId"><option value="">Không lọc theo sở thích</option>@foreach(var p in Model.Choices("products")){<option value="@p["id"]">@p["display_name"]</option>}</select></div>
+        <label>Thích sản phẩm</label><select name="productId"><option value="">Không lọc theo sở thích</option>@foreach(var p in Model.Choices("products")){<option value="@p["id"]">@p["display_name"]</option>}</select>
+        <partial name="_SegmentSelect" /></div> @* [CRM-02] *@
         <div class="bulk-list hidden"><label>Khách hàng (200 khách mới nhất hoặc kết quả tìm ở trên)</label><div class="check-list">@foreach(var x in Model.Choices("customers")){<label><input type="checkbox" name="customerIds" value="@x["id"]"> @x["display_name"]</label>}</div></div>
         <p class="muted">Khách đã được mời trước đó sẽ được bỏ qua, không gửi trùng.</p>
         </form>

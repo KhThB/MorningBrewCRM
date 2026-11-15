@@ -30,8 +30,7 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
         if (allowed.Count == 0) throw new ApiException(403, "Bạn không có quyền thực hiện thao tác này.");
     }
 
-    [HttpGet("customers")]
-    public Task<ApiPage> ListCustomers([FromQuery] PageRequest page, string? q = null) => List("customers", page, q);
+    // [CRM-02] GET v1/customers chuyển sang AdminCrmInsights.cs (thêm thống kê mua hàng và lọc theo nhóm hành vi).
     [HttpGet("surveys")]
     public Task<ApiPage> ListSurveys([FromQuery] PageRequest page) => List("surveys", page);
     [HttpGet("promotions")]
@@ -60,13 +59,6 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
 
                     """;
                 break;
-            case "customers":
-                sql = $"""
-                    SELECT c.CustomerID,u.FullName,u.Email,u.Phone,c.DateOfBirth,c.Gender,c.LoyaltyPoints,u.IsActive
-                    FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID WHERE u.DeletedAt IS NULL AND {CustomerScope}
-                    AND (@q='' OR u.FullName LIKE @search OR u.Email LIKE @search OR u.Phone LIKE @search)
-
-                    """; break;
             case "feedbacks":
                 sql = """
                     SELECT f.FeedbackID,u.FullName,f.BranchID,f.Type,f.Content,f.Rating,f.Status,f.ResponseContent,f.CreatedAt
@@ -87,7 +79,8 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
                 sql = """
                     SELECT PromotionID,Name,Scope,AreaID,BranchID,DiscountType,DiscountValue,PointsCost,StartsAt,EndsAt,IsActive,
                     Description,MaxDiscount,MinSubtotal,TotalLimit,PerCustomerLimit, -- [WEB-11] để mở form Sửa ưu đãi
-                    (SELECT COUNT(*) FROM dbo.CustomerPromotions cp WHERE cp.PromotionID=p.PromotionID) AS Issued -- [WEB-11] đã cấp
+                    (SELECT COUNT(*) FROM dbo.CustomerPromotions cp WHERE cp.PromotionID=p.PromotionID) AS Issued, -- [WEB-11] đã cấp
+                    (SELECT COUNT(*) FROM dbo.CustomerPromotions cp WHERE cp.PromotionID=p.PromotionID AND cp.Status='Used') AS Used -- [CRM-04] đã dùng
                     FROM dbo.Promotions p WHERE dbo.CanScope(@actor,Scope,AreaID,BranchID,'Promotions.Manage')=1
                     AND (@q='' OR p.Name LIKE @search OR p.Description LIKE @search) -- [WEB-11]
 
@@ -121,7 +114,7 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
         }
         var keys = section switch
         {
-            "suppliers" => new[] { "SupplierID" }, "customers" => ["CustomerID"],
+            "suppliers" => new[] { "SupplierID" },
             "feedbacks" => ["FeedbackID"], "surveys" => ["SurveyID"], "promotions" => ["PromotionID"],
             "products" => ["VariantID"], "accounts" => ["UserID"], "permissions" => ["Role", "Permission"],
             _ => throw new ApiException(404, "Resource not found.")
@@ -178,6 +171,8 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
         branches = await db.Query("SELECT BranchID AS Id,Name FROM dbo.Branches WHERE dbo.CanBranch(@actor,BranchID,'Orders.Read')=1 ORDER BY BranchID", ("@actor", Actor)),
         categories = await db.Query("SELECT CategoryID AS Id,Name FROM dbo.Categories WHERE IsActive=1 ORDER BY CategoryID"),
         products = await db.Query("SELECT ProductID AS Id,Name FROM dbo.Products WHERE IsActive=1 ORDER BY Name"),
+        // [CRM-09] quyền của người đang đăng nhập – web ẩn / hiện nút theo quyền (vd Điều chỉnh điểm)
+        permissions = await db.Query("SELECT Code AS Id,Code AS Name FROM dbo.Permissions WHERE dbo.CanScope(@actor,'Chain',NULL,NULL,Code)=1", ("@actor", Actor)),
         customers = await db.Query($"""
             SELECT TOP(200) c.CustomerID AS Id,CONCAT(u.FullName,N' · ',COALESCE(u.Phone,u.Email)) AS Name FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID
             WHERE u.IsActive=1 AND u.DeletedAt IS NULL AND {CustomerScope}

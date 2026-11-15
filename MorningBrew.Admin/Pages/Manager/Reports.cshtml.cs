@@ -17,6 +17,7 @@ public class ReportsModel(CrmApi api):WorkspaceBase(api)
     public DateTime Today {get;}=DateTime.UtcNow.AddHours(7).Date;
     public string? PeriodError {get;set;}
     public List<Dictionary<string,JsonElement>> Daily {get;set;}=[]; // [WEB-09] doanh thu từng ngày
+    public List<Dictionary<string,JsonElement>> Promotions {get;set;}=[]; // [CRM-04] hiệu quả ưu đãi
     protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>();
     public static string Day(DateTime d)=>d.ToString("yyyy-MM-dd",CultureInfo.InvariantCulture);
     // Các kỳ có sẵn: (nhãn, từ ngày, đến ngày).
@@ -49,5 +50,28 @@ public class ReportsModel(CrmApi api):WorkspaceBase(api)
         var range=$"fromTime={Vn(From)}&toTime={Vn(To.AddDays(1))}";
         Rows=(await Api.Get<ApiPage>($"v1/reports/revenue?{range}")).Items; // [UI2-W4]
         Daily=(await Api.Get<ApiPage>($"v1/reports/revenue/daily?{range}")).Items; // [WEB-09]
+        Promotions=(await Api.Get<ApiPage>("v1/reports/promotions")).Items; // [CRM-04]
+    }
+
+    // [CRM-07] Xuất toàn bộ báo cáo đang xem (đúng kỳ doanh thu) ra một file Excel nhiều sheet.
+    public async Task<IActionResult> OnGetExportAsync()
+    {
+        try { await LoadAsync(); }
+        catch(CrmApiException e) { TempData["Error"]=e.Message; return RedirectToPage(new{from=FromText,to=ToText}); }
+        var sheets=new List<XlsxSheet>
+        {
+            XlsxSheet.From($"Doanh thu {From:dd.MM}-{To:dd.MM.yyyy}",Daily,[("day","Ngày"),("completed_orders","Đơn hoàn tất"),("gross_revenue","Doanh thu (đ)"),("refunded_revenue","Đã hoàn tiền (đ)"),("net_revenue","Doanh thu thuần (đ)")],
+                (k,r)=>k=="day"&&DateTime.TryParse(r[k].ToString(),CultureInfo.InvariantCulture,DateTimeStyles.None,out var d)?d.ToString("dd/MM/yyyy"):null),
+            XlsxSheet.From("Hiệu quả ưu đãi",Promotions,[("display_name","Ưu đãi"),("is_active","Đang cấp"),("issued","Đã cấp"),("used","Đã dùng"),("unused","Chưa dùng"),
+                ("expired","Hết hạn chưa dùng"),("total_discount","Tổng tiền giảm (đ)"),("revenue","Doanh thu đơn có voucher (đ)"),("points_spent","Điểm đã đổi")])
+        };
+        if(Report is not null)
+        {
+            sheets.Add(XlsxSheet.From("Nhóm hành vi mua",ReportView.Rows(Report,"segments"),[("segment","Nhóm khách"),("customers","Số khách"),("completed_orders","Đơn hoàn tất"),("total_spent","Tổng chi tiêu (đ)"),("average_spent","Chi tiêu TB / khách (đ)")]));
+            sheets.Add(XlsxSheet.From("Độ tuổi",ReportView.Rows(Report,"age_groups"),[("age_group","Nhóm tuổi"),("customers","Số khách")]));
+            sheets.Add(XlsxSheet.From("Giới tính",ReportView.Rows(Report,"genders"),[("gender","Giới tính"),("customers","Số khách")]));
+            sheets.Add(XlsxSheet.From("Món yêu thích",ReportView.Rows(Report,"products"),[("product","Món"),("category","Danh mục"),("customers","Số khách thích")]));
+        }
+        return File(XlsxExport.Build(sheets),XlsxExport.ContentType,XlsxExport.FileName("BaoCao"));
     }
 }

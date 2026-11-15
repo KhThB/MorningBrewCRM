@@ -29,7 +29,8 @@ public sealed partial class AdminController
 
     // Mời nhiều khách cùng lúc. Chọn một trong hai: danh sách CustomerIds, hoặc nhóm khách (tất cả /
     // nhóm tuổi / giới tính / thích một sản phẩm). Khách đã được mời thì bỏ qua (InviteSurvey idempotent).
-    public record BulkInviteInput(int[]? CustomerIds, bool All = false, int? AgeGroup = null, string? Gender = null, int? ProductId = null);
+    public record BulkInviteInput(int[]? CustomerIds, bool All = false, int? AgeGroup = null, string? Gender = null, int? ProductId = null,
+        string? Segment = null); // [CRM-02] thêm tiêu chí nhóm hành vi mua (dbo.CustomerStats.Segment)
     [HttpPost("surveys/{id:int}:inviteBulk")]
     public async Task<object> InviteBulk(int id, BulkInviteInput input)
     {
@@ -55,8 +56,10 @@ public sealed partial class AdminController
         }
         else
         {
-            if (!input.All && input.AgeGroup is null && string.IsNullOrEmpty(input.Gender) && input.ProductId is null)
+            if (!input.All && input.AgeGroup is null && string.IsNullOrEmpty(input.Gender) && input.ProductId is null && string.IsNullOrEmpty(input.Segment))
                 throw new ApiException(400, "Chọn khách hàng hoặc ít nhất một tiêu chí nhóm.");
+            if (input.Segment is not (null or "") && !CustomerSegments.Contains(input.Segment)) // [CRM-02]
+                throw new ApiException(400, "Nhóm hành vi mua không hợp lệ.");
             if (input.AgeGroup is < 1 or > 6) throw new ApiException(400, "Nhóm tuổi không hợp lệ.");
             if (input.Gender is not (null or "" or "Male" or "Female" or "Other" or "Undisclosed"))
                 throw new ApiException(400, "Giới tính không hợp lệ.");
@@ -64,11 +67,11 @@ public sealed partial class AdminController
             var rows = await db.Query($"""
                 {ScopedCustomers}
                 SELECT x.CustomerID FROM grouped x JOIN dbo.Customers c ON c.CustomerID=x.CustomerID
-                JOIN dbo.Users u ON u.UserID=c.UserID
-                WHERE u.IsActive=1 AND (@age IS NULL OR x.GroupOrder=@age)
+                JOIN dbo.Users u ON u.UserID=c.UserID JOIN dbo.CustomerStats s ON s.CustomerID=x.CustomerID -- [CRM-02]
+                WHERE u.IsActive=1 AND (@age IS NULL OR x.GroupOrder=@age) AND (@segment='' OR s.Segment=@segment)
                 AND (@gender='' OR COALESCE(x.Gender,'Undisclosed')=@gender)
                 AND (@product IS NULL OR EXISTS(SELECT 1 FROM dbo.CustomerPreferences p WHERE p.CustomerID=x.CustomerID AND p.ProductID=@product))
-                """, ("@actor", Actor), ("@today", today), ("@age", input.AgeGroup), ("@gender", input.Gender ?? ""), ("@product", input.ProductId));
+                """, ("@actor", Actor), ("@today", today), ("@age", input.AgeGroup), ("@gender", input.Gender ?? ""), ("@product", input.ProductId), ("@segment", input.Segment ?? ""));
             targets = rows.Select(r => (int)r["CustomerID"]!).ToList();
         }
         return targets;

@@ -1,6 +1,6 @@
 # Morning Brew CRM — database
 
-SQL Server 2022+ (hoặc LocalDB 2022). Mô hình **một cửa hàng** (Morning Brew Thủ Đức), **44 bảng** sau khi chạy đủ 15 script:
+SQL Server 2022+ (hoặc LocalDB 2022). Mô hình **một cửa hàng** (Morning Brew Thủ Đức), **44 bảng** sau khi chạy đủ 16 script:
 41 bảng CRM/đơn hàng/khảo sát/nhà cung cấp, 2 bảng kho nguyên liệu (`Ingredients`, `InventoryTransactions`) và bảng định mức `RecipeItems`.
 Database dùng cho cấu hình Development: **`MorningBrewCRM_Crm`** trên `(localdb)\MSSQLLocalDB`.
 
@@ -11,16 +11,16 @@ Không cần chọn database trước. File tự nhận biết:
 
 | Tình trạng | File làm gì |
 |---|---|
-| Chưa có database / database trống | **Cài mới**: tạo `MorningBrewCRM_Crm`, chạy 01 → 15 (gồm dữ liệu mẫu). |
-| Database MorningBrew đang dùng | **Nâng cấp**: sao lưu `.bak` (CHECKSUM + VERIFYONLY) rồi chạy 08 → 15; không chạy lại 01–07, không xóa dữ liệu. |
+| Chưa có database / database trống | **Cài mới**: tạo `MorningBrewCRM_Crm`, chạy 01 → 16 (gồm dữ liệu mẫu). |
+| Database MorningBrew đang dùng | **Nâng cấp**: sao lưu `.bak` (CHECKSUM + VERIFYONLY) rồi chạy 08 → 16; không chạy lại 01–07, không xóa dữ liệu. |
 
 Thành công khi tab Messages có `=== HOÀN TẤT ...` và bảng kiểm tra có `SoBang = 44`. Thấy `>>> DỪNG` thì phần sau không chạy;
 đọc dòng lỗi đỏ đầu tiên. Đóng API, web Admin, app, POS trước khi nâng cấp. Tên database khác: Find and Replace `MorningBrewCRM_Crm`
 trong file và sửa `ConnectionStrings:MorningBrew` của API.
 
-Cách khác (PowerShell + `sqlcmd`): `./database/tools/Apply.ps1` chạy chính file fullscript ở trên. Mặc định tạo mới `MorningBrewCRM_Crm` (file MDF/LDF trong `database/.local`); `-Database <tên>` đổi tên, `-NoSeed` bỏ dữ liệu mẫu, `-Upgrade` nâng cấp database đang dùng (tự sao lưu rồi chạy 08–15).
+Cách khác (PowerShell + `sqlcmd`): `./database/tools/Apply.ps1` chạy chính file fullscript ở trên. Mặc định tạo mới `MorningBrewCRM_Crm` (file MDF/LDF trong `database/.local`); `-Database <tên>` đổi tên, `-NoSeed` bỏ dữ liệu mẫu, `-Upgrade` nâng cấp database đang dùng (tự sao lưu rồi chạy 08–16).
 
-Chạy lẻ một script trong SSMS: nhớ chọn đúng database `MorningBrewCRM_Crm` ở ô database (không để `master`). `14_inventory.sql`, `15_web_admin.sql` tự dừng
+Chạy lẻ một script trong SSMS: nhớ chọn đúng database `MorningBrewCRM_Crm` ở ô database (không để `master`). `14_inventory.sql`, `15_web_admin.sql`, `16_crm.sql` tự dừng
 nếu đang chọn nhầm database.
 
 ## Thứ tự script (`database/sql`)
@@ -42,8 +42,9 @@ nếu đang chọn nhầm database.
 | `13_ui_review.sql` | Góp ý giao diện 09/11: đồ uống chỉ còn Size M/L + Đá/Nóng, tình trạng còn hàng, nhà cung cấp mẫu. |
 | `14_inventory.sql` | Kho nguyên liệu: 2 bảng, trigger chống sửa/xóa phiếu kho, quyền `Inventory.Manage`, 16 nguyên liệu + phiếu mẫu. |
 | `15_web_admin.sql` | Sửa web Admin 15/11: thông báo cho khách khi giao hàng / hoàn tiền chưa thành công (`UpdateDelivery`, `SimulateRefund`); bảng định mức `RecipeItems` + trigger `TR_Orders_Inventory` tự lập phiếu "Xuất dùng" khi đơn hoàn tất; định mức mẫu cho 10 món. |
+| `16_crm.sql` | Nâng cấp CRM: view `CustomerStats` (số đơn, tổng chi tiêu, nhóm hành vi mua), trigger `TR_Users_CustomerPhone` (một SĐT chỉ thuộc một khách), quyền `Loyalty.Adjust`, bỏ quyền thừa `Organization.Manage`. |
 
-08–15 chạy lại nhiều lần được (dùng cho nâng cấp). 01–07 chỉ dùng khi cài mới.
+08–16 chạy lại nhiều lần được (dùng cho nâng cấp). 01–07 chỉ dùng khi cài mới.
 
 ## Tài khoản mẫu
 

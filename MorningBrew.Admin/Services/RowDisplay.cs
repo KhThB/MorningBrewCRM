@@ -30,7 +30,11 @@ public static class RowDisplay
         // [WEB-02][WEB-03][WEB-11][WEB-14]
         ["has_temperature"]="Đá / Nóng",["size_active"]="Size",["category_id"]="Mã danh mục",["issued"]="Đã cấp",["total_limit"]="Số lượng",
         ["per_customer_limit"]="Lượt mỗi khách",["active_products"]="Món đang bán",["ingredient_name"]="Nguyên liệu",["actor_name"]="Người lập",
-        ["product_name"]="Món",["variant_name"]="Size",["recipe_quantity"]="Định mức / 1 phần"
+        ["product_name"]="Món",["variant_name"]="Size",["recipe_quantity"]="Định mức / 1 phần",
+        // [CRM-02][CRM-04]
+        ["total_spent"]="Tổng chi tiêu",["last_order_at"]="Mua gần nhất",["segment"]="Nhóm khách",["used"]="Đã dùng",["unused"]="Chưa dùng",
+        ["expired"]="Hết hạn chưa dùng",["total_discount"]="Tổng tiền giảm",["revenue"]="Doanh thu đơn có voucher",["points_spent"]="Điểm đã đổi",
+        ["average_spent"]="Chi tiêu TB / khách"
     };
     private static readonly Dictionary<string,string> Values=new()
     {
@@ -43,6 +47,10 @@ public static class RowDisplay
         ["Service"]="Dịch vụ",["Product"]="Sản phẩm",["Space"]="Không gian",["Earn"]="Tích điểm",["Redeem"]="Đổi điểm",["Reverse"]="Hoàn tác điểm",["Adjust"]="Điều chỉnh",
         ["Import"]="Nhập kho",["Export"]="Xuất dùng",["Waste"]="Hủy / hư hỏng" // [KHO]
     };
+    /// <summary>[CRM-02] Nhóm hành vi mua: mã, tên, giải thích (đúng ngưỡng của view dbo.CustomerStats).</summary>
+    public static readonly (string Code,string Name,string Hint)[] Segments={
+        ("New","Khách mới","Đơn hoàn tất đầu tiên trong 30 ngày"),("Active","Đang mua","Còn mua trong 60 ngày, dưới 5 đơn"),
+        ("Loyal","Thân thiết","Từ 5 đơn hoàn tất, còn mua trong 60 ngày"),("Lapsed","Lâu không quay lại","Lần mua cuối quá 60 ngày"),("None","Chưa mua","Chưa có đơn hoàn tất")};
     // [AUD-01] Nhật ký thao tác: ghi rõ mỗi mã thao tác làm gì (trước đây chỉ hiện mã kỹ thuật như "Account.Role").
     // Mã gốc giữ trong ngoặc để vẫn tìm được bằng ô tìm kiếm của trang Nhật ký hệ thống.
     private static readonly Dictionary<string,string> Actions=new()
@@ -128,6 +136,7 @@ public static class RowDisplay
         return Word(text);
     }
     public static string Label(string key)=>Names.GetValueOrDefault(key,key);
+    public static string SegmentName(string code)=>Segments.FirstOrDefault(s=>s.Code==code).Name ?? code; // [CRM-02]
     public static string Value(string key,JsonElement value)
     {
         if(value.ValueKind==JsonValueKind.Null)return "—";
@@ -140,6 +149,7 @@ public static class RowDisplay
         // múi giờ thêm một lần nên lệch +7 giờ.
         if((key.EndsWith("_time")||key.EndsWith("_at"))&&DateTimeOffset.TryParse(text,CultureInfo.InvariantCulture,DateTimeStyles.AssumeUniversal,out var time))
             return time.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss");
+        if(key=="segment")return SegmentName(text); // [CRM-02] tra riêng: "New", "Active" ở cột khác mang nghĩa khác
         if(key is "status" or "scope" or "role" or "gender" or "kind" or "type")return Values.GetValueOrDefault(text,text);
         if(key=="action")return Action(text);                         // [AUD-01]
         if(key=="entity_type")return Entities.GetValueOrDefault(text,text); // [AUD-01]

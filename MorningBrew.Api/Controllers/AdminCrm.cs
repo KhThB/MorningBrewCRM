@@ -201,7 +201,7 @@ public sealed partial class AdminController
     [HttpPost("customers/{id:int}:adjustPoints")]
     public async Task<IActionResult> AdjustPoints(int id,AdjustInput input)
     {
-        await RequireOwner();
+        await RequirePermission("Loyalty.Adjust"); // [CRM-09] theo bảng phân quyền (trước đây viết cứng: chỉ chủ cửa hàng)
         if(input.Delta==0||Math.Abs((long)input.Delta)>1000000||input.RequestKey==Guid.Empty) throw new ApiException(400,"Điểm điều chỉnh hoặc RequestKey không hợp lệ.");
         await db.Query("""
             SET XACT_ABORT ON; BEGIN TRAN;

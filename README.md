@@ -6,7 +6,7 @@ Bản đồ án CRM hiện tại gồm **MorningBrew.Api**, **MorningBrew.Admin*
 
 Cài .NET SDK 10, workload .NET MAUI, Windows SDK phù hợp project, SQL Server 2022+ hoặc LocalDB và `sqlcmd`. Mở **MorningBrewCRM.slnx** ở thư mục gốc; solution có đủ ba project. Chọn Windows Machine khi chạy app MAUI; Android cần thêm SDK/emulator, iOS cần môi trường Mac để chạy.
 
-Tạo database khớp cấu hình Development (`MorningBrewCRM_Crm`): mở SSMS → kết nối `(localdb)\MSSQLLocalDB` → mở **`database/sql_ssms/morningbrew_fullscript.sql`** → Execute (F5). File tự **cài mới** (database trống: script 01–15 kèm dữ liệu mẫu) hoặc **nâng cấp** (database đang dùng: sao lưu `.bak` rồi chạy 08–15), không cần PowerShell.
+Tạo database khớp cấu hình Development (`MorningBrewCRM_Crm`): mở SSMS → kết nối `(localdb)\MSSQLLocalDB` → mở **`database/sql_ssms/morningbrew_fullscript.sql`** → Execute (F5). File tự **cài mới** (database trống: script 01–16 kèm dữ liệu mẫu) hoặc **nâng cấp** (database đang dùng: sao lưu `.bak` rồi chạy 08–16), không cần PowerShell.
 
 Cách khác bằng PowerShell: `./database/tools/Apply.ps1` (chạy cùng file fullscript; thêm `-Upgrade` để nâng cấp database đang dùng). Nếu dùng database/server khác, cấu hình `ConnectionStrings:MorningBrew` bằng user secrets hoặc biến môi trường; xem [hướng dẫn database](database/README.md).
 

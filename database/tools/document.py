@@ -228,7 +228,9 @@ def make():
     doc.add_heading('Cách đọc tài liệu',1)
     doc.add_paragraph('Phần đầu mô tả nghiệp vụ và quy tắc. Tiếp theo là sơ đồ quan hệ, đối chiếu với Word gốc và từ điển chi tiết theo từng bảng. Phần cuối ghi các điểm cần nối với backend và kết quả kiểm thử. File README.md hướng dẫn cài đặt và chạy thử trên máy.')
     doc.add_page_break()
-    arch=(DOCS/'architecture.md').read_text(encoding='utf-8')
+    # [DOC-01] architecture.md đã bỏ (tài liệu cũ cho mô hình nhiều chi nhánh; phân tích nghiệp vụ nằm trong báo cáo) – bỏ qua nếu không còn file.
+    arch_path=DOCS/'architecture.md'
+    arch=arch_path.read_text(encoding='utf-8') if arch_path.exists() else ''
     for line in arch.splitlines():
         if line.startswith('# '): continue
         if line.startswith('## '): doc.add_heading(line[3:],1)

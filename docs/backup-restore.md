@@ -1,6 +1,6 @@
 # Phương án sao lưu và phục hồi CSDL (yêu cầu II.1)
 
-> Cập nhật 09/11/2026 [UI2-W3a]: toàn bộ sao lưu, phục hồi và sao lưu tự động làm trên **web Admin** (API), không còn dùng `Backup.ps1` / `Restore.ps1`.
+> Toàn bộ sao lưu, phục hồi và sao lưu tự động làm trên **Admin server** (http://localhost:5190 → Sao lưu & phục hồi), không dùng script PowerShell.
 
 ## 1. Mục tiêu
 - **RPO** (dữ liệu tối đa có thể mất): **24 giờ** nhờ sao lưu tự động hằng ngày; giảm thêm bằng sao lưu thủ công trước thao tác lớn.
@@ -10,7 +10,7 @@
 ## 2. Thành phần
 | Thành phần | Vai trò |
 |---|---|
-| Admin web → **Sao lưu & phục hồi** (chỉ chủ cửa hàng) | Nút **Sao lưu database**; danh sách file `.bak` (loại, dung lượng, thời gian); nút **Phục hồi** trên từng file |
+| Admin server (cổng 5190) → **Sao lưu & phục hồi** (chỉ chủ cửa hàng) | Nút **Sao lưu database**; danh sách file `.bak` (loại, dung lượng, thời gian); nút **Phục hồi** trên từng file |
 | API `POST v1/admin/backups` | Sao lưu FULL, `COPY_ONLY`, `CHECKSUM` ra file `.bak`, kiểm tra lại bằng `RESTORE VERIFYONLY`, ghi `AuditLogs` (`Database.Backup`) |
 | API `POST v1/admin/backups:restore` | Kiểm tra file → sao lưu bản *Trước khi phục hồi* → kết nối `master`: `SINGLE_USER WITH ROLLBACK IMMEDIATE` → `RESTORE DATABASE … WITH REPLACE, CHECKSUM` → `MULTI_USER`; ghi `AuditLogs` (`Database.Restore`) |
 | Dịch vụ nền `AutoBackupService` (trong API) | Mỗi giờ kiểm tra: nếu bản tự động mới nhất đã quá 24 giờ thì sao lưu; chỉ giữ **14** bản tự động mới nhất (bản thủ công không bị xóa) |
@@ -40,7 +40,7 @@ Tên file cho biết loại bản sao lưu:
 Khi triển khai thật (SQL Server bản Standard, nhiều giao dịch): chuyển recovery model sang FULL, dùng SQL Server Agent sao lưu **differential** mỗi 6 giờ và **transaction log** mỗi 15–30 phút để giảm RPO xuống vài phút.
 
 ## 4. Quy trình phục hồi
-1. Đăng nhập Admin bằng tài khoản chủ cửa hàng → **Sao lưu & phục hồi**.
+1. Đăng nhập Admin server (http://localhost:5190) bằng tài khoản chủ cửa hàng → **Sao lưu & phục hồi**.
 2. Chọn file `.bak` mới nhất **trước** thời điểm sự cố → bấm **Phục hồi**, tích ô xác nhận → **Phục hồi**.
 3. Hệ thống: kiểm tra file → tạo bản *Trước khi phục hồi* → ghi đè database → bật lại chế độ nhiều người dùng.
 4. Đăng nhập lại (phiên đăng nhập cũng quay về thời điểm sao lưu), kiểm tra Tổng quan, danh sách khách, Nhật ký hệ thống (có dòng `Database.Restore`).

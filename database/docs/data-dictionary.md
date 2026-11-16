@@ -1,6 +1,6 @@
 # Từ điển dữ liệu Morning Brew CRM
 
-40 bảng lõi, 310 trường. Sinh từ tools/schema.py.
+45 bảng, 348 trường. Mục 1–40 (bảng lõi của `01_schema.sql`) sinh từ tools/schema.py; mục 41–45 là các bảng thêm ở script 08, 14, 15, 17, viết tay — nếu sinh lại bằng tools/document.py thì giữ lại phần này.
 
 ## 1. Roles
 Tài khoản • Điều chỉnh bảng gốc. Bốn vai trò nghiệp vụ dùng chung cho ba ứng dụng.
@@ -679,3 +679,80 @@ Tài khoản • Bảng bổ sung. Nhật ký ai làm gì; không ghi mật kh�
 | Details<br>nvarchar(4000) | Được trống | Thông tin nghiệp vụ đã loại bỏ dữ liệu bí mật.<br>Nguồn: Backend/procedure ghi khi sự kiện phát sinh.<br>Ví dụ: Khách yêu cầu hủy |
 | CreatedAt<br>datetime2(3) | Bắt buộc<br>Mặc định: SYSUTCDATETIME() | Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.<br>Nguồn: Backend/SQL Server ghi khi sự kiện tương ứng xảy ra.<br>Ví dụ: 2026-09-17T03:00:00Z |
 - Index  (BranchID,CreatedAt)
+
+## 41. Suppliers
+Tài khoản, cửa hàng, hệ thống • Bảng bổ sung (`08_admin.sql`). Danh bạ nhà cung cấp nguyên liệu.
+
+| Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
+|---|---|---|
+| SupplierID<br>int IDENTITY(1,1) | Bắt buộc<br>PK<br>Tự tăng từ 1 | Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.<br>Nguồn: SQL Server sinh khi tạo bản ghi.<br>Ví dụ: 1 |
+| Code<br>varchar(30) | Bắt buộc<br>UNIQUE | Mã nhà cung cấp dạng chữ.<br>Nguồn: Chủ cửa hàng / quản lý nhập trên web.<br>Ví dụ: NCC-CF01 |
+| Name<br>nvarchar(150) | Bắt buộc | Tên nhà cung cấp.<br>Ví dụ: Cà phê Buôn Ma Thuột |
+| Phone<br>varchar(20) | Được trống | Số điện thoại liên hệ.<br>Ví dụ: 0281234567 |
+| Email<br>nvarchar(254) | Được trống | Email liên hệ.<br>Ví dụ: sales@ncc.test |
+| ProductGroup<br>nvarchar(150) | Được trống | Nhóm hàng cung cấp.<br>Ví dụ: Cà phê hạt |
+| IsActive<br>bit | Bắt buộc<br>Mặc định: 1 | Còn hợp tác (1) / ngừng (0); không xóa để giữ lịch sử phiếu nhập.<br>Ví dụ: 1 |
+- UNIQUE (Code)
+
+## 42. Ingredients
+Kho nguyên liệu • Bảng bổ sung (`14_inventory.sql`). Nguyên liệu và tồn kho hiện tại.
+
+| Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
+|---|---|---|
+| IngredientID<br>int IDENTITY(1,1) | Bắt buộc<br>PK<br>Tự tăng từ 1 | Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.<br>Nguồn: SQL Server sinh khi tạo bản ghi.<br>Ví dụ: 1 |
+| SupplierID<br>int | Được trống<br>FK → Suppliers.<br>SupplierID | Nhà cung cấp chính của nguyên liệu.<br>Ví dụ: 1 |
+| Code<br>varchar(30) | Bắt buộc<br>UNIQUE | Mã nguyên liệu.<br>Ví dụ: NL-CF01 |
+| Name<br>nvarchar(150) | Bắt buộc | Tên nguyên liệu.<br>Ví dụ: Cà phê hạt Robusta |
+| Unit<br>nvarchar(20) | Bắt buộc | Đơn vị tính.<br>Ví dụ: kg |
+| Quantity<br>decimal(18,3) | Bắt buộc<br>Mặc định: 0<br>CHECK ≥ 0 | Tồn kho hiện tại; chỉ thay đổi qua phiếu kho.<br>Nguồn: Thủ tục / trigger kho cập nhật.<br>Ví dụ: 12.500 |
+| MinStock<br>decimal(18,3) | Bắt buộc<br>Mặc định: 0<br>CHECK ≥ 0 | Mức tồn tối thiểu; dưới mức này web cảnh báo "Sắp hết".<br>Ví dụ: 2.000 |
+| LastUnitCost<br>decimal(18,2) | Được trống<br>CHECK ≥ 0 | Đơn giá của lần nhập gần nhất.<br>Ví dụ: 180000 |
+| IsActive<br>bit | Bắt buộc<br>Mặc định: 1 | Đang dùng (1) / ngừng dùng (0).<br>Ví dụ: 1 |
+| StockUpdatedAt<br>datetime2(3) | Được trống | Thời điểm UTC tồn kho thay đổi gần nhất.<br>Ví dụ: 2026-11-15T03:00:00Z |
+| CreatedAt<br>datetime2(3) | Bắt buộc<br>Mặc định: SYSUTCDATETIME() | Thời điểm UTC tạo nguyên liệu.<br>Ví dụ: 2026-11-09T03:00:00Z |
+- UNIQUE (Code)
+- CHECK Quantity >= 0, MinStock >= 0, LastUnitCost IS NULL OR LastUnitCost >= 0
+
+## 43. InventoryTransactions
+Kho nguyên liệu • Bảng bổ sung (`14_inventory.sql`). Phiếu nhập / xuất / hủy / kiểm kê; chỉ thêm, trigger chặn sửa và xóa.
+
+| Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
+|---|---|---|
+| TransactionID<br>int IDENTITY(1,1) | Bắt buộc<br>PK<br>Tự tăng từ 1 | Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.<br>Nguồn: SQL Server sinh khi tạo bản ghi.<br>Ví dụ: 1 |
+| IngredientID<br>int | Bắt buộc<br>FK → Ingredients.<br>IngredientID | Nguyên liệu của phiếu.<br>Ví dụ: 1 |
+| SupplierID<br>int | Được trống<br>FK → Suppliers.<br>SupplierID | Nhà cung cấp; chỉ có ở phiếu nhập.<br>Ví dụ: 1 |
+| ActorID<br>int | Được trống<br>FK → Users.<br>UserID | Người lập phiếu; trống khi hệ thống tự trừ kho lúc đơn hoàn tất.<br>Ví dụ: 2 |
+| Kind<br>varchar(10) | Bắt buộc<br>CHECK Import / Export / Waste / Adjust | Loại phiếu: nhập, xuất dùng, hủy, kiểm kê.<br>Ví dụ: Import |
+| QuantityChange<br>decimal(18,3) | Bắt buộc | Lượng thay đổi: nhập > 0, xuất / hủy < 0, kiểm kê ±.<br>Ví dụ: 5.000 |
+| BalanceAfter<br>decimal(18,3) | Bắt buộc<br>CHECK ≥ 0 | Tồn kho sau phiếu, để đối chiếu lịch sử.<br>Ví dụ: 17.500 |
+| UnitCost<br>decimal(18,2) | Được trống<br>CHECK ≥ 0 | Đơn giá; chỉ có ở phiếu nhập.<br>Ví dụ: 180000 |
+| TotalCost<br>(cột tính) | SQL tự tính | = |QuantityChange| × UnitCost khi Kind = Import, còn lại NULL.<br>Ví dụ: 900000 |
+| Note<br>nvarchar(300) | Được trống | Ghi chú phiếu.<br>Ví dụ: Xuất dùng cho đơn MB261115-0003 |
+| CreatedAt<br>datetime2(3) | Bắt buộc<br>Mặc định: SYSUTCDATETIME() | Thời điểm UTC lập phiếu.<br>Ví dụ: 2026-11-15T03:00:00Z |
+- CHECK Kind IN ('Import','Export','Waste','Adjust')
+- CHECK BalanceAfter >= 0; Import thì QuantityChange > 0; Export/Waste thì QuantityChange < 0
+
+## 44. RecipeItems
+Kho nguyên liệu • Bảng bổ sung (`15_web_admin.sql`). Định mức nguyên liệu cho từng size món; trigger `TR_Orders_Inventory` dùng để tự trừ kho khi đơn hoàn tất.
+
+| Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
+|---|---|---|
+| VariantID<br>int | Bắt buộc<br>PK<br>FK → ProductVariants.<br>VariantID | Size của món.<br>Ví dụ: 3 |
+| IngredientID<br>int | Bắt buộc<br>PK<br>FK → Ingredients.<br>IngredientID | Nguyên liệu dùng.<br>Ví dụ: 1 |
+| Quantity<br>decimal(18,3) | Bắt buộc<br>CHECK > 0 | Lượng dùng cho 1 phần, theo đơn vị của nguyên liệu.<br>Ví dụ: 0.020 |
+- PRIMARY KEY (VariantID, IngredientID)
+- INDEX IX_RecipeItems_22 (IngredientID)
+
+## 45. MemberTiers
+Tích điểm, ưu đãi • Bảng bổ sung (`17_member_tiers.sql`). Hạng thành viên theo chi tiêu 12 tháng; hạng của từng khách tính bằng view `CustomerTiers`, không lưu cứng.
+
+| Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
+|---|---|---|
+| TierID<br>int IDENTITY(1,1) | Bắt buộc<br>PK<br>Tự tăng từ 1 | Định danh ổn định để liên kết bản ghi; không dùng tên có thể thay đổi làm khóa.<br>Nguồn: SQL Server sinh khi tạo bản ghi.<br>Ví dụ: 1 |
+| Code<br>varchar(20) | Bắt buộc<br>UNIQUE | Mã hạng cố định, dùng để lọc.<br>Ví dụ: Silver |
+| Name<br>nvarchar(50) | Bắt buộc<br>UNIQUE | Tên hạng hiển thị trên web và app.<br>Ví dụ: Bạc |
+| MinSpent<br>decimal(18,2) | Bắt buộc<br>UNIQUE<br>CHECK ≥ 0 | Chi tiêu 12 tháng tối thiểu (đơn hoàn tất, đã trừ tiền hoàn) để đạt hạng; hạng 0đ là mặc định.<br>Ví dụ: 1000000 |
+| Benefit<br>nvarchar(300) | Được trống | Mô tả quyền lợi của hạng.<br>Ví dụ: Ưu tiên nhận voucher riêng hạng Bạc. |
+| CreatedAt<br>datetime2(3) | Bắt buộc<br>Mặc định: SYSUTCDATETIME() | Thời điểm UTC tạo hạng.<br>Ví dụ: 2026-11-15T03:00:00Z |
+- UNIQUE (Code), UNIQUE (Name), UNIQUE (MinSpent)
+- CHECK MinSpent >= 0

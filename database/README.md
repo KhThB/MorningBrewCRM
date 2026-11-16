@@ -18,8 +18,6 @@ Thành công khi tab Messages có `=== HOÀN TẤT ...` và bảng kiểm tra c�
 đọc dòng lỗi đỏ đầu tiên. Đóng API, web Admin, app, POS trước khi nâng cấp. Tên database khác: Find and Replace `MorningBrewCRM_Crm`
 trong file và sửa `ConnectionStrings:MorningBrew` của API.
 
-Cách khác (PowerShell + `sqlcmd`): `./database/tools/Apply.ps1` chạy chính file fullscript ở trên. Mặc định tạo mới `MorningBrewCRM_Crm` (file MDF/LDF trong `database/.local`); `-Database <tên>` đổi tên, `-NoSeed` bỏ dữ liệu mẫu, `-Upgrade` nâng cấp database đang dùng (tự sao lưu rồi chạy 08–17).
-
 Chạy lẻ một script trong SSMS: nhớ chọn đúng database `MorningBrewCRM_Crm` ở ô database (không để `master`). `14_inventory.sql`, `15_web_admin.sql`, `16_crm.sql`, `17_member_tiers.sql` tự dừng
 nếu đang chọn nhầm database.
 
@@ -64,11 +62,15 @@ Cửa hàng mẫu mở 00:00–23:59:59 nên đặt hàng demo không phụ thu�
 
 - `51100` sai nghiệp vụ, `51103` không có quyền, `51109` yêu cầu trùng / xung đột; trigger dùng `51001`. API dịch sang thông báo tiếng Việt.
 - `ActorID` luôn lấy từ người dùng đã đăng nhập ở API, không lấy từ dữ liệu client gửi lên.
-- Chạy bằng `sqlcmd` thì dùng `-I -b -f 65001` (quoted identifier, dừng khi lỗi, đọc UTF-8).
+- Các file SQL lưu UTF-8; mở bằng SSMS để giữ đúng tiếng Việt.
 
 ## Tài liệu thiết kế
 
-- [Phân tích nghiệp vụ](docs/architecture.md), [từ điển dữ liệu](docs/data-dictionary.md), Word thiết kế database trong `docs/`.
+- [Từ điển dữ liệu](docs/data-dictionary.md) (đủ 45 bảng), Word thiết kế database trong `docs/`. Phân tích nghiệp vụ chi tiết nằm trong báo cáo đồ án.
 - ERD: `docs/MorningBrewCRM.drawio`, `docs/MorningBrewCRM.mmd`, ảnh `docs/erd-*.png`; sơ đồ UML hệ thống ở `docs/diagrams/`.
-- Từ điển dữ liệu và ERD sinh từ `tools/schema.py` / `tools/document.py` cho 40 bảng lõi của `01_schema.sql` (nhà cung cấp ở `08_admin.sql`); 2 bảng kho và bảng định mức mô tả trực tiếp trong `14_inventory.sql`, `15_web_admin.sql`.
+- Phần đầu từ điển dữ liệu và ERD sinh từ `tools/schema.py` / `tools/document.py` cho 40 bảng lõi của `01_schema.sql`; 5 bảng bổ sung sau (`Suppliers` ở 08, `Ingredients`, `InventoryTransactions` ở 14, `RecipeItems` ở 15, `MemberTiers` ở 17) được mô tả ở cuối từ điển dữ liệu.
+
+## Kiểm thử
+
+- `tests/test_15_web_admin.sql`, `tests/test_16_crm.sql`, `tests/test_17_member_tiers.sql`: chạy trong SSMS trên database `MorningBrewCRM_Crm` sau khi chạy fullscript; mỗi kiểm tra in PASS/FAIL, mọi dữ liệu thử được ROLLBACK.
 - `tests/verify.py` là bộ kiểm thử SQL cũ (viết cho dữ liệu nhiều chi nhánh), chỉ chạy trên database kiểm thử riêng có chữ `Verify` trong tên.

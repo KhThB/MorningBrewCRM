@@ -51,7 +51,7 @@ Ví dụ đã rút gọn các trường. Trang tiếp theo giữ nguyên `q`, th
 
 Token được mã hóa và xác thực bằng ASP.NET Data Protection, hết hạn sau 2 giờ, gắn với tài khoản/tài nguyên/bộ lọc. Mỗi trang vẫn kiểm tra quyền từ SQL. Dùng keyset theo khóa duy nhất nên thêm bản ghi mới ở đầu danh sách không làm lặp bản ghi trang sau. Đây không phải ảnh chụp bất biến: thay đổi quyền, dữ liệu hoặc bộ lọc vẫn ảnh hưởng kết quả.
 
-Áp dụng cho danh sách quản trị, lịch sử điểm/voucher/phản hồi/khảo sát/sở thích và kết quả khảo sát. Báo cáo doanh thu trả cùng envelope nhưng không phân trang, vì là dữ liệu tổng hợp theo chi nhánh. `lookups/options` là dữ liệu hỗ trợ chọn trong form, không phải endpoint xuất toàn bộ dữ liệu; danh sách khách ở đó giới hạn 200.
+Áp dụng cho danh sách quản trị, lịch sử điểm/voucher/phản hồi/khảo sát/sở thích và kết quả khảo sát. Báo cáo doanh thu trả cùng envelope nhưng không phân trang, vì là dữ liệu tổng hợp của cửa hàng. `lookups/options` là dữ liệu hỗ trợ chọn trong form, không phải endpoint xuất toàn bộ dữ liệu; danh sách khách ở đó giới hạn 200.
 
 ## Endpoint chính
 
@@ -136,22 +136,10 @@ Lỗi validation, JSON sai, xác thực, routing và rate limit dùng cùng enve
 
 ## Nâng cấp database đã có
 
-Chạy `database/sql_ssms/morningbrew_fullscript.sql` trong SSMS: file tự sao lưu rồi áp dụng `08`–`15`. Giá dùng chung (`09`) lấy `ProductVariants.BasePrice` và `ModifierOptions.ExtraPrice`; **không sửa giá snapshot trên đơn hàng đã tạo.**
+Chạy `database/sql_ssms/morningbrew_fullscript.sql` trong SSMS: file tự sao lưu rồi áp dụng `08`–`17`. Giá dùng chung (`09`) lấy `ProductVariants.BasePrice` và `ModifierOptions.ExtraPrice`; **không sửa giá snapshot trên đơn hàng đã tạo.**
 
 ## Cấu hình và kiểm thử
 
 - Browser frontend khác origin: cấu hình danh sách chính xác ở `Cors:AllowedOrigins`; mặc định không cho phép CORS. Admin hiện gọi API từ server nên không cần bật CORS.
 - Giữ Data Protection keys ổn định khi triển khai; nhiều instance phải dùng chung keys/application name. Mất keys làm token phân trang cũ hết hiệu lực.
-- Chạy test trên hai database mới riêng biệt vì bộ SQL và bộ API đều thay đổi dữ liệu demo:
-
-```powershell
-dotnet build MorningBrewCRM.slnx
-./database/tools/Apply.ps1 -Database MorningBrewCRM_VerifyV1
-python database/tests/verify.py --database MorningBrewCRM_VerifyV1
-./database/tools/Apply.ps1 -Database MorningBrewCRM_TestApiV1
-python tests/integration.py --database MorningBrewCRM_TestApiV1
-```
-
-Các kiểm tra gồm phân quyền, CSRF, lưu phiên, mã HTTP, JSON lỗi, phân trang có chèn mới và khóa ghép, PATCH đồng thời, giá chung, Swagger, CORS và rate limit.
-
-`tests/integration.py` và `database/tests/verify.py` viết cho dữ liệu nhiều chi nhánh của bản trước; chỉ chạy trên database kiểm thử riêng.
+- Kiểm thử: build `dotnet build MorningBrewCRM.slnx`, chạy fullscript trong SSMS, rồi chạy `database/tests/test_15_web_admin.sql`, `test_16_crm.sql`, `test_17_member_tiers.sql` (in PASS/FAIL, tự ROLLBACK). Kiểm thử giao diện và API theo `docs/TestCases_WebAdmin_CRM_15-11.xlsx`; thử nhanh từng endpoint bằng `MorningBrew.Api/MorningBrew.Api.http` hoặc `/swagger`.

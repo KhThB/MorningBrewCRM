@@ -1,0 +1,62 @@
+@page "/order-type"
+@inject ShopService Shop
+@inject NavigationManager Nav
+
+@* [APP-15] Trang riêng để chọn hình thức nhận hàng (thay cho bảng nổi trong Thực đơn).
+   Trước đây bảng nổi bấm ra ngoài là tự chọn "Nhận tại quầy"; nay khách phải bấm chọn rõ ràng,
+   bấm "Quay lại" thì về trang trước và KHÔNG ghi nhận lựa chọn nào. *@
+<PageHeader Title="Hình thức nhận hàng" BackTo="@BackUrl" />
+
+<div class="page-body order-type">
+    <h2>Bạn muốn nhận món thế nào?</h2>
+    <p class="muted">Có thể đổi lại bất cứ lúc nào ở đầu trang Thực đơn hoặc trong giỏ hàng.</p>
+
+    <div class="store-line"><Icon Name="store" Size="18" /><span>@Shop.CurrentBranch.Name</span></div>
+
+    @if (!Shop.CurrentBranch.AcceptingOrders)
+    {
+        <div class="alert">Cửa hàng đang tạm ngưng nhận đơn. Bạn vẫn có thể xem thực đơn.</div>
+    }
+
+    <button class="fulfil-option big @(Shop.PreferredFulfillment == "Pickup" ? "active" : "")" disabled="@(!Shop.CurrentBranch.PickupEnabled)" @onclick='() => Choose("Pickup")'>
+        <span class="quick-icon"><Icon Name="bag" Size="28" /></span>
+        <span><b>Nhận tại quầy</b>
+            <small>@(Shop.CurrentBranch.PickupEnabled ? $"Đặt trước, đến lấy tại {Shop.CurrentBranch.Address}" : "Cửa hàng tạm ngưng nhận tại quầy")</small></span>
+        <Icon Name="next" Size="18" />
+    </button>
+
+    <button class="fulfil-option big @(Shop.PreferredFulfillment == "Delivery" ? "active" : "")" disabled="@(!Shop.CurrentBranch.DeliveryEnabled)" @onclick='() => Choose("Delivery")'>
+        <span class="quick-icon"><Icon Name="truck" Size="28" /></span>
+        <span><b>Giao hàng tận nơi</b>
+            <small>@(Shop.CurrentBranch.DeliveryEnabled ? $"Phí giao {Fmt.Money(Shop.CurrentBranch.DeliveryFee)} · nhập địa chỉ ở giỏ hàng" : "Cửa hàng tạm ngưng giao hàng")</small></span>
+        <Icon Name="next" Size="18" />
+    </button>
+
+    @if (!Shop.CurrentBranch.PickupEnabled && !Shop.CurrentBranch.DeliveryEnabled)
+    {
+        <div class="alert">Cửa hàng đang tạm ngưng cả hai hình thức nhận hàng.</div>
+    }
+</div>
+
+@code {
+    // ?next=/menu|/cart : trang mở tiếp sau khi chọn; ?product=… : món cần mở ngay ở Thực đơn (từ Yêu thích).
+    [SupplyParameterFromQuery] public string? Next { get; set; }
+    [SupplyParameterFromQuery] public int? Product { get; set; }
+
+    // Chỉ cho quay về các trang trong app (chặn chuyển hướng ra ngoài).
+    private string Target => Next is "/cart" ? "/cart" : "/menu";
+    // Quay lại: đã có lựa chọn (đang "Đổi") thì về trang gọi; chưa chọn thì về Trang chủ (không tự chọn hộ khách).
+    private string BackUrl => Shop.PreferredFulfillment is null ? "/" : Target;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { await Shop.GetMenuAsync(); } catch (ApiException) { } // lấy thông tin cửa hàng (phí giao, hình thức đang mở)
+    }
+
+    private void Choose(string value)
+    {
+        Shop.PreferredFulfillment = value;
+        var url = Target == "/menu" && Product is { } pid ? $"/menu?product={pid}" : Target;
+        Nav.NavigateTo(url, replace: true); // replace: bấm Back ở Thực đơn không quay lại trang chọn
+    }
+}

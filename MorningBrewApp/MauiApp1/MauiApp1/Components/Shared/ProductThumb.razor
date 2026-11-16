@@ -1,0 +1,49 @@
+@* Bundled photos work offline. Unknown products and failed images retain a category illustration. *@
+<div class="thumb thumb-@Kind @(Large ? "thumb-lg" : "")">
+    @if (source is not null)
+    {
+        <img @key="source" src="@source" alt="@ProductName" loading="lazy" decoding="async" @onerror="ImageFailed" />
+    }
+    else if (Kind == "cake")
+    {
+        <svg viewBox="0 0 64 64"><path d="M14 40h36v12H14z" fill="var(--thumb-a)" /><path d="M14 30h36v10H14z" fill="var(--thumb-b)" />
+            <path d="M14 30c4-6 32-6 36 0" fill="var(--thumb-c)" /><circle cx="32" cy="22" r="4" fill="#c2410c" /></svg>
+    }
+    else
+    {
+        <svg viewBox="0 0 64 64"><path d="M18 18h28l-3 34a4 4 0 0 1-4 4H25a4 4 0 0 1-4-4z" fill="var(--thumb-b)" />
+            <path d="M19.5 30h25l-2 22a4 4 0 0 1-4 4H25.5a4 4 0 0 1-4-4z" fill="var(--thumb-a)" />
+            <path d="M16 14h32v5H16z" fill="var(--thumb-c)" /><path d="M36 14l4-9" stroke="var(--thumb-c)" stroke-width="3" stroke-linecap="round" /></svg>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Category { get; set; }
+    [Parameter] public bool Large { get; set; }
+    [Parameter] public string? ProductName { get; set; }
+    [Parameter] public string? ImageUrl { get; set; }
+    private string? source;
+    private string? previousSource;
+    private string? previousName;
+    private string? LocalSource => ProductPhotos.ForName(ProductName);
+    protected override void OnParametersSet()
+    {
+        // [UI2-IMG] Ảnh tải lên từ Admin nằm ở API (/uploads/products/...) → ghép địa chỉ API; ưu tiên hơn ảnh có sẵn trong app.
+        var candidate = string.IsNullOrWhiteSpace(ImageUrl) ? LocalSource
+            : ImageUrl.StartsWith("/uploads/") ? ApiSettings.BaseUrl.TrimEnd('/') + ImageUrl : ImageUrl;
+        if (candidate != previousSource || ProductName != previousName)
+        {
+            source = candidate;
+            previousSource = candidate;
+            previousName = ProductName;
+        }
+    }
+    private void ImageFailed() => source = source != LocalSource ? LocalSource : null;
+
+    private string Kind => Category switch
+    {
+        "Trà" => "tea",
+        "Bánh" => "cake",
+        _ => "coffee"
+    };
+}

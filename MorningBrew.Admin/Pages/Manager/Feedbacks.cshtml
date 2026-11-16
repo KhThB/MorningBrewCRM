@@ -1,0 +1,41 @@
+@page
+@model FeedbacksModel
+@{
+    ViewData["Title"]=Model.Title;
+    string Short(string s)=>s.Length>90?s[..90]+"…":s;
+    // [UI-02] Phản hồi chưa giải quyết: nút "Trả lời"; đã giải quyết: chỉ xem (khóa theo BUG-09).
+    Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
+        @if(item["status"].ToString()!="Resolved"){
+            <button type="button" class="btn-sm" data-open="m-reply" data-fill="@(JsonSerializer.Serialize(new{id=item["feedback_id"].ToString(),full_name=item["full_name"].ToString(),content=item["content"].ToString(),response=ReportView.Text(item,"response_content")}))">Trả lời</button>
+        } else {<span class="muted" style="font-size:12px">Đã đóng</span>}
+    </div>;
+    string Link(string? status)=>$"?status={status}&q={Uri.EscapeDataString(Model.Q??"")}";
+}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel">
+    @* [UI-03] Bộ lọc dạng tab theo trạng thái + ô tìm kiếm *@
+    <div class="tabs-filter">
+        @foreach(var (code,name) in new[]{("","Tất cả"),("New","Mới"),("Processing","Đang xử lý"),("Resolved","Đã giải quyết")})
+        {<a href="@Link(code)" class="@((Model.Status??"")==code?"current":null)">@name</a>}
+    </div>
+    <div class="list-toolbar"><form method="get"><input type="hidden" name="status" value="@Model.Status"><input name="q" type="search" value="@Model.Q" placeholder="Tìm theo nội dung hoặc tên khách" aria-label="Tìm phản hồi"><button class="secondary">Tìm</button>@if(!string.IsNullOrEmpty(Model.Q)){<a class="btn-sm" href="?status=@Model.Status">Bỏ lọc</a>}</form></div>
+    <p class="list-count">@Model.Rows.Count phản hồi · bấm vào một dòng để xem đầy đủ nội dung và câu trả lời</p>
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,RowDetail=true,DetailTitle="Chi tiết phản hồi",Hide=new HashSet<string>{"response_content"},
+        Format=(k,r)=>k=="content"?Short(r[k].ToString()):k=="rating"&&r[k].ValueKind==JsonValueKind.Number?new string('★',r[k].GetInt32())+new string('☆',5-r[k].GetInt32()):null})" />
+    <partial name="_Pager" model="Model" />
+</section>
+
+@* [UI-01] Trả lời phản hồi: hai nút thay cho ô chọn trạng thái (dễ quên đổi sang "Đã giải quyết") *@
+<dialog class="modal" id="m-reply"><form method="post">
+    <input type="hidden" name="operation" value="feedback"><input type="hidden" name="modal" value="m-reply"><input type="hidden" name="id">
+    <header><h2>Trả lời phản hồi</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <p class="muted" style="margin-bottom:4px">Khách <b data-text="full_name"></b> viết:</p>
+        <blockquote class="quote" data-text="content"></blockquote>
+        <label>Nội dung trả lời *</label><textarea name="response" maxlength="4000" rows="5" required></textarea>
+        <p class="muted">“Trả lời &amp; đóng” chuyển phản hồi sang <b>Đã giải quyết</b> và khóa lại, không sửa được nữa. “Trả lời, vẫn xử lý” giữ trạng thái <b>Đang xử lý</b> để trả lời tiếp sau.</p>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button>
+        <button class="secondary" name="status" value="Processing">Trả lời, vẫn xử lý</button>
+        <button class="primary" name="status" value="Resolved">Trả lời &amp; đóng</button></footer>
+</form></dialog>

@@ -1,0 +1,157 @@
+@page "/surveys/{Id:int}"
+@inject CrmService Crm
+@inject ToastService Toasts
+@inject NavigationManager Nav
+
+<PageHeader Title="Khảo sát" BackTo="/account/surveys" />
+
+@if (done)
+{
+    <div class="page-body thanks">
+        <div class="thanks-icon"><Icon Name="check" Size="44" /></div>
+        <h2>Cảm ơn bạn!</h2>
+        <p class="muted">Câu trả lời của bạn giúp Morning Brew cải thiện sản phẩm và dịch vụ.</p>
+        <a class="btn btn-primary" href="/account/surveys">Về danh sách khảo sát</a>
+        <a class="btn btn-ghost" href="/">Về trang chủ</a>
+    </div>
+}
+else
+{
+    <div class="page-body with-footer">
+        <StateView Loading="loading" Error="@error" OnRetry="Load">
+            @if (info is not null)
+            {
+                <div class="survey-intro">
+                    <h2>@info.Title</h2>
+                    @if (!string.IsNullOrWhiteSpace(info.Description)) { <p class="muted">@info.Description</p> }
+                    <small class="muted">Hạn chót @Fmt.Date(info.EndsAt) · @detail!.Questions.Count câu hỏi</small>
+                </div>
+            }
+            @if (detail is not null)
+            {
+                <div class="progress thin"><i style="width:@(Progress)%"></i></div>
+                @for (var index = 0; index < detail.Questions.Count; index++)
+                {
+                    var q = detail.Questions[index];
+                    var number = index + 1;
+                    <div class="card question @(missing.Contains(q.QuestionId) ? "missing" : "")">
+                        <p class="q-title"><span class="q-num">@number</span>@q.Text @if (q.IsRequired){<b class="req">*</b>}</p>
+                        @switch (q.Type)
+                        {
+                            case "Rating":
+                                <StarRating Min="@(q.RatingMin ?? 1)" Max="@(q.RatingMax ?? 5)" Value="Rating(q.QuestionId)"
+                                            ValueChanged="(int? v) => SetRating(q.QuestionId, v)" />
+                                break;
+                            case "SingleChoice":
+                                <div class="options">
+                                    @foreach (var o in OptionsOf(q))
+                                    {
+                                        <button type="button" class="option @(IsPicked(q, o) ? "on" : "")" @onclick="() => Pick(q, o, single: true)">
+                                            <i class="radio"></i>@o.Text
+                                        </button>
+                                    }
+                                </div>
+                                break;
+                            case "MultipleChoice":
+                                <small class="muted">Có thể chọn nhiều đáp án</small>
+                                <div class="options">
+                                    @foreach (var o in OptionsOf(q))
+                                    {
+                                        <button type="button" class="option @(IsPicked(q, o) ? "on" : "")" @onclick="() => Pick(q, o, single: false)">
+                                            <i class="checkbox"></i>@o.Text
+                                        </button>
+                                    }
+                                </div>
+                                break;
+                            default:
+                                <textarea class="input" rows="3" maxlength="4000" placeholder="Nhập câu trả lời..."
+                                          value="@Text(q.QuestionId)" @oninput="e => SetText(q.QuestionId, e.Value?.ToString())"></textarea>
+                                break;
+                        }
+                    </div>
+                }
+            }
+        </StateView>
+    </div>
+
+    @if (detail is not null)
+    {
+        <div class="footer-bar">
+            <button class="btn btn-primary block" @onclick="Submit" disabled="@busy">@(busy ? "Đang gửi..." : "Gửi câu trả lời")</button>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private SurveyItem? info;
+    private SurveyDetail? detail;
+    private readonly Dictionary<int, int?> ratings = [];
+    private readonly Dictionary<int, string?> texts = [];
+    private readonly Dictionary<int, HashSet<int>> picks = [];
+    private HashSet<int> missing = [];
+    private bool loading = true, busy, done;
+    private string? error;
+
+    private int Progress => detail is null || detail.Questions.Count == 0 ? 0
+        : detail.Questions.Count(IsAnswered) * 100 / detail.Questions.Count;
+
+    protected override Task OnParametersSetAsync() => Load();
+
+    private async Task Load()
+    {
+        loading = true; error = null;
+        try
+        {
+            info = (await Crm.GetSurveysAsync()).FirstOrDefault(s => s.SurveyId == Id);
+            if (info is { IsDone: true }) { error = "Bạn đã hoàn thành khảo sát này. Cảm ơn bạn!"; }
+            else if (info is { IsUpcoming: true }) { error = $"Khảo sát chưa mở. Bạn có thể trả lời từ {Fmt.Date(info.StartsAt)}."; } // [BUG-08]
+            else if (info is { IsExpired: true }) { error = "Khảo sát đã đóng hoặc hết hạn."; }
+            else detail = await Crm.GetSurveyAsync(Id);
+        }
+        catch (ApiException e) { error = e.Status == 403 ? "Bạn không được mời tham gia khảo sát này." : e.Message; }
+        loading = false;
+    }
+
+    private IEnumerable<SurveyOption> OptionsOf(SurveyQuestion q) => detail!.Options.Where(o => o.QuestionId == q.QuestionId);
+    private int? Rating(int id) => ratings.GetValueOrDefault(id);
+    private string? Text(int id) => texts.GetValueOrDefault(id);
+    private bool IsPicked(SurveyQuestion q, SurveyOption o) => picks.TryGetValue(q.QuestionId, out var s) && s.Contains(o.OptionId);
+
+    private void SetRating(int id, int? v) { ratings[id] = v; missing.Remove(id); }
+    private void SetText(int id, string? v) { texts[id] = v; missing.Remove(id); }
+
+    private void Pick(SurveyQuestion q, SurveyOption o, bool single)
+    {
+        if (!picks.TryGetValue(q.QuestionId, out var set)) picks[q.QuestionId] = set = [];
+        if (single) { set.Clear(); set.Add(o.OptionId); }
+        else if (!set.Add(o.OptionId)) set.Remove(o.OptionId);
+        missing.Remove(q.QuestionId);
+    }
+
+    private bool IsAnswered(SurveyQuestion q) => q.Type switch
+    {
+        "Rating" => ratings.GetValueOrDefault(q.QuestionId) is not null,
+        "SingleChoice" or "MultipleChoice" => picks.TryGetValue(q.QuestionId, out var s) && s.Count > 0,
+        _ => !string.IsNullOrWhiteSpace(texts.GetValueOrDefault(q.QuestionId))
+    };
+
+    private async Task Submit()
+    {
+        missing = detail!.Questions.Where(q => q.IsRequired && !IsAnswered(q)).Select(q => q.QuestionId).ToHashSet();
+        if (missing.Count > 0) { Toasts.Show($"Còn {missing.Count} câu bắt buộc chưa trả lời.", true); return; }
+
+        // Gửi toàn bộ form một lần; câu không bắt buộc bỏ trống thì không gửi.
+        var answers = detail.Questions.Where(IsAnswered).Select(q => q.Type switch
+        {
+            "Rating" => new CrmService.Answer(q.QuestionId, null, ratings[q.QuestionId], null),
+            "SingleChoice" or "MultipleChoice" => new CrmService.Answer(q.QuestionId, null, null, picks[q.QuestionId].ToArray()),
+            _ => new CrmService.Answer(q.QuestionId, texts[q.QuestionId]!.Trim(), null, null)
+        }).ToList();
+
+        busy = true;
+        try { await Crm.SubmitSurveyAsync(Id, answers); done = true; }
+        catch (ApiException e) { Toasts.Error(e); }
+        busy = false;
+    }
+}

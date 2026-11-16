@@ -1,0 +1,13 @@
+@page
+@model LoginModel
+@{ Layout=null; }
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Đăng nhập @Model.Portal.Title · Morning Brew</title><link rel="stylesheet" href="/css/site.css"></head>
+<body class="login-bg"><main class="login-card">
+<div class="brand big">Morning<span>Brew</span></div><h1>Đăng nhập @Model.Portal.Title</h1>
+@* [SEP-04] Mỗi cổng là một giao diện riêng *@
+<p class="muted">@(Model.Portal==Portals.Admin ? "Quản trị hệ thống: tài khoản, phân quyền, nhật ký, sao lưu. Chỉ dành cho chủ cửa hàng." : "Quản lý khách hàng (CRM): đơn hàng, khách hàng, phản hồi, khảo sát, ưu đãi, báo cáo. Dành cho chủ cửa hàng và quản lý.")</p>
+<div asp-validation-summary="All" class="alert"></div>
+<form method="post"><label asp-for="Email">Email</label><input asp-for="Email" type="email" autocomplete="username" required>
+<label asp-for="Password">Mật khẩu</label><input asp-for="Password" type="password" autocomplete="current-password" required>
+<button class="primary full">Đăng nhập</button></form>
+<p class="muted" style="margin-top:14px">Giao diện còn lại: <a href="@(Portals.Other(Model.Portal).BaseUrl + "/Login")">@(Portals.Other(Model.Portal).Title)</a> (đăng nhập riêng). Khách hàng sử dụng ứng dụng Morning Brew.</p></main></body></html>

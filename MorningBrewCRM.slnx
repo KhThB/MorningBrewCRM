@@ -1,1 +1,6 @@
-<Solution><Project Path="Admin_MC/CRMManagementWeb.csproj" /><Project Path="MorningBrew.Api/MorningBrew.Api.csproj" /><Project Path="MorningBrew.Pos/MorningBrew.Pos.csproj" /></Solution>
+<Solution>
+  <Project Path="MorningBrew.Admin/MorningBrew.Admin.csproj" />
+  <Project Path="MorningBrew.Api/MorningBrew.Api.csproj" />
+  <Project Path="MorningBrewApp/MauiApp1/MauiApp1/MorningBrewwApp.csproj" />
+  <Project Path="MorningBrewPos/MorningBrewPos.csproj" />
+</Solution>

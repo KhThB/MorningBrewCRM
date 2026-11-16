@@ -1,0 +1,79 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject AuthService Auth
+@inject ShopService Shop
+@inject CrmService Crm
+@inject NavigationManager Nav
+
+<div class="app-frame">
+    @if (!ready)
+    {
+        <div class="splash"><div class="logo-word">Morning<span>Brew</span></div><div class="spinner light"></div></div>
+    }
+    else
+    {
+        <main class="app-content @(Shop.CartCount > 0 && ShowCartBar ? "has-cart" : "")">@Body</main>
+
+        @if (Shop.CartCount > 0 && ShowCartBar)
+        {
+            <a class="cart-bar" href="/cart">
+                <span class="cart-count">@Shop.CartCount</span>
+                <span>Xem giỏ hàng</span>
+                <b>@Fmt.Money(Shop.CartSubtotal)</b>
+            </a>
+        }
+
+        <nav class="tabbar" aria-label="Điều hướng chính">
+            <NavLink href="/" Match="NavLinkMatch.All" class="tab"><Icon Name="home" /><span>Trang chủ</span></NavLink>
+            <NavLink href="/menu" class="tab"><Icon Name="cup" /><span>Thực đơn</span></NavLink>
+            <NavLink href="/orders" class="tab"><Icon Name="receipt" /><span>Đơn hàng</span></NavLink>
+            <NavLink href="/rewards" class="tab"><Icon Name="gift" /><span>Ưu đãi</span></NavLink>
+            <NavLink href="/account" class="tab">
+                <span class="tab-icon"><Icon Name="user" />@if (Crm.PendingSurveys > 0){<i class="dot"></i>}</span><span>Tài khoản</span>
+            </NavLink>
+        </nav>
+    }
+    <Toast />
+</div>
+
+@code {
+    private bool ready;
+
+    // Thanh giỏ hàng chỉ hiện ở trang chủ và thực đơn.
+    private bool ShowCartBar
+    {
+        get
+        {
+            var path = "/" + Nav.ToBaseRelativePath(Nav.Uri).Split('?')[0];
+            return path is "/" or "/menu";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Shop.Changed += Refresh;
+        Crm.Changed += Refresh;
+        Auth.Changed += OnAuthChanged;
+        Nav.LocationChanged += OnLocationChanged;
+        await Auth.EnsureLoadedAsync();
+        if (!Auth.IsLoggedIn) { Nav.NavigateTo("/login", replace: true); return; }
+        ready = true;
+        try { await Crm.GetSurveysAsync(); } catch (ApiException) { }
+    }
+
+    private void OnAuthChanged()
+    {
+        if (!Auth.IsLoggedIn) InvokeAsync(() => Nav.NavigateTo("/login", replace: true));
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) => Refresh();
+    private void Refresh() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Shop.Changed -= Refresh;
+        Crm.Changed -= Refresh;
+        Auth.Changed -= OnAuthChanged;
+        Nav.LocationChanged -= OnLocationChanged;
+    }
+}

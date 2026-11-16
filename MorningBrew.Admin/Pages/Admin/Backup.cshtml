@@ -1,0 +1,48 @@
+@page
+@model BackupModel
+@{
+    ViewData["Title"]=Model.Title;
+    // [UI2-W3a] Phục hồi ngay trên từng dòng file .bak (không còn cần Restore.ps1).
+    Func<Dictionary<string,JsonElement>,object> actions=@<div class="row-actions">
+        @{var fn=item["file_name"].ToString();}
+        <a class="btn-sm" href="?handler=Download&file=@Uri.EscapeDataString(fn)" download>Tải về</a> @* [UI2-BK] *@
+        <button type="button" class="btn-sm" data-open="m-delete" data-fill="@(JsonSerializer.Serialize(new{fileName=fn}))">Xóa</button>
+        <button type="button" class="btn-sm danger-text" data-open="m-restore" data-fill="@(JsonSerializer.Serialize(new{fileName=item["file_name"].ToString(),time=RowDisplay.Value("create_time",item["create_time"])}))">Phục hồi</button>
+    </div>;
+}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<div class="grid-2">
+<section class="panel"><h2>Sao lưu ngay</h2>
+<p class="muted">Tạo file <b>.bak</b> sao lưu FULL (có CHECKSUM) rồi kiểm tra lại bằng <code>RESTORE VERIFYONLY</code>. Nên sao lưu trước khi nâng cấp hoặc trước buổi demo.</p>
+<form method="post"><input type="hidden" name="operation" value="backup"><button class="primary">Sao lưu database</button></form></section>
+<section class="panel"><h2>Sao lưu tự động &amp; phục hồi</h2>
+<ul class="answers">
+<li><b>Tự động:</b> API tự sao lưu mỗi 24 giờ khi đang chạy và chỉ giữ <b>14</b> bản tự động mới nhất (bản thủ công không bị xóa).</li>
+<li><b>Phục hồi:</b> bấm <b>Phục hồi</b> ở dòng file muốn dùng. Hệ thống tự sao lưu một bản <i>“Trước khi phục hồi”</i> rồi mới ghi đè, nên vẫn quay lại được nếu chọn nhầm.</li>
+<li>Thư mục lưu: <code>database/.local/backups</code> trên máy chạy SQL Server (cấu hình <code>Backup:Directory</code> trong API).</li>
+</ul></section>
+</div>
+<section class="panel"><h2>Các bản sao lưu</h2>
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,EmptyText="Chưa có bản sao lưu nào."})" /> @* [UI-03] *@
+</section>
+
+<dialog class="modal" id="m-restore"><form method="post">
+    <input type="hidden" name="operation" value="restore"><input type="hidden" name="modal" value="m-restore"><input type="hidden" name="fileName">
+    <header><h2>Phục hồi database</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body">
+        <p>Phục hồi từ <b data-text="fileName"></b> (sao lưu lúc <b data-text="time"></b>)?</p>
+        <div class="modal-warn">Toàn bộ dữ liệu sẽ quay về thời điểm của bản sao lưu: đơn hàng, khách hàng, phản hồi… tạo sau thời điểm đó sẽ mất. Mọi người dùng (kể cả bạn) có thể phải đăng nhập lại.</div>
+        <label class="check-line"><input type="checkbox" required> Tôi hiểu và muốn phục hồi</label>
+        <p class="muted">Trước khi ghi đè, hệ thống tự tạo bản sao lưu “Trước khi phục hồi”. Thao tác mất vài giây đến vài phút.</p>
+    </div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Phục hồi</button></footer>
+</form></dialog>
+
+@* [UI2-BK] Xóa file sao lưu *@
+<dialog class="modal" id="m-delete"><form method="post">
+    <input type="hidden" name="operation" value="backup-delete"><input type="hidden" name="modal" value="m-delete"><input type="hidden" name="fileName">
+    <header><h2>Xóa file sao lưu</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
+    <div class="modal-body"><p>Xóa file <b data-text="fileName"></b> khỏi thư mục sao lưu? File đã xóa không phục hồi lại được.</p>
+        <p class="muted">Nên bấm “Tải về” để lưu một bản ra máy trước khi xóa.</p></div>
+    <footer><button type="button" class="secondary" data-close>Hủy</button><button class="danger">Xóa file</button></footer>
+</form></dialog>

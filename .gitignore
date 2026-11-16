@@ -361,3 +361,18 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Generated database bundles belong in release artifacts, not source control.
+database/*.zip
+*.db
+*.db-shm
+*.db-wal
+
+# Local test artifacts and backups
+_backup*/
+*.bak
+*.zip
+.env
+.env.*
+!.env.example
+**/.local/
+MorningBrewApp/preview_*.png

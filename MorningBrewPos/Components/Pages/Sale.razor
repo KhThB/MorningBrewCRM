@@ -1,0 +1,155 @@
+@page "/"
+@implements IDisposable
+@inject PosService Pos
+@inject ToastService Toasts
+@* [BUG-02 · giai đoạn 2] Bán hàng tại quầy: chọn món + tùy chọn, gắn thành viên theo SĐT để tích điểm,
+   tạo đơn nhận tại quầy, tiền mặt (thu ngay hoặc thu sau). Đơn vào hàng chờ ở trang Đơn hàng. *@
+<div class="pos-sale">
+    <section class="pos-menu">
+        <StateView Loading="loading" Error="@error" OnRetry="Load">
+            <div class="chips wrap">
+                <button class="chip-btn @(category is null ? "active" : "")" @onclick="() => category = null">Tất cả</button>
+                @foreach (var c in Categories) { <button class="chip-btn @(category == c ? "active" : "")" @onclick="() => category = c">@c</button> }
+            </div>
+            <div class="pos-grid">
+                @foreach (var p in Products)
+                {
+                    var first = p.First(); var available = p.Any(x => x.IsAvailable);
+                    <button class="pos-item @(available ? "" : "sold-out")" disabled="@(!available)" @onclick="() => Open(p.ToList())">
+                        <b>@first.Name</b><small>@first.Category</small>
+                        <span class="price">@(available ? Fmt.Money(p.Where(x => x.IsAvailable).Min(x => x.Price)) : "Tạm hết")</span>
+                    </button>
+                }
+            </div>
+        </StateView>
+    </section>
+
+    <aside class="pos-cart card">
+        <h2 class="card-title">Đơn tại quầy</h2>
+        <form class="pos-member" @onsubmit="Lookup" @onsubmit:preventDefault>
+            <input class="input" type="tel" placeholder="SĐT thành viên (tích điểm)" @bind="phone" />
+            <button class="btn btn-outline btn-sm" type="submit">Tìm</button>
+        </form>
+        @if (Pos.Customer is { } m)
+        {
+            <p class="small">Thành viên: <b>@m.FullName</b> · @m.LoyaltyPoints điểm <button class="link" @onclick="() => Pos.Customer = null">bỏ</button></p>
+        }
+        @if (Pos.Cart.Count == 0)
+        {
+            <p class="muted">Chưa có món. Chọn món bên trái.</p>
+        }
+        @foreach (var line in Pos.Cart)
+        {
+            <div class="cart-line">
+                <div class="grow"><b>@line.Item.Name</b><small class="muted">@("Size " + line.Item.VariantName + (line.Picked.Count > 0 ? " · " + line.OptionText : ""))</small><span class="price">@Fmt.Money(line.Total)</span></div>
+                <div class="stepper sm">
+                    <button @onclick="() => Pos.ChangeQuantity(line.Key, -1)" aria-label="Giảm"><Icon Name="minus" Size="16" /></button>
+                    <b>@line.Quantity</b>
+                    <button @onclick="() => Pos.ChangeQuantity(line.Key, 1)" aria-label="Tăng"><Icon Name="plus" Size="16" /></button>
+                </div>
+            </div>
+        }
+        <input class="input" placeholder="Ghi chú đơn" @bind="note" maxlength="500" />
+        <div class="row-between total"><b>Tổng cộng</b><b>@Fmt.Money(Pos.Subtotal)</b></div>
+        <button class="btn btn-primary block" disabled="@(busy || Pos.Cart.Count == 0)" @onclick="() => Sell(true)">Thu tiền mặt & tạo đơn</button>
+        <button class="btn btn-outline block" disabled="@(busy || Pos.Cart.Count == 0)" @onclick="() => Sell(false)">Tạo đơn, thu tiền sau</button>
+        @if (Pos.Cart.Count > 0) { <button class="link" @onclick="Pos.Clear">Xóa đơn đang nhập</button> }
+    </aside>
+</div>
+
+@if (sheet is not null)
+{
+    <div class="sheet-backdrop" @onclick="() => sheet = null"></div>
+    <div class="sheet pos-sheet" role="dialog">
+        <h2>@sheet[0].Name</h2>
+        <h3>Kích cỡ</h3>
+        <div class="chips wrap">
+            @foreach (var v in sheet.Where(x => x.IsAvailable))
+            {
+                <button class="chip-btn @(variant?.VariantId == v.VariantId ? "active" : "")" @onclick="() => variant = v">@v.VariantName · @Fmt.Money(v.Price)</button>
+            }
+        </div>
+        @foreach (var g in Groups)
+        {
+            var f = g.First();
+            <h3>@f.GroupName @(f.MinSelections > 0 ? "*" : "")</h3>
+            <div class="chips wrap">
+                @foreach (var o in g)
+                {
+                    <button class="chip-btn @(picked.Contains(o.OptionId) ? "active" : "")" @onclick="() => Toggle(g.ToList(), o)">@(o.OptionName + (o.ExtraPrice > 0 ? $" +{Fmt.Money(o.ExtraPrice)}" : ""))</button>
+                }
+            </div>
+        }
+        <div class="row-between sheet-footer">
+            <div class="stepper">
+                <button @onclick="() => quantity = Math.Max(1, quantity - 1)" aria-label="Giảm"><Icon Name="minus" Size="18" /></button>
+                <b>@quantity</b>
+                <button @onclick="() => quantity++" aria-label="Tăng"><Icon Name="plus" Size="18" /></button>
+            </div>
+            <button class="btn btn-primary" disabled="@(variant is null || !Valid)" @onclick="AddToCart">Thêm · @Fmt.Money(((variant?.Price ?? 0) + Picked.Sum(o => o.ExtraPrice)) * quantity)</button>
+        </div>
+    </div>
+}
+
+@code {
+    private bool loading = true, busy;
+    private string? error, category, phone, note;
+    private List<MenuProduct>? sheet;
+    private MenuProduct? variant;
+    private int quantity = 1;
+    private HashSet<int> picked = [];
+    private Guid requestKey = Guid.NewGuid();
+
+    private IEnumerable<string> Categories => Pos.Menu?.Items.Select(x => x.Category).Distinct() ?? [];
+    private IEnumerable<IGrouping<int, MenuProduct>> Products => (Pos.Menu?.Items ?? []).Where(x => category is null || x.Category == category).GroupBy(x => x.ProductId);
+    private List<IGrouping<int, MenuModifier>> Groups => sheet is null || Pos.Menu is null ? [] : Pos.Menu.Modifiers.Where(m => m.ProductId == sheet[0].ProductId).GroupBy(m => m.GroupId).ToList();
+    private List<MenuModifier> Picked => Groups.SelectMany(g => g).Where(o => picked.Contains(o.OptionId)).ToList();
+    private bool Valid => Groups.All(g => { var n = g.Count(o => picked.Contains(o.OptionId)); return n >= g.First().MinSelections && n <= g.First().MaxSelections; });
+
+    protected override async Task OnInitializedAsync() { Pos.Changed += Refresh; await Load(); }
+    private void Refresh() => InvokeAsync(StateHasChanged);
+
+    private async Task Load()
+    {
+        loading = true; error = null;
+        try { await Pos.LoadMenuAsync(); } catch (ApiException e) { error = e.Message; }
+        loading = false;
+    }
+
+    private void Open(List<MenuProduct> variants) { sheet = variants; variant = variants.FirstOrDefault(x => x.IsAvailable); quantity = 1; picked = []; }
+    private void Toggle(List<MenuModifier> group, MenuModifier o)
+    {
+        if (picked.Remove(o.OptionId)) return;
+        if (group[0].MaxSelections == 1) foreach (var x in group) picked.Remove(x.OptionId);
+        else if (group.Count(x => picked.Contains(x.OptionId)) >= group[0].MaxSelections) return;
+        picked.Add(o.OptionId);
+    }
+    private void AddToCart() { if (variant is null || !Valid) return; Pos.Add(variant, quantity, Picked); sheet = null; }
+
+    private async Task Lookup()
+    {
+        if (string.IsNullOrWhiteSpace(phone)) return;
+        try
+        {
+            var m = await Pos.LookupAsync(phone);
+            Pos.Customer = m;
+            Toasts.Show(m is null ? "Không tìm thấy thành viên với số này." : $"Đã gắn thành viên {m.FullName}.", m is null);
+        }
+        catch (ApiException e) { Toasts.Error(e); }
+    }
+
+    private async Task Sell(bool collectNow)
+    {
+        busy = true;
+        try
+        {
+            var o = await Pos.SellAsync(requestKey, string.IsNullOrWhiteSpace(note) ? null : note.Trim(), collectNow);
+            requestKey = Guid.NewGuid(); note = null; phone = null;
+            Toasts.Show($"Đã tạo đơn {o.OrderCode} · {Fmt.Money(o.Total)}");
+        }
+        catch (ApiException e) { Toasts.Error(e); }
+        busy = false;
+    }
+
+    public void Dispose() => Pos.Changed -= Refresh;
+}

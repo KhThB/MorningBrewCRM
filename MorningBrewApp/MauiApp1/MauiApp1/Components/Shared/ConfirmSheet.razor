@@ -1,0 +1,31 @@
+@* [APP-03][APP-04] Hộp xác nhận dùng chung cho thao tác khó hoàn tác (hủy đơn, đổi điểm lấy voucher).
+   Bấm nền tối hoặc "Không" để đóng mà không làm gì. *@
+@if (Open)
+{
+    <div class="sheet-backdrop" @onclick="Close"></div>
+    <div class="sheet confirm-sheet" role="alertdialog" aria-label="@Title">
+        <div class="sheet-handle"></div>
+        <h2>@Title</h2>
+        @if (!string.IsNullOrEmpty(Message)) { <p class="muted">@Message</p> }
+        @ChildContent
+        <div class="confirm-actions">
+            <button class="btn btn-outline" @onclick="Close" disabled="@Busy">@CancelText</button>
+            <button class="btn @(Danger ? "btn-danger" : "btn-primary")" @onclick="OnConfirm" disabled="@Busy">@(Busy ? "Đang xử lý..." : ConfirmText)</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public string ConfirmText { get; set; } = "Đồng ý";
+    [Parameter] public string CancelText { get; set; } = "Không";
+    [Parameter] public bool Danger { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private Task Close() => Busy ? Task.CompletedTask : OpenChanged.InvokeAsync(false);
+}

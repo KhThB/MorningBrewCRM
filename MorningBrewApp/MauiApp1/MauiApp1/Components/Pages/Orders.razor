@@ -1,0 +1,65 @@
+@page "/orders"
+@implements IDisposable
+@inject ShopService Shop
+
+<PageHeader Title="Đơn hàng" ShowBack="false" />
+
+<div class="page-body">
+    <StateView Loading="loading" Error="@error" OnRetry="Load" Empty="orders.Count == 0" EmptyText="Bạn chưa có đơn hàng nào." EmptyIcon="receipt">
+        <EmptyAction><a class="btn btn-primary" href="/menu">Đặt món ngay</a></EmptyAction>
+        <ChildContent>
+            @foreach (var o in orders)
+            {
+                <a class="card order-card" href="@($"/orders/{o.OrderId}")">
+                    <div class="row-between">
+                        <b>@o.OrderCode</b>
+                        <span class="chip @Fmt.OrderCss(o.Status)">@Fmt.OrderStatus(o.Status)</span>
+                    </div>
+                    <p class="muted">@o.BranchName · @(o.Fulfillment == "Delivery" ? "Giao hàng" : "Nhận tại quầy")</p>
+                    <p>@o.Summary</p> @* [BUG-02] danh sách món từ API *@
+                    <div class="row-between">
+                        <span class="muted small">@Fmt.When(o.CreatedAt)</span>
+                        <b>@Fmt.Money(o.Total)</b>
+                    </div>
+                    @if (o.Status == "Completed" && !o.FeedbackSent)
+                    {
+                        <div class="order-cta"><Icon Name="star" Size="16" /> Đánh giá để giúp quán phục vụ tốt hơn</div>
+                    }
+                </a>
+            }
+        </ChildContent>
+    </StateView>
+</div>
+
+@code {
+    private List<Order> orders = [];
+    private bool loading = true;
+    private string? error;
+    private System.Threading.Timer? timer; // [APP-09]
+
+    protected override async Task OnInitializedAsync()
+    {
+        Shop.Changed += Refresh;
+        await Load();
+        // [APP-09] Tự tải lại mỗi 15 giây khi còn đơn đang xử lý (trước đây phải thoát ra vào lại mới thấy trạng thái mới).
+        timer = new System.Threading.Timer(_ => InvokeAsync(Poll), null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+    }
+
+    private async Task Poll() // [APP-09] tải lặng lẽ, không hiện vòng xoay
+    {
+        if (loading || error is not null || !orders.Any(o => o.Status is not ("Completed" or "Cancelled"))) return;
+        try { orders = await Shop.GetOrdersAsync(); StateHasChanged(); }
+        catch (ApiException) { }
+    }
+
+    private async Task Load()
+    {
+        loading = true; error = null;
+        try { orders = await Shop.GetOrdersAsync(); }
+        catch (ApiException e) { error = e.Message; }
+        loading = false;
+    }
+
+    private void Refresh() => InvokeAsync(StateHasChanged);
+    public void Dispose() { Shop.Changed -= Refresh; timer?.Dispose(); } // [APP-09]
+}

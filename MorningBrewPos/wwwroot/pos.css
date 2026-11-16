@@ -1,0 +1,19 @@
+/* [BUG-02 · giai đoạn 2] Bố cục màn hình rộng cho POS (dùng lại app.css của app khách) */
+.pos-frame{min-height:100vh;background:#f6f3ee}
+.pos-frame.blank{display:block}
+.pos-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 24px;background:#1c1917;color:#fff;position:sticky;top:0;z-index:5}
+.pos-top .logo-word{font-size:22px}.pos-top nav{display:flex;gap:8px}
+.pos-tab{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;color:#e7e5e4;text-decoration:none;font-weight:700}
+.pos-tab.active{background:#d6a76c;color:#1c1917}
+.pos-user{display:flex;align-items:center;gap:12px;font-size:13px}.pos-user .btn{color:#fff;border-color:#57534e}
+.pos-main{padding:20px 24px}
+.pos-sale,.pos-orders{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:20px;align-items:start}
+.pos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-top:12px}
+.pos-item{display:flex;flex-direction:column;gap:4px;text-align:left;padding:14px;border:1px solid #e7e2da;border-radius:14px;background:#fff;cursor:pointer;min-height:96px}
+.pos-item:hover{border-color:#d6a76c}.pos-item.sold-out{opacity:.5;cursor:not-allowed}
+.pos-cart,.pos-orders aside{position:sticky;top:84px;display:flex;flex-direction:column;gap:10px}
+.pos-member{display:flex;gap:8px}.pos-member .input{margin:0}
+.pos-sheet{max-width:560px;left:50%;transform:translateX(-50%);right:auto;width:100%}
+.pos-order{display:block;width:100%;text-align:left;cursor:pointer;border:1px solid transparent}
+.pos-order.active{border-color:#d6a76c}
+.pos-actions{display:flex;flex-direction:column;gap:8px}

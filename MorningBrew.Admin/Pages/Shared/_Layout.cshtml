@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · Morning Brew</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand"><div class="brand-mark">M</div><div><strong>MORNING BREW</strong><small>Customer relationship management</small></div></div>
+        @if(User.Identity?.IsAuthenticated==true)
+        {
+            <div class="user-box"><div class="avatar">@(User.Identity.Name?.FirstOrDefault())</div><div class="user-info"><b>@User.Identity.Name</b><small>@User.FindFirstValue(ClaimTypes.Role)</small></div></div>
+            <nav>
+            @{ var portal=Portals.Of(Context) ?? Portals.Manager; } @* [SEP-06] chỉ link trong giao diện của cổng này *@
+            <a href="@portal.Home">Về @portal.Title</a>
+            </nav>
+            <form method="post" asp-page="/Logout" class="logout-form"><button>Đăng xuất</button></form>
+        }
+    </aside>
+    <main class="content">
+        @if(TempData["Error"] is string error){ <div class="alert" role="alert">@error</div> }
+        @if(TempData["Success"] is string success){ <div class="success" role="status">@success</div> }
+        @RenderBody()
+        <footer class="footer">Morning Brew CRM</footer>
+    </main>
+</div>
+<script src="~/js/ui.js" asp-append-version="true" defer></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+@page
+@model PermissionsModel
+@{ViewData["Title"]=Model.Title;}
+<div class="topbar"><div><h1>@Model.Title</h1><p class="muted">@Model.Subtitle</p></div></div>
+<section class="panel"><h2>Ma trận quyền</h2>
+<p class="muted">Cột <b>Chủ cửa hàng</b> luôn đủ quyền và không sửa được. Quyền có biểu tượng 🔒 (tài khoản, tổ chức, danh mục dùng chung) chỉ thuộc chủ cửa hàng.</p>
+<form method="post"><input type="hidden" name="operation" value="matrix">
+<div class="table-wrap"><table class="matrix"><thead><tr><th>Quyền</th><th>Mô tả</th>@foreach(var r in PermissionsModel.Roles){<th class="center">@r.Name</th>}</tr></thead><tbody>
+@foreach(var row in Model.Matrix)
+{
+    var code=ReportView.Text(row,"permission");var locked=PermissionsModel.Locked(row);
+    <tr><td><code>@code</code>@(locked?" 🔒":"")</td><td>@ReportView.Text(row,"description")</td>
+    @foreach(var r in PermissionsModel.Roles)
+    {
+        var editable=!locked && PermissionsModel.EditableRoles.Contains(r.Code);
+        <td class="center"><input type="checkbox" name="grant" value="@($"{r.Code}|{code}")" checked="@PermissionsModel.Granted(row,r.Code)" disabled="@(!editable)" aria-label="@($"{r.Name} – {code}")"></td>
+    }
+    </tr>
+}
+</tbody></table></div>
+<button class="primary">Lưu phân quyền</button></form></section>

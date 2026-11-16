@@ -1,0 +1,26 @@
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<header class="page-header @(Dark ? "dark" : "")">
+    @if (ShowBack)
+    {
+        <button class="icon-btn" @onclick="Back" aria-label="Quay lại"><Icon Name="back" /></button>
+    }
+    <h1>@Title</h1>
+    <div class="page-header-actions">@Actions</div>
+</header>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public bool ShowBack { get; set; } = true;
+    [Parameter] public bool Dark { get; set; }
+    [Parameter] public string? BackTo { get; set; }
+    [Parameter] public RenderFragment? Actions { get; set; }
+
+    private async Task Back()
+    {
+        if (BackTo is not null) { Nav.NavigateTo(BackTo); return; }
+        try { await JS.InvokeVoidAsync("history.back"); }
+        catch { Nav.NavigateTo("/"); }
+    }
+}

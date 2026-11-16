@@ -1,0 +1,39 @@
+@* Hiển thị trạng thái chung: đang tải / lỗi / rỗng. Khi không thuộc 3 trạng thái trên thì render ChildContent. *@
+@if (Loading)
+{
+    <div class="state"><div class="spinner" aria-label="Đang tải"></div></div>
+}
+else if (Error is not null)
+{
+    <div class="state state-error">
+        <Icon Name="info" Size="34" />
+        <p>@Error</p>
+        @if (OnRetry.HasDelegate)
+        {
+            <button class="btn btn-outline btn-sm" @onclick="OnRetry">Thử lại</button>
+        }
+    </div>
+}
+else if (Empty)
+{
+    <div class="state">
+        <Icon Name="@EmptyIcon" Size="38" />
+        <p>@EmptyText</p>
+        @EmptyAction
+    </div>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public bool Empty { get; set; }
+    [Parameter] public string EmptyText { get; set; } = "Chưa có dữ liệu.";
+    [Parameter] public string EmptyIcon { get; set; } = "info";
+    [Parameter] public RenderFragment? EmptyAction { get; set; }
+    [Parameter] public EventCallback OnRetry { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

@@ -1,0 +1,46 @@
+@page "/account/feedbacks"
+@inject CrmService Crm
+
+<PageHeader Title="Phản hồi của tôi" BackTo="/account" />
+
+<div class="page-body with-footer">
+    <StateView Loading="loading" Error="@error" OnRetry="Load" Empty="items.Count == 0" EmptyText="Bạn chưa gửi phản hồi nào." EmptyIcon="chat">
+        @foreach (var f in items)
+        {
+            var status = Fmt.FeedbackStatus(f.Status);
+            <div class="card feedback">
+                <div class="row-between">
+                    <span class="chip chip-muted">@Fmt.FeedbackType(f.Type)</span>
+                    <span class="chip @status.Css">@status.Text</span>
+                </div>
+                @if (f.Rating is not null) { <StarRating Value="f.Rating" ReadOnly="true" Size="16" /> }
+                <p>@f.Content</p>
+                <small class="muted">@Fmt.When(f.CreatedAt)</small>
+                @if (!string.IsNullOrWhiteSpace(f.ResponseContent))
+                {
+                    <div class="reply"><b>Morning Brew trả lời</b><p>@f.ResponseContent</p></div>
+                }
+            </div>
+        }
+    </StateView>
+</div>
+
+<div class="footer-bar">
+    <a class="btn btn-primary block" href="/feedback/new"><Icon Name="chat" Size="18" /> Gửi phản hồi mới</a>
+</div>
+
+@code {
+    private List<Feedback> items = [];
+    private bool loading = true;
+    private string? error;
+
+    protected override Task OnInitializedAsync() => Load();
+
+    private async Task Load()
+    {
+        loading = true; error = null;
+        try { items = await Crm.GetFeedbacksAsync(); }
+        catch (ApiException e) { error = e.Message; }
+        loading = false;
+    }
+}

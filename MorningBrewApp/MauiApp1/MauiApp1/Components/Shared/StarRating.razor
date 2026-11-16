@@ -1,0 +1,39 @@
+<div class="stars @(ReadOnly ? "readonly" : "")" role="radiogroup" aria-label="@Label">
+    @for (var i = Min; i <= Max; i++)
+    {
+        var value = i;
+        var on = Value is not null && value <= Value;
+        if (ReadOnly)
+        {
+            <span class="star @(on ? "on" : "")"><Icon Name="star" Size="@Size" Filled="on" /></span>
+        }
+        else
+        {
+            <button type="button" class="star @(on ? "on" : "")" role="radio" aria-checked="@(Value == value)"
+                    aria-label="@($"{value} sao")" @onclick="() => Pick(value)">
+                <Icon Name="star" Size="@Size" Filled="on" />
+            </button>
+        }
+    }
+    @if (!ReadOnly && Value is not null && ShowCaption)
+    {
+        <span class="star-caption">@Caption(Value.Value)</span>
+    }
+</div>
+
+@code {
+    [Parameter] public int? Value { get; set; }
+    [Parameter] public EventCallback<int?> ValueChanged { get; set; }
+    [Parameter] public int Min { get; set; } = 1;
+    [Parameter] public int Max { get; set; } = 5;
+    [Parameter] public bool ReadOnly { get; set; }
+    [Parameter] public int Size { get; set; } = 30;
+    [Parameter] public bool ShowCaption { get; set; } = true;
+    [Parameter] public string Label { get; set; } = "Đánh giá";
+
+    private Task Pick(int value) => ValueChanged.InvokeAsync(value);
+
+    private string Caption(int v) => (Min, Max) == (1, 5)
+        ? v switch { 1 => "Rất tệ", 2 => "Chưa tốt", 3 => "Bình thường", 4 => "Hài lòng", _ => "Tuyệt vời" }
+        : $"{v}/{Max}";
+}

@@ -8,7 +8,6 @@ namespace MorningBrew.Admin.Pages.ManagerArea;
 public class InventoryModel(CrmApi api):WorkspaceBase(api)
 {
     public override string Title=>"Kho nguyên liệu";
-    public override string Subtitle=>"Tồn kho, nhập hàng từ nhà cung cấp, xuất dùng, hủy hỏng và kiểm kê.";
     protected override bool Searchable=>true;
     protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"ingredient","ingredient-update","ingredient-active","stock","recipe","recipe-delete"} /* [WEB-14] */;
 

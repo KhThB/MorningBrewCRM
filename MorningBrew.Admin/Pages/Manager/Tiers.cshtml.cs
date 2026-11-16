@@ -6,7 +6,6 @@ namespace MorningBrew.Admin.Pages.ManagerArea;
 public class TiersModel(CrmApi api):WorkspaceBase(api)
 {
     public override string Title=>"Hạng thành viên";
-    public override string Subtitle=>"Hạng tính theo chi tiêu 12 tháng gần nhất; đổi mức ở đây áp dụng ngay cho mọi khách, web và app.";
     protected override string ListPath=>"v1/tiers";
     protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"tier","tier-update","tier-delete"};
     protected override async Task LoadAsync()=>Rows=(await Api.Get<ApiPage>(ListPath)).Items;

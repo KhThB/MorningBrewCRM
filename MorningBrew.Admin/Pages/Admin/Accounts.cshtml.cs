@@ -4,7 +4,6 @@ namespace MorningBrew.Admin.Pages.AdminArea;
 public class AccountsModel(CrmApi api):WorkspaceBase(api)
 {
     public override string Title=>"Tài khoản";
-    public override string Subtitle=>"Thêm, khóa, xóa tài khoản và phân vai trò (yêu cầu II.2).";
     protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"account","account-role","account-active","account-delete","account-password","account-update"} /* [BUG-05] [WEB-04] */;
     [BindProperty(SupportsGet=true)] public string? Role {get;set;}
     [BindProperty(SupportsGet=true)] public string? Active {get;set;}

@@ -7,7 +7,6 @@ namespace MorningBrew.Admin.Pages.ManagerArea;
 public class OrdersModel(CrmApi api):WorkspaceBase(api)
 {
     public override string Title=>Id.HasValue?"Chi tiết đơn hàng":"Đơn hàng";
-    public override string Subtitle=>"Đơn từ app khách và POS: xác nhận, pha chế, giao hàng, thu tiền, hủy, hoàn tiền.";
     protected override bool Searchable=>true;
     protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"order-advance","order-collect","order-cancel","order-delivery","order-refund","refund-complete"};
     [BindProperty(SupportsGet=true)] public string? Status {get;set;}="Active";

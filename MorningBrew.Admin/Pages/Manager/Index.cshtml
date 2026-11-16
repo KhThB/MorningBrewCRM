@@ -16,7 +16,7 @@
     var pendingOrders=ReportView.Rows(todo,"pending_orders"); var refunds=ReportView.Rows(todo,"pending_refunds");
     var feedbacks=ReportView.Rows(todo,"new_feedbacks"); var surveys=ReportView.Rows(todo,"ending_surveys");
 }
-<div class="topbar"><div><h1>Tổng quan</h1><p class="muted">Doanh thu, sản phẩm bán chạy và việc cần xử lý của cửa hàng.</p></div>
+<div class="topbar"><div><h1>Tổng quan</h1></div>
     <form method="get" class="dash-filter"><input type="hidden" name="year" value="@y">
         <select name="month" aria-label="Tháng" onchange="this.form.submit()">@for(var i=1;i<=12;i++){<option value="@i" selected="@(i==m)">Tháng @i/@y</option>}</select>
     </form>

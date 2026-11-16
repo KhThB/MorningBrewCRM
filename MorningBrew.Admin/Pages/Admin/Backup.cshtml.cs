@@ -5,7 +5,6 @@ namespace MorningBrew.Admin.Pages.AdminArea;
 public class BackupModel(CrmApi api):WorkspaceBase(api)
 {
     public override string Title=>"Sao lưu & phục hồi";
-    public override string Subtitle=>"Sao lưu, phục hồi và sao lưu tự động toàn bộ database (yêu cầu II.1).";
     protected override string ListPath=>"v1/admin/backups";
     protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"backup","restore","backup-delete"}; // [UI2-W3a] phục hồi, [UI2-BK] xóa file
     protected override async Task LoadAsync()=>Rows=(await Api.Get<ApiPage>(ListPath)).Items;

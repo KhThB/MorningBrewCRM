@@ -6,7 +6,6 @@ namespace MorningBrew.Admin.Pages.ManagerArea;
 public class ReportsModel(CrmApi api):WorkspaceBase(api)
 {
     public override string Title=>"Báo cáo";
-    public override string Subtitle=>"Báo cáo khách hàng theo độ tuổi, giới tính, sở thích (yêu cầu 4.1.5) và doanh thu.";
     public Dictionary<string,JsonElement>? Report {get;set;}
     // [UI2-W4] Kỳ doanh thu tính theo giờ Việt Nam, không theo mốc UTC.
     // [WEB-09] Người xem tự chọn kỳ (?from=yyyy-MM-dd&to=yyyy-MM-dd, tối đa 366 ngày) hoặc bấm kỳ có sẵn; mặc định 30 ngày gần nhất.

@@ -1,7 +1,7 @@
 @page
 @model IndexModel
 @{ViewData["Title"]="Tổng quan hệ thống";}
-<div class="topbar"><div><h1>Tổng quan hệ thống</h1><p class="muted">Tài khoản, phân quyền và nhật ký thao tác của toàn hệ thống.</p></div><span class="role-badge">Quản trị viên</span></div>
+<div class="topbar"><div><h1>Tổng quan hệ thống</h1></div><span class="role-badge">Quản trị viên</span></div>
 <div class="cards">
 @foreach(var r in Model.Roles)
 {<div class="stat"><span>@RowDisplay.Value("role",r["role"])</span><b>@ReportView.Int(r,"accounts")</b><small>@ReportView.Int(r,"active_accounts") hoạt động · @ReportView.Int(r,"locked_accounts") bị khóa</small></div>}

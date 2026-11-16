@@ -7,7 +7,6 @@ namespace MorningBrew.Admin.Pages.AdminArea;
 public class PermissionsModel(CrmApi api):WorkspaceBase(api)
 {
     public override string Title=>"Phân quyền theo vai trò";
-    public override string Subtitle=>"Đánh dấu quyền cho từng vai trò. Thay đổi áp dụng cho mọi tài khoản có vai trò đó.";
     protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"matrix"};
     public static readonly (string Code,string Name)[] Roles={("Owner","Chủ cửa hàng"),("BranchManager","Quản lý cửa hàng"),("Staff","Thu ngân")};
     public static readonly HashSet<string> EditableRoles=["BranchManager","Staff"];

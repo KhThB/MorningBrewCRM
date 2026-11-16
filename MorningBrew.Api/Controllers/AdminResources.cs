@@ -20,7 +20,14 @@ public sealed partial class AdminController
 
     private async Task<Dictionary<string, object?>> ReadResource(string collection, int id)
     {
-        if (collection is "accounts") await RequireOwner();
+        // [PERM-01] Tài khoản khách hàng: người có quyền Customers.Manage (quản lý) được đọc – CreateAccount gọi hàm này
+        //           sau khi đã thêm khách, trước đây RequireOwner làm quản lý nhận lỗi 403 dù khách đã được tạo.
+        //           Tài khoản nội bộ (chủ cửa hàng, quản lý, thu ngân) vẫn chỉ chủ cửa hàng xem được.
+        if (collection is "accounts")
+        {
+            var isCustomer = (await db.Query("SELECT 1 AS X FROM dbo.Customers WHERE UserID=@id", ("@id", id))).Count > 0;
+            if (isCustomer) await RequirePermission("Customers.Manage"); else await RequireOwner();
+        }
         if (collection is "suppliers") await RequirePermission("Inventory.Manage"); // [WEB-10]
         var (sql, key) = collection switch
         {

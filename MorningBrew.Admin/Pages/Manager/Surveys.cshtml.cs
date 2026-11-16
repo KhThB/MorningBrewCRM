@@ -5,7 +5,6 @@ namespace MorningBrew.Admin.Pages.ManagerArea;
 public class SurveysModel(CrmApi api):WorkspaceBase(api)
 {
     public override string Title=>SurveyId.HasValue?"Kết quả khảo sát":"Khảo sát";
-    public override string Subtitle=>"Tạo khảo sát, gửi đến khách hàng và thống kê kết quả (yêu cầu 4.1.6–4.1.7).";
     [BindProperty(SupportsGet=true)] public int? SurveyId {get;set;}
     public Dictionary<string,JsonElement>? Summary {get;set;}
     // [UI2-W5] ?edit={id}: nạp khảo sát nháp để mở lại cửa sổ soạn với đủ câu hỏi.

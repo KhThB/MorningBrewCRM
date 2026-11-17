@@ -62,6 +62,8 @@ public class Order
     public string? DeliveryAddress { get; set; }
     public string? CourierName { get; set; }
     public string? CourierPhone { get; set; }
+    public string? DeliveryStatus { get; set; }   // [ORD-01] Pending / Delivering / Failed / Delivered
+    public string? DeliveryFailure { get; set; }  // [ORD-01] lý do giao chưa thành công gần nhất
     public string? Note { get; set; }
     public string? ItemsText { get; set; }
     public List<OrderLine> Lines { get; set; } = [];

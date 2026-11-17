@@ -140,9 +140,9 @@ public abstract class WorkspaceBase(CrmApi api):PageModel
         {
             // ----- Quản trị -----
             case "account":
-                // [WEB-07] vai trò Khách hàng: gửi thêm ngày sinh, giới tính (ô chỉ hiện khi chọn Khách hàng)
-                await Api.Send(HttpMethod.Post,"v1/accounts",new {email=Text("email"),fullName=Text("fullName"),password=Text("password"),phone=Text("phone"),role=Text("role"),
-                    dateOfBirth=Text("role")=="Customer"?Blank("dateOfBirth"):null,gender=Text("role")=="Customer"?Blank("gender"):null});
+                // [REV-02] Admin server chỉ tạo tài khoản nội bộ; khách hàng thêm ở Quản lý CRM → Khách hàng (thao tác "customer").
+                if(Text("role") is not ("Owner" or "BranchManager" or "Staff")) throw new CrmApiException(400,"Admin server chỉ tạo tài khoản nội bộ. Thêm khách hàng ở Quản lý CRM → Khách hàng.");
+                await Api.Send(HttpMethod.Post,"v1/accounts",new {email=Text("email"),fullName=Text("fullName"),password=Text("password"),phone=Blank("phone"),role=Text("role")});
                 TempData["Success"]="Đã tạo tài khoản."; break;
             case "account-role":
                 await Api.Send(HttpMethod.Put,$"v1/accounts/{Number("id")}/role",new {role=Text("role")});

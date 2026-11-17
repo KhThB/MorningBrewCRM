@@ -30,12 +30,13 @@
 @* [UI-D8] Việc cần xử lý ngay *@
 <section class="panel"><h2>Việc cần xử lý ngay</h2>
 <div class="todo-grid">
-    <div class="todo-card"><h3>Đơn chờ xác nhận <span class="badge @(Total(pendingOrders)>0?"warn":"muted")">@Total(pendingOrders)</span></h3>
+    @* [REV-04] Đơn được xử lý trên POS: thẻ này chỉ để theo dõi hàng chờ, không phải việc của web *@
+    <div class="todo-card"><h3>Đơn đang chờ ở POS <span class="badge @(Total(pendingOrders)>0?"info":"muted")">@Total(pendingOrders)</span></h3>
         @if(pendingOrders.Count==0){<p class="none">Không có đơn chờ.</p>}else{<ul class="mini-list">@foreach(var o in pendingOrders){<li><div><b>@ReportView.Text(o,"order_code")</b><small>@ReportView.Text(o,"contact_name") · @OrderView.Time(o,"create_time")</small></div><div>@OrderView.Money(o,"total_amount")</div></li>}</ul>}
-        <a class="more" href="/Manager/Orders?status=Pending">Mở danh sách đơn →</a></div>
+        <p class="muted small">Thu ngân xác nhận và xử lý đơn trên POS.</p><a class="more" href="/Manager/Orders?status=Active">Xem đơn đang xử lý →</a></div>@* [REV-10] tab Chờ xác nhận đã gộp vào Đang xử lý *@
     <div class="todo-card"><h3>Yêu cầu hoàn tiền <span class="badge @(Total(refunds)>0?"bad":"muted")">@Total(refunds)</span></h3>
         @if(refunds.Count==0){<p class="none">Không có yêu cầu.</p>}else{<ul class="mini-list">@foreach(var r in refunds){<li><div><b>@ReportView.Text(r,"order_code")</b><small>@ReportView.Text(r,"reason")</small></div><div>@OrderView.Money(r,"amount")</div></li>}</ul>}
-        <a class="more" href="/Manager/Orders?status=">Mở đơn hàng →</a></div>
+        <a class="more" href="/Manager/Orders?status=RefundPending">Mở đơn chờ hoàn tiền →</a></div>@* [ORD-01] *@
     <div class="todo-card"><h3>Phản hồi mới <span class="badge @(Total(feedbacks)>0?"info":"muted")">@Total(feedbacks)</span></h3>
         @if(feedbacks.Count==0){<p class="none">Không có phản hồi mới.</p>}else{<ul class="mini-list">@foreach(var f in feedbacks){var c=ReportView.Text(f,"content");<li><div><b>@ReportView.Text(f,"full_name")</b><small>@(c.Length>60?c[..60]+"…":c)</small></div></li>}</ul>}
         <a class="more" href="/Manager/Feedbacks?status=New">Trả lời phản hồi →</a></div>

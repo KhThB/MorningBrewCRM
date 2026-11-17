@@ -8,6 +8,7 @@ namespace MorningBrew.Api.Controllers;
 
 // [BUG-02 · giai đoạn 2] API cho app POS của thu ngân (MorningBrewPos): bán tại quầy, tra cứu thành viên để tích điểm,
 // hàng chờ đơn (gồm đơn từ app khách), chuyển trạng thái, xác nhận thu tiền mặt.
+// [ORD-01] Thêm báo giao thất bại / giao lại (trước đây chỉ có ở web Quản lý).
 // Quyền theo vai trò trong stored procedure: Staff có Orders.Create/Manage/Read, Payments.Manage, Customers.Lookup;
 // hủy đơn (Orders.Cancel) và hoàn tiền (Refunds.Manage) chỉ quản lý / chủ cửa hàng làm được.
 [ApiController, Authorize(Roles = "Staff,BranchManager,Owner"), Route("v1/pos")]
@@ -81,6 +82,19 @@ public sealed class PosController(SqlStore db, PageReader pages) : ControllerBas
     {
         await RequireOrder(id);
         await OrderQueries.Settle(db, Actor, id, "Succeeded");
+        return await OrderResource(id);
+    }
+
+    // [ORD-01] Đơn đang giao: Failed = giao chưa thành công (bắt buộc lý do), Delivering = giao lại. Khách nhận thông báo (dbo.UpdateDelivery).
+    public record DeliveryInput([Required] string Status, [MaxLength(500)] string? Reason = null);
+    [HttpPost("orders/{id:int}:delivery")]
+    public async Task<Dictionary<string, object?>> Delivery(int id, DeliveryInput input)
+    {
+        await RequireOrder(id);
+        if (input.Status is not ("Failed" or "Delivering")) throw new ApiException(400, "Trạng thái giao hàng không hợp lệ.");
+        if (input.Status == "Failed" && string.IsNullOrWhiteSpace(input.Reason))
+            throw new ApiException(400, "Cần nhập lý do giao chưa thành công.", [new("FIELD_REQUIRED", "reason")]);
+        await db.Procedure("dbo.UpdateDelivery", ("@ActorID", Actor), ("@OrderID", id), ("@Status", input.Status), ("@Reason", input.Reason?.Trim()));
         return await OrderResource(id);
     }
 

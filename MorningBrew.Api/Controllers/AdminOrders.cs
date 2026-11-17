@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using MorningBrew.Api.Infrastructure;
 namespace MorningBrew.Api.Controllers;
 
-// [BUG-02] Trang Đơn hàng của quản lý (/Manager/Orders): xem, xử lý theo trạng thái, xác nhận thu tiền mặt,
-// giao hàng, hủy, hoàn tiền. Quyền kiểm tra trong stored procedure (Orders.Read/Manage/Cancel, Payments.Manage, Refunds.Manage).
+// [BUG-02] Trang Đơn hàng của quản lý (/Manager/Orders). [ORD-01][REV-03] chỉ còn xem đơn và hoàn tiền;
+// quyền kiểm tra trong stored procedure (Orders.Read, Refunds.Manage).
 public sealed partial class AdminController
 {
     private static readonly string[] OrderStatuses = ["AwaitingPayment", "Pending", "Confirmed", "Preparing", "Ready", "Delivering", "Completed", "Cancelled"];
@@ -13,12 +13,14 @@ public sealed partial class AdminController
     [HttpGet("orders")]
     public async Task<ApiPage> ListOrders([FromQuery] PageRequest page, string? status = null, string? q = null)
     {
-        if (!string.IsNullOrEmpty(status) && status != "Active" && !OrderStatuses.Contains(status))
+        if (!string.IsNullOrEmpty(status) && status is not ("Active" or "RefundPending") && !OrderStatuses.Contains(status))
             throw new ApiException(400, "Trạng thái đơn không hợp lệ.");
         // "Active" = các đơn còn cần xử lý (chưa hoàn tất, chưa hủy).
+        // [ORD-01] "RefundPending" = đơn có yêu cầu hoàn tiền chưa thành công (chờ hoặc đã thất bại, cần xử lý lại).
         var sql = OrderQueries.ListSql("""
             dbo.CanBranch(@actor,o.BranchID,'Orders.Read')=1
-            AND (@status='' OR (@status='Active' AND o.Status NOT IN ('Completed','Cancelled')) OR o.Status=@status)
+            AND (@status='' OR (@status='Active' AND o.Status NOT IN ('Completed','Cancelled')) OR o.Status=@status
+                 OR (@status='RefundPending' AND EXISTS(SELECT 1 FROM dbo.Refunds r WHERE r.OrderID=o.OrderID AND r.Status<>'Succeeded')))
             AND (@q='' OR o.OrderCode LIKE @search OR o.ContactName LIKE @search OR o.ContactPhone LIKE @search OR cu.FullName LIKE @search)
             """);
         return await pages.Read(sql, ["OrderID"], true, page,
@@ -37,53 +39,8 @@ public sealed partial class AdminController
     [HttpGet("orders/{id:int}")]
     public async Task<Dictionary<string, object?>> GetOrder(int id) { await RequireOrder(id); return await OrderResource(id); }
 
-    public record AdvanceInput([Required] string NextStatus, [MaxLength(500)] string? Reason = null,
-        [MaxLength(120)] string? CourierName = null, [MaxLength(20)] string? CourierPhone = null);
-    [HttpPost("orders/{id:int}:advance")]
-    public async Task<Dictionary<string, object?>> Advance(int id, AdvanceInput input)
-    {
-        await RequireOrder(id);
-        if (!OrderStatuses.Contains(input.NextStatus) || input.NextStatus is "AwaitingPayment" or "Pending" or "Cancelled")
-            throw new ApiException(400, "Trạng thái tiếp theo không hợp lệ.");
-        if (input.NextStatus == "Delivering")
-        {
-            if (string.IsNullOrWhiteSpace(input.CourierName))
-                throw new ApiException(400, "Cần nhập tên người giao hàng.", [new("FIELD_REQUIRED", "courier_name")]);
-            if (string.IsNullOrWhiteSpace(input.CourierPhone))
-                throw new ApiException(400, "Cần nhập số điện thoại người giao hàng.", [new("FIELD_REQUIRED", "courier_phone")]);
-        }
-        await db.Procedure("dbo.AdvanceOrder", ("@ActorID", Actor), ("@OrderID", id), ("@NextStatus", input.NextStatus), ("@Reason", input.Reason),
-            ("@CourierName", input.CourierName?.Trim()), ("@CourierPhone", PhoneRule.Normalize(input.CourierPhone, "courier_phone")));
-        return await OrderResource(id);
-    }
-
-    // Xác nhận đã thu tiền mặt (đơn COD) để có thể hoàn tất đơn.
-    [HttpPost("orders/{id:int}:collect")]
-    public async Task<Dictionary<string, object?>> Collect(int id)
-    {
-        await RequireOrder(id);
-        await OrderQueries.Settle(db, Actor, id, "Succeeded");
-        return await OrderResource(id);
-    }
-
+    // [REV-03] Bỏ :advance, :collect, :cancel, :delivery của quản lý – vận hành đơn làm trên POS (v1/pos/orders/...).
     public record ReasonInput([Required, StringLength(500, MinimumLength = 3)] string Reason);
-    [HttpPost("orders/{id:int}:cancel")]
-    public async Task<Dictionary<string, object?>> CancelOrder(int id, ReasonInput input)
-    {
-        await RequireOrder(id);
-        await db.Procedure("dbo.CancelOrder", ("@ActorID", Actor), ("@OrderID", id), ("@Reason", input.Reason.Trim()));
-        return await OrderResource(id);
-    }
-
-    public record DeliveryInput([Required] string Status, [MaxLength(500)] string? Reason = null);
-    [HttpPost("orders/{id:int}:delivery")]
-    public async Task<Dictionary<string, object?>> Delivery(int id, DeliveryInput input)
-    {
-        await RequireOrder(id);
-        await db.Procedure("dbo.UpdateDelivery", ("@ActorID", Actor), ("@OrderID", id), ("@Status", input.Status), ("@Reason", input.Reason));
-        return await OrderResource(id);
-    }
-
     [HttpPost("orders/{id:int}:refund")]
     public async Task<Dictionary<string, object?>> Refund(int id, ReasonInput input)
     {

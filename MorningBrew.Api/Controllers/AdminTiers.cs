@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MorningBrew.Api.Infrastructure;
 namespace MorningBrew.Api.Controllers;
 
-// [CRM-01] Hạng thành viên (dbo.MemberTiers, 17_member_tiers.sql): xem, thêm, sửa, xóa hạng.
+// [CRM-01] Hạng thành viên (dbo.MemberTiers, 01_schema.sql; dữ liệu mẫu 06_seed.sql): xem, thêm, sửa, xóa hạng.
 // Hạng của khách tính trực tiếp trong view dbo.CustomerTiers theo chi tiêu 12 tháng, nên đổi mức ở đây áp dụng ngay.
 // Quyền: Promotions.Manage (chương trình khách hàng thân thiết đi cùng ưu đãi).
 public sealed partial class AdminController

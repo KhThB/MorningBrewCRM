@@ -1,6 +1,6 @@
--- test_17_member_tiers.sql – kiểm thử 17_member_tiers.sql [CRM-01]. Chỉ đọc + ghi trong giao dịch rồi ROLLBACK.
+-- test_17_member_tiers.sql – kiểm thử hạng thành viên [CRM-01] (trước ở 17_member_tiers.sql, nay trong 01–07). Chỉ đọc + ghi trong giao dịch rồi ROLLBACK.
 SET NOCOUNT ON; SET XACT_ABORT OFF;
-IF OBJECT_ID(N'dbo.CustomerTiers','V') IS NULL BEGIN RAISERROR(N'Chưa chạy 17_member_tiers.sql trên database này.',16,1); RETURN; END;
+IF OBJECT_ID(N'dbo.CustomerTiers','V') IS NULL BEGIN RAISERROR(N'Database chưa cài bằng fullscript bản mới (01–07).',16,1); RETURN; END;
 DECLARE @pass int=0,@fail int=0;
 -- TC-SQL-17-01: có hạng mặc định 0đ
 IF EXISTS(SELECT 1 FROM dbo.MemberTiers WHERE MinSpent=0) BEGIN SET @pass+=1; PRINT N'PASS TC-SQL-17-01 Có hạng mặc định 0đ'; END

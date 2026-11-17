@@ -170,6 +170,9 @@ h1:focus { outline: none; }
 .btn-sm { padding: 7px 12px; font-size: 13px; border-radius: 10px; }
 .btn-primary { background: var(--espresso); color: var(--caramel); }
 .btn-primary:disabled { background: var(--disabled); color: #78716c; }
+/* [REV-05] nút xác nhận hủy đơn */
+.btn-danger { background: var(--bad); color: #fff; }
+.btn-danger:disabled { background: var(--disabled); color: #78716c; }
 .btn-outline { border: 1.5px solid var(--espresso); color: var(--espresso); }
 .btn-outline:disabled { border-color: var(--disabled); color: #a8a29e; }
 .btn-ghost { color: var(--caramel-ink); }

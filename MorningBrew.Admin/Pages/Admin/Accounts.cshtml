@@ -7,10 +7,12 @@
         @{var id=item["user_id"].ToString(); var name=item["full_name"].ToString(); var role=item["role"].ToString(); var active=item["is_active"].ValueKind==JsonValueKind.True;
           var fill=JsonSerializer.Serialize(new{id,full_name=name,role,role_name=RowDisplay.Value("role",item["role"]),
               fullName=name,phone=item["phone"].ValueKind==JsonValueKind.Null?"":item["phone"].ToString()});} @* [WEB-04] fullName, phone cho form Sửa *@
-        <button type="button" class="btn-sm" data-open="m-edit" data-fill="@fill">Sửa</button> @* [WEB-04] *@
+        @* [REV-02] Tài khoản khách: Admin chỉ xem và đặt lại mật khẩu; thêm / sửa / khóa / xóa khách làm ở Quản lý CRM → Khách hàng *@
+        @if(role=="Customer"){<button type="button" class="btn-sm" data-open="m-password" data-fill="@fill">Mật khẩu</button><span class="muted" style="font-size:12px">Quản lý ở Quản lý CRM</span>}
+        else{<button type="button" class="btn-sm" data-open="m-edit" data-fill="@fill">Sửa</button>} @* [WEB-04] *@
         @if(id==me){<span class="muted" style="font-size:12px">Tài khoản của bạn</span>}
-        else{
-            if(role!="Customer"){<button type="button" class="btn-sm" data-open="m-role" data-fill="@fill">Đổi vai trò</button>}
+        else if(role!="Customer"){
+            <button type="button" class="btn-sm" data-open="m-role" data-fill="@fill">Đổi vai trò</button>
             <button type="button" class="btn-sm" data-open="m-password" data-fill="@fill">Mật khẩu</button>
             <button type="button" class="btn-sm" data-open="@(active?"m-lock":"m-unlock")" data-fill="@fill">@(active?"Khóa":"Mở khóa")</button>
             <button type="button" class="btn-sm danger-text" data-open="m-delete" data-fill="@fill">Xóa</button>
@@ -40,15 +42,11 @@
     <div class="modal-body">
         <label>Họ tên *</label><input name="fullName" maxlength="120" required>
         <div class="two"><div><label>Email *</label><input name="email" type="email" required></div>
-            <div><label>Điện thoại <span data-show-when="role=Customer">*</span></label>@* [BUG-04] kiểm tra trên trình duyệt; API kiểm tra lại bằng PhoneRule. [WEB-06] bắt buộc với khách hàng *@<input name="phone" maxlength="20" pattern="^0[0-9 .\-]{9,14}$" title="10–11 số, bắt đầu bằng 0" data-required-if="role=Customer"></div></div>
+            <div><label>Điện thoại</label>@* [BUG-04] kiểm tra trên trình duyệt; API kiểm tra lại bằng PhoneRule *@<input name="phone" maxlength="20" pattern="^0[0-9 .\-]{9,14}$" title="10–11 số, bắt đầu bằng 0"></div></div>
         <label>Mật khẩu ban đầu * (ít nhất 10 ký tự)</label><input name="password" type="password" minlength="10" required autocomplete="new-password">
-        <label>Vai trò</label><select name="role"><option value="BranchManager">Quản lý cửa hàng</option><option value="Staff">Thu ngân</option><option value="Customer">Khách hàng</option><option value="Owner">Chủ cửa hàng</option></select>
-        @* [WEB-07] Tài khoản khách hàng: nhập thêm ngày sinh, giới tính như form Thêm khách hàng (báo cáo độ tuổi / giới tính) *@
-        <div class="two" data-show-when="role=Customer" hidden>
-            <div><label>Ngày sinh</label><input name="dateOfBirth" type="date" min="1900-01-01" max="@DateTime.Today.ToString("yyyy-MM-dd")"></div>
-            <div><label>Giới tính</label><select name="gender"><option value="">Chưa cung cấp</option><option value="Female">Nữ</option><option value="Male">Nam</option><option value="Other">Khác</option></select></div>
-        </div>
-        <p class="muted">Quản lý và thu ngân được gán vào cửa hàng duy nhất của hệ thống. Có thể có nhiều quản lý. Khách hàng nên thêm ở Quản lý CRM → Khách hàng.</p>
+        <label>Vai trò</label><select name="role"><option value="BranchManager">Quản lý cửa hàng</option><option value="Staff">Thu ngân</option><option value="Owner">Chủ cửa hàng</option></select>
+        @* [REV-02] Bỏ vai trò Khách hàng khỏi form: khách được thêm ở Quản lý CRM → Khách hàng (hoặc tự đăng ký trên app) *@
+        <p class="muted">Chỉ tạo tài khoản nội bộ. Quản lý và thu ngân được gán vào cửa hàng duy nhất của hệ thống. Khách hàng được thêm ở Quản lý CRM → Khách hàng.</p>
     </div>
     <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Tạo tài khoản</button></footer>
 </form></dialog>

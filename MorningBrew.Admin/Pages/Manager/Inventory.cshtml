@@ -72,12 +72,31 @@
 
 <section class="panel">
     <div class="tabs-filter">
-        <a href="?tab=stock" class="@(Model.History?null:"current")">Tồn kho</a>
+        <a href="?tab=stock" class="@(Model.Tab is "stock" or ""?"current":null)">Tồn kho</a>
         <a href="?tab=history" class="@(Model.History?"current":null)">Lịch sử nhập / xuất</a>
         <a href="?tab=recipes" class="@(Model.Recipes?"current":null)">Định mức theo món</a> @* [WEB-14] *@
+        <a href="?tab=menu" class="@(Model.MenuTab?"current":null)">Tình trạng món</a> @* [REV-06] *@
     </div>
 
-    @if(Model.Recipes) // [WEB-14] định mức: đơn hoàn tất tự trừ kho theo bảng này
+    @if(Model.MenuTab) // [REV-06][REV-07] báo tạm hết / có hàng lại; gợi ý theo nguyên liệu dưới mức tối thiểu (kho không tự chặn bán)
+    {
+        string T(Dictionary<string,JsonElement> r,string k)=>r.TryGetValue(k,out var v)&&v.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined)?v.ToString():"";
+        var warn=Model.Rows.Count(r=>T(r,"low_ingredients")!="" && r["in_stock"].ValueKind==JsonValueKind.True);
+        <p class="list-count">@Model.Rows.Count món đang bán · @Model.Rows.Count(r=>r["in_stock"].ValueKind!=JsonValueKind.True) món tạm hết@(warn>0?$" · {warn} món còn bán nhưng có nguyên liệu dưới mức tối thiểu":"") · món tạm hết vẫn hiện trên app / POS nhưng không đặt được</p>
+        @if(Model.Rows.Count==0){<div class="empty-state">Không có món đang bán.</div>}
+        else{<div class="table-wrap"><table><thead><tr><th>Danh mục</th><th>Món</th><th>Trạng thái</th><th>Nguyên liệu dưới mức tối thiểu</th><th class="actions-col">Thao tác</th></tr></thead><tbody>
+        @foreach(var r in Model.Rows)
+        {
+            var inStock=r["in_stock"].ValueKind==JsonValueKind.True; var low=T(r,"low_ingredients");
+            <tr><td>@T(r,"category")</td><td><b>@T(r,"name")</b></td>
+                <td><span class="badge @(inStock?"ok":"bad")">@(inStock?"Còn hàng":"Tạm hết")</span></td>
+                <td>@if(low!=""){<span class="badge warn">Sắp hết</span> <small>@low</small>}else{<span class="muted">—</span>}</td>
+                <td class="actions-col"><form method="post" class="inline-form"><input type="hidden" name="operation" value="product-stock"><input type="hidden" name="tab" value="menu"><input type="hidden" name="id" value="@T(r,"product_id")"><input type="hidden" name="available" value="@(inStock?"false":"true")"><button class="btn-sm @(inStock?"danger-text":null)">@(inStock?"Báo tạm hết":"Có hàng lại")</button></form></td></tr>
+        }
+        </tbody></table></div>}
+    }
+    else if(Model.Recipes) // [WEB-14] định mức: đơn hoàn tất tự trừ kho theo bảng này
+
     {
         <div class="list-toolbar">
             <form method="get">

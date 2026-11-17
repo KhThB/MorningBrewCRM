@@ -55,5 +55,7 @@ public sealed class PosService(ApiClient api)
     public Task<Order> AdvanceAsync(int id, string next, string? courierName = null, string? courierPhone = null)
         => api.Send<Order>(HttpMethod.Post, $"v1/pos/orders/{id}:advance", new { NextStatus = next, CourierName = courierName, CourierPhone = courierPhone });
     public Task<Order> CollectAsync(int id) => api.Send<Order>(HttpMethod.Post, $"v1/pos/orders/{id}:collect");
+    // [ORD-01] Báo giao thất bại (status = "Failed", kèm lý do) hoặc giao lại (status = "Delivering").
+    public Task<Order> DeliveryAsync(int id, string status, string? reason = null) => api.Send<Order>(HttpMethod.Post, $"v1/pos/orders/{id}:delivery", new { Status = status, Reason = reason });
     public Task<Order> CancelAsync(int id, string reason) => api.Send<Order>(HttpMethod.Post, $"v1/pos/orders/{id}:cancel", new { Reason = reason });
 }

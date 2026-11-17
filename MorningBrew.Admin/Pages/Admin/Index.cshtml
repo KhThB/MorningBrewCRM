@@ -6,5 +6,5 @@
 @foreach(var r in Model.Roles)
 {<div class="stat"><span>@RowDisplay.Value("role",r["role"])</span><b>@ReportView.Int(r,"accounts")</b><small>@ReportView.Int(r,"active_accounts") hoạt động · @ReportView.Int(r,"locked_accounts") bị khóa</small></div>}
 </div>
-<section class="panel"><h2>Tác vụ quản trị</h2><div class="flow"><a class="primary" asp-page="/Admin/Accounts">Thêm / khóa / xóa tài khoản</a><a class="secondary" asp-page="/Admin/Permissions">Phân quyền theo vai trò</a><a class="secondary" asp-page="/Admin/Products">Sản phẩm &amp; giá</a></div></section>
+<section class="panel"><h2>Tác vụ quản trị</h2><div class="flow"><a class="primary" asp-page="/Admin/Accounts">Thêm / khóa / xóa tài khoản</a><a class="secondary" asp-page="/Admin/Permissions">Phân quyền theo vai trò</a><a class="secondary" asp-page="/Admin/Backup">Sao lưu &amp; phục hồi</a></div></section>@* [REV-09] bỏ lối tắt Sản phẩm *@
 <section class="panel"><h2>Nhật ký thao tác gần nhất</h2><partial name="_Rows" model="Model.Activity" /></section>

@@ -1,3 +1,5 @@
+-- 03_orders.sql – nghiệp vụ đơn hàng: voucher, đặt đơn, thanh toán mô phỏng, trạng thái, giao hàng, hủy, hoàn tiền.
+-- [GOP-01] Bản gộp: UpdateDelivery, SimulateRefund lấy bản có thông báo cho khách khi giao / hoàn tiền chưa thành công (trước ở 15_web_admin.sql).
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -228,8 +230,8 @@ BEGIN
  SET NOCOUNT ON; SET XACT_ABORT ON;
  BEGIN TRY
  BEGIN TRAN;
- DECLARE @branch int,@orderStatus varchar(20),@old varchar(12);
- SELECT @branch=BranchID,@orderStatus=Status FROM dbo.Orders WITH(UPDLOCK,HOLDLOCK) WHERE OrderID=@OrderID AND Fulfillment='Delivery';
+ DECLARE @branch int,@orderStatus varchar(20),@old varchar(12),@customer int; -- [WEB-08] @customer
+ SELECT @branch=BranchID,@orderStatus=Status,@customer=CustomerID FROM dbo.Orders WITH(UPDLOCK,HOLDLOCK) WHERE OrderID=@OrderID AND Fulfillment='Delivery';
  IF @branch IS NULL OR dbo.CanBranch(@ActorID,@branch,'Orders.Manage')=0 THROW 51103,N'Cannot update this delivery.',1;
  IF @orderStatus<>'Delivering' THROW 51100,N'Order is not in delivery phase.',1;
  SELECT @old=Status FROM dbo.Deliveries WHERE OrderID=@OrderID;
@@ -238,6 +240,13 @@ BEGIN
  IF NOT ((@old='Delivering' AND @Status='Failed') OR (@old='Failed' AND @Status='Delivering')) THROW 51100,N'Invalid delivery transition.',1;
  IF @Status='Failed' AND NULLIF(@Reason,'') IS NULL THROW 51100,N'Failure reason is required.',1;
  UPDATE dbo.Deliveries SET Status=@Status,FailureReason=CASE WHEN @Status='Failed' THEN @Reason END,AttemptCount=AttemptCount+CASE WHEN @Status='Delivering' THEN 1 ELSE 0 END,DispatchedAt=CASE WHEN @Status='Delivering' THEN SYSUTCDATETIME() ELSE DispatchedAt END WHERE OrderID=@OrderID;
+ -- [WEB-08] báo cho khách: giao chưa thành công (kèm lý do) hoặc cửa hàng đang giao lại
+ INSERT dbo.Notifications(UserID,Title,Body,OrderID)
+ SELECT UserID,
+        CASE WHEN @Status='Failed' THEN N'Giao hàng chưa thành công' ELSE N'Đang giao lại đơn hàng' END,
+        CASE WHEN @Status='Failed' THEN CONCAT(N'Lý do: ',@Reason,N'. Cửa hàng sẽ liên hệ để giao lại hoặc hủy đơn.') ELSE N'Trạng thái mới: Đang giao lại' END,
+        @OrderID
+ FROM dbo.Customers WHERE CustomerID=@customer;
  INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Delivery.Update','Deliveries',@OrderID,CONCAT(@Status,': ',@Reason));
  COMMIT;
  END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
@@ -316,6 +325,11 @@ BEGIN
   UPDATE dbo.CustomerPromotions SET Status='Available',UsedOrderID=NULL,UsedAt=NULL WHERE CustomerPromotionID=@voucher AND Status='Used' AND UsedOrderID=@order;
   INSERT dbo.Notifications(UserID,Title,Body,OrderID) SELECT UserID,N'Hoàn tiền thành công',N'Toàn bộ tiền của đơn đã được hoàn.',@order FROM dbo.Customers WHERE CustomerID=@customer;
  END;
+ -- [WEB-08] hoàn tiền thất bại: báo cho khách biết cửa hàng sẽ xử lý lại
+ IF @Outcome='Failed'
+  INSERT dbo.Notifications(UserID,Title,Body,OrderID)
+  SELECT UserID,N'Hoàn tiền chưa thành công',CONCAT(N'Cửa hàng sẽ thực hiện hoàn tiền lại.',CASE WHEN NULLIF(@FailureReason,'') IS NOT NULL THEN CONCAT(N' Lý do: ',@FailureReason) END),@order
+  FROM dbo.Customers WHERE CustomerID=@customer;
  INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Refund.Simulate','Refunds',@RefundID,@Outcome);
  COMMIT;
  END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;

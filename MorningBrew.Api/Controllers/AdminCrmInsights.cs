@@ -4,7 +4,7 @@ using MorningBrew.Api.Infrastructure;
 namespace MorningBrew.Api.Controllers;
 
 // [CRM-02] Phân tích hành vi mua: danh sách khách kèm số đơn, tổng chi tiêu, lần mua gần nhất, nhóm hành vi
-//          (view dbo.CustomerStats, 16_crm.sql) và lọc theo nhóm / SĐT trùng [CRM-08].
+//          (view dbo.CustomerStats, 05_access.sql) và lọc theo nhóm / SĐT trùng [CRM-08].
 // [CRM-04] Báo cáo hiệu quả ưu đãi: đã cấp, đã dùng, chưa dùng, hết hạn, tổng tiền giảm, doanh thu đơn có voucher.
 public sealed partial class AdminController
 {

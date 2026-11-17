@@ -15,7 +15,6 @@ public class ProductsModel(CrmApi api,IConfiguration config):WorkspaceBase(api)
         "product-update","variant-add","variant-active","category","category-update","category-active"} /* [WEB-03] */;
     public List<Dictionary<string,JsonElement>> Categories {get;set;}=[]; // [WEB-03] cả danh mục đang ẩn
     public bool CanEdit=>IsOwner; // [REV-09] Catalog.Manage là quyền bảo vệ, chỉ chủ cửa hàng có
-    public override string Subtitle=>CanEdit?"Thêm món, size, giá, ảnh, danh mục; ngừng bán. Báo tạm hết hằng ngày ở Kho nguyên liệu → Tình trạng món.":"Chỉ xem: giá và thực đơn do chủ cửa hàng cập nhật. Báo tạm hết ở Kho nguyên liệu → Tình trạng món.";
     protected override async Task LoadAsync()
     {
         await base.LoadAsync();

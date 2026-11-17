@@ -9,7 +9,6 @@ namespace MorningBrew.Admin.Pages.ManagerArea;
 public class OrdersModel(CrmApi api):WorkspaceBase(api)
 {
     public override string Title=>Id.HasValue?"Chi tiết đơn hàng":"Đơn hàng";
-    public override string Subtitle=>"Xem đơn và xử lý hoàn tiền. Đơn được xử lý trên POS tại quầy.";
     protected override bool Searchable=>true;
     protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"order-refund","refund-complete"};
     // [REV-10] Mặc định mở tab Chờ hoàn tiền – việc duy nhất quản lý xử lý trên trang này.

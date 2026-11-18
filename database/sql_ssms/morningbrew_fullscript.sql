@@ -1,33 +1,37 @@
-﻿-- morningbrew_fullscript.sql – CÀI MỚI hoặc NÂNG CẤP database MorningBrew CRM lên bản mới nhất (nhánh lmt_v2)
+﻿-- morningbrew_fullscript.sql – CÀI MỚI database MorningBrew CRM (bản gộp 01–07) [GOP-01]
 -- =====================================================================================
--- Gồm 17 file database/sql: 01–05 lõi, 06–07 dữ liệu mẫu, 08–13 cập nhật CRM + góp ý giao diện 09/11,
--- 14 kho nguyên liệu (Ingredients, InventoryTransactions, quyền Inventory.Manage, dữ liệu kho mẫu),
--- 15 sửa web Admin 15/11 (thông báo giao / hoàn tiền chưa thành công, định mức RecipeItems + tự trừ kho khi đơn hoàn tất),
--- 16 nâng cấp CRM (view CustomerStats, SĐT khách không trùng, quyền Loyalty.Adjust, bỏ quyền Organization.Manage),
--- 17 hạng thành viên (bảng MemberTiers + view CustomerTiers, tính theo chi tiêu 12 tháng).
+-- Gồm 7 file database/sql: 01 bảng (45 bảng), 02 hàm phân quyền + trigger, 03 nghiệp vụ đơn hàng,
+-- 04 nghiệp vụ CRM, 05 truy vấn / báo cáo / view, 06 dữ liệu nền (tài khoản, thực đơn, kho, hạng thành viên),
+-- 07 giao dịch mẫu (đơn, thanh toán, hủy, hoàn tiền, phản hồi, khảo sát).
 -- KHÔNG cần PowerShell. SSMS: kết nối (localdb)\MSSQLLocalDB → File → Open file này → Execute (F5).
--- Không cần chọn database trước (đang ở master cũng được): file tự chuyển sang [MorningBrewCRM_Crm].
--- File tự nhận biết tình trạng database [MorningBrewCRM_Crm]:
---   * Chưa có database / database trống → CÀI MỚI: tạo database, chạy 01 → 17.
---   * Database MorningBrew đang dùng     → NÂNG CẤP: kiểm tra, SAO LƯU (.bak có CHECKSUM + VERIFYONLY),
---                                          rồi chạy 08 → 17. KHÔNG chạy lại 01–07, không xóa dữ liệu.
---                                          Nhớ ĐÓNG API, web Admin, app, POS trước khi chạy.
--- Kết quả: tab Messages có "=== HOÀN TẤT ..." và bảng kiểm tra (SoBang = 45). Thấy ">>> DỪNG" thì
--- các lệnh sau không chạy; đọc lỗi đỏ đầu tiên. Nâng cấp lỗi giữa chừng: phục hồi từ file .bak đã in ra.
--- Chạy lại nhiều lần không sao (lần sau là NÂNG CẤP, mỗi lần thêm 1 bản .bak).
--- Khi NÂNG CẤP, SQL Server vẫn "dịch thử" đoạn 01–07 bị bỏ qua nên có thể hiện vài dòng đỏ trong đoạn đó;
--- không lệnh nào của 01–07 được chạy, kết quả thật là dòng "=== HOÀN TẤT" cuối cùng.
--- Visual Studio có thể gạch đỏ (IntelliSense đang nối vào master, cột/bảng chỉ có sau khi chạy) – không phải lỗi.
--- Tên database khác: Edit → Find and Replace "MorningBrewCRM_Crm" (và sửa ConnectionStrings:MorningBrew của API).
--- Nội dung SQL giữ nguyên các file database/sql; file này chỉ thêm chọn database, kiểm tra, sao lưu, dừng khi lỗi.
--- Sinh lại bằng: database/sql_ssms (xem README.md mục Database).
+-- Không cần chọn database trước (đang ở master cũng được): file tự tạo / chuyển sang [MorningBrewCRM_Crm].
+-- CHỈ CÀI MỚI: nếu [MorningBrewCRM_Crm] đã có bảng thì dừng, không thay đổi gì. Muốn cài lại: xóa database cũ
+-- (SSMS → Databases → chuột phải [MorningBrewCRM_Crm] → Delete, tích "Close existing connections") hoặc đổi tên database
+-- (Edit → Find and Replace "MorningBrewCRM_Crm", và sửa ConnectionStrings:MorningBrew của API).
+-- Kết quả: tab Messages có "=== HOÀN TẤT ..." và bảng kiểm tra (SoBang = 45, SoThuTuc = 24, SoTrigger = 21,
+-- SoHam = 4, SoView = 3). Thấy ">>> DỪNG" thì các lệnh sau không chạy; đọc dòng lỗi đỏ đầu tiên.
+-- Visual Studio có thể gạch đỏ (IntelliSense đang nối vào master, bảng chỉ có sau khi chạy) – không phải lỗi.
+-- Nội dung SQL giữ nguyên các file database/sql; file này chỉ thêm tạo / chọn database, kiểm tra và dừng khi lỗi.
 -- =====================================================================================
 GO
 SET NOEXEC OFF;
 EXEC sp_set_session_context N'mb_failed', 0;
-EXEC sp_set_session_context N'mb_mode', NULL;
 GO
 USE master;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+IF CAST(SERVERPROPERTY('ProductMajorVersion') AS int) < 16
+BEGIN
+    RAISERROR(N'>>> DỪNG: cần SQL Server 2022 trở lên (hoặc LocalDB 2022).', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
 GO
 IF @@ERROR <> 0
 BEGIN
@@ -39,6 +43,7 @@ GO
 IF DB_ID(N'MorningBrewCRM_Crm') IS NULL
 BEGIN
     CREATE DATABASE [MorningBrewCRM_Crm];
+    ALTER DATABASE [MorningBrewCRM_Crm] SET COMPATIBILITY_LEVEL = 160;
     PRINT N'Đã tạo database [MorningBrewCRM_Crm].';
 END
 GO
@@ -64,19 +69,9 @@ BEGIN
     EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
-IF NOT EXISTS (SELECT 1 FROM sys.tables)
+IF EXISTS (SELECT 1 FROM sys.tables)
 BEGIN
-    EXEC sp_set_session_context N'mb_mode', N'install';
-    PRINT N'>>> Database trống: CÀI MỚI (01 → 17).';
-END
-ELSE IF OBJECT_ID(N'dbo.CreateOrder', N'P') IS NOT NULL AND OBJECT_ID(N'dbo.GetMenu', N'P') IS NOT NULL
-BEGIN
-    EXEC sp_set_session_context N'mb_mode', N'upgrade';
-    PRINT N'>>> Database đã có dữ liệu: NÂNG CẤP (sao lưu → 08 → 17). Bỏ qua 01–07.';
-END
-ELSE
-BEGIN
-    RAISERROR(N'>>> DỪNG: database [MorningBrewCRM_Crm] có bảng nhưng không phải database MorningBrew CRM. Dùng database trống hoặc đổi tên database.', 16, 1);
+    RAISERROR(N'>>> DỪNG: database [MorningBrewCRM_Crm] đã có bảng. Script này chỉ CÀI MỚI: xóa database [MorningBrewCRM_Crm] (hoặc đổi tên database trong script) rồi chạy lại.', 16, 1);
     EXEC sp_set_session_context N'mb_failed', 1;
     SET NOEXEC ON;
 END
@@ -85,29 +80,6 @@ IF @@ERROR <> 0
 BEGIN
     RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
     EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-IF CAST(SERVERPROPERTY('ProductMajorVersion') AS int) < 16
-BEGIN
-    RAISERROR(N'>>> DỪNG: cần SQL Server 2022 trở lên (hoặc LocalDB 2022).', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-ELSE IF SESSION_CONTEXT(N'mb_mode') = N'install'
-    ALTER DATABASE [MorningBrewCRM_Crm] SET COMPATIBILITY_LEVEL = 160;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- ===== PHẦN CÀI MỚI (01–07): bỏ qua khi nâng cấp =====
-IF SESSION_CONTEXT(N'mb_mode') = N'upgrade'
-BEGIN
-    PRINT N'(Bỏ qua 01–07 – dòng đỏ nếu có trong đoạn này là do SQL Server dịch thử, không phải lỗi thật.)';
     SET NOEXEC ON;
 END
 GO
@@ -115,6 +87,7 @@ PRINT N'--- 01_schema.sql ---';
 GO
 -- Generated by tools/schema.py. SQL Server 2022+. Run only in a NEW empty database.
 -- [AREA-01] Không còn vai trò / bảng AreaManager (mô hình một cửa hàng).
+-- [GOP-01] Đủ 45 bảng: gộp các bảng / cột / index trước đây thêm ở script nâng cấp 08, 10, 14, 15, 16, 17.
 
 SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;
 
@@ -156,6 +129,7 @@ CREATE TABLE dbo.[Users] (
     [IsActive] bit NOT NULL CONSTRAINT [DF_Users_IsActive] DEFAULT (1),
     [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_Users_CreatedAt] DEFAULT (SYSUTCDATETIME()),
     [Version] rowversion NOT NULL,
+    [DeletedAt] datetime2(3) NULL,
     CONSTRAINT [PK_Users] PRIMARY KEY ([UserID]),
     CONSTRAINT [UQ_Users_0] UNIQUE (NormalizedEmail),
     CONSTRAINT [CK_Users_0] CHECK (NormalizedEmail = UPPER(LTRIM(RTRIM(Email))))
@@ -691,6 +665,79 @@ CREATE TABLE dbo.[AuditLogs] (
     CONSTRAINT [PK_AuditLogs] PRIMARY KEY ([AuditID])
 );
 
+CREATE TABLE dbo.[Suppliers] (
+    [SupplierID] int IDENTITY(1,1) NOT NULL,
+    [Code] varchar(30) NOT NULL,
+    [Name] nvarchar(150) NOT NULL,
+    [Phone] varchar(20) NULL,
+    [Email] nvarchar(254) NULL,
+    [ProductGroup] nvarchar(150) NULL,
+    [IsActive] bit NOT NULL CONSTRAINT [DF_Suppliers_IsActive] DEFAULT (1),
+    CONSTRAINT [PK_Suppliers] PRIMARY KEY ([SupplierID]),
+    CONSTRAINT [UQ_Suppliers_0] UNIQUE (Code)
+);
+
+CREATE TABLE dbo.[Ingredients] (
+    [IngredientID] int IDENTITY(1,1) NOT NULL,
+    [SupplierID] int NULL,
+    [Code] varchar(30) NOT NULL,
+    [Name] nvarchar(150) NOT NULL,
+    [Unit] nvarchar(20) NOT NULL,
+    [Quantity] decimal(18,3) NOT NULL CONSTRAINT [DF_Ingredients_Quantity] DEFAULT (0),
+    [MinStock] decimal(18,3) NOT NULL CONSTRAINT [DF_Ingredients_MinStock] DEFAULT (0),
+    [LastUnitCost] decimal(18,2) NULL,
+    [IsActive] bit NOT NULL CONSTRAINT [DF_Ingredients_IsActive] DEFAULT (1),
+    [StockUpdatedAt] datetime2(3) NULL,
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_Ingredients_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT [PK_Ingredients] PRIMARY KEY ([IngredientID]),
+    CONSTRAINT [UQ_Ingredients_0] UNIQUE (Code),
+    CONSTRAINT [CK_Ingredients_0] CHECK ([Quantity]  >= 0),
+    CONSTRAINT [CK_Ingredients_1] CHECK ([MinStock]  >= 0),
+    CONSTRAINT [CK_Ingredients_2] CHECK ([LastUnitCost] IS NULL OR [LastUnitCost] >= 0)
+);
+
+CREATE TABLE dbo.[InventoryTransactions] (
+    [TransactionID] int IDENTITY(1,1) NOT NULL,
+    [IngredientID] int NOT NULL,
+    [SupplierID] int NULL,
+    [ActorID] int NULL,
+    [Kind] varchar(10) NOT NULL,
+    [QuantityChange] decimal(18,3) NOT NULL,
+    [BalanceAfter] decimal(18,3) NOT NULL,
+    [UnitCost] decimal(18,2) NULL,
+    [TotalCost] AS CASE WHEN [Kind]='Import' AND [UnitCost] IS NOT NULL THEN ABS([QuantityChange])*[UnitCost] ELSE NULL END,
+    [Note] nvarchar(300) NULL,
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_InventoryTransactions_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT [PK_InventoryTransactions] PRIMARY KEY ([TransactionID]),
+    CONSTRAINT [CK_InventoryTransactions_0] CHECK ([Kind] IN ('Import','Export','Waste','Adjust')),
+    CONSTRAINT [CK_InventoryTransactions_1] CHECK ([BalanceAfter] >= 0),
+    CONSTRAINT [CK_InventoryTransactions_2] CHECK ([UnitCost] IS NULL OR [UnitCost] >= 0),
+    CONSTRAINT [CK_InventoryTransactions_3] CHECK ([Kind] <> 'Import' OR [QuantityChange] > 0),
+    CONSTRAINT [CK_InventoryTransactions_4] CHECK ([Kind] NOT IN ('Export','Waste') OR [QuantityChange] < 0 OR ([Kind]='Export' AND [QuantityChange]=0 AND [BalanceAfter]=0 AND [ActorID] IS NULL AND [Note] IS NOT NULL AND [Note] LIKE N'Bán hàng%thiếu%kiểm kê%'))
+);
+
+CREATE TABLE dbo.[RecipeItems] (
+    [VariantID] int NOT NULL,
+    [IngredientID] int NOT NULL,
+    [Quantity] decimal(18,3) NOT NULL,
+    CONSTRAINT [PK_RecipeItems] PRIMARY KEY ([VariantID],[IngredientID]),
+    CONSTRAINT [CK_RecipeItems_0] CHECK ([Quantity] > 0)
+);
+
+CREATE TABLE dbo.[MemberTiers] (
+    [TierID] int IDENTITY(1,1) NOT NULL,
+    [Code] varchar(20) NOT NULL,
+    [Name] nvarchar(50) NOT NULL,
+    [MinSpent] decimal(18,2) NOT NULL,
+    [Benefit] nvarchar(300) NULL,
+    [CreatedAt] datetime2(3) NOT NULL CONSTRAINT [DF_MemberTiers_CreatedAt] DEFAULT (SYSUTCDATETIME()),
+    CONSTRAINT [PK_MemberTiers] PRIMARY KEY ([TierID]),
+    CONSTRAINT [UQ_MemberTiers_0] UNIQUE (Code),
+    CONSTRAINT [UQ_MemberTiers_1] UNIQUE (Name),
+    CONSTRAINT [UQ_MemberTiers_2] UNIQUE (MinSpent),
+    CONSTRAINT [CK_MemberTiers_0] CHECK ([MinSpent] >= 0)
+);
+
 ALTER TABLE dbo.[RolePermissions] ADD CONSTRAINT [FK_RolePermissions_RoleID] FOREIGN KEY ([RoleID]) REFERENCES dbo.[Roles]([RoleID]);
 
 ALTER TABLE dbo.[RolePermissions] ADD CONSTRAINT [FK_RolePermissions_PermissionID] FOREIGN KEY ([PermissionID]) REFERENCES dbo.[Permissions]([PermissionID]);
@@ -841,6 +888,18 @@ ALTER TABLE dbo.[AuditLogs] ADD CONSTRAINT [FK_AuditLogs_ActorID] FOREIGN KEY ([
 
 ALTER TABLE dbo.[AuditLogs] ADD CONSTRAINT [FK_AuditLogs_BranchID] FOREIGN KEY ([BranchID]) REFERENCES dbo.[Branches]([BranchID]);
 
+ALTER TABLE dbo.[Ingredients] ADD CONSTRAINT [FK_Ingredients_SupplierID] FOREIGN KEY ([SupplierID]) REFERENCES dbo.[Suppliers]([SupplierID]);
+
+ALTER TABLE dbo.[InventoryTransactions] ADD CONSTRAINT [FK_InventoryTransactions_IngredientID] FOREIGN KEY ([IngredientID]) REFERENCES dbo.[Ingredients]([IngredientID]);
+
+ALTER TABLE dbo.[InventoryTransactions] ADD CONSTRAINT [FK_InventoryTransactions_SupplierID] FOREIGN KEY ([SupplierID]) REFERENCES dbo.[Suppliers]([SupplierID]);
+
+ALTER TABLE dbo.[InventoryTransactions] ADD CONSTRAINT [FK_InventoryTransactions_ActorID] FOREIGN KEY ([ActorID]) REFERENCES dbo.[Users]([UserID]);
+
+ALTER TABLE dbo.[RecipeItems] ADD CONSTRAINT [FK_RecipeItems_VariantID] FOREIGN KEY ([VariantID]) REFERENCES dbo.[ProductVariants]([VariantID]);
+
+ALTER TABLE dbo.[RecipeItems] ADD CONSTRAINT [FK_RecipeItems_IngredientID] FOREIGN KEY ([IngredientID]) REFERENCES dbo.[Ingredients]([IngredientID]);
+
 ALTER TABLE dbo.[BranchProductVariants] ADD CONSTRAINT FK_Composite_0 FOREIGN KEY (BranchID,ProductID) REFERENCES dbo.[BranchProducts](BranchID,ProductID);
 
 ALTER TABLE dbo.[BranchProductVariants] ADD CONSTRAINT FK_Composite_1 FOREIGN KEY (VariantID,ProductID) REFERENCES dbo.[ProductVariants](VariantID,ProductID);
@@ -899,6 +958,16 @@ CREATE  INDEX IX_UserSessions_17 ON dbo.[UserSessions](UserID,ExpiresAt);
 
 CREATE  INDEX IX_Customers_18 ON dbo.[Customers](DateOfBirth,Gender);
 
+CREATE  INDEX IX_Ingredients_19 ON dbo.[Ingredients]([IsActive],[Name]);
+
+CREATE  INDEX IX_InventoryTransactions_20 ON dbo.[InventoryTransactions]([IngredientID],[CreatedAt] DESC);
+
+CREATE  INDEX IX_InventoryTransactions_21 ON dbo.[InventoryTransactions]([CreatedAt] DESC);
+
+CREATE  INDEX IX_RecipeItems_22 ON dbo.[RecipeItems]([IngredientID]);
+
+CREATE  INDEX IX_Users_Phone ON dbo.[Users](Phone);
+
 COMMIT;
 GO
 IF @@ERROR <> 0
@@ -910,6 +979,10 @@ END
 GO
 PRINT N'--- 02_rules.sql ---';
 GO
+-- 02_rules.sql – hàm phân quyền và trigger bảo vệ dữ liệu.
+-- [GOP-01] Bản gộp: hàm CanBranch / CanScope / CustomerInScope, trigger TR_StaffBranches_Role, TR_Users_Role lấy bản cuối
+--          (mô hình một cửa hàng, trước ở 11_single_store.sql); thêm trigger TR_Orders_ShortCode (mã đơn ngắn, trước ở 12),
+--          TR_InventoryTransactions_Immutable (14), TR_Orders_Inventory (tự trừ kho, 15), TR_Users_CustomerPhone (16).
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -925,12 +998,12 @@ RETURNS bit AS
 BEGIN
  DECLARE @ok bit=0;
  IF EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
- JOIN dbo.RolePermissions rp ON rp.RoleID=u.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
- JOIN dbo.Branches b ON b.BranchID=@BranchID
- WHERE u.UserID=@UserID AND u.IsActive=1 AND p.Code=@Permission AND
- -- [AREA-01] bỏ nhánh AreaManager (không còn vai trò quản lý khu vực)
- (r.Code='Owner'
- OR (r.Code='BranchManager' AND b.ManagerID=u.UserID) OR (r.Code='Staff' AND EXISTS(SELECT 1 FROM dbo.StaffBranches s WHERE s.UserID=u.UserID AND s.BranchID=b.BranchID AND s.IsActive=1)))) SET @ok=1;
+  JOIN dbo.RolePermissions rp ON rp.RoleID=u.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
+  JOIN dbo.Branches b ON b.BranchID=@BranchID
+  WHERE u.UserID=@UserID AND u.IsActive=1 AND p.Code=@Permission AND
+  (r.Code='Owner'
+   OR (r.Code='BranchManager' AND b.ManagerID=u.UserID)
+   OR (r.Code IN ('BranchManager','Staff') AND EXISTS(SELECT 1 FROM dbo.StaffBranches s WHERE s.UserID=u.UserID AND s.BranchID=b.BranchID AND s.IsActive=1)))) SET @ok=1;
  RETURN @ok;
 END;
 GO
@@ -958,10 +1031,12 @@ CREATE OR ALTER FUNCTION dbo.CanScope(@UserID int,@Scope varchar(10),@AreaID int
 RETURNS bit AS
 BEGIN
  IF @Scope='Branch' RETURN dbo.CanBranch(@UserID,@BranchID,@Permission);
+ -- Chain/Area: chủ cửa hàng có quyền, hoặc người có quyền tại một cửa hàng đang hoạt động (chỉ có 1 cửa hàng).
  RETURN CASE WHEN EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
- JOIN dbo.RolePermissions rp ON rp.RoleID=r.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
- WHERE u.UserID=@UserID AND u.IsActive=1 AND p.Code=@Permission AND
- r.Code='Owner') THEN 1 ELSE 0 END; -- [AREA-01] bỏ nhánh AreaManager; 11_single_store.sql định nghĩa lại hàm này
+   JOIN dbo.RolePermissions rp ON rp.RoleID=r.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
+   WHERE u.UserID=@UserID AND u.IsActive=1 AND p.Code=@Permission AND r.Code='Owner')
+  OR EXISTS(SELECT 1 FROM dbo.Branches b WHERE b.IsActive=1 AND dbo.CanBranch(@UserID,b.BranchID,@Permission)=1)
+  THEN 1 ELSE 0 END;
 END;
 GO
 IF @@ERROR <> 0
@@ -974,7 +1049,8 @@ GO
 CREATE OR ALTER FUNCTION dbo.CustomerInScope(@CustomerID int,@Scope varchar(10),@AreaID int,@BranchID int)
 RETURNS bit AS
 BEGIN
- RETURN CASE WHEN @Scope='Chain' OR EXISTS(SELECT 1 FROM dbo.Orders o JOIN dbo.Branches b ON b.BranchID=o.BranchID WHERE o.CustomerID=@CustomerID AND o.Status='Completed' AND ((@Scope='Branch' AND o.BranchID=@BranchID) OR (@Scope='Area' AND b.AreaID=@AreaID))) THEN 1 ELSE 0 END;
+ RETURN CASE WHEN EXISTS(SELECT 1 FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID
+  WHERE c.CustomerID=@CustomerID AND u.DeletedAt IS NULL) THEN 1 ELSE 0 END;
 END;
 GO
 IF @@ERROR <> 0
@@ -998,11 +1074,11 @@ BEGIN
     SET NOEXEC ON;
 END
 GO
--- [AREA-01] bỏ trigger TR_AreaManagers_Role (không còn bảng AreaManagers)
 CREATE OR ALTER TRIGGER dbo.TR_StaffBranches_Role ON dbo.StaffBranches AFTER INSERT,UPDATE AS
 BEGIN
  SET NOCOUNT ON;
- IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.Users u ON u.UserID=i.UserID JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE r.Code<>'Staff') THROW 51001,N'Assignment requires Staff role.',1;
+ IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.Users u ON u.UserID=i.UserID JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE r.Code NOT IN ('Staff','BranchManager'))
+  THROW 51001,N'Assignment requires Staff or BranchManager role.',1;
 END;
 GO
 IF @@ERROR <> 0
@@ -1029,7 +1105,7 @@ CREATE OR ALTER TRIGGER dbo.TR_Users_Role ON dbo.Users AFTER UPDATE AS
 BEGIN
  SET NOCOUNT ON;
  IF UPDATE(RoleID) AND EXISTS(SELECT 1 FROM inserted i JOIN deleted d ON d.UserID=i.UserID WHERE i.RoleID<>d.RoleID AND
- (EXISTS(SELECT 1 FROM dbo.Customers WHERE UserID=i.UserID) OR EXISTS(SELECT 1 FROM dbo.StaffBranches WHERE UserID=i.UserID) OR EXISTS(SELECT 1 FROM dbo.Branches WHERE ManagerID=i.UserID)))
+ (EXISTS(SELECT 1 FROM dbo.Customers WHERE UserID=i.UserID) OR EXISTS(SELECT 1 FROM dbo.StaffBranches WHERE UserID=i.UserID AND IsActive=1) OR EXISTS(SELECT 1 FROM dbo.Branches WHERE ManagerID=i.UserID)))
  THROW 51001,N'Remove incompatible assignments/profile before changing role.',1;
 END;
 GO
@@ -1209,8 +1285,104 @@ BEGIN
     SET NOEXEC ON;
 END
 GO
+-- [Mã đơn ngắn] Mã đơn cũ 'MB-' + GUID (35 ký tự) quá dài để đọc / gọi tại quầy.
+-- Mã mới: MB + ngày đặt (giờ Việt Nam, yyMMdd) + '-' + số thứ tự đơn 4 chữ số, ví dụ MB261108-0028 (13 ký tự).
+-- Duy nhất vì gắn với OrderID. Trigger chạy sau khi CreateOrder thêm đơn nên không phải sửa procedure.
+CREATE OR ALTER TRIGGER dbo.TR_Orders_ShortCode ON dbo.Orders AFTER INSERT AS
+BEGIN
+ SET NOCOUNT ON;
+ UPDATE o SET OrderCode=CONCAT('MB',FORMAT(DATEADD(hour,7,i.CreatedAt),'yyMMdd'),'-',
+   CASE WHEN i.OrderID>9999 THEN CONVERT(varchar(12),i.OrderID) ELSE RIGHT(CONCAT('0000',i.OrderID),4) END)
+ FROM dbo.Orders o JOIN inserted i ON i.OrderID=o.OrderID;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+CREATE OR ALTER TRIGGER dbo.TR_InventoryTransactions_Immutable
+ON dbo.InventoryTransactions AFTER UPDATE, DELETE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF EXISTS(SELECT 1 FROM deleted)
+        THROW 51001, N'Phiếu kho là append-only; sai sót thì lập phiếu kiểm kê.', 1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- ===== [WEB-14] Đơn hoàn tất → tự trừ kho theo định mức =====
+-- Chạy trong cùng giao dịch với dbo.AdvanceOrder (POS và web Quản lý đều hoàn tất đơn qua thủ tục này).
+-- Không bao giờ báo lỗi để chặn việc hoàn tất đơn: thiếu hàng thì trừ về 0 và ghi chú để kiểm kê.
+CREATE OR ALTER TRIGGER dbo.TR_Orders_Inventory ON dbo.Orders AFTER UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF NOT UPDATE(Status) RETURN;
+    DECLARE @done TABLE(OrderID int PRIMARY KEY,OrderCode varchar(40));
+    INSERT @done SELECT i.OrderID,i.OrderCode FROM inserted i JOIN deleted d ON d.OrderID=i.OrderID
+    WHERE i.Status='Completed' AND d.Status<>'Completed';
+    IF NOT EXISTS(SELECT 1 FROM @done) RETURN;
+
+    DECLARE @note nvarchar(300)=LEFT(CONCAT(N'Bán hàng – đơn ',(SELECT STRING_AGG(COALESCE(OrderCode,CONVERT(varchar(20),OrderID)),', ') FROM @done)),240);
+    DECLARE @use TABLE(IngredientID int PRIMARY KEY,Need decimal(18,3));
+    INSERT @use
+    SELECT r.IngredientID,SUM(od.Quantity*r.Quantity)
+    FROM @done x JOIN dbo.OrderDetails od ON od.OrderID=x.OrderID
+    JOIN dbo.RecipeItems r ON r.VariantID=od.VariantID
+    JOIN dbo.Ingredients g ON g.IngredientID=r.IngredientID AND g.IsActive=1
+    GROUP BY r.IngredientID;
+    IF NOT EXISTS(SELECT 1 FROM @use) RETURN;
+
+    DECLARE @moved TABLE(IngredientID int,Delta decimal(18,3),Balance decimal(18,3),Short decimal(18,3));
+    UPDATE g SET Quantity=CASE WHEN g.Quantity>=u.Need THEN g.Quantity-u.Need ELSE 0 END,StockUpdatedAt=SYSUTCDATETIME()
+    OUTPUT inserted.IngredientID,inserted.Quantity-deleted.Quantity,inserted.Quantity,u.Need-(deleted.Quantity-inserted.Quantity) INTO @moved
+    FROM dbo.Ingredients g WITH(UPDLOCK,HOLDLOCK) JOIN @use u ON u.IngredientID=g.IngredientID;
+
+    INSERT dbo.InventoryTransactions(IngredientID,ActorID,Kind,QuantityChange,BalanceAfter,Note)
+    SELECT IngredientID,NULL,'Export',Delta,Balance,
+           CONCAT(@note,CASE WHEN Short>0 THEN CONCAT(N' (thiếu ',FORMAT(Short,'0.###','vi-VN'),N' – cần kiểm kê)') END)
+    -- Tồn đã bằng 0 vẫn cần phiếu tự động ghi lượng thiếu; không tạo biến động kho giả.
+    -- CHECK của InventoryTransactions chỉ cho phép Export=0 khi là phiếu thiếu kho tự động.
+    FROM @moved WHERE Delta<0 OR Short>0;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- ===== [CRM-08] Một SĐT chỉ thuộc một khách hàng chưa xóa =====
+-- Áp dụng cho mọi đường ghi: đăng ký app, sửa hồ sơ app, tạo / sửa khách trên web. Nhân viên không bị ràng buộc.
+CREATE OR ALTER TRIGGER dbo.TR_Users_CustomerPhone ON dbo.Users AFTER INSERT,UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF NOT (UPDATE(Phone) OR UPDATE(RoleID) OR UPDATE(DeletedAt)) RETURN;
+    DECLARE @customer int=(SELECT RoleID FROM dbo.Roles WHERE Code='Customer');
+    IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.Users u ON u.Phone=i.Phone AND u.UserID<>i.UserID
+              WHERE i.Phone IS NOT NULL AND i.RoleID=@customer AND u.RoleID=@customer AND i.DeletedAt IS NULL AND u.DeletedAt IS NULL)
+        THROW 51120,N'Số điện thoại này đã được dùng cho một khách hàng khác.',1;
+END;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
 PRINT N'--- 03_orders.sql ---';
 GO
+-- 03_orders.sql – nghiệp vụ đơn hàng: voucher, đặt đơn, thanh toán mô phỏng, trạng thái, giao hàng, hủy, hoàn tiền.
+-- [GOP-01] Bản gộp: UpdateDelivery, SimulateRefund lấy bản có thông báo cho khách khi giao / hoàn tiền chưa thành công (trước ở 15_web_admin.sql).
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -1483,8 +1655,8 @@ BEGIN
  SET NOCOUNT ON; SET XACT_ABORT ON;
  BEGIN TRY
  BEGIN TRAN;
- DECLARE @branch int,@orderStatus varchar(20),@old varchar(12);
- SELECT @branch=BranchID,@orderStatus=Status FROM dbo.Orders WITH(UPDLOCK,HOLDLOCK) WHERE OrderID=@OrderID AND Fulfillment='Delivery';
+ DECLARE @branch int,@orderStatus varchar(20),@old varchar(12),@customer int; -- [WEB-08] @customer
+ SELECT @branch=BranchID,@orderStatus=Status,@customer=CustomerID FROM dbo.Orders WITH(UPDLOCK,HOLDLOCK) WHERE OrderID=@OrderID AND Fulfillment='Delivery';
  IF @branch IS NULL OR dbo.CanBranch(@ActorID,@branch,'Orders.Manage')=0 THROW 51103,N'Cannot update this delivery.',1;
  IF @orderStatus<>'Delivering' THROW 51100,N'Order is not in delivery phase.',1;
  SELECT @old=Status FROM dbo.Deliveries WHERE OrderID=@OrderID;
@@ -1493,6 +1665,13 @@ BEGIN
  IF NOT ((@old='Delivering' AND @Status='Failed') OR (@old='Failed' AND @Status='Delivering')) THROW 51100,N'Invalid delivery transition.',1;
  IF @Status='Failed' AND NULLIF(@Reason,'') IS NULL THROW 51100,N'Failure reason is required.',1;
  UPDATE dbo.Deliveries SET Status=@Status,FailureReason=CASE WHEN @Status='Failed' THEN @Reason END,AttemptCount=AttemptCount+CASE WHEN @Status='Delivering' THEN 1 ELSE 0 END,DispatchedAt=CASE WHEN @Status='Delivering' THEN SYSUTCDATETIME() ELSE DispatchedAt END WHERE OrderID=@OrderID;
+ -- [WEB-08] báo cho khách: giao chưa thành công (kèm lý do) hoặc cửa hàng đang giao lại
+ INSERT dbo.Notifications(UserID,Title,Body,OrderID)
+ SELECT UserID,
+        CASE WHEN @Status='Failed' THEN N'Giao hàng chưa thành công' ELSE N'Đang giao lại đơn hàng' END,
+        CASE WHEN @Status='Failed' THEN CONCAT(N'Lý do: ',@Reason,N'. Cửa hàng sẽ liên hệ để giao lại hoặc hủy đơn.') ELSE N'Trạng thái mới: Đang giao lại' END,
+        @OrderID
+ FROM dbo.Customers WHERE CustomerID=@customer;
  INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Delivery.Update','Deliveries',@OrderID,CONCAT(@Status,': ',@Reason));
  COMMIT;
  END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
@@ -1592,6 +1771,11 @@ BEGIN
   UPDATE dbo.CustomerPromotions SET Status='Available',UsedOrderID=NULL,UsedAt=NULL WHERE CustomerPromotionID=@voucher AND Status='Used' AND UsedOrderID=@order;
   INSERT dbo.Notifications(UserID,Title,Body,OrderID) SELECT UserID,N'Hoàn tiền thành công',N'Toàn bộ tiền của đơn đã được hoàn.',@order FROM dbo.Customers WHERE CustomerID=@customer;
  END;
+ -- [WEB-08] hoàn tiền thất bại: báo cho khách biết cửa hàng sẽ xử lý lại
+ IF @Outcome='Failed'
+  INSERT dbo.Notifications(UserID,Title,Body,OrderID)
+  SELECT UserID,N'Hoàn tiền chưa thành công',CONCAT(N'Cửa hàng sẽ thực hiện hoàn tiền lại.',CASE WHEN NULLIF(@FailureReason,'') IS NOT NULL THEN CONCAT(N' Lý do: ',@FailureReason) END),@order
+  FROM dbo.Customers WHERE CustomerID=@customer;
  INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Refund.Simulate','Refunds',@RefundID,@Outcome);
  COMMIT;
  END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
@@ -1632,6 +1816,9 @@ END
 GO
 PRINT N'--- 04_crm.sql ---';
 GO
+-- 04_crm.sql – nghiệp vụ CRM: khảo sát, địa chỉ, phản hồi, xóa mềm tài khoản.
+-- [GOP-01] Bản gộp: PublishSurvey, InviteSurvey, HandleFeedback lấy bản sửa lỗi (trước ở 12_bugfix.sql);
+--          bỏ SetBranchPrice (giá theo chi nhánh đã ngừng); thêm SoftDeleteUser bản cuối (trước ở 10 và 11).
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -1642,15 +1829,20 @@ BEGIN
     SET NOEXEC ON;
 END
 GO
+-- [BUG-06] Tách lỗi "sai trạng thái" (51124 → HTTP 409, thông báo tiếng Việt) khỏi lỗi "thiếu quyền" (51103 → 403).
+-- [BUG-07] Không cho phát hành khảo sát đã quá ngày kết thúc.
 CREATE OR ALTER PROCEDURE dbo.PublishSurvey @ActorID int,@SurveyID int
 AS
 BEGIN
  SET NOCOUNT ON; SET XACT_ABORT ON;
  BEGIN TRY
  BEGIN TRAN;
- DECLARE @scope varchar(10),@area int,@branch int;
- SELECT @scope=Scope,@area=AreaID,@branch=BranchID FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@SurveyID AND Status='Draft';
- IF @scope IS NULL OR dbo.CanScope(@ActorID,@scope,@area,@branch,'Surveys.Manage')=0 THROW 51103,N'Survey missing, published, or outside scope.',1;
+ DECLARE @status varchar(10),@scope varchar(10),@area int,@branch int,@ends datetime2(3);
+ SELECT @status=Status,@scope=Scope,@area=AreaID,@branch=BranchID,@ends=EndsAt FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@SurveyID;
+ IF @status IS NULL THROW 51104,N'Không tìm thấy khảo sát.',1;
+ IF dbo.CanScope(@ActorID,@scope,@area,@branch,'Surveys.Manage')=0 THROW 51103,N'Survey outside scope.',1;
+ IF @status<>'Draft' THROW 51124,N'Khảo sát đã được phát hành hoặc đã đóng, không phát hành lại được.',1;
+ IF @ends<=SYSUTCDATETIME() THROW 51124,N'Khảo sát đã quá ngày kết thúc, không thể phát hành.',1; -- [BUG-07]
  UPDATE dbo.Surveys SET Status='Open' WHERE SurveyID=@SurveyID;
  INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID) VALUES(@ActorID,@branch,'Survey.Publish','Surveys',@SurveyID);
  COMMIT;
@@ -1664,15 +1856,19 @@ BEGIN
     SET NOEXEC ON;
 END
 GO
+-- [BUG-06] Mời vào khảo sát chưa phát hành / đã đóng / hết hạn → 51124 thay vì 51103.
 CREATE OR ALTER PROCEDURE dbo.InviteSurvey @ActorID int,@SurveyID int,@CustomerID int
 AS
 BEGIN
  SET NOCOUNT ON; SET XACT_ABORT ON;
  BEGIN TRY
  BEGIN TRAN;
- DECLARE @scope varchar(10),@area int,@branch int;
- SELECT @scope=Scope,@area=AreaID,@branch=BranchID FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@SurveyID AND Status='Open' AND EndsAt>SYSUTCDATETIME();
- IF @scope IS NULL OR dbo.CanScope(@ActorID,@scope,@area,@branch,'Surveys.Manage')=0 OR dbo.CustomerInScope(@CustomerID,@scope,@area,@branch)=0 THROW 51103,N'Cannot invite customer to this survey.',1;
+ DECLARE @status varchar(10),@scope varchar(10),@area int,@branch int,@ends datetime2(3);
+ SELECT @status=Status,@scope=Scope,@area=AreaID,@branch=BranchID,@ends=EndsAt FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@SurveyID;
+ IF @status IS NULL THROW 51104,N'Không tìm thấy khảo sát.',1;
+ IF dbo.CanScope(@ActorID,@scope,@area,@branch,'Surveys.Manage')=0 THROW 51103,N'Survey outside scope.',1;
+ IF @status<>'Open' OR @ends<=SYSUTCDATETIME() THROW 51124,N'Khảo sát chưa phát hành, đã đóng hoặc đã hết hạn nên không mời thêm được.',1;
+ IF dbo.CustomerInScope(@CustomerID,@scope,@area,@branch)=0 THROW 51104,N'Không tìm thấy khách hàng.',1;
  IF EXISTS(SELECT 1 FROM dbo.SurveyRecipients WHERE SurveyID=@SurveyID AND CustomerID=@CustomerID) BEGIN COMMIT; RETURN; END;
  INSERT dbo.SurveyRecipients(SurveyID,CustomerID) VALUES(@SurveyID,@CustomerID);
  INSERT dbo.Notifications(UserID,Title,Body,SurveyID) SELECT c.UserID,N'Khảo sát mới',s.Title,@SurveyID FROM dbo.Customers c CROSS JOIN dbo.Surveys s WHERE c.CustomerID=@CustomerID AND s.SurveyID=@SurveyID;
@@ -1781,15 +1977,18 @@ BEGIN
     SET NOEXEC ON;
 END
 GO
+-- [BUG-09] Không cho sửa phản hồi đã giải quyết (trước đây trả lời lại sẽ ghi đè câu trả lời cũ).
 CREATE OR ALTER PROCEDURE dbo.HandleFeedback @ActorID int,@FeedbackID int,@Status varchar(12),@Response nvarchar(4000)=NULL
 AS
 BEGIN
  SET NOCOUNT ON; SET XACT_ABORT ON;
  BEGIN TRY
  BEGIN TRAN;
- DECLARE @branch int,@customer int;
- SELECT @branch=BranchID,@customer=CustomerID FROM dbo.Feedbacks WITH(UPDLOCK,HOLDLOCK) WHERE FeedbackID=@FeedbackID;
+ DECLARE @branch int,@customer int,@old varchar(12);
+ SELECT @branch=BranchID,@customer=CustomerID,@old=Status FROM dbo.Feedbacks WITH(UPDLOCK,HOLDLOCK) WHERE FeedbackID=@FeedbackID;
  IF @customer IS NULL OR (@branch IS NULL AND dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Feedbacks.Manage')=0) OR (@branch IS NOT NULL AND dbo.CanBranch(@ActorID,@branch,'Feedbacks.Manage')=0) THROW 51103,N'Feedback is outside scope.',1;
+ -- [BUG-09] Phản hồi đã giải quyết thì khóa: không đổi trạng thái, không ghi đè câu trả lời đã gửi khách.
+ IF @old='Resolved' THROW 51124,N'Phản hồi đã được giải quyết, không thể sửa trạng thái hoặc câu trả lời.',1;
  IF @Status NOT IN ('Processing','Resolved') OR (@Status='Resolved' AND NULLIF(@Response,'') IS NULL) THROW 51100,N'Resolved feedback needs a response.',1;
  UPDATE dbo.Feedbacks SET Status=@Status,HandledBy=@ActorID,ResponseContent=@Response,HandledAt=SYSUTCDATETIME() WHERE FeedbackID=@FeedbackID;
  INSERT dbo.Notifications(UserID,Title,Body) SELECT UserID,N'Cập nhật phản hồi',COALESCE(@Response,N'Phản hồi đang được xử lý.') FROM dbo.Customers WHERE CustomerID=@customer;
@@ -1805,22 +2004,36 @@ BEGIN
     SET NOEXEC ON;
 END
 GO
-CREATE OR ALTER PROCEDURE dbo.SetBranchPrice @ActorID int,@BranchID int,@VariantID int,@Price decimal(18,2),@IsAvailable bit
+-- Xóa mềm: thu hồi phân công cửa hàng; nếu xóa quản lý chính thì chuyển ManagerID cho quản lý khác còn hoạt động.
+CREATE OR ALTER PROCEDURE dbo.SoftDeleteUser @ActorID int,@UserID int
 AS
 BEGIN
  SET NOCOUNT ON; SET XACT_ABORT ON;
- BEGIN TRY
  BEGIN TRAN;
- IF dbo.CanBranch(@ActorID,@BranchID,'Menu.Manage')=0 THROW 51103,N'Cannot edit prices at this branch.',1;
- DECLARE @product int;
- SELECT @product=v.ProductID FROM dbo.ProductVariants v JOIN dbo.BranchProducts bp ON bp.ProductID=v.ProductID AND bp.BranchID=@BranchID WHERE v.VariantID=@VariantID;
- IF @product IS NULL OR @Price<0 THROW 51100,N'Invalid price or product not distributed to branch.',1;
- IF EXISTS(SELECT 1 FROM dbo.BranchProductVariants WITH(UPDLOCK,HOLDLOCK) WHERE BranchID=@BranchID AND VariantID=@VariantID)
- UPDATE dbo.BranchProductVariants SET SellingPrice=@Price,IsAvailable=@IsAvailable WHERE BranchID=@BranchID AND VariantID=@VariantID;
- ELSE INSERT dbo.BranchProductVariants(BranchID,VariantID,ProductID,SellingPrice,IsAvailable) VALUES(@BranchID,@VariantID,@product,@Price,@IsAvailable);
- INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@BranchID,'Menu.Price','ProductVariants',@VariantID,CONCAT(@Price,N' VND'));
+ IF dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Security.Manage')=0
+    AND NOT (dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Customers.Manage')=1
+             AND EXISTS(SELECT 1 FROM dbo.Customers WHERE UserID=@UserID))
+    THROW 51103,N'Không có quyền xóa tài khoản này.',1;
+ IF @UserID=@ActorID THROW 51121,N'Không thể tự xóa tài khoản đang đăng nhập.',1;
+ DECLARE @role varchar(30);
+ SELECT @role=r.Code FROM dbo.Users u WITH(UPDLOCK,HOLDLOCK) JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE u.UserID=@UserID AND u.DeletedAt IS NULL;
+ IF @role IS NULL THROW 51104,N'Account not found.',1;
+ IF @role='Owner' AND NOT EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
+    WHERE r.Code='Owner' AND u.UserID<>@UserID AND u.IsActive=1 AND u.DeletedAt IS NULL)
+    THROW 51122,N'Phải còn ít nhất một chủ cửa hàng đang hoạt động.',1;
+ DECLARE @email nvarchar(254)=CONCAT(N'deleted-',@UserID,N'@deleted.invalid');
+ UPDATE dbo.Users SET IsActive=0,DeletedAt=SYSUTCDATETIME(),Email=@email,NormalizedEmail=UPPER(@email),
+    FullName=CASE WHEN @role='Customer' THEN N'Khách đã xóa' ELSE N'Tài khoản đã xóa' END,Phone=NULL
+ WHERE UserID=@UserID;
+ UPDATE dbo.UserSessions SET RevokedAt=SYSUTCDATETIME() WHERE UserID=@UserID AND RevokedAt IS NULL;
+ UPDATE dbo.StaffBranches SET IsActive=0 WHERE UserID=@UserID;
+ IF @role='BranchManager'
+  UPDATE b SET ManagerID=(SELECT TOP(1) s.UserID FROM dbo.StaffBranches s JOIN dbo.Users u ON u.UserID=s.UserID
+       JOIN dbo.Roles r ON r.RoleID=u.RoleID
+       WHERE s.BranchID=b.BranchID AND s.IsActive=1 AND r.Code='BranchManager' AND u.IsActive=1 AND u.UserID<>@UserID ORDER BY s.AssignedAt)
+  FROM dbo.Branches b WHERE b.ManagerID=@UserID;
+ INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details) VALUES(@ActorID,'Account.SoftDelete','Users',@UserID,@role);
  COMMIT;
- END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
 END;
 GO
 IF @@ERROR <> 0
@@ -1832,6 +2045,8 @@ END
 GO
 PRINT N'--- 05_access.sql ---';
 GO
+-- 05_access.sql – đọc dữ liệu theo quyền, báo cáo, view thống kê và vai trò database cho API.
+-- [GOP-01] Bản gộp: thêm vai trò MorningBrewApi (trước ở 08_admin.sql), view CustomerStats (16_crm.sql), view CustomerTiers (17_member_tiers.sql).
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -2009,21 +2224,85 @@ BEGIN
     SET NOEXEC ON;
 END
 GO
+-- Trusted API service role: metadata CRUD and business procedures, without schema/DDL ownership.
+IF DATABASE_PRINCIPAL_ID('MorningBrewApi') IS NULL CREATE ROLE MorningBrewApi;
+GRANT SELECT,INSERT,UPDATE,DELETE,EXECUTE ON SCHEMA::dbo TO MorningBrewApi;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- ===== [CRM-02] Thống kê mua hàng và nhóm hành vi của từng khách =====
+-- Ngưỡng: Khách mới = đơn hoàn tất đầu tiên trong 30 ngày; Lâu không quay lại = lần mua cuối quá 60 ngày;
+-- Thân thiết = từ 5 đơn hoàn tất và còn mua trong 60 ngày; Đang mua = còn lại. Tổng chi tiêu đã trừ tiền hoàn.
+CREATE OR ALTER VIEW dbo.CustomerStats AS
+SELECT x.CustomerID,x.CompletedOrders,x.TotalSpent,x.FirstOrderAt,x.LastOrderAt,
+    CASE WHEN x.CompletedOrders=0 THEN 'None'
+         WHEN x.FirstOrderAt>=DATEADD(day,-30,SYSUTCDATETIME()) THEN 'New'
+         WHEN x.LastOrderAt<DATEADD(day,-60,SYSUTCDATETIME()) THEN 'Lapsed'
+         WHEN x.CompletedOrders>=5 THEN 'Loyal'
+         ELSE 'Active' END AS Segment
+FROM (
+    SELECT c.CustomerID,COUNT(o.OrderID) AS CompletedOrders,
+        CAST(COALESCE(SUM(o.TotalAmount-COALESCE(r.Refunded,0)),0) AS decimal(18,2)) AS TotalSpent,
+        MIN(o.CompletedAt) AS FirstOrderAt,MAX(o.CompletedAt) AS LastOrderAt
+    FROM dbo.Customers c LEFT JOIN dbo.Orders o ON o.CustomerID=c.CustomerID AND o.Status='Completed'
+    -- tiền đã hoàn gộp sẵn theo đơn (SUM không được chứa truy vấn con – lỗi Msg 130)
+    LEFT JOIN (SELECT OrderID,SUM(Amount) AS Refunded FROM dbo.Refunds WHERE Status='Succeeded' GROUP BY OrderID) r ON r.OrderID=o.OrderID
+    GROUP BY c.CustomerID) x;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
+-- ===== Hạng hiện tại của từng khách =====
+CREATE OR ALTER VIEW dbo.CustomerTiers AS
+WITH spend AS (
+    SELECT c.CustomerID,CAST(COALESCE(SUM(o.TotalAmount-COALESCE(r.Refunded,0)),0) AS decimal(18,2)) AS Spent12M
+    FROM dbo.Customers c
+    LEFT JOIN dbo.Orders o ON o.CustomerID=c.CustomerID AND o.Status='Completed' AND o.CompletedAt>=DATEADD(month,-12,SYSUTCDATETIME())
+    LEFT JOIN (SELECT OrderID,SUM(Amount) AS Refunded FROM dbo.Refunds WHERE Status='Succeeded' GROUP BY OrderID) r ON r.OrderID=o.OrderID
+    GROUP BY c.CustomerID)
+SELECT s.CustomerID,s.Spent12M,t.TierID,t.Code AS TierCode,t.Name AS TierName,t.Benefit AS TierBenefit,
+       n.Code AS NextTierCode,n.Name AS NextTierName,n.MinSpent AS NextTierSpent
+FROM spend s
+OUTER APPLY (SELECT TOP(1) x.TierID,x.Code,x.Name,x.Benefit FROM dbo.MemberTiers x WHERE x.MinSpent<=s.Spent12M ORDER BY x.MinSpent DESC) t
+OUTER APPLY (SELECT TOP(1) y.Code,y.Name,y.MinSpent FROM dbo.MemberTiers y WHERE y.MinSpent>s.Spent12M ORDER BY y.MinSpent) n;
+GO
+IF @@ERROR <> 0
+BEGIN
+    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
+    EXEC sp_set_session_context N'mb_failed', 1;
+    SET NOEXEC ON;
+END
+GO
 PRINT N'--- 06_seed.sql ---';
 GO
 -- Demo password for all accounts: MorningBrew!2026. ASP.NET PasswordHasher V3, SHA512.
 -- Phạm vi demo CRM: 1 cửa hàng (Morning Brew Thủ Đức), không có phần nhân sự (HRM).
 -- Tài khoản: 1 chủ cửa hàng, 1 quản lý, 1 thu ngân (POS) và 30 khách hàng.
+-- [GOP-01] Bản gộp: dữ liệu nền ở trạng thái cuối, thay cho các đoạn dữ liệu trước nằm ở script nâng cấp:
+--   quyền Customers.Manage (11), Inventory.Manage (14), Loyalty.Adjust (16); quản lý được gán vào StaffBranches (11);
+--   thực đơn chỉ còn Size M/L + Nhiệt độ Đá/Nóng, mọi món đang bán (13); nhà cung cấp mẫu (13);
+--   16 nguyên liệu + phiếu kho mẫu (14); định mức nguyên liệu cho 10 món (15); 4 hạng thành viên (17).
 SET NOCOUNT ON; SET XACT_ABORT ON;
 IF EXISTS(SELECT 1 FROM dbo.Roles) THROW 51000,N'Seed requires empty tables.',1;
 BEGIN TRAN;
--- Vai trò AreaManager đã bị bỏ trong 11_single_store.sql (chỉ có 1 cửa hàng).
+-- Không có vai trò AreaManager (mô hình một cửa hàng).
 INSERT dbo.Roles(Code,Name) VALUES('Owner',N'Chủ cửa hàng'),('BranchManager',N'Quản lý cửa hàng'),('Staff',N'Nhân viên thu ngân'),('Customer',N'Khách hàng');
 -- [CRM-00] Không còn quyền Organization.Manage (thừa từ mô hình nhiều chi nhánh).
+-- Quản lý có mọi quyền trừ Security.Manage, Catalog.Manage và Loyalty.Adjust (chủ cửa hàng cấp thêm ở Admin server → Phân quyền).
 INSERT dbo.Permissions(Code,Description) VALUES
 ('Orders.Create',N'Tạo đơn tại POS'),('Orders.Manage',N'Cập nhật xử lý đơn'),('Orders.Cancel',N'Hủy đơn sau xác nhận'),('Orders.Read',N'Xem lịch sử đơn'),
-('Payments.Manage',N'Ghi nhận tiền đã thu'),('Refunds.Manage',N'Xử lý hoàn tiền'),('Menu.Manage',N'Quản lý thực đơn'),('Customers.Lookup',N'Tra cứu thành viên bằng số điện thoại'),('Customers.Read',N'Xem và phân nhóm khách hàng'),('Promotions.Manage',N'Quản lý và cấp ưu đãi'),('Surveys.Manage',N'Quản lý khảo sát'),('Feedbacks.Manage',N'Xử lý phản hồi'),('Reports.Read',N'Xem báo cáo'),('Security.Manage',N'Quản lý tài khoản và quyền'),('Catalog.Manage',N'Quản lý danh mục dùng chung');
-INSERT dbo.RolePermissions SELECT r.RoleID,p.PermissionID FROM dbo.Roles r CROSS JOIN dbo.Permissions p WHERE r.Code='Owner' OR (r.Code='BranchManager' AND p.Code NOT IN ('Security.Manage','Catalog.Manage')) OR (r.Code='Staff' AND p.Code IN ('Orders.Create','Orders.Manage','Orders.Read','Payments.Manage','Customers.Lookup'));
+('Payments.Manage',N'Ghi nhận tiền đã thu'),('Refunds.Manage',N'Xử lý hoàn tiền'),('Menu.Manage',N'Quản lý thực đơn'),('Customers.Lookup',N'Tra cứu thành viên bằng số điện thoại'),('Customers.Read',N'Xem và phân nhóm khách hàng'),('Promotions.Manage',N'Quản lý và cấp ưu đãi'),('Surveys.Manage',N'Quản lý khảo sát'),('Feedbacks.Manage',N'Xử lý phản hồi'),('Reports.Read',N'Xem báo cáo'),('Security.Manage',N'Quản lý tài khoản và quyền'),('Catalog.Manage',N'Quản lý danh mục dùng chung'),
+('Customers.Manage',N'Thêm, xóa, khóa tài khoản khách hàng'),('Inventory.Manage',N'Quản lý kho nguyên liệu'),('Loyalty.Adjust',N'Điều chỉnh điểm thành viên bằng tay');
+INSERT dbo.RolePermissions SELECT r.RoleID,p.PermissionID FROM dbo.Roles r CROSS JOIN dbo.Permissions p WHERE r.Code='Owner' OR (r.Code='BranchManager' AND p.Code NOT IN ('Security.Manage','Catalog.Manage','Loyalty.Adjust')) OR (r.Code='Staff' AND p.Code IN ('Orders.Create','Orders.Manage','Orders.Read','Payments.Manage','Customers.Lookup'));
 DECLARE @hash varchar(512)='AQAAAAIAAYagAAAAEE8G2F5hjA72TxlV9NrR092YRGzNf1+QMFGndUjRlWxuS/DMviEjHdzD5daFtHJW2w==';
 INSERT dbo.Users(RoleID,Email,NormalizedEmail,PasswordHash,FullName,Phone)
 SELECT r.RoleID,v.Email,UPPER(v.Email),@hash,v.FullName,v.Phone FROM (VALUES
@@ -2069,7 +2348,7 @@ INSERT dbo.Areas(Name) VALUES(N'TP. Hồ Chí Minh');
 -- Demo shop opens all day so exercises work at any local time. Production should set real hours.
 INSERT dbo.Branches(AreaID,ManagerID,Code,Name,Address,Phone,OpeningTime,ClosingTime,DeliveryFee) VALUES
 (1,@manager,'MB01',N'Morning Brew Thủ Đức',N'12 Võ Văn Ngân, TP.HCM','0281111111','00:00','23:59:59',15000);
-INSERT dbo.StaffBranches(UserID,BranchID) VALUES(@staff,1);
+INSERT dbo.StaffBranches(UserID,BranchID) VALUES(@staff,1),(@manager,1); -- quản lý gán cả ở StaffBranches để có thể có nhiều quản lý
 -- 30 khách hàng: ngày sinh trải đều các nhóm tuổi để báo cáo tỷ lệ độ tuổi có ý nghĩa.
 INSERT dbo.Customers(UserID,DateOfBirth,Gender,LoyaltyPoints)
 SELECT u.UserID,v.DateOfBirth,v.Gender,v.Points FROM (VALUES
@@ -2115,24 +2394,28 @@ INSERT dbo.Products(CategoryID,Name,Description,ImageURL) VALUES
 (2,N'Trà vải lài',N'Trà lài và vải tươi',NULL),(2,N'Trà sen vàng',N'Hạt sen, kem sữa',NULL),(3,N'Bánh croissant bơ',N'Nướng mỗi sáng',NULL),(3,N'Bánh mousse chanh dây',N'Chua ngọt nhẹ',NULL);
 INSERT dbo.ProductVariants(ProductID,Name,BasePrice,DisplayOrder) VALUES
 (1,'M',30000,1),(1,'L',40000,2),(2,'M',35000,1),(3,'Standard',45000,1),
-(4,'M',29000,1),(5,'M',32000,1),(6,'M',45000,1),(7,'M',39000,1),(8,'M',45000,1),(9,'Standard',29000,1),(10,'Standard',39000,1);
+(4,'M',29000,1),(5,'M',32000,1),(6,'M',45000,1),(7,'M',39000,1),(8,'M',45000,1),(9,'Standard',29000,1),(10,'Standard',39000,1),
+-- Size L = giá M + 10.000đ cho đồ uống (VariantID 12–17).
+(2,'L',45000,2),(4,'L',39000,2),(5,'L',42000,2),(6,'L',55000,2),(7,'L',49000,2),(8,'L',55000,2);
 INSERT dbo.BranchProducts(BranchID,ProductID) SELECT 1,ProductID FROM dbo.Products;
-UPDATE dbo.BranchProducts SET IsAvailable=0 WHERE ProductID IN (8,10); -- minh họa món tạm hết
 INSERT dbo.BranchProductVariants(BranchID,VariantID,ProductID,SellingPrice) VALUES(1,1,1,30000);
-INSERT dbo.ModifierGroups(Name,Kind) VALUES(N'Đường','Sugar'),(N'Đá','Ice'),(N'Topping','Topping');
-INSERT dbo.ModifierOptions(ModifierGroupID,Name,ExtraPrice,DisplayOrder) VALUES(1,N'50% đường',0,1),(1,N'100% đường',0,2),(2,N'50% đá',0,1),(2,N'100% đá',0,2),(3,N'Trân châu',5000,1),(3,N'Pudding',7000,2);
-INSERT dbo.ProductModifierGroups(ProductID,ModifierGroupID,MinSelections,MaxSelections) VALUES(1,1,1,1),(1,2,1,1),(1,3,0,2),(2,1,1,1),(2,2,1,1),(2,3,0,2);
+-- Chọn món chỉ còn Size + Nhiệt độ (Đá / Nóng, bắt buộc với đồ uống). Nhóm Đường, Topping giữ ở trạng thái tắt để có thể bật lại.
+INSERT dbo.ModifierGroups(Name,Kind,IsActive) VALUES(N'Đường','Sugar',0),(N'Nhiệt độ','Ice',1),(N'Topping','Topping',0);
+INSERT dbo.ModifierOptions(ModifierGroupID,Name,ExtraPrice,DisplayOrder) VALUES(1,N'50% đường',0,1),(1,N'100% đường',0,2),(2,N'Đá',0,1),(2,N'Nóng',0,2),(3,N'Trân châu',5000,1),(3,N'Pudding',7000,2);
+INSERT dbo.ProductModifierGroups(ProductID,ModifierGroupID,MinSelections,MaxSelections) VALUES(1,1,1,1),(1,3,0,2),(2,1,1,1),(2,3,0,2),
+(1,2,1,1),(2,2,1,1),(4,2,1,1),(5,2,1,1),(6,2,1,1),(7,2,1,1),(8,2,1,1); -- đồ uống (Cà phê, Trà) bắt buộc chọn Đá / Nóng
 -- Sở thích: mỗi khách 2 món, phân bố lệch để báo cáo "món được yêu thích" có xếp hạng rõ.
 INSERT dbo.CustomerPreferences(CustomerID,ProductID)
 SELECT c.CustomerID,p.ProductID FROM dbo.Customers c CROSS APPLY (VALUES
  (CASE c.CustomerID % 5 WHEN 0 THEN 1 WHEN 1 THEN 1 WHEN 2 THEN 5 WHEN 3 THEN 2 ELSE 7 END),
  (CASE c.CustomerID % 4 WHEN 0 THEN 3 WHEN 1 THEN 9 WHEN 2 THEN 6 ELSE 4 END)) p(ProductID)
 GROUP BY c.CustomerID,p.ProductID;
+-- [DEMO-01] Ưu đãi bắt đầu từ 365 ngày trước để đơn lịch sử ở 07_demo.sql dùng được voucher.
 INSERT dbo.LoyaltyPolicies(Name,AmountPerPoint,EffectiveFrom) VALUES(N'10.000 đồng đổi 1 điểm',10000,'2020-01-01');
 INSERT dbo.Promotions(Name,Description,Scope,CreatedBy,DiscountType,DiscountValue,MaxDiscount,MinSubtotal,StartsAt,EndsAt,PointsCost,TotalLimit,PerCustomerLimit) VALUES
-(N'Đổi 50 điểm giảm 10.000',N'Đơn từ 50.000 đồng','Chain',@owner,'Amount',10000,NULL,50000,DATEADD(day,-1,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME()),50,1000,3),
-(N'Quà tặng 10%',N'Đơn từ 30.000 đồng, giảm tối đa 20.000','Chain',@owner,'Percent',10,20000,30000,DATEADD(day,-1,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME()),NULL,1000,1),
-(N'Chào mừng',N'Nhận miễn phí, giảm 5.000 đồng từ đơn 10.000','Chain',@owner,'Amount',5000,NULL,10000,DATEADD(day,-1,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME()),0,1000,1);
+(N'Đổi 50 điểm giảm 10.000',N'Đơn từ 50.000 đồng','Chain',@owner,'Amount',10000,NULL,50000,DATEADD(day,-365,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME()),50,1000,3),
+(N'Quà tặng 10%',N'Đơn từ 30.000 đồng, giảm tối đa 20.000','Chain',@owner,'Percent',10,20000,30000,DATEADD(day,-365,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME()),NULL,1000,1),
+(N'Chào mừng',N'Nhận miễn phí, giảm 5.000 đồng từ đơn 10.000','Chain',@owner,'Amount',5000,NULL,10000,DATEADD(day,-365,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME()),0,1000,1);
 -- Khảo sát 1: trải nghiệm hiện tại. Khảo sát 2: thăm dò trước khi ra mắt món mới.
 INSERT dbo.Surveys(Title,Description,CreatedBy,Scope,StartsAt,EndsAt) VALUES
 (N'Khẩu vị và trải nghiệm',N'Khảo sát cải thiện sản phẩm',@owner,'Chain',DATEADD(day,-1,SYSUTCDATETIME()),DATEADD(year,1,SYSUTCDATETIME())),
@@ -2144,6 +2427,79 @@ INSERT dbo.SurveyQuestionOptions(QuestionID,Text,DisplayOrder) VALUES
 (1,N'Cà phê',1),(1,N'Socola',2),(1,N'Trà',3),
 (4,N'Cacao muối',1),(4,N'Trà gừng mật ong',2),(4,N'Latte hạt dẻ',3),(4,N'Matcha khoai môn',4),
 (6,N'Buổi sáng',1),(6,N'Buổi trưa',2),(6,N'Buổi chiều',3),(6,N'Buổi tối',4);
+
+-- ===== Nhà cung cấp mẫu =====
+INSERT dbo.Suppliers(Code,Name,Phone,Email,ProductGroup,IsActive) VALUES
+('NCC-CF01',N'Công ty TNHH Cà phê Cầu Đất','0263 3812 456','kinhdoanh@caudatcoffee.test',N'Cà phê hạt Robusta, Arabica',1),
+('NCC-SU01',N'Nhà phân phối Sữa Phương Nam','028 3896 1122','order@suaphuongnam.test',N'Sữa tươi, sữa đặc, kem béo',1),
+('NCC-TR01',N'Trà Thái Nguyên Xanh','0208 3655 789','sales@trathainguyen.test',N'Trà lài, trà xanh, trà sen',1),
+('NCC-TC01',N'Vựa trái cây Bốn Mùa','0909 456 123','bonmua.fruit@mail.test',N'Đào, vải, cam, chanh dây',1),
+('NCC-BK01',N'Lò bánh Ngọc Lan','028 3512 7788','ngoclan.bakery@mail.test',N'Bánh croissant, tiramisu, mousse',1),
+('NCC-BB01',N'Bao bì Minh Phát','028 3754 2299','minhphat.pack@mail.test',N'Ly nhựa, ống hút, túi giấy',0);
+-- ===== Kho nguyên liệu: 16 nguyên liệu và phiếu nhập khởi tạo =====
+-- [DEMO-01] Phiếu nhập định kỳ, xuất bán theo đơn, hủy hàng và kiểm kê được sinh ở 07_demo.sql theo đúng thời gian.
+DECLARE @cf  int = (SELECT SupplierID FROM dbo.Suppliers WHERE Code='NCC-CF01'),
+        @su  int = (SELECT SupplierID FROM dbo.Suppliers WHERE Code='NCC-SU01'),
+        @tr  int = (SELECT SupplierID FROM dbo.Suppliers WHERE Code='NCC-TR01'),
+        @tc  int = (SELECT SupplierID FROM dbo.Suppliers WHERE Code='NCC-TC01'),
+        @bk  int = (SELECT SupplierID FROM dbo.Suppliers WHERE Code='NCC-BK01');
+
+INSERT dbo.Ingredients(Code,Name,Unit,Quantity,MinStock,LastUnitCost,SupplierID,StockUpdatedAt) VALUES
+-- Cà phê
+('NL-CF01', N'Cà phê Robusta',         N'kg',    15.500, 5.000,  180000, @cf, SYSUTCDATETIME()),
+('NL-CF02', N'Cà phê Arabica',          N'kg',     8.200, 3.000,  320000, @cf, SYSUTCDATETIME()),
+-- Sữa
+('NL-SU01', N'Sữa tươi không đường',    N'lít',   24.000, 10.000,  32000, @su, SYSUTCDATETIME()),
+('NL-SU02', N'Sữa đặc có đường',        N'hộp',   48.000, 20.000,  22000, @su, SYSUTCDATETIME()),
+('NL-SU03', N'Kem béo (whipping cream)',N'lít',    6.000,  3.000,  95000, @su, SYSUTCDATETIME()),
+-- Trà
+('NL-TR01', N'Trà lài khô',             N'kg',     3.500,  1.500, 280000, @tr, SYSUTCDATETIME()),
+('NL-TR02', N'Trà xanh bột (matcha)',   N'kg',     1.200,  0.500, 650000, @tr, SYSUTCDATETIME()),
+-- Trái cây
+('NL-TC01', N'Đào tươi (peach)',        N'kg',     8.000,  3.000,  45000, @tc, SYSUTCDATETIME()),
+('NL-TC02', N'Chanh tươi',              N'kg',     5.500,  2.000,  18000, @tc, SYSUTCDATETIME()),
+('NL-TC03', N'Cam tươi',               N'kg',     4.000,  2.000,  22000, @tc, SYSUTCDATETIME()),
+-- Bánh & nguyên liệu làm bánh
+('NL-BK01', N'Bột mì đa dụng',         N'kg',    10.000,  5.000,  18000, @bk, SYSUTCDATETIME()),
+('NL-BK02', N'Cream cheese',           N'kg',     3.000,  1.000, 320000, @bk, SYSUTCDATETIME()),
+('NL-BK03', N'Đường cát trắng',        N'kg',    12.000,  5.000,  18000, NULL, SYSUTCDATETIME()),
+-- Vật tư / bao bì (không có NCC tương ứng trong seed)
+('NL-PP01', N'Ly nhựa 500ml',          N'cái',  350.000, 100.000,   800, NULL, SYSUTCDATETIME()),
+('NL-PP02', N'Ống hút giấy',           N'cái',  500.000, 100.000,   200, NULL, SYSUTCDATETIME()),
+('NL-PP03', N'Túi giấy take-away',     N'cái',  200.000,  50.000,  2500, NULL, SYSUTCDATETIME());
+
+-- Ghi phiếu nhập kho mẫu cho từng nguyên liệu vừa thêm
+-- (BalanceAfter = Quantity, Kind='Import', QuantityChange = Quantity)
+INSERT dbo.InventoryTransactions(IngredientID,Kind,QuantityChange,BalanceAfter,UnitCost,Note,CreatedAt)
+SELECT IngredientID,'Import',Quantity,Quantity,LastUnitCost,
+       N'Nhập kho khởi tạo dữ liệu demo',
+       DATEADD(day,-365,SYSUTCDATETIME())   -- [DEMO-01] mở kho 365 ngày trước, trước mọi đơn lịch sử
+FROM dbo.Ingredients;
+
+-- ===== Định mức nguyên liệu (size M / Standard; size L dùng gấp 1,3 lần, ly và ống hút giữ 1) =====
+DECLARE @mau TABLE(Product nvarchar(150),Code varchar(30),Qty decimal(18,3),Scale bit);
+INSERT @mau VALUES
+(N'Cà phê sữa','NL-CF01',0.020,1),(N'Cà phê sữa','NL-SU02',0.100,1),(N'Cà phê sữa','NL-PP01',1,0),(N'Cà phê sữa','NL-PP02',1,0),
+(N'Cà phê đen đá','NL-CF01',0.020,1),(N'Cà phê đen đá','NL-PP01',1,0),(N'Cà phê đen đá','NL-PP02',1,0),
+(N'Bạc xỉu','NL-CF01',0.010,1),(N'Bạc xỉu','NL-SU01',0.080,1),(N'Bạc xỉu','NL-SU02',0.080,1),(N'Bạc xỉu','NL-PP01',1,0),(N'Bạc xỉu','NL-PP02',1,0),
+(N'Cold brew cam sả','NL-CF02',0.025,1),(N'Cold brew cam sả','NL-TC03',0.050,1),(N'Cold brew cam sả','NL-PP01',1,0),(N'Cold brew cam sả','NL-PP02',1,0),
+(N'Trà đào','NL-TR01',0.008,1),(N'Trà đào','NL-TC01',0.050,1),(N'Trà đào','NL-BK03',0.020,1),(N'Trà đào','NL-PP01',1,0),(N'Trà đào','NL-PP02',1,0),
+(N'Trà vải lài','NL-TR01',0.008,1),(N'Trà vải lài','NL-BK03',0.020,1),(N'Trà vải lài','NL-PP01',1,0),(N'Trà vải lài','NL-PP02',1,0),
+(N'Trà sen vàng','NL-TR01',0.008,1),(N'Trà sen vàng','NL-SU03',0.030,1),(N'Trà sen vàng','NL-PP01',1,0),(N'Trà sen vàng','NL-PP02',1,0),
+(N'Bánh tiramisu','NL-BK02',0.030,0),(N'Bánh tiramisu','NL-CF01',0.005,0),
+(N'Bánh croissant bơ','NL-BK01',0.060,0),
+(N'Bánh mousse chanh dây','NL-SU03',0.040,0),(N'Bánh mousse chanh dây','NL-BK03',0.020,0);
+INSERT dbo.RecipeItems(VariantID,IngredientID,Quantity)
+SELECT v.VariantID,i.IngredientID,CASE WHEN m.Scale=1 AND v.Name='L' THEN ROUND(m.Qty*1.3,3) ELSE m.Qty END
+FROM @mau m JOIN dbo.Products p ON p.Name=m.Product
+JOIN dbo.ProductVariants v ON v.ProductID=p.ProductID
+JOIN dbo.Ingredients i ON i.Code=m.Code;
+-- ===== Hạng thành viên (chi tiêu 12 tháng; quản lý sửa ở Quản lý CRM → Hạng thành viên) =====
+INSERT dbo.MemberTiers(Code,Name,MinSpent,Benefit) VALUES
+    ('Member', N'Thành viên',       0, N'Tích điểm cho mọi đơn hoàn tất, đổi điểm lấy voucher.'),
+    ('Silver', N'Bạc',        1000000, N'Ưu tiên nhận voucher riêng hạng Bạc.'),
+    ('Gold',   N'Vàng',       3000000, N'Voucher sinh nhật và ưu đãi riêng hạng Vàng.'),
+    ('Diamond',N'Kim cương',  6000000, N'Ưu đãi cao nhất, được mời thử món mới đầu tiên.');
 COMMIT;
 GO
 IF @@ERROR <> 0
@@ -2157,6 +2513,10 @@ PRINT N'--- 07_demo.sql ---';
 GO
 -- Dữ liệu giao dịch demo cho phạm vi CRM (1 cửa hàng, 30 khách).
 -- Mọi ID được tra theo email / thứ tự hiển thị, không gán cứng.
+-- [GOP-01] Chạy trên thực đơn ở trạng thái cuối (06_seed.sql): đồ uống bắt buộc chọn Nhiệt độ Đá / Nóng nên đơn mẫu
+--          gửi kèm tùy chọn này. Trigger của 02_rules.sql tự sinh mã đơn ngắn và tự trừ kho khi đơn hoàn tất.
+-- [DEMO-01] Thêm mục 0 (lịch sử 12 tháng: 68 đơn, nhập kho định kỳ, voucher quà tặng) và mục 4 (hủy hàng, kiểm kê);
+--          mục 3 bỏ đơn hôm nay của nhóm "lâu không quay lại".
 SET NOCOUNT ON;
 DECLARE @r TABLE(ID int);
 DECLARE @voucher int,@order int,@payment int,@refund int,@feedback int,@key uniqueidentifier=NEWID();
@@ -2169,13 +2529,165 @@ DECLARE @lan int=(SELECT CustomerID FROM dbo.Customers WHERE UserID=@lanUser),
         @minh int=(SELECT CustomerID FROM dbo.Customers WHERE UserID=@minhUser),
         @branch int=(SELECT BranchID FROM dbo.Branches WHERE Code='MB01'),
         @minhAddress int;
+DECLARE @iceGroup int=(SELECT ModifierGroupID FROM dbo.ModifierGroups WHERE Kind='Ice' AND IsActive=1);
+DECLARE @da int=(SELECT ModifierOptionID FROM dbo.ModifierOptions WHERE ModifierGroupID=@iceGroup AND Name=N'Đá'),
+        @nong int=(SELECT ModifierOptionID FROM dbo.ModifierOptions WHERE ModifierGroupID=@iceGroup AND Name=N'Nóng');
+DECLARE @lines nvarchar(200);
 SELECT @minhAddress=AddressID FROM dbo.CustomerAddresses WHERE CustomerID=@minh AND IsDefault=1;
+
+-- ===== 0. [DEMO-01] Lịch sử mua hàng 12 tháng (chạy trước các luồng mẫu để mã đơn và phiếu kho theo đúng thời gian) =====
+-- Mục đích: báo cáo theo tháng, phân nhóm khách và hạng thành viên có dữ liệu ngay sau khi cài.
+--   Phân nhóm dự kiến (CustomerStats): Chưa mua 4 (2, 10, 20, 30) · Mới 7 (1, 5, 15, 18, 23, 26, 28)
+--   · Đang hoạt động 7 (6, 8, 12, 13, 17, 21, 25) · Trung thành 6 (3, 7, 11, 16, 22, 27) · Lâu không quay lại 6 (4, 9, 14, 19, 24, 29).
+--   Hạng 12 tháng (CustomerTiers): Kim cương 3 · Vàng 7, 12 · Bạc 4, 6, 11, 16 (đơn đặt cho văn phòng 25–30 ly) · còn lại Thành viên.
+-- Cách làm: mỗi đơn chạy đúng luồng thủ tục (CreateOrder → StartPayment → SimulatePayment → AdvanceOrder) để tiền, điểm,
+--   kho, thông báo khớp nghiệp vụ; sau đó dời thời gian các dòng vừa sinh về ngày trong quá khứ. Sổ điểm và phiếu kho là
+--   append-only nên tạm tắt 2 trigger chặn sửa trong lúc dời ngày rồi bật lại ngay. Mỗi kỳ 30 ngày có 1 phiếu nhập kho
+--   (đủ cho đơn của kỳ và đưa tồn về mức ban đầu) ghi trước các đơn của kỳ đó.
+-- Số khách theo CustomerID của bản cài mới (Lan = 1, Minh = 2, khach01–28 = 3–30), giống cách phân bố ở mục 3.
+-- Cột: khách, số ngày trước hôm nay, VariantID, số lượng, voucher (G = Quà tặng 10% do quản lý cấp, W = Chào mừng).
+DECLARE @base datetime2(3)=CAST(CAST(SYSUTCDATETIME() AS date) AS datetime2(3));   -- 0 giờ UTC = 7 giờ sáng giờ Việt Nam
+DECLARE @plan TABLE(Seq int IDENTITY(1,1) PRIMARY KEY,CustomerID int,DaysAgo int,VariantID int,Qty int,Voucher char(1) NULL,At datetime2(3));
+INSERT @plan(CustomerID,DaysAgo,VariantID,Qty,Voucher,At)   -- giờ đặt 8–18 giờ, cố định theo khách và ngày
+SELECT CustomerID,DaysAgo,VariantID,Qty,Voucher,DATEADD(minute,(CustomerID*7+DaysAgo)%50,DATEADD(hour,1+(CustomerID*3+DaysAgo)%11,DATEADD(day,-DaysAgo,@base))) FROM (VALUES
+(24,330,5,1,NULL),(22,320,9,1,NULL),(7,310,8,2,NULL),(3,300,15,30,NULL),(14,300,5,1,NULL),(16,300,7,1,NULL),
+(21,300,3,2,NULL),(27,290,8,2,NULL),(4,280,7,1,NULL),(11,280,6,2,NULL),(3,265,7,1,NULL),(8,260,7,1,NULL),
+(12,260,15,30,NULL),(7,250,3,2,NULL),(9,250,6,2,NULL),(22,240,9,1,NULL),(24,240,1,1,NULL),(16,230,9,1,NULL),
+(3,220,15,30,NULL),(6,220,5,1,NULL),(11,210,8,2,NULL),(14,210,1,1,NULL),(4,200,12,25,NULL),(7,200,15,30,NULL),
+(21,200,8,2,NULL),(27,200,6,2,NULL),(29,200,8,2,NULL),(3,180,10,2,NULL),(13,180,3,2,NULL),(19,180,10,2,NULL),
+(22,170,1,1,NULL),(9,160,3,2,NULL),(16,160,1,1,NULL),(7,150,8,2,NULL),(11,150,12,25,NULL),(24,150,9,1,NULL),
+(3,140,15,30,NULL),(8,140,1,2,'G'),(12,130,15,30,NULL),(27,130,8,2,NULL),(19,120,6,2,NULL),(22,120,1,2,'G'),
+(25,120,3,2,NULL),(16,110,9,1,NULL),(29,110,6,2,NULL),(6,100,12,25,NULL),(9,100,8,2,NULL),(11,100,10,2,NULL),
+(3,95,1,2,'G'),(4,90,9,1,NULL),(7,90,15,30,NULL),(17,90,6,2,NULL),(13,75,1,2,'G'),(16,75,12,25,NULL),
+(19,75,9,1,NULL),(27,70,3,2,NULL),(21,65,9,1,NULL),(22,55,8,2,NULL),(3,50,15,30,NULL),(16,40,1,1,NULL),
+(25,40,3,2,NULL),(7,35,5,1,NULL),(27,28,10,2,NULL),(11,25,7,1,NULL),(3,20,10,2,NULL),(5,20,3,2,'W'),
+(15,12,6,2,'W'),(5,6,6,2,NULL)
+) p(CustomerID,DaysAgo,VariantID,Qty,Voucher) ORDER BY 6;   -- Seq theo thời gian: mã đơn và phiếu kho tăng dần theo ngày giờ
+DECLARE @lapsed TABLE(CustomerID int PRIMARY KEY);   -- mục 3 không tạo đơn hôm nay cho nhóm này
+INSERT @lapsed VALUES(4),(9),(14),(19),(24),(29);
+DECLARE @giftPromo int=(SELECT PromotionID FROM dbo.Promotions WHERE Name=N'Quà tặng 10%'),
+        @welcomePromo int=(SELECT PromotionID FROM dbo.Promotions WHERE Name=N'Chào mừng');
+DECLARE @hSeq int=1,@hMax int=(SELECT MAX(Seq) FROM @plan),@hc int,@hu int,@hActor int,@hDays int,@hVariant int,@hQty int,
+        @hKind char(1),@hAt datetime2(3),@hBucket int,@hLastBucket int=-1,@hVoucher int,@hOrder int,
+        @mN int,@mA int,@mL int,@mI int;
+DECLARE @need TABLE(IngredientID int PRIMARY KEY,Qty decimal(18,3));
+DECLARE @hist TABLE(OrderID int PRIMARY KEY,At datetime2(3),N0 int,A0 int,L0 int,I0 int,VoucherID int NULL);
+WHILE @hSeq<=@hMax
+BEGIN
+ SELECT @hc=CustomerID,@hDays=DaysAgo,@hVariant=VariantID,@hQty=Qty,@hKind=Voucher,@hAt=At FROM @plan WHERE Seq=@hSeq;
+ SELECT @hu=UserID FROM dbo.Customers WHERE CustomerID=@hc;
+ SET @hBucket=@hDays/30;
+ -- Phiếu nhập đầu kỳ: đủ nguyên liệu cho mọi đơn của kỳ và bù tồn về mức nhập ban đầu (06_seed.sql).
+ IF @hBucket<>@hLastBucket
+ BEGIN
+  DELETE @need;
+  INSERT @need SELECT g.IngredientID,CEILING(COALESCE(d.Qty,0)+f.Qty-g.Quantity)
+  FROM dbo.Ingredients g
+  CROSS APPLY (SELECT TOP(1) t.QuantityChange AS Qty FROM dbo.InventoryTransactions t WHERE t.IngredientID=g.IngredientID AND t.Kind='Import' ORDER BY t.TransactionID) f
+  LEFT JOIN (SELECT r.IngredientID,SUM(p.Qty*r.Quantity) AS Qty FROM @plan p JOIN dbo.RecipeItems r ON r.VariantID=p.VariantID
+             WHERE p.DaysAgo/30=@hBucket GROUP BY r.IngredientID) d ON d.IngredientID=g.IngredientID
+  WHERE g.IsActive=1 AND COALESCE(d.Qty,0)+f.Qty-g.Quantity>0;
+  INSERT dbo.InventoryTransactions(IngredientID,SupplierID,ActorID,Kind,QuantityChange,BalanceAfter,UnitCost,Note,CreatedAt)
+  SELECT g.IngredientID,g.SupplierID,@manager,'Import',n.Qty,g.Quantity+n.Qty,g.LastUnitCost,N'Nhập hàng định kỳ',
+         DATEADD(minute,30,DATEADD(day,-(@hBucket*30+29),@base))
+  FROM dbo.Ingredients g JOIN @need n ON n.IngredientID=g.IngredientID;
+  UPDATE g SET Quantity=g.Quantity+n.Qty,StockUpdatedAt=DATEADD(minute,30,DATEADD(day,-(@hBucket*30+29),@base))
+  FROM dbo.Ingredients g JOIN @need n ON n.IngredientID=g.IngredientID;
+  SET @hLastBucket=@hBucket;
+ END;
+ SELECT @mN=COALESCE(MAX(NotificationID),0) FROM dbo.Notifications;
+ SELECT @mA=COALESCE(MAX(AuditID),0) FROM dbo.AuditLogs;
+ SELECT @mL=COALESCE(MAX(LoyaltyTransactionID),0) FROM dbo.LoyaltyTransactions;
+ SELECT @mI=COALESCE(MAX(TransactionID),0) FROM dbo.InventoryTransactions;
+ SET @hVoucher=NULL;
+ IF @hKind IS NOT NULL
+ BEGIN
+  SET @key=NEWID();
+  IF @hKind='G' BEGIN SET @hActor=@manager; INSERT @r EXEC dbo.IssueVoucher @hActor,@hc,@giftPromo,@key; END
+  ELSE BEGIN SET @hActor=@hu; INSERT @r EXEC dbo.IssueVoucher @hActor,@hc,@welcomePromo,@key; END;
+  SELECT @hVoucher=ID FROM @r; DELETE @r;
+ END;
+ SET @key=NEWID();
+ SET @lines=CONCAT(N'[{"variantId":',@hVariant,N',"quantity":',@hQty,
+      CASE WHEN EXISTS(SELECT 1 FROM dbo.ProductVariants v JOIN dbo.ProductModifierGroups pg ON pg.ProductID=v.ProductID AND pg.ModifierGroupID=@iceGroup WHERE v.VariantID=@hVariant)
+           THEN CONCAT(N',"optionIds":[',CASE WHEN (@hc+@hDays)%2=0 THEN @da ELSE @nong END,N']') ELSE N'' END,N'}]');
+ INSERT @r EXEC dbo.CreateOrder @ActorID=@hu,@BranchID=@branch,@Source='App',@Fulfillment='Pickup',@PaymentMode='Prepaid',
+      @Items=@lines,@RequestKey=@key,@CustomerID=@hc,@CustomerPromotionID=@hVoucher;
+ SELECT @hOrder=ID FROM @r; DELETE @r;
+ -- Dời ngày tạo và mã đơn trước khi hoàn tất để phiếu "Bán hàng – đơn ..." mang đúng mã theo ngày.
+ UPDATE dbo.Orders SET CreatedAt=@hAt,
+      OrderCode=CONCAT('MB',FORMAT(DATEADD(hour,7,@hAt),'yyMMdd'),'-',CASE WHEN @hOrder>9999 THEN CONVERT(varchar(12),@hOrder) ELSE RIGHT(CONCAT('0000',@hOrder),4) END)
+ WHERE OrderID=@hOrder;
+ SET @key=NEWID(); INSERT @r EXEC dbo.StartPayment @hu,@hOrder,@key; SELECT @payment=ID FROM @r; DELETE @r;
+ EXEC dbo.SimulatePayment @hu,@payment,'Succeeded';
+ EXEC dbo.AdvanceOrder @staff,@hOrder,'Confirmed'; EXEC dbo.AdvanceOrder @staff,@hOrder,'Preparing';
+ EXEC dbo.AdvanceOrder @staff,@hOrder,'Ready'; EXEC dbo.AdvanceOrder @staff,@hOrder,'Completed';
+ INSERT @hist VALUES(@hOrder,@hAt,@mN,@mA,@mL,@mI,@hVoucher);
+ SET @hSeq+=1;
+END;
+-- Voucher Quà tặng 10% còn lại: 2 voucher chưa dùng (khách 17, 21), 2 voucher đã hết hạn (khách 24, 29).
+DECLARE @extra TABLE(CustomerID int PRIMARY KEY,IssuedDaysAgo int,ExpiredDaysAgo int NULL,VoucherID int NULL);
+INSERT @extra(CustomerID,IssuedDaysAgo,ExpiredDaysAgo) VALUES(17,15,NULL),(21,8,NULL),(24,100,10),(29,90,5);
+SELECT @hc=MIN(CustomerID) FROM @extra;
+WHILE @hc IS NOT NULL
+BEGIN
+ SET @key=NEWID(); INSERT @r EXEC dbo.IssueVoucher @manager,@hc,@giftPromo,@key;
+ UPDATE @extra SET VoucherID=(SELECT ID FROM @r) WHERE CustomerID=@hc; DELETE @r;
+ SELECT @hc=MIN(CustomerID) FROM @extra WHERE CustomerID>@hc;
+END;
+-- Dời thời gian các dòng do từng đơn sinh ra: thanh toán phút 1, xác nhận 2, pha chế 3, sẵn sàng 9, hoàn tất 12.
+SELECT @mN=COALESCE(MAX(NotificationID),0) FROM dbo.Notifications;
+SELECT @mA=COALESCE(MAX(AuditID),0) FROM dbo.AuditLogs;
+SELECT @mL=COALESCE(MAX(LoyaltyTransactionID),0) FROM dbo.LoyaltyTransactions;
+SELECT @mI=COALESCE(MAX(TransactionID),0) FROM dbo.InventoryTransactions;
+DECLARE @span TABLE(OrderID int PRIMARY KEY,At datetime2(3),N0 int,N1 int,A0 int,A1 int,L0 int,L1 int,I0 int,I1 int,VoucherID int NULL);
+INSERT @span SELECT OrderID,At,N0,LEAD(N0,1,@mN) OVER(ORDER BY OrderID),A0,LEAD(A0,1,@mA) OVER(ORDER BY OrderID),
+       L0,LEAD(L0,1,@mL) OVER(ORDER BY OrderID),I0,LEAD(I0,1,@mI) OVER(ORDER BY OrderID),VoucherID FROM @hist;
+UPDATE o SET PaymentDueAt=DATEADD(minute,15,s.At),CompletedAt=DATEADD(minute,12,s.At)
+FROM dbo.Orders o JOIN @span s ON s.OrderID=o.OrderID;
+UPDATE h SET CreatedAt=DATEADD(minute,CASE h.ToStatus WHEN 'Confirmed' THEN 2 WHEN 'Preparing' THEN 3 WHEN 'Ready' THEN 9 WHEN 'Completed' THEN 12
+       ELSE CASE WHEN h.FromStatus IS NULL THEN 0 ELSE 1 END END,s.At)
+FROM dbo.OrderStatusHistory h JOIN @span s ON s.OrderID=h.OrderID;
+UPDATE a SET CreatedAt=DATEADD(second,20,s.At),SettledAt=CASE WHEN a.SettledAt IS NULL THEN NULL ELSE DATEADD(minute,1,s.At) END
+FROM dbo.PaymentAttempts a JOIN @span s ON s.OrderID=a.OrderID;
+UPDATE n SET CreatedAt=DATEADD(minute,CASE WHEN n.Body LIKE N'%Completed' THEN 12 WHEN n.Body LIKE N'%Ready' THEN 9 WHEN n.Body LIKE N'%Preparing' THEN 3
+       WHEN n.Body LIKE N'%Confirmed' THEN 2 ELSE 1 END,s.At),ReadAt=DATEADD(hour,2,s.At)
+FROM dbo.Notifications n JOIN @span s ON n.NotificationID>s.N0 AND n.NotificationID<=s.N1;
+UPDATE l SET CreatedAt=DATEADD(minute,CASE WHEN l.Details LIKE '%Completed' THEN 12 WHEN l.Details LIKE '%Ready' THEN 9 WHEN l.Details LIKE '%Preparing' THEN 3
+       WHEN l.Details LIKE '%Confirmed' THEN 2 ELSE 1 END,s.At)
+FROM dbo.AuditLogs l JOIN @span s ON l.AuditID>s.A0 AND l.AuditID<=s.A1;
+DISABLE TRIGGER dbo.TR_Loyalty_Immutable ON dbo.LoyaltyTransactions;
+DISABLE TRIGGER dbo.TR_InventoryTransactions_Immutable ON dbo.InventoryTransactions;
+DISABLE TRIGGER dbo.TR_CustomerPromotions_Terms ON dbo.CustomerPromotions;
+UPDATE l SET CreatedAt=DATEADD(minute,12,s.At)
+FROM dbo.LoyaltyTransactions l JOIN @span s ON l.LoyaltyTransactionID>s.L0 AND l.LoyaltyTransactionID<=s.L1;
+UPDATE t SET CreatedAt=DATEADD(minute,12,s.At)
+FROM dbo.InventoryTransactions t JOIN @span s ON t.TransactionID>s.I0 AND t.TransactionID<=s.I1
+WHERE t.Kind='Export' AND t.ActorID IS NULL;
+UPDATE cp SET IssuedAt=DATEADD(day,-3,s.At),UsedAt=DATEADD(minute,12,s.At)
+FROM dbo.CustomerPromotions cp JOIN @span s ON s.VoucherID=cp.CustomerPromotionID;
+UPDATE cp SET IssuedAt=DATEADD(hour,2,DATEADD(day,-x.IssuedDaysAgo,@base)),
+       ExpiresAt=CASE WHEN x.ExpiredDaysAgo IS NULL THEN cp.ExpiresAt ELSE DATEADD(day,-x.ExpiredDaysAgo,@base) END
+FROM dbo.CustomerPromotions cp JOIN @extra x ON x.VoucherID=cp.CustomerPromotionID;
+ENABLE TRIGGER dbo.TR_CustomerPromotions_Terms ON dbo.CustomerPromotions;
+ENABLE TRIGGER dbo.TR_InventoryTransactions_Immutable ON dbo.InventoryTransactions;
+ENABLE TRIGGER dbo.TR_Loyalty_Immutable ON dbo.LoyaltyTransactions;
+-- Thông báo và nhật ký phát hành voucher theo ngày phát hành mới.
+UPDATE n SET CreatedAt=cp.IssuedAt FROM dbo.Notifications n JOIN dbo.CustomerPromotions cp ON cp.CustomerPromotionID=n.CustomerPromotionID;
+UPDATE l SET CreatedAt=cp.IssuedAt FROM dbo.AuditLogs l JOIN dbo.CustomerPromotions cp ON l.EntityType='CustomerPromotions' AND l.EntityID=cp.CustomerPromotionID;
+-- Tài khoản khách có lịch sử được tạo trước đơn đầu tiên 14 ngày.
+UPDATE c SET CreatedAt=DATEADD(day,-14,x.FirstAt)
+FROM dbo.Customers c JOIN (SELECT CustomerID,MIN(CreatedAt) AS FirstAt FROM dbo.Orders WHERE CustomerID IS NOT NULL GROUP BY CustomerID) x ON x.CustomerID=c.CustomerID
+WHERE c.CreatedAt>DATEADD(day,-14,x.FirstAt);
+UPDATE u SET CreatedAt=c.CreatedAt FROM dbo.Users u JOIN dbo.Customers c ON c.UserID=u.UserID WHERE u.CreatedAt>c.CreatedAt;
+SET @key=NEWID();   -- khóa yêu cầu mới cho mục 1 (khóa cũ đã dùng cho voucher ở trên)
 
 -- ===== 1. Các luồng mẫu gốc (Lan, Minh, POS) =====
 INSERT @r EXEC dbo.IssueVoucher @lanUser,@lan,1,@key;
 SELECT @voucher=ID FROM @r; DELETE @r;
 SET @key=NEWID();
-INSERT @r EXEC dbo.CreateOrder @ActorID=@lanUser,@BranchID=@branch,@Source='App',@Fulfillment='Pickup',@PaymentMode='Prepaid',@Items=N'[{"variantId":1,"quantity":2,"optionIds":[1,3,5]}]',@RequestKey=@key,@CustomerID=@lan,@CustomerPromotionID=@voucher;
+SET @lines=CONCAT(N'[{"variantId":1,"quantity":2,"optionIds":[',@da,N']}]');
+INSERT @r EXEC dbo.CreateOrder @ActorID=@lanUser,@BranchID=@branch,@Source='App',@Fulfillment='Pickup',@PaymentMode='Prepaid',@Items=@lines,@RequestKey=@key,@CustomerID=@lan,@CustomerPromotionID=@voucher;
 SELECT @order=ID FROM @r; DELETE @r;
 SET @key=NEWID(); INSERT @r EXEC dbo.StartPayment @lanUser,@order,@key; SELECT @payment=ID FROM @r; DELETE @r;
 EXEC dbo.SimulatePayment @lanUser,@payment,'Failed',N'Khách hủy lần thanh toán đầu';
@@ -2186,7 +2698,8 @@ INSERT @r EXEC dbo.SubmitFeedback @ActorID=@lanUser,@CustomerID=@lan,@Content=N'
 SELECT @feedback=ID FROM @r; DELETE @r;
 EXEC dbo.HandleFeedback @manager,@feedback,'Resolved',N'Cảm ơn bạn đã ghé Morning Brew!';
 SET @key=NEWID();
-INSERT @r EXEC dbo.CreateOrder @ActorID=@minhUser,@BranchID=@branch,@Source='App',@Fulfillment='Delivery',@PaymentMode='COD',@Items=N'[{"variantId":3,"quantity":1,"optionIds":[1,3]}]',@RequestKey=@key,@CustomerID=@minh,@AddressID=@minhAddress;
+SET @lines=CONCAT(N'[{"variantId":3,"quantity":1,"optionIds":[',@nong,N']}]');
+INSERT @r EXEC dbo.CreateOrder @ActorID=@minhUser,@BranchID=@branch,@Source='App',@Fulfillment='Delivery',@PaymentMode='COD',@Items=@lines,@RequestKey=@key,@CustomerID=@minh,@AddressID=@minhAddress;
 SELECT @order=ID FROM @r; DELETE @r;
 EXEC dbo.AdvanceOrder @staff,@order,'Confirmed'; EXEC dbo.AdvanceOrder @staff,@order,'Preparing'; EXEC dbo.AdvanceOrder @staff,@order,'Ready';
 EXEC dbo.AdvanceOrder @ActorID=@staff,@OrderID=@order,@NextStatus='Delivering',@CourierName=N'Anh Bình',@CourierPhone='0908888888';
@@ -2257,14 +2770,15 @@ OPEN people; FETCH NEXT FROM people INTO @c,@u;
 WHILE @@FETCH_STATUS=0
 BEGIN
  SET @order=NULL;
- -- 4/5 số khách có 1 đơn hoàn tất (món không cần chọn topping/đường/đá).
- IF @c % 5 <> 0
+ -- 4/5 số khách có 1 đơn hoàn tất hôm nay (trừ nhóm lâu không quay lại); đồ uống (VariantID 5–8) kèm Đá / Nóng xen kẽ, bánh (4, 10) không có tùy chọn.
+ IF @c % 5 <> 0 AND NOT EXISTS(SELECT 1 FROM @lapsed WHERE CustomerID=@c)   -- [DEMO-01]
  BEGIN
   SET @variant=CHOOSE(@c % 6 + 1, 4, 5, 6, 7, 8, 10);
   SET @qty=1 + @c % 2;
   SELECT @product=ProductID FROM dbo.ProductVariants WHERE VariantID=@variant;
   SET @key=NEWID();
-  SET @items=CONCAT(N'[{"variantId":',@variant,N',"quantity":',@qty,N'}]');
+  SET @items=CONCAT(N'[{"variantId":',@variant,N',"quantity":',@qty,
+       CASE WHEN @variant BETWEEN 5 AND 8 THEN CONCAT(N',"optionIds":[',CASE WHEN @c % 2 = 0 THEN @da ELSE @nong END,N']') ELSE N'' END,N'}]');
   INSERT @r EXEC dbo.CreateOrder @ActorID=@u,@BranchID=@branch,@Source='App',@Fulfillment='Pickup',@PaymentMode='Prepaid',
        @Items=@items,@RequestKey=@key,@CustomerID=@c;
   SELECT @order=ID FROM @r; DELETE @r;
@@ -2312,11 +2826,24 @@ BEGIN
  FETCH NEXT FROM people INTO @c,@u;
 END;
 CLOSE people; DEALLOCATE people;
+-- ===== 4. [DEMO-01] Hủy hàng và kiểm kê cuối ngày (cảnh báo tồn thấp có dữ liệu) =====
+INSERT dbo.InventoryTransactions(IngredientID,ActorID,Kind,QuantityChange,BalanceAfter,Note)
+SELECT IngredientID,@manager,'Waste',-0.500,Quantity-0.500,N'Sữa hết hạn, đổ bỏ' FROM dbo.Ingredients WHERE Code='NL-SU01' AND Quantity>=0.500;
+UPDATE dbo.Ingredients SET Quantity=Quantity-0.500,StockUpdatedAt=SYSUTCDATETIME() WHERE Code='NL-SU01' AND Quantity>=0.500;
+DECLARE @count TABLE(Code varchar(30) PRIMARY KEY,Qty decimal(18,3));
+INSERT @count VALUES('NL-TC02',1.000),('NL-TR02',0.300),('NL-SU03',2.000);   -- dưới mức tối thiểu
+INSERT dbo.InventoryTransactions(IngredientID,ActorID,Kind,QuantityChange,BalanceAfter,Note)
+SELECT g.IngredientID,@manager,'Adjust',k.Qty-g.Quantity,k.Qty,N'Kiểm kê cuối ngày: hao hụt thực tế'
+FROM dbo.Ingredients g JOIN @count k ON k.Code=g.Code WHERE g.Quantity<>k.Qty;
+UPDATE g SET Quantity=k.Qty,StockUpdatedAt=SYSUTCDATETIME() FROM dbo.Ingredients g JOIN @count k ON k.Code=g.Code WHERE g.Quantity<>k.Qty;
 SELECT 'Demo ready' AS Result,
  (SELECT COUNT(*) FROM dbo.Customers) AS Customers,
  (SELECT COUNT(*) FROM dbo.Orders WHERE Status='Completed') AS CompletedOrders,
  (SELECT COUNT(*) FROM dbo.Feedbacks) AS Feedbacks,
- (SELECT COUNT(*) FROM dbo.SurveyRecipients WHERE CompletedAt IS NOT NULL) AS SurveyAnswers;
+ (SELECT COUNT(*) FROM dbo.SurveyRecipients WHERE CompletedAt IS NOT NULL) AS SurveyAnswers,
+ (SELECT STRING_AGG(CONCAT(Segment,'=',n),', ') FROM (SELECT Segment,COUNT(*) AS n FROM dbo.CustomerStats GROUP BY Segment) s) AS Segments,   -- [DEMO-01]
+ (SELECT STRING_AGG(CONCAT(TierCode,'=',n),', ') FROM (SELECT TierCode,COUNT(*) AS n FROM dbo.CustomerTiers GROUP BY TierCode) s) AS Tiers,
+ (SELECT SUM(ABS(Difference)) FROM dbo.LoyaltyReconciliation) AS LoyaltyDifference;
 GO
 IF @@ERROR <> 0
 BEGIN
@@ -2325,1145 +2852,15 @@ BEGIN
     SET NOEXEC ON;
 END
 GO
--- ===== Hết phần cài mới: chạy tiếp (trừ khi đã lỗi) =====
-SET NOEXEC OFF;
-GO
-IF SESSION_CONTEXT(N'mb_failed') = 1 SET NOEXEC ON;
-GO
-USE [MorningBrewCRM_Crm];
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-IF OBJECT_ID(N'dbo.CreateOrder', N'P') IS NULL
-BEGIN
-    RAISERROR(N'>>> DỪNG: chưa có bảng/thủ tục lõi.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-IF (SELECT COUNT(*) FROM dbo.Branches WHERE IsActive = 1) > 1
-BEGIN
-    RAISERROR(N'>>> DỪNG: bản cập nhật này chỉ dành cho mô hình MỘT cửa hàng.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-IF OBJECT_ID(N'dbo.AreaManagers', N'U') IS NOT NULL AND EXISTS (SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID = u.RoleID WHERE r.Code = 'AreaManager')
-BEGIN
-    RAISERROR(N'>>> DỪNG: còn tài khoản AreaManager. Chuyển các tài khoản này sang vai trò khác trước.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- Sao lưu trước khi nâng cấp (chỉ khi NÂNG CẤP). Muốn bỏ qua: đổi @SaoLuu = 0.
-DECLARE @SaoLuu bit = 1;
-IF @SaoLuu = 1 AND SESSION_CONTEXT(N'mb_mode') = N'upgrade'
-BEGIN
-    DECLARE @dir nvarchar(300) = CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS nvarchar(300));
-    DECLARE @file nvarchar(400) = CONCAT(CASE WHEN @dir IS NULL THEN N'' WHEN RIGHT(@dir, 1) = N'\' THEN @dir ELSE @dir + N'\' END, N'MorningBrewCRM_Crm_truoc-nang-cap_', FORMAT(SYSDATETIME(), 'yyyyMMdd_HHmmss'), N'.bak');
-    DECLARE @sql nvarchar(max) = N'BACKUP DATABASE [MorningBrewCRM_Crm] TO DISK = @f WITH COPY_ONLY, CHECKSUM, INIT; RESTORE VERIFYONLY FROM DISK = @f WITH CHECKSUM;';
-    EXEC sp_executesql @sql, N'@f nvarchar(400)', @f = @file;
-    PRINT CONCAT(N'Đã sao lưu và kiểm tra bản sao lưu: ', @file);
-END
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-PRINT N'--- 08_admin.sql ---';
-GO
--- Additive, repeatable migration for Admin features. No existing data is reset.
--- Phạm vi CRM: đã bỏ phần nhân sự (bảng StaffShifts và quyền Staff.Manage).
-SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
-BEGIN TRAN;
-IF OBJECT_ID('dbo.Suppliers','U') IS NULL
-CREATE TABLE dbo.Suppliers(
- SupplierID int IDENTITY PRIMARY KEY,
- Code varchar(30) NOT NULL UNIQUE,
- Name nvarchar(150) NOT NULL,
- Phone varchar(20) NULL,
- Email nvarchar(254) NULL,
- ProductGroup nvarchar(150) NULL,
- IsActive bit NOT NULL DEFAULT 1
-);
-COMMIT;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- Trusted API service role: metadata CRUD and business procedures, without schema/DDL ownership.
-IF DATABASE_PRINCIPAL_ID('MorningBrewApi') IS NULL CREATE ROLE MorningBrewApi;
-GRANT SELECT,INSERT,UPDATE,DELETE,EXECUTE ON SCHEMA::dbo TO MorningBrewApi;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-PRINT N'--- 09_shared_prices.sql ---';
-GO
--- Repeatable upgrade: shared catalog prices for all future orders/menu reads.
--- Retains existing availability rows and historical order snapshots. No data is deleted.
-SET NOCOUNT ON; SET XACT_ABORT ON;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-BEGIN TRAN;
-DECLARE @sql nvarchar(max), @name sysname;
-DECLARE procedures CURSOR LOCAL FAST_FORWARD FOR
- SELECT name FROM sys.procedures WHERE schema_id=SCHEMA_ID('dbo') AND name IN ('CreateOrder','GetMenu');
-OPEN procedures;
-FETCH NEXT FROM procedures INTO @name;
-WHILE @@FETCH_STATUS=0
-BEGIN
- SET @sql=OBJECT_DEFINITION(OBJECT_ID('dbo.'+@name));
- IF @sql IS NULL THROW 51100,'Install core procedures before 09_shared_prices.sql.',1;
- SET @sql='ALTER '+SUBSTRING(@sql,CHARINDEX('PROCEDURE',@sql),LEN(@sql));
- SET @sql=REPLACE(@sql,'COALESCE(bv.SellingPrice,v.BasePrice)','v.BasePrice');
- SET @sql=REPLACE(@sql,'COALESCE(bo.ExtraPrice,mo.ExtraPrice)','mo.ExtraPrice');
- SET @sql=REPLACE(@sql,'COALESCE(bo.ExtraPrice,o.ExtraPrice)','o.ExtraPrice');
- EXEC sys.sp_executesql @sql;
- FETCH NEXT FROM procedures INTO @name;
-END;
-CLOSE procedures; DEALLOCATE procedures;
-IF OBJECT_ID('dbo.CreateOrder','P') IS NULL OR OBJECT_ID('dbo.GetMenu','P') IS NULL
- THROW 51100,'Install core procedures before 09_shared_prices.sql.',1;
-COMMIT;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-CREATE OR ALTER PROCEDURE dbo.SetBranchPrice
- @ActorID int,@BranchID int,@VariantID int,@Price decimal(18,2),@IsAvailable bit
-AS
-BEGIN
- SET NOCOUNT ON;
- THROW 51100,'Branch-specific prices are retired. Use the owner-only shared variant price API.',1;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-PRINT N'--- 10_soft_delete.sql ---';
-GO
--- LƯU Ý: dbo.SoftDeleteUser được 11_single_store.sql định nghĩa lại (cho quản lý xóa khách). Nếu chạy lại file này, hãy chạy lại 11 sau đó.
--- Xóa mềm tài khoản / khách hàng (yêu cầu 4.1 "Xóa khách hàng", II.2 "Thêm, xóa account").
--- Chạy lặp lại được. Không xóa dòng nào: chỉ đánh dấu DeletedAt, khóa đăng nhập và ẩn danh dữ liệu cá nhân,
--- để đơn hàng, điểm, phản hồi, khảo sát (khóa ngoại tới Users/Customers) và các báo cáo vẫn đúng.
--- Database đã tạo trước đó: sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\10_soft_delete.sql
-SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
-IF COL_LENGTH('dbo.Users','DeletedAt') IS NULL
-    ALTER TABLE dbo.Users ADD DeletedAt datetime2(3) NULL;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-CREATE OR ALTER PROCEDURE dbo.SoftDeleteUser @ActorID int,@UserID int
-AS
-BEGIN
- SET NOCOUNT ON; SET XACT_ABORT ON;
- BEGIN TRAN;
- IF dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Security.Manage')=0 THROW 51103,N'Chỉ chủ cửa hàng được xóa tài khoản.',1;
- IF @UserID=@ActorID THROW 51121,N'Không thể tự xóa tài khoản đang đăng nhập.',1;
- DECLARE @role varchar(30);
- SELECT @role=r.Code FROM dbo.Users u WITH(UPDLOCK,HOLDLOCK) JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE u.UserID=@UserID AND u.DeletedAt IS NULL;
- IF @role IS NULL THROW 51104,N'Account not found.',1;
- IF @role='Owner' AND NOT EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
-    WHERE r.Code='Owner' AND u.UserID<>@UserID AND u.IsActive=1 AND u.DeletedAt IS NULL)
-    THROW 51122,N'Phải còn ít nhất một chủ cửa hàng đang hoạt động.',1;
- -- Ẩn danh: email đổi thành giá trị không dùng được để email gốc có thể đăng ký lại.
- DECLARE @email nvarchar(254)=CONCAT(N'deleted-',@UserID,N'@deleted.invalid');
- UPDATE dbo.Users SET IsActive=0,DeletedAt=SYSUTCDATETIME(),Email=@email,NormalizedEmail=UPPER(@email),
-    FullName=CASE WHEN @role='Customer' THEN N'Khách đã xóa' ELSE N'Tài khoản đã xóa' END,Phone=NULL
- WHERE UserID=@UserID;
- UPDATE dbo.UserSessions SET RevokedAt=SYSUTCDATETIME() WHERE UserID=@UserID AND RevokedAt IS NULL;
- IF @role='BranchManager' UPDATE dbo.Branches SET ManagerID=NULL WHERE ManagerID=@UserID;
- INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details) VALUES(@ActorID,'Account.SoftDelete','Users',@UserID,@role);
- COMMIT;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-PRINT N'--- 11_single_store.sql ---';
-GO
--- Chế độ MỘT CỬA HÀNG (phạm vi đồ án hiện tại). Chạy lặp lại được, không xóa dữ liệu nghiệp vụ.
--- Áp dụng sau 01–10. Database đã có:
---   sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\11_single_store.sql
--- Thay đổi:
---  1. CanScope: phạm vi chung (Chain) = cửa hàng duy nhất. Người có quyền tại một cửa hàng đang hoạt động
---     thì có quyền đó ở phạm vi chung -> quản lý thấy toàn bộ khách, phản hồi không gắn cửa hàng,
---     khảo sát/ưu đãi do chủ cửa hàng tạo.
---  2. CustomerInScope: mọi khách chưa bị xóa đều thuộc cửa hàng (không còn phụ thuộc đơn hàng Completed).
---  3. CanBranch: quản lý được gán qua Branches.ManagerID HOẶC StaffBranches -> có thể có nhiều quản lý.
---  4. Bỏ vai trò AreaManager (bảng AreaManagers, trigger, nhánh kiểm tra quyền) và procedure SetBranchPrice đã ngừng dùng.
---  5. Quyền Customers.Manage (thêm/xóa/khóa khách hàng) cho chủ cửa hàng và quản lý.
-SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-CREATE OR ALTER FUNCTION dbo.CanBranch(@UserID int,@BranchID int,@Permission varchar(80))
-RETURNS bit AS
-BEGIN
- DECLARE @ok bit=0;
- IF EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
-  JOIN dbo.RolePermissions rp ON rp.RoleID=u.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
-  JOIN dbo.Branches b ON b.BranchID=@BranchID
-  WHERE u.UserID=@UserID AND u.IsActive=1 AND p.Code=@Permission AND
-  (r.Code='Owner'
-   OR (r.Code='BranchManager' AND b.ManagerID=u.UserID)
-   OR (r.Code IN ('BranchManager','Staff') AND EXISTS(SELECT 1 FROM dbo.StaffBranches s WHERE s.UserID=u.UserID AND s.BranchID=b.BranchID AND s.IsActive=1)))) SET @ok=1;
- RETURN @ok;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-CREATE OR ALTER FUNCTION dbo.CanScope(@UserID int,@Scope varchar(10),@AreaID int,@BranchID int,@Permission varchar(80))
-RETURNS bit AS
-BEGIN
- IF @Scope='Branch' RETURN dbo.CanBranch(@UserID,@BranchID,@Permission);
- -- Chain/Area: chủ cửa hàng có quyền, hoặc người có quyền tại một cửa hàng đang hoạt động (chỉ có 1 cửa hàng).
- RETURN CASE WHEN EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
-   JOIN dbo.RolePermissions rp ON rp.RoleID=r.RoleID JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID
-   WHERE u.UserID=@UserID AND u.IsActive=1 AND p.Code=@Permission AND r.Code='Owner')
-  OR EXISTS(SELECT 1 FROM dbo.Branches b WHERE b.IsActive=1 AND dbo.CanBranch(@UserID,b.BranchID,@Permission)=1)
-  THEN 1 ELSE 0 END;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-CREATE OR ALTER FUNCTION dbo.CustomerInScope(@CustomerID int,@Scope varchar(10),@AreaID int,@BranchID int)
-RETURNS bit AS
-BEGIN
- RETURN CASE WHEN EXISTS(SELECT 1 FROM dbo.Customers c JOIN dbo.Users u ON u.UserID=c.UserID
-  WHERE c.CustomerID=@CustomerID AND u.DeletedAt IS NULL) THEN 1 ELSE 0 END;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-CREATE OR ALTER TRIGGER dbo.TR_StaffBranches_Role ON dbo.StaffBranches AFTER INSERT,UPDATE AS
-BEGIN
- SET NOCOUNT ON;
- IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.Users u ON u.UserID=i.UserID JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE r.Code NOT IN ('Staff','BranchManager'))
-  THROW 51001,N'Assignment requires Staff or BranchManager role.',1;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-CREATE OR ALTER TRIGGER dbo.TR_Users_Role ON dbo.Users AFTER UPDATE AS
-BEGIN
- SET NOCOUNT ON;
- IF UPDATE(RoleID) AND EXISTS(SELECT 1 FROM inserted i JOIN deleted d ON d.UserID=i.UserID WHERE i.RoleID<>d.RoleID AND
- (EXISTS(SELECT 1 FROM dbo.Customers WHERE UserID=i.UserID) OR EXISTS(SELECT 1 FROM dbo.StaffBranches WHERE UserID=i.UserID AND IsActive=1) OR EXISTS(SELECT 1 FROM dbo.Branches WHERE ManagerID=i.UserID)))
- THROW 51001,N'Remove incompatible assignments/profile before changing role.',1;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-BEGIN TRAN;
--- Quản lý hiện tại (Branches.ManagerID) cũng được ghi vào StaffBranches để thống nhất cách gán.
-INSERT dbo.StaffBranches(UserID,BranchID)
-SELECT b.ManagerID,b.BranchID FROM dbo.Branches b
-WHERE b.ManagerID IS NOT NULL AND NOT EXISTS(SELECT 1 FROM dbo.StaffBranches s WHERE s.UserID=b.ManagerID AND s.BranchID=b.BranchID);
--- Quyền thêm/xóa/khóa khách hàng.
-IF NOT EXISTS(SELECT 1 FROM dbo.Permissions WHERE Code='Customers.Manage')
- INSERT dbo.Permissions(Code,Description) VALUES('Customers.Manage',N'Thêm, xóa, khóa tài khoản khách hàng');
-INSERT dbo.RolePermissions(RoleID,PermissionID)
-SELECT r.RoleID,p.PermissionID FROM dbo.Roles r CROSS JOIN dbo.Permissions p
-WHERE r.Code IN ('Owner','BranchManager') AND p.Code='Customers.Manage'
- AND NOT EXISTS(SELECT 1 FROM dbo.RolePermissions x WHERE x.RoleID=r.RoleID AND x.PermissionID=p.PermissionID);
-COMMIT;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- Bỏ vai trò AreaManager (không có tài khoản nào dùng trong chế độ một cửa hàng).
-IF OBJECT_ID('dbo.TR_AreaManagers_Role','TR') IS NOT NULL DROP TRIGGER dbo.TR_AreaManagers_Role;
-IF OBJECT_ID('dbo.AreaManagers','U') IS NOT NULL
-BEGIN
- IF EXISTS(SELECT 1 FROM dbo.AreaManagers) THROW 51130,N'AreaManagers còn dữ liệu: chuyển các tài khoản này sang vai trò khác trước khi chạy script.',1;
- DROP TABLE dbo.AreaManagers;
-END;
-IF EXISTS(SELECT 1 FROM dbo.Roles WHERE Code='AreaManager') THROW 51130,N'Còn vai trò AreaManager trong dbo.Roles.',1;
-IF EXISTS(SELECT 1 FROM sys.check_constraints WHERE name='CK_Roles_0' AND definition LIKE '%AreaManager%')
-BEGIN
- ALTER TABLE dbo.Roles DROP CONSTRAINT CK_Roles_0;
- ALTER TABLE dbo.Roles ADD CONSTRAINT CK_Roles_0 CHECK (Code IN ('Owner','BranchManager','Staff','Customer'));
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- Giá riêng theo cửa hàng đã ngừng từ 09_shared_prices.sql.
-DROP PROCEDURE IF EXISTS dbo.SetBranchPrice;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- Xóa mềm: thu hồi phân công cửa hàng; nếu xóa quản lý chính thì chuyển ManagerID cho quản lý khác còn hoạt động.
-CREATE OR ALTER PROCEDURE dbo.SoftDeleteUser @ActorID int,@UserID int
-AS
-BEGIN
- SET NOCOUNT ON; SET XACT_ABORT ON;
- BEGIN TRAN;
- IF dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Security.Manage')=0
-    AND NOT (dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Customers.Manage')=1
-             AND EXISTS(SELECT 1 FROM dbo.Customers WHERE UserID=@UserID))
-    THROW 51103,N'Không có quyền xóa tài khoản này.',1;
- IF @UserID=@ActorID THROW 51121,N'Không thể tự xóa tài khoản đang đăng nhập.',1;
- DECLARE @role varchar(30);
- SELECT @role=r.Code FROM dbo.Users u WITH(UPDLOCK,HOLDLOCK) JOIN dbo.Roles r ON r.RoleID=u.RoleID WHERE u.UserID=@UserID AND u.DeletedAt IS NULL;
- IF @role IS NULL THROW 51104,N'Account not found.',1;
- IF @role='Owner' AND NOT EXISTS(SELECT 1 FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
-    WHERE r.Code='Owner' AND u.UserID<>@UserID AND u.IsActive=1 AND u.DeletedAt IS NULL)
-    THROW 51122,N'Phải còn ít nhất một chủ cửa hàng đang hoạt động.',1;
- DECLARE @email nvarchar(254)=CONCAT(N'deleted-',@UserID,N'@deleted.invalid');
- UPDATE dbo.Users SET IsActive=0,DeletedAt=SYSUTCDATETIME(),Email=@email,NormalizedEmail=UPPER(@email),
-    FullName=CASE WHEN @role='Customer' THEN N'Khách đã xóa' ELSE N'Tài khoản đã xóa' END,Phone=NULL
- WHERE UserID=@UserID;
- UPDATE dbo.UserSessions SET RevokedAt=SYSUTCDATETIME() WHERE UserID=@UserID AND RevokedAt IS NULL;
- UPDATE dbo.StaffBranches SET IsActive=0 WHERE UserID=@UserID;
- IF @role='BranchManager'
-  UPDATE b SET ManagerID=(SELECT TOP(1) s.UserID FROM dbo.StaffBranches s JOIN dbo.Users u ON u.UserID=s.UserID
-       JOIN dbo.Roles r ON r.RoleID=u.RoleID
-       WHERE s.BranchID=b.BranchID AND s.IsActive=1 AND r.Code='BranchManager' AND u.IsActive=1 AND u.UserID<>@UserID ORDER BY s.AssignedAt)
-  FROM dbo.Branches b WHERE b.ManagerID=@UserID;
- INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details) VALUES(@ActorID,'Account.SoftDelete','Users',@UserID,@role);
- COMMIT;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-PRINT N'--- 12_bugfix.sql ---';
-GO
--- Đợt sửa lỗi theo docs/BugReport_MorningBrew_App-Admin.xlsx. Chạy lặp lại được, áp dụng sau 01–11.
--- Database đã có:
---   sqlcmd -S "(localdb)\MSSQLLocalDB" -d MorningBrewCRM_Crm -E -C -I -b -f 65001 -i database\sql\12_bugfix.sql
-SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- [BUG-06] Tách lỗi "sai trạng thái" (51124 → HTTP 409, thông báo tiếng Việt) khỏi lỗi "thiếu quyền" (51103 → 403).
--- [BUG-07] Không cho phát hành khảo sát đã quá ngày kết thúc.
-CREATE OR ALTER PROCEDURE dbo.PublishSurvey @ActorID int,@SurveyID int
-AS
-BEGIN
- SET NOCOUNT ON; SET XACT_ABORT ON;
- BEGIN TRY
- BEGIN TRAN;
- DECLARE @status varchar(10),@scope varchar(10),@area int,@branch int,@ends datetime2(3);
- SELECT @status=Status,@scope=Scope,@area=AreaID,@branch=BranchID,@ends=EndsAt FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@SurveyID;
- IF @status IS NULL THROW 51104,N'Không tìm thấy khảo sát.',1;
- IF dbo.CanScope(@ActorID,@scope,@area,@branch,'Surveys.Manage')=0 THROW 51103,N'Survey outside scope.',1;
- IF @status<>'Draft' THROW 51124,N'Khảo sát đã được phát hành hoặc đã đóng, không phát hành lại được.',1;
- IF @ends<=SYSUTCDATETIME() THROW 51124,N'Khảo sát đã quá ngày kết thúc, không thể phát hành.',1; -- [BUG-07]
- UPDATE dbo.Surveys SET Status='Open' WHERE SurveyID=@SurveyID;
- INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID) VALUES(@ActorID,@branch,'Survey.Publish','Surveys',@SurveyID);
- COMMIT;
- END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- [BUG-06] Mời vào khảo sát chưa phát hành / đã đóng / hết hạn → 51124 thay vì 51103.
-CREATE OR ALTER PROCEDURE dbo.InviteSurvey @ActorID int,@SurveyID int,@CustomerID int
-AS
-BEGIN
- SET NOCOUNT ON; SET XACT_ABORT ON;
- BEGIN TRY
- BEGIN TRAN;
- DECLARE @status varchar(10),@scope varchar(10),@area int,@branch int,@ends datetime2(3);
- SELECT @status=Status,@scope=Scope,@area=AreaID,@branch=BranchID,@ends=EndsAt FROM dbo.Surveys WITH(UPDLOCK,HOLDLOCK) WHERE SurveyID=@SurveyID;
- IF @status IS NULL THROW 51104,N'Không tìm thấy khảo sát.',1;
- IF dbo.CanScope(@ActorID,@scope,@area,@branch,'Surveys.Manage')=0 THROW 51103,N'Survey outside scope.',1;
- IF @status<>'Open' OR @ends<=SYSUTCDATETIME() THROW 51124,N'Khảo sát chưa phát hành, đã đóng hoặc đã hết hạn nên không mời thêm được.',1;
- IF dbo.CustomerInScope(@CustomerID,@scope,@area,@branch)=0 THROW 51104,N'Không tìm thấy khách hàng.',1;
- IF EXISTS(SELECT 1 FROM dbo.SurveyRecipients WHERE SurveyID=@SurveyID AND CustomerID=@CustomerID) BEGIN COMMIT; RETURN; END;
- INSERT dbo.SurveyRecipients(SurveyID,CustomerID) VALUES(@SurveyID,@CustomerID);
- INSERT dbo.Notifications(UserID,Title,Body,SurveyID) SELECT c.UserID,N'Khảo sát mới',s.Title,@SurveyID FROM dbo.Customers c CROSS JOIN dbo.Surveys s WHERE c.CustomerID=@CustomerID AND s.SurveyID=@SurveyID;
- COMMIT;
- END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- [Mã đơn ngắn] Mã đơn cũ 'MB-' + GUID (35 ký tự) quá dài để đọc / gọi tại quầy.
--- Mã mới: MB + ngày đặt (giờ Việt Nam, yyMMdd) + '-' + số thứ tự đơn 4 chữ số, ví dụ MB261108-0028 (13 ký tự).
--- Duy nhất vì gắn với OrderID. Trigger chạy sau khi CreateOrder thêm đơn nên không phải sửa procedure.
-CREATE OR ALTER TRIGGER dbo.TR_Orders_ShortCode ON dbo.Orders AFTER INSERT AS
-BEGIN
- SET NOCOUNT ON;
- UPDATE o SET OrderCode=CONCAT('MB',FORMAT(DATEADD(hour,7,i.CreatedAt),'yyMMdd'),'-',
-   CASE WHEN i.OrderID>9999 THEN CONVERT(varchar(12),i.OrderID) ELSE RIGHT(CONCAT('0000',i.OrderID),4) END)
- FROM dbo.Orders o JOIN inserted i ON i.OrderID=o.OrderID;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- Đổi mã các đơn đã có sang dạng ngắn (chạy lại không đổi gì vì chỉ áp dụng cho mã dạng cũ 'MB-…').
-UPDATE dbo.Orders SET OrderCode=CONCAT('MB',FORMAT(DATEADD(hour,7,CreatedAt),'yyMMdd'),'-',
-  CASE WHEN OrderID>9999 THEN CONVERT(varchar(12),OrderID) ELSE RIGHT(CONCAT('0000',OrderID),4) END)
-WHERE OrderCode LIKE 'MB-%';
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- [BUG-09] Không cho sửa phản hồi đã giải quyết (trước đây trả lời lại sẽ ghi đè câu trả lời cũ).
-CREATE OR ALTER PROCEDURE dbo.HandleFeedback @ActorID int,@FeedbackID int,@Status varchar(12),@Response nvarchar(4000)=NULL
-AS
-BEGIN
- SET NOCOUNT ON; SET XACT_ABORT ON;
- BEGIN TRY
- BEGIN TRAN;
- DECLARE @branch int,@customer int,@old varchar(12);
- SELECT @branch=BranchID,@customer=CustomerID,@old=Status FROM dbo.Feedbacks WITH(UPDLOCK,HOLDLOCK) WHERE FeedbackID=@FeedbackID;
- IF @customer IS NULL OR (@branch IS NULL AND dbo.CanScope(@ActorID,'Chain',NULL,NULL,'Feedbacks.Manage')=0) OR (@branch IS NOT NULL AND dbo.CanBranch(@ActorID,@branch,'Feedbacks.Manage')=0) THROW 51103,N'Feedback is outside scope.',1;
- -- [BUG-09] Phản hồi đã giải quyết thì khóa: không đổi trạng thái, không ghi đè câu trả lời đã gửi khách.
- IF @old='Resolved' THROW 51124,N'Phản hồi đã được giải quyết, không thể sửa trạng thái hoặc câu trả lời.',1;
- IF @Status NOT IN ('Processing','Resolved') OR (@Status='Resolved' AND NULLIF(@Response,'') IS NULL) THROW 51100,N'Resolved feedback needs a response.',1;
- UPDATE dbo.Feedbacks SET Status=@Status,HandledBy=@ActorID,ResponseContent=@Response,HandledAt=SYSUTCDATETIME() WHERE FeedbackID=@FeedbackID;
- INSERT dbo.Notifications(UserID,Title,Body) SELECT UserID,N'Cập nhật phản hồi',COALESCE(@Response,N'Phản hồi đang được xử lý.') FROM dbo.Customers WHERE CustomerID=@customer;
- INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Feedback.Handle','Feedbacks',@FeedbackID,@Status);
- COMMIT;
- END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-PRINT N'--- 13_ui_review.sql ---';
-GO
--- 13_ui_review.sql – đợt góp ý giao diện 09/11/2026 (chạy sau 12_bugfix.sql). Chạy lại nhiều lần không sao.
---   [UI2-A3]  Chọn món chỉ còn Size + Đá/Nóng: tắt nhóm Đường, Topping; nhóm "Đá" thành "Nhiệt độ" (Đá / Nóng, bắt buộc)
---             cho mọi đồ uống; thêm size L (= giá M + 10.000đ) cho đồ uống chỉ có size M.
---   [UI2-A4a] Hai món dữ liệu mẫu đang "Tạm hết" (Trà sen vàng, Bánh mousse chanh dây) đặt lại "Còn hàng";
---             từ nay chỉnh tình trạng còn hàng ở Admin → Sản phẩm.
---   [UI2-W2]  Dữ liệu mẫu nhà cung cấp (chỉ thêm khi bảng còn trống).
-SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
-BEGIN TRAN;
-
--- ===== [UI2-A3] =====
--- Tắt nhóm Đường và Topping (không xóa: đơn cũ vẫn giữ đúng tên tùy chọn đã chọn).
-UPDATE dbo.ModifierGroups SET IsActive=0 WHERE Kind IN ('Sugar','Topping') AND IsActive=1;
-
-DECLARE @temp int=(SELECT TOP(1) ModifierGroupID FROM dbo.ModifierGroups WHERE Kind='Ice' ORDER BY ModifierGroupID);
-IF @temp IS NULL
-BEGIN
-    INSERT dbo.ModifierGroups(Name,Kind) VALUES(N'Nhiệt độ','Ice');
-    SET @temp=SCOPE_IDENTITY();
-END
-UPDATE dbo.ModifierGroups SET Name=N'Nhiệt độ',IsActive=1 WHERE ModifierGroupID=@temp;
--- Lựa chọn cũ (50% đá, 100% đá) ngừng dùng; thêm "Đá" và "Nóng".
-UPDATE dbo.ModifierOptions SET IsActive=0 WHERE ModifierGroupID=@temp AND Name NOT IN (N'Đá',N'Nóng');
-IF NOT EXISTS(SELECT 1 FROM dbo.ModifierOptions WHERE ModifierGroupID=@temp AND Name=N'Đá')
-    INSERT dbo.ModifierOptions(ModifierGroupID,Name,ExtraPrice,DisplayOrder) VALUES(@temp,N'Đá',0,1);
-IF NOT EXISTS(SELECT 1 FROM dbo.ModifierOptions WHERE ModifierGroupID=@temp AND Name=N'Nóng')
-    INSERT dbo.ModifierOptions(ModifierGroupID,Name,ExtraPrice,DisplayOrder) VALUES(@temp,N'Nóng',0,2);
-UPDATE dbo.ModifierOptions SET IsActive=1 WHERE ModifierGroupID=@temp AND Name IN (N'Đá',N'Nóng');
-
--- Đồ uống = sản phẩm thuộc danh mục Cà phê / Trà.
-DECLARE @drinks TABLE(ProductID int PRIMARY KEY);
-INSERT @drinks SELECT p.ProductID FROM dbo.Products p JOIN dbo.Categories c ON c.CategoryID=p.CategoryID
-WHERE c.Name IN (N'Cà phê',N'Trà');
-
-UPDATE pg SET MinSelections=1,MaxSelections=1 FROM dbo.ProductModifierGroups pg JOIN @drinks d ON d.ProductID=pg.ProductID WHERE pg.ModifierGroupID=@temp;
-INSERT dbo.ProductModifierGroups(ProductID,ModifierGroupID,MinSelections,MaxSelections)
-SELECT d.ProductID,@temp,1,1 FROM @drinks d
-WHERE NOT EXISTS(SELECT 1 FROM dbo.ProductModifierGroups pg WHERE pg.ProductID=d.ProductID AND pg.ModifierGroupID=@temp);
-
--- Size L cho đồ uống chỉ có size M.
-INSERT dbo.ProductVariants(ProductID,Name,BasePrice,DisplayOrder)
-SELECT m.ProductID,'L',m.BasePrice+10000,2 FROM dbo.ProductVariants m JOIN @drinks d ON d.ProductID=m.ProductID
-WHERE m.Name='M' AND m.IsActive=1 AND NOT EXISTS(SELECT 1 FROM dbo.ProductVariants l WHERE l.ProductID=m.ProductID AND l.Name='L');
-UPDATE v SET DisplayOrder=CASE v.Name WHEN 'M' THEN 1 WHEN 'L' THEN 2 ELSE v.DisplayOrder END
-FROM dbo.ProductVariants v JOIN @drinks d ON d.ProductID=v.ProductID;
-
--- ===== [UI2-A4a] =====
-UPDATE bp SET IsAvailable=1 FROM dbo.BranchProducts bp JOIN dbo.Products p ON p.ProductID=bp.ProductID
-WHERE p.Name IN (N'Trà sen vàng',N'Bánh mousse chanh dây') AND bp.IsAvailable=0;
-
--- ===== [UI2-W2] =====
-IF OBJECT_ID('dbo.Suppliers','U') IS NOT NULL AND NOT EXISTS(SELECT 1 FROM dbo.Suppliers)
-INSERT dbo.Suppliers(Code,Name,Phone,Email,ProductGroup,IsActive) VALUES
-('NCC-CF01',N'Công ty TNHH Cà phê Cầu Đất','0263 3812 456','kinhdoanh@caudatcoffee.test',N'Cà phê hạt Robusta, Arabica',1),
-('NCC-SU01',N'Nhà phân phối Sữa Phương Nam','028 3896 1122','order@suaphuongnam.test',N'Sữa tươi, sữa đặc, kem béo',1),
-('NCC-TR01',N'Trà Thái Nguyên Xanh','0208 3655 789','sales@trathainguyen.test',N'Trà lài, trà xanh, trà sen',1),
-('NCC-TC01',N'Vựa trái cây Bốn Mùa','0909 456 123','bonmua.fruit@mail.test',N'Đào, vải, cam, chanh dây',1),
-('NCC-BK01',N'Lò bánh Ngọc Lan','028 3512 7788','ngoclan.bakery@mail.test',N'Bánh croissant, tiramisu, mousse',1),
-('NCC-BB01',N'Bao bì Minh Phát','028 3754 2299','minhphat.pack@mail.test',N'Ly nhựa, ống hút, túi giấy',0);
-
-COMMIT;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-PRINT N'--- 14_inventory.sql ---';
-GO
-SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
-BEGIN TRAN;
-
--- ===== 1. BẢNG Ingredients =====
-IF OBJECT_ID('dbo.Ingredients','U') IS NULL
-CREATE TABLE dbo.[Ingredients] (
-    [IngredientID]  int           IDENTITY(1,1) NOT NULL,
-    [SupplierID]    int           NULL,                        -- nhà cung cấp chính (nullable)
-    [Code]          varchar(30)   NOT NULL,
-    [Name]          nvarchar(150) NOT NULL,
-    [Unit]          nvarchar(20)  NOT NULL,                    -- kg, lít, hộp …
-    [Quantity]      decimal(18,3) NOT NULL CONSTRAINT [DF_Ingredients_Quantity]  DEFAULT (0),
-    [MinStock]      decimal(18,3) NOT NULL CONSTRAINT [DF_Ingredients_MinStock]  DEFAULT (0),
-    [LastUnitCost]  decimal(18,2) NULL,                       -- đơn giá lần nhập gần nhất
-    [IsActive]      bit           NOT NULL CONSTRAINT [DF_Ingredients_IsActive]  DEFAULT (1),
-    [StockUpdatedAt] datetime2(3) NULL,
-    [CreatedAt]     datetime2(3)  NOT NULL CONSTRAINT [DF_Ingredients_CreatedAt] DEFAULT (SYSUTCDATETIME()),
-    CONSTRAINT [PK_Ingredients]   PRIMARY KEY ([IngredientID]),
-    CONSTRAINT [UQ_Ingredients_0] UNIQUE ([Code]),
-    CONSTRAINT [CK_Ingredients_0] CHECK ([Quantity]  >= 0),
-    CONSTRAINT [CK_Ingredients_1] CHECK ([MinStock]  >= 0),
-    CONSTRAINT [CK_Ingredients_2] CHECK ([LastUnitCost] IS NULL OR [LastUnitCost] >= 0)
-);
-
--- ===== 2. BẢNG InventoryTransactions (phiếu kho – append-only) =====
-IF OBJECT_ID('dbo.InventoryTransactions','U') IS NULL
-CREATE TABLE dbo.[InventoryTransactions] (
-    [TransactionID]   int           IDENTITY(1,1) NOT NULL,
-    [IngredientID]    int           NOT NULL,
-    [SupplierID]      int           NULL,                     -- chỉ có khi Kind='Import'
-    [ActorID]         int           NULL,                     -- người thực hiện
-    [Kind]            varchar(10)   NOT NULL,                 -- Import | Export | Waste | Adjust
-    [QuantityChange]  decimal(18,3) NOT NULL,                 -- dương=nhập, âm=xuất/hủy, ± adjust
-    [BalanceAfter]    decimal(18,3) NOT NULL,                 -- tồn kho SAU phiếu
-    [UnitCost]        decimal(18,2) NULL,                     -- đơn giá (chỉ Import)
-    [TotalCost]       AS CASE WHEN [Kind]='Import' AND [UnitCost] IS NOT NULL THEN ABS([QuantityChange])*[UnitCost] ELSE NULL END,
-    [Note]            nvarchar(300) NULL,
-    [CreatedAt]       datetime2(3)  NOT NULL CONSTRAINT [DF_InventoryTransactions_CreatedAt] DEFAULT (SYSUTCDATETIME()),
-    CONSTRAINT [PK_InventoryTransactions]   PRIMARY KEY ([TransactionID]),
-    CONSTRAINT [CK_InventoryTransactions_0] CHECK ([Kind] IN ('Import','Export','Waste','Adjust')),
-    CONSTRAINT [CK_InventoryTransactions_1] CHECK ([BalanceAfter] >= 0),
-    CONSTRAINT [CK_InventoryTransactions_2] CHECK ([UnitCost] IS NULL OR [UnitCost] >= 0),
-    CONSTRAINT [CK_InventoryTransactions_3] CHECK ([Kind] <> 'Import' OR [QuantityChange] > 0),
-    CONSTRAINT [CK_InventoryTransactions_4] CHECK ([Kind] NOT IN ('Export','Waste') OR [QuantityChange] < 0)
-);
-
--- ===== 3. FOREIGN KEYS (chỉ thêm nếu chưa có) =====
-IF OBJECT_ID('dbo.Ingredients','U') IS NOT NULL
-AND NOT EXISTS(SELECT 1 FROM sys.foreign_keys WHERE name='FK_Ingredients_SupplierID')
-    ALTER TABLE dbo.[Ingredients] ADD CONSTRAINT [FK_Ingredients_SupplierID]
-        FOREIGN KEY ([SupplierID]) REFERENCES dbo.[Suppliers]([SupplierID]);
-
-IF OBJECT_ID('dbo.InventoryTransactions','U') IS NOT NULL
-AND NOT EXISTS(SELECT 1 FROM sys.foreign_keys WHERE name='FK_InventoryTransactions_IngredientID')
-    ALTER TABLE dbo.[InventoryTransactions] ADD CONSTRAINT [FK_InventoryTransactions_IngredientID]
-        FOREIGN KEY ([IngredientID]) REFERENCES dbo.[Ingredients]([IngredientID]);
-
-IF OBJECT_ID('dbo.InventoryTransactions','U') IS NOT NULL
-AND NOT EXISTS(SELECT 1 FROM sys.foreign_keys WHERE name='FK_InventoryTransactions_SupplierID')
-    ALTER TABLE dbo.[InventoryTransactions] ADD CONSTRAINT [FK_InventoryTransactions_SupplierID]
-        FOREIGN KEY ([SupplierID]) REFERENCES dbo.[Suppliers]([SupplierID]);
-
-IF OBJECT_ID('dbo.InventoryTransactions','U') IS NOT NULL
-AND NOT EXISTS(SELECT 1 FROM sys.foreign_keys WHERE name='FK_InventoryTransactions_ActorID')
-    ALTER TABLE dbo.[InventoryTransactions] ADD CONSTRAINT [FK_InventoryTransactions_ActorID]
-        FOREIGN KEY ([ActorID]) REFERENCES dbo.[Users]([UserID]);
-
--- ===== 4. INDEX =====
-IF NOT EXISTS(SELECT 1 FROM sys.indexes WHERE name='IX_Ingredients_19' AND object_id=OBJECT_ID('dbo.Ingredients'))
-    CREATE INDEX IX_Ingredients_19 ON dbo.[Ingredients]([IsActive],[Name]);
-
-IF NOT EXISTS(SELECT 1 FROM sys.indexes WHERE name='IX_InventoryTransactions_20' AND object_id=OBJECT_ID('dbo.InventoryTransactions'))
-    CREATE INDEX IX_InventoryTransactions_20 ON dbo.[InventoryTransactions]([IngredientID],[CreatedAt] DESC);
-
-IF NOT EXISTS(SELECT 1 FROM sys.indexes WHERE name='IX_InventoryTransactions_21' AND object_id=OBJECT_ID('dbo.InventoryTransactions'))
-    CREATE INDEX IX_InventoryTransactions_21 ON dbo.[InventoryTransactions]([CreatedAt] DESC);
-
--- ===== 5. TRIGGER: phiếu kho là append-only (không sửa, không xóa) =====
-COMMIT; -- commit DDL trước để tạo trigger
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-CREATE OR ALTER TRIGGER dbo.TR_InventoryTransactions_Immutable
-ON dbo.InventoryTransactions AFTER UPDATE, DELETE AS
-BEGIN
-    SET NOCOUNT ON;
-    IF EXISTS(SELECT 1 FROM deleted)
-        THROW 51001, N'Phiếu kho là append-only; sai sót thì lập phiếu kiểm kê.', 1;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-BEGIN TRAN;
-
--- ===== 6. QUYỀN Inventory.Manage =====
-IF NOT EXISTS(SELECT 1 FROM dbo.Permissions WHERE Code='Inventory.Manage')
-    INSERT dbo.Permissions(Code,Description) VALUES('Inventory.Manage',N'Quản lý kho nguyên liệu');
-
--- Cấp quyền cho Owner (đã có mọi quyền) và BranchManager (nếu chưa có)
-INSERT dbo.RolePermissions(RoleID,PermissionID)
-SELECT r.RoleID, p.PermissionID
-FROM dbo.Roles r CROSS JOIN dbo.Permissions p
-WHERE p.Code = 'Inventory.Manage'
-  AND r.Code IN ('Owner','BranchManager')
-  AND NOT EXISTS(
-      SELECT 1 FROM dbo.RolePermissions rp
-      WHERE rp.RoleID=r.RoleID AND rp.PermissionID=p.PermissionID
-  );
-
--- ===== 7. DỮ LIỆU MẪU (chỉ thêm khi bảng còn trống) =====
-IF NOT EXISTS(SELECT 1 FROM dbo.Ingredients)
-BEGIN
-    -- Giả sử SupplierID của NCC-CF01, NCC-SU01, NCC-TR01, NCC-TC01, NCC-BK01 từ 13_ui_review
-    DECLARE @cf  int = (SELECT SupplierID FROM dbo.Suppliers WHERE Code='NCC-CF01'),
-            @su  int = (SELECT SupplierID FROM dbo.Suppliers WHERE Code='NCC-SU01'),
-            @tr  int = (SELECT SupplierID FROM dbo.Suppliers WHERE Code='NCC-TR01'),
-            @tc  int = (SELECT SupplierID FROM dbo.Suppliers WHERE Code='NCC-TC01'),
-            @bk  int = (SELECT SupplierID FROM dbo.Suppliers WHERE Code='NCC-BK01');
-
-    INSERT dbo.Ingredients(Code,Name,Unit,Quantity,MinStock,LastUnitCost,SupplierID,StockUpdatedAt) VALUES
-    -- Cà phê
-    ('NL-CF01', N'Cà phê Robusta',         N'kg',    15.500, 5.000,  180000, @cf, SYSUTCDATETIME()),
-    ('NL-CF02', N'Cà phê Arabica',          N'kg',     8.200, 3.000,  320000, @cf, SYSUTCDATETIME()),
-    -- Sữa
-    ('NL-SU01', N'Sữa tươi không đường',    N'lít',   24.000, 10.000,  32000, @su, SYSUTCDATETIME()),
-    ('NL-SU02', N'Sữa đặc có đường',        N'hộp',   48.000, 20.000,  22000, @su, SYSUTCDATETIME()),
-    ('NL-SU03', N'Kem béo (whipping cream)',N'lít',    6.000,  3.000,  95000, @su, SYSUTCDATETIME()),
-    -- Trà
-    ('NL-TR01', N'Trà lài khô',             N'kg',     3.500,  1.500, 280000, @tr, SYSUTCDATETIME()),
-    ('NL-TR02', N'Trà xanh bột (matcha)',   N'kg',     1.200,  0.500, 650000, @tr, SYSUTCDATETIME()),
-    -- Trái cây
-    ('NL-TC01', N'Đào tươi (peach)',        N'kg',     8.000,  3.000,  45000, @tc, SYSUTCDATETIME()),
-    ('NL-TC02', N'Chanh tươi',              N'kg',     5.500,  2.000,  18000, @tc, SYSUTCDATETIME()),
-    ('NL-TC03', N'Cam tươi',               N'kg',     4.000,  2.000,  22000, @tc, SYSUTCDATETIME()),
-    -- Bánh & nguyên liệu làm bánh
-    ('NL-BK01', N'Bột mì đa dụng',         N'kg',    10.000,  5.000,  18000, @bk, SYSUTCDATETIME()),
-    ('NL-BK02', N'Cream cheese',           N'kg',     3.000,  1.000, 320000, @bk, SYSUTCDATETIME()),
-    ('NL-BK03', N'Đường cát trắng',        N'kg',    12.000,  5.000,  18000, NULL, SYSUTCDATETIME()),
-    -- Vật tư / bao bì (không có NCC tương ứng trong seed)
-    ('NL-PP01', N'Ly nhựa 500ml',          N'cái',  350.000, 100.000,   800, NULL, SYSUTCDATETIME()),
-    ('NL-PP02', N'Ống hút giấy',           N'cái',  500.000, 100.000,   200, NULL, SYSUTCDATETIME()),
-    ('NL-PP03', N'Túi giấy take-away',     N'cái',  200.000,  50.000,  2500, NULL, SYSUTCDATETIME());
-
-    -- Ghi phiếu nhập kho mẫu cho từng nguyên liệu vừa thêm
-    -- (BalanceAfter = Quantity, Kind='Import', QuantityChange = Quantity)
-    INSERT dbo.InventoryTransactions(IngredientID,Kind,QuantityChange,BalanceAfter,UnitCost,Note,CreatedAt)
-    SELECT IngredientID,'Import',Quantity,Quantity,LastUnitCost,
-           N'Nhập kho khởi tạo dữ liệu demo',
-           DATEADD(day,-7,SYSUTCDATETIME())   -- 7 ngày trước để "tiền nhập 30 ngày" có số
-    FROM dbo.Ingredients;
-
-    -- Một số phiếu xuất dùng + hủy để lịch sử trông tự nhiên
-    DECLARE @cf01 int = (SELECT IngredientID FROM dbo.Ingredients WHERE Code='NL-CF01'),
-            @su01 int = (SELECT IngredientID FROM dbo.Ingredients WHERE Code='NL-SU01'),
-            @su02 int = (SELECT IngredientID FROM dbo.Ingredients WHERE Code='NL-SU02'),
-            @tr01 int = (SELECT IngredientID FROM dbo.Ingredients WHERE Code='NL-TR01');
-
-    -- Xuất cà phê để pha (3 ngày trước)
-    INSERT dbo.InventoryTransactions(IngredientID,Kind,QuantityChange,BalanceAfter,Note,CreatedAt)
-    VALUES (@cf01,'Export',-2.000,13.500,N'Xuất pha chế quầy',DATEADD(day,-3,SYSUTCDATETIME())),
-           (@su01,'Export',-5.000,19.000,N'Xuất pha chế quầy',DATEADD(day,-3,SYSUTCDATETIME())),
-           (@su02,'Export',-8.000,40.000,N'Xuất pha chế quầy',DATEADD(day,-3,SYSUTCDATETIME())),
-           (@tr01,'Export',-0.500, 3.000,N'Xuất pha chế quầy',DATEADD(day,-3,SYSUTCDATETIME()));
-
-    -- Hủy hỏng sữa (hôm qua)
-    INSERT dbo.InventoryTransactions(IngredientID,Kind,QuantityChange,BalanceAfter,Note,CreatedAt)
-    VALUES (@su01,'Waste',-0.500,18.500,N'Sữa hết hạn, đổ bỏ',DATEADD(day,-1,SYSUTCDATETIME()));
-
-    -- Cập nhật Quantity về số thực tế sau các phiếu xuất/hủy demo
-    UPDATE dbo.Ingredients SET Quantity=13.500, StockUpdatedAt=SYSUTCDATETIME() WHERE IngredientID=@cf01;
-    UPDATE dbo.Ingredients SET Quantity=18.500, StockUpdatedAt=SYSUTCDATETIME() WHERE IngredientID=@su01;
-    UPDATE dbo.Ingredients SET Quantity=40.000, StockUpdatedAt=SYSUTCDATETIME() WHERE IngredientID=@su02;
-    UPDATE dbo.Ingredients SET Quantity= 3.000, StockUpdatedAt=SYSUTCDATETIME() WHERE IngredientID=@tr01;
-END;
-
-COMMIT;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-PRINT N'--- 15_web_admin.sql ---';
-GO
-SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- ===== [WEB-08] Giao hàng: thêm thông báo khi giao chưa thành công / giao lại =====
-CREATE OR ALTER PROCEDURE dbo.UpdateDelivery @ActorID int,@OrderID int,@Status varchar(12),@Reason nvarchar(500)=NULL
-AS
-BEGIN
- SET NOCOUNT ON; SET XACT_ABORT ON;
- BEGIN TRY
- BEGIN TRAN;
- DECLARE @branch int,@orderStatus varchar(20),@old varchar(12),@customer int; -- [WEB-08] @customer
- SELECT @branch=BranchID,@orderStatus=Status,@customer=CustomerID FROM dbo.Orders WITH(UPDLOCK,HOLDLOCK) WHERE OrderID=@OrderID AND Fulfillment='Delivery';
- IF @branch IS NULL OR dbo.CanBranch(@ActorID,@branch,'Orders.Manage')=0 THROW 51103,N'Cannot update this delivery.',1;
- IF @orderStatus<>'Delivering' THROW 51100,N'Order is not in delivery phase.',1;
- SELECT @old=Status FROM dbo.Deliveries WHERE OrderID=@OrderID;
- IF @Status NOT IN ('Failed','Delivering') THROW 51100,N'Use AdvanceOrder for handover and completion.',1;
- IF @old=@Status BEGIN COMMIT; RETURN; END;
- IF NOT ((@old='Delivering' AND @Status='Failed') OR (@old='Failed' AND @Status='Delivering')) THROW 51100,N'Invalid delivery transition.',1;
- IF @Status='Failed' AND NULLIF(@Reason,'') IS NULL THROW 51100,N'Failure reason is required.',1;
- UPDATE dbo.Deliveries SET Status=@Status,FailureReason=CASE WHEN @Status='Failed' THEN @Reason END,AttemptCount=AttemptCount+CASE WHEN @Status='Delivering' THEN 1 ELSE 0 END,DispatchedAt=CASE WHEN @Status='Delivering' THEN SYSUTCDATETIME() ELSE DispatchedAt END WHERE OrderID=@OrderID;
- -- [WEB-08] báo cho khách: giao chưa thành công (kèm lý do) hoặc cửa hàng đang giao lại
- INSERT dbo.Notifications(UserID,Title,Body,OrderID)
- SELECT UserID,
-        CASE WHEN @Status='Failed' THEN N'Giao hàng chưa thành công' ELSE N'Đang giao lại đơn hàng' END,
-        CASE WHEN @Status='Failed' THEN CONCAT(N'Lý do: ',@Reason,N'. Cửa hàng sẽ liên hệ để giao lại hoặc hủy đơn.') ELSE N'Trạng thái mới: Đang giao lại' END,
-        @OrderID
- FROM dbo.Customers WHERE CustomerID=@customer;
- INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Delivery.Update','Deliveries',@OrderID,CONCAT(@Status,': ',@Reason));
- COMMIT;
- END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- ===== [WEB-08] Hoàn tiền: thêm thông báo khi hoàn tiền chưa thành công =====
-CREATE OR ALTER PROCEDURE dbo.SimulateRefund @ActorID int,@RefundID int,@Outcome varchar(12),@FailureReason nvarchar(500)=NULL
-AS
-BEGIN
- SET NOCOUNT ON; SET XACT_ABORT ON;
- BEGIN TRY
- BEGIN TRAN;
- DECLARE @order int,@branch int,@customer int,@voucher int,@old varchar(12),@points int;
- SELECT @order=OrderID FROM dbo.Refunds WHERE RefundID=@RefundID;
- SELECT @branch=BranchID,@customer=CustomerID,@voucher=CustomerPromotionID FROM dbo.Orders WITH(UPDLOCK,HOLDLOCK) WHERE OrderID=@order;
- IF @branch IS NULL OR dbo.CanBranch(@ActorID,@branch,'Refunds.Manage')=0 THROW 51103,N'Cannot process this refund.',1;
- IF @Outcome NOT IN ('Succeeded','Failed') THROW 51100,N'Invalid refund result.',1;
- SELECT @old=Status FROM dbo.Refunds WITH(UPDLOCK,HOLDLOCK) WHERE RefundID=@RefundID;
- IF @old='Succeeded' BEGIN
-  IF @Outcome<>'Succeeded' THROW 51109,N'Successful refund cannot change.',1;
-  COMMIT; RETURN;
- END;
- UPDATE dbo.Refunds SET Status=@Outcome,AttemptCount=AttemptCount+1,FailureReason=CASE WHEN @Outcome='Failed' THEN @FailureReason END,ProviderReference=CASE WHEN @Outcome='Succeeded' THEN CONCAT('REF-',@RefundID) END,CompletedAt=CASE WHEN @Outcome='Succeeded' THEN SYSUTCDATETIME() END WHERE RefundID=@RefundID;
- IF @Outcome='Succeeded' BEGIN
-  SELECT @points=Points FROM dbo.LoyaltyTransactions WHERE OrderID=@order AND Kind='Earn';
-  IF @points IS NOT NULL BEGIN
-   UPDATE dbo.Customers WITH(UPDLOCK) SET LoyaltyPoints=LoyaltyPoints-@points WHERE CustomerID=@customer;
-   INSERT dbo.LoyaltyTransactions(CustomerID,OrderID,Kind,Points,RequestKey,Note) VALUES(@customer,@order,'Reverse',-@points,NEWID(),N'Thu hồi điểm do hoàn toàn bộ đơn');
-  END;
-  UPDATE dbo.CustomerPromotions SET Status='Available',UsedOrderID=NULL,UsedAt=NULL WHERE CustomerPromotionID=@voucher AND Status='Used' AND UsedOrderID=@order;
-  INSERT dbo.Notifications(UserID,Title,Body,OrderID) SELECT UserID,N'Hoàn tiền thành công',N'Toàn bộ tiền của đơn đã được hoàn.',@order FROM dbo.Customers WHERE CustomerID=@customer;
- END;
- -- [WEB-08] hoàn tiền thất bại: báo cho khách biết cửa hàng sẽ xử lý lại
- IF @Outcome='Failed'
-  INSERT dbo.Notifications(UserID,Title,Body,OrderID)
-  SELECT UserID,N'Hoàn tiền chưa thành công',CONCAT(N'Cửa hàng sẽ thực hiện hoàn tiền lại.',CASE WHEN NULLIF(@FailureReason,'') IS NOT NULL THEN CONCAT(N' Lý do: ',@FailureReason) END),@order
-  FROM dbo.Customers WHERE CustomerID=@customer;
- INSERT dbo.AuditLogs(ActorID,BranchID,Action,EntityType,EntityID,Details) VALUES(@ActorID,@branch,'Refund.Simulate','Refunds',@RefundID,@Outcome);
- COMMIT;
- END TRY BEGIN CATCH IF @@TRANCOUNT>0 ROLLBACK; THROW; END CATCH;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- ===== [WEB-14] Định mức nguyên liệu theo size =====
-SET NOCOUNT ON; SET XACT_ABORT ON;
-BEGIN TRAN;
-IF OBJECT_ID('dbo.RecipeItems','U') IS NULL
-CREATE TABLE dbo.[RecipeItems] (
-    [VariantID]    int           NOT NULL,                   -- size của món (dbo.ProductVariants)
-    [IngredientID] int           NOT NULL,                   -- nguyên liệu (dbo.Ingredients)
-    [Quantity]     decimal(18,3) NOT NULL,                   -- lượng dùng cho 1 ly / 1 cái, theo đơn vị của nguyên liệu
-    CONSTRAINT [PK_RecipeItems]   PRIMARY KEY ([VariantID],[IngredientID]),
-    CONSTRAINT [CK_RecipeItems_0] CHECK ([Quantity] > 0)
-);
-IF NOT EXISTS(SELECT 1 FROM sys.foreign_keys WHERE name='FK_RecipeItems_VariantID')
-    ALTER TABLE dbo.[RecipeItems] ADD CONSTRAINT [FK_RecipeItems_VariantID] FOREIGN KEY ([VariantID]) REFERENCES dbo.[ProductVariants]([VariantID]);
-IF NOT EXISTS(SELECT 1 FROM sys.foreign_keys WHERE name='FK_RecipeItems_IngredientID')
-    ALTER TABLE dbo.[RecipeItems] ADD CONSTRAINT [FK_RecipeItems_IngredientID] FOREIGN KEY ([IngredientID]) REFERENCES dbo.[Ingredients]([IngredientID]);
-IF NOT EXISTS(SELECT 1 FROM sys.indexes WHERE name='IX_RecipeItems_22' AND object_id=OBJECT_ID('dbo.RecipeItems'))
-    CREATE INDEX IX_RecipeItems_22 ON dbo.[RecipeItems]([IngredientID]);
-
--- Định mức mẫu (lượng cho size M / Standard; size L dùng gấp 1,3 lần, ly và ống hút giữ 1).
-IF NOT EXISTS(SELECT 1 FROM dbo.RecipeItems)
-BEGIN
-    DECLARE @mau TABLE(Product nvarchar(150),Code varchar(30),Qty decimal(18,3),Scale bit);
-    INSERT @mau VALUES
-    (N'Cà phê sữa','NL-CF01',0.020,1),(N'Cà phê sữa','NL-SU02',0.100,1),(N'Cà phê sữa','NL-PP01',1,0),(N'Cà phê sữa','NL-PP02',1,0),
-    (N'Cà phê đen đá','NL-CF01',0.020,1),(N'Cà phê đen đá','NL-PP01',1,0),(N'Cà phê đen đá','NL-PP02',1,0),
-    (N'Bạc xỉu','NL-CF01',0.010,1),(N'Bạc xỉu','NL-SU01',0.080,1),(N'Bạc xỉu','NL-SU02',0.080,1),(N'Bạc xỉu','NL-PP01',1,0),(N'Bạc xỉu','NL-PP02',1,0),
-    (N'Cold brew cam sả','NL-CF02',0.025,1),(N'Cold brew cam sả','NL-TC03',0.050,1),(N'Cold brew cam sả','NL-PP01',1,0),(N'Cold brew cam sả','NL-PP02',1,0),
-    (N'Trà đào','NL-TR01',0.008,1),(N'Trà đào','NL-TC01',0.050,1),(N'Trà đào','NL-BK03',0.020,1),(N'Trà đào','NL-PP01',1,0),(N'Trà đào','NL-PP02',1,0),
-    (N'Trà vải lài','NL-TR01',0.008,1),(N'Trà vải lài','NL-BK03',0.020,1),(N'Trà vải lài','NL-PP01',1,0),(N'Trà vải lài','NL-PP02',1,0),
-    (N'Trà sen vàng','NL-TR01',0.008,1),(N'Trà sen vàng','NL-SU03',0.030,1),(N'Trà sen vàng','NL-PP01',1,0),(N'Trà sen vàng','NL-PP02',1,0),
-    (N'Bánh tiramisu','NL-BK02',0.030,0),(N'Bánh tiramisu','NL-CF01',0.005,0),
-    (N'Bánh croissant bơ','NL-BK01',0.060,0),
-    (N'Bánh mousse chanh dây','NL-SU03',0.040,0),(N'Bánh mousse chanh dây','NL-BK03',0.020,0);
-    INSERT dbo.RecipeItems(VariantID,IngredientID,Quantity)
-    SELECT v.VariantID,i.IngredientID,CASE WHEN m.Scale=1 AND v.Name='L' THEN ROUND(m.Qty*1.3,3) ELSE m.Qty END
-    FROM @mau m JOIN dbo.Products p ON p.Name=m.Product
-    JOIN dbo.ProductVariants v ON v.ProductID=p.ProductID
-    JOIN dbo.Ingredients i ON i.Code=m.Code;
-END;
-COMMIT;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- ===== [WEB-14] Đơn hoàn tất → tự trừ kho theo định mức =====
--- Chạy trong cùng giao dịch với dbo.AdvanceOrder (POS và web Quản lý đều hoàn tất đơn qua thủ tục này).
--- Không bao giờ báo lỗi để chặn việc hoàn tất đơn: thiếu hàng thì trừ về 0 và ghi chú để kiểm kê.
-CREATE OR ALTER TRIGGER dbo.TR_Orders_Inventory ON dbo.Orders AFTER UPDATE AS
-BEGIN
-    SET NOCOUNT ON;
-    IF NOT UPDATE(Status) RETURN;
-    DECLARE @done TABLE(OrderID int PRIMARY KEY,OrderCode varchar(40));
-    INSERT @done SELECT i.OrderID,i.OrderCode FROM inserted i JOIN deleted d ON d.OrderID=i.OrderID
-    WHERE i.Status='Completed' AND d.Status<>'Completed';
-    IF NOT EXISTS(SELECT 1 FROM @done) RETURN;
-
-    DECLARE @note nvarchar(300)=LEFT(CONCAT(N'Bán hàng – đơn ',(SELECT STRING_AGG(COALESCE(OrderCode,CONVERT(varchar(20),OrderID)),', ') FROM @done)),240);
-    DECLARE @use TABLE(IngredientID int PRIMARY KEY,Need decimal(18,3));
-    INSERT @use
-    SELECT r.IngredientID,SUM(od.Quantity*r.Quantity)
-    FROM @done x JOIN dbo.OrderDetails od ON od.OrderID=x.OrderID
-    JOIN dbo.RecipeItems r ON r.VariantID=od.VariantID
-    JOIN dbo.Ingredients g ON g.IngredientID=r.IngredientID AND g.IsActive=1
-    GROUP BY r.IngredientID;
-    IF NOT EXISTS(SELECT 1 FROM @use) RETURN;
-
-    DECLARE @moved TABLE(IngredientID int,Delta decimal(18,3),Balance decimal(18,3),Short decimal(18,3));
-    UPDATE g SET Quantity=CASE WHEN g.Quantity>=u.Need THEN g.Quantity-u.Need ELSE 0 END,StockUpdatedAt=SYSUTCDATETIME()
-    OUTPUT inserted.IngredientID,inserted.Quantity-deleted.Quantity,inserted.Quantity,u.Need-(deleted.Quantity-inserted.Quantity) INTO @moved
-    FROM dbo.Ingredients g WITH(UPDLOCK,HOLDLOCK) JOIN @use u ON u.IngredientID=g.IngredientID;
-
-    INSERT dbo.InventoryTransactions(IngredientID,ActorID,Kind,QuantityChange,BalanceAfter,Note)
-    SELECT IngredientID,NULL,'Export',Delta,Balance,
-           CONCAT(@note,CASE WHEN Short>0 THEN CONCAT(N' (thiếu ',FORMAT(Short,'0.###','vi-VN'),N' – cần kiểm kê)') END)
-    FROM @moved WHERE Delta<0;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-PRINT N'--- 16_crm.sql ---';
-GO
-SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
-BEGIN TRAN;
--- ===== [CRM-00] Bỏ quyền Organization.Manage =====
-DELETE rp FROM dbo.RolePermissions rp JOIN dbo.Permissions p ON p.PermissionID=rp.PermissionID WHERE p.Code='Organization.Manage';
-DELETE dbo.Permissions WHERE Code='Organization.Manage';
--- ===== [CRM-09] Quyền điều chỉnh điểm =====
-IF NOT EXISTS(SELECT 1 FROM dbo.Permissions WHERE Code='Loyalty.Adjust')
-    INSERT dbo.Permissions(Code,Description) VALUES('Loyalty.Adjust',N'Điều chỉnh điểm thành viên bằng tay');
-INSERT dbo.RolePermissions(RoleID,PermissionID)
-SELECT r.RoleID,p.PermissionID FROM dbo.Roles r CROSS JOIN dbo.Permissions p
-WHERE r.Code='Owner' AND p.Code='Loyalty.Adjust'
-  AND NOT EXISTS(SELECT 1 FROM dbo.RolePermissions x WHERE x.RoleID=r.RoleID AND x.PermissionID=p.PermissionID);
--- ===== [CRM-08] Index tra khách theo SĐT =====
-IF NOT EXISTS(SELECT 1 FROM sys.indexes WHERE name='IX_Users_Phone' AND object_id=OBJECT_ID('dbo.Users'))
-    CREATE INDEX IX_Users_Phone ON dbo.Users(Phone); -- không dùng filtered index: tránh lỗi SET option khi thủ tục cũ ghi Users
-COMMIT;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- ===== [CRM-02] Thống kê mua hàng và nhóm hành vi của từng khách =====
--- Ngưỡng: Khách mới = đơn hoàn tất đầu tiên trong 30 ngày; Lâu không quay lại = lần mua cuối quá 60 ngày;
--- Thân thiết = từ 5 đơn hoàn tất và còn mua trong 60 ngày; Đang mua = còn lại. Tổng chi tiêu đã trừ tiền hoàn.
-CREATE OR ALTER VIEW dbo.CustomerStats AS
-SELECT x.CustomerID,x.CompletedOrders,x.TotalSpent,x.FirstOrderAt,x.LastOrderAt,
-    CASE WHEN x.CompletedOrders=0 THEN 'None'
-         WHEN x.FirstOrderAt>=DATEADD(day,-30,SYSUTCDATETIME()) THEN 'New'
-         WHEN x.LastOrderAt<DATEADD(day,-60,SYSUTCDATETIME()) THEN 'Lapsed'
-         WHEN x.CompletedOrders>=5 THEN 'Loyal'
-         ELSE 'Active' END AS Segment
-FROM (
-    SELECT c.CustomerID,COUNT(o.OrderID) AS CompletedOrders,
-        CAST(COALESCE(SUM(o.TotalAmount-COALESCE(r.Refunded,0)),0) AS decimal(18,2)) AS TotalSpent,
-        MIN(o.CompletedAt) AS FirstOrderAt,MAX(o.CompletedAt) AS LastOrderAt
-    FROM dbo.Customers c LEFT JOIN dbo.Orders o ON o.CustomerID=c.CustomerID AND o.Status='Completed'
-    -- tiền đã hoàn gộp sẵn theo đơn (SUM không được chứa truy vấn con – lỗi Msg 130)
-    LEFT JOIN (SELECT OrderID,SUM(Amount) AS Refunded FROM dbo.Refunds WHERE Status='Succeeded' GROUP BY OrderID) r ON r.OrderID=o.OrderID
-    GROUP BY c.CustomerID) x;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- ===== [CRM-08] Một SĐT chỉ thuộc một khách hàng chưa xóa =====
--- Áp dụng cho mọi đường ghi: đăng ký app, sửa hồ sơ app, tạo / sửa khách trên web. Nhân viên không bị ràng buộc.
-CREATE OR ALTER TRIGGER dbo.TR_Users_CustomerPhone ON dbo.Users AFTER INSERT,UPDATE AS
-BEGIN
-    SET NOCOUNT ON;
-    IF NOT (UPDATE(Phone) OR UPDATE(RoleID) OR UPDATE(DeletedAt)) RETURN;
-    DECLARE @customer int=(SELECT RoleID FROM dbo.Roles WHERE Code='Customer');
-    IF EXISTS(SELECT 1 FROM inserted i JOIN dbo.Users u ON u.Phone=i.Phone AND u.UserID<>i.UserID
-              WHERE i.Phone IS NOT NULL AND i.RoleID=@customer AND u.RoleID=@customer AND i.DeletedAt IS NULL AND u.DeletedAt IS NULL)
-        THROW 51120,N'Số điện thoại này đã được dùng cho một khách hàng khác.',1;
-END;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- Báo dữ liệu trùng có sẵn (không sửa tự động).
-DECLARE @dups int=(SELECT COUNT(*) FROM (SELECT u.Phone FROM dbo.Users u JOIN dbo.Roles r ON r.RoleID=u.RoleID
-    WHERE r.Code='Customer' AND u.DeletedAt IS NULL AND u.Phone IS NOT NULL GROUP BY u.Phone HAVING COUNT(*)>1) d);
-IF @dups>0 PRINT CONCAT(N'Lưu ý: có ',@dups,N' số điện thoại đang dùng chung cho nhiều khách. Xem ở Quản lý CRM → Khách hàng → lọc "Trùng SĐT".');
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-PRINT N'--- 17_member_tiers.sql ---';
-GO
-SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON;
-BEGIN TRAN;
-IF OBJECT_ID('dbo.MemberTiers','U') IS NULL
-CREATE TABLE dbo.[MemberTiers] (
-    [TierID]       int           IDENTITY(1,1) NOT NULL,
-    [Code]         varchar(20)   NOT NULL,                 -- mã cố định (Member, Silver, …) – dùng để lọc, không hiển thị
-    [Name]         nvarchar(50)  NOT NULL,                 -- tên hiển thị trên web và app
-    [MinSpent]     decimal(18,2) NOT NULL,                 -- chi tiêu 12 tháng tối thiểu để đạt hạng
-    [Benefit]      nvarchar(300) NULL,                     -- mô tả quyền lợi (hiển thị cho khách)
-    [CreatedAt]    datetime2(3)  NOT NULL CONSTRAINT [DF_MemberTiers_CreatedAt] DEFAULT (SYSUTCDATETIME()),
-    CONSTRAINT [PK_MemberTiers]   PRIMARY KEY ([TierID]),
-    CONSTRAINT [UQ_MemberTiers_0] UNIQUE ([Code]),
-    CONSTRAINT [UQ_MemberTiers_1] UNIQUE ([Name]),
-    CONSTRAINT [UQ_MemberTiers_2] UNIQUE ([MinSpent]),
-    CONSTRAINT [CK_MemberTiers_0] CHECK ([MinSpent] >= 0)
-);
-IF NOT EXISTS(SELECT 1 FROM dbo.MemberTiers)
-    INSERT dbo.MemberTiers(Code,Name,MinSpent,Benefit) VALUES
-    ('Member', N'Thành viên',       0, N'Tích điểm cho mọi đơn hoàn tất, đổi điểm lấy voucher.'),
-    ('Silver', N'Bạc',        1000000, N'Ưu tiên nhận voucher riêng hạng Bạc.'),
-    ('Gold',   N'Vàng',       3000000, N'Voucher sinh nhật và ưu đãi riêng hạng Vàng.'),
-    ('Diamond',N'Kim cương',  6000000, N'Ưu đãi cao nhất, được mời thử món mới đầu tiên.');
-COMMIT;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-SET ANSI_NULLS ON; SET QUOTED_IDENTIFIER ON;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
--- ===== Hạng hiện tại của từng khách =====
-CREATE OR ALTER VIEW dbo.CustomerTiers AS
-WITH spend AS (
-    SELECT c.CustomerID,CAST(COALESCE(SUM(o.TotalAmount-COALESCE(r.Refunded,0)),0) AS decimal(18,2)) AS Spent12M
-    FROM dbo.Customers c
-    LEFT JOIN dbo.Orders o ON o.CustomerID=c.CustomerID AND o.Status='Completed' AND o.CompletedAt>=DATEADD(month,-12,SYSUTCDATETIME())
-    LEFT JOIN (SELECT OrderID,SUM(Amount) AS Refunded FROM dbo.Refunds WHERE Status='Succeeded' GROUP BY OrderID) r ON r.OrderID=o.OrderID
-    GROUP BY c.CustomerID)
-SELECT s.CustomerID,s.Spent12M,t.TierID,t.Code AS TierCode,t.Name AS TierName,t.Benefit AS TierBenefit,
-       n.Code AS NextTierCode,n.Name AS NextTierName,n.MinSpent AS NextTierSpent
-FROM spend s
-OUTER APPLY (SELECT TOP(1) x.TierID,x.Code,x.Name,x.Benefit FROM dbo.MemberTiers x WHERE x.MinSpent<=s.Spent12M ORDER BY x.MinSpent DESC) t
-OUTER APPLY (SELECT TOP(1) y.Code,y.Name,y.MinSpent FROM dbo.MemberTiers y WHERE y.MinSpent>s.Spent12M ORDER BY y.MinSpent) n;
-GO
-IF @@ERROR <> 0
-BEGIN
-    RAISERROR(N'>>> DỪNG: khối lệnh phía trên bị lỗi. Các lệnh còn lại KHÔNG được chạy. Xem dòng lỗi màu đỏ phía trên.', 16, 1);
-    EXEC sp_set_session_context N'mb_failed', 1;
-    SET NOEXEC ON;
-END
-GO
-PRINT CONCAT(N'=== HOÀN TẤT ', CASE SESSION_CONTEXT(N'mb_mode') WHEN N'install' THEN N'CÀI MỚI' ELSE N'NÂNG CẤP' END, N' database [MorningBrewCRM_Crm] (01–17). Có thể chạy API, Admin, app, POS.');
+PRINT N'=== HOÀN TẤT CÀI MỚI database [MorningBrewCRM_Crm] (01–07). Có thể chạy API, Admin, app, POS.';
 SELECT (SELECT COUNT(*) FROM sys.tables) AS SoBang,
+       (SELECT COUNT(*) FROM sys.procedures) AS SoThuTuc,
+       (SELECT COUNT(*) FROM sys.triggers WHERE parent_class = 1) AS SoTrigger,
+       (SELECT COUNT(*) FROM sys.objects WHERE type IN ('FN','IF','TF')) AS SoHam,
+       (SELECT COUNT(*) FROM sys.views) AS SoView,
        (SELECT COUNT(*) FROM dbo.Users) AS SoTaiKhoan,
-       (SELECT COUNT(*) FROM dbo.Suppliers) AS SoNhaCungCap,
-       (SELECT COUNT(*) FROM dbo.Ingredients) AS SoNguyenLieu,
+       (SELECT COUNT(*) FROM dbo.Orders WHERE Status = 'Completed') AS SoDonHoanTat,
        (SELECT COUNT(*) FROM dbo.InventoryTransactions) AS SoPhieuKho,
-       (SELECT COUNT(*) FROM dbo.Permissions WHERE Code = 'Inventory.Manage') AS CoQuyenKho,
-       (SELECT COUNT(*) FROM dbo.RecipeItems) AS SoDinhMuc,
-       (SELECT COUNT(*) FROM dbo.Permissions WHERE Code = 'Organization.Manage') AS QuyenToChucConLai,
        (SELECT COUNT(*) FROM dbo.MemberTiers) AS SoHangThanhVien;
 GO
 SET NOEXEC OFF;

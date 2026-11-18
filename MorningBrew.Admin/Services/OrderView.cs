@@ -9,7 +9,7 @@ public static class OrderView
     {
         "AwaitingPayment" => "Chờ thanh toán", "Pending" => "Chờ xác nhận", "Confirmed" => "Đã xác nhận",
         "Preparing" => "Đang pha chế", "Ready" => "Sẵn sàng", "Delivering" => "Đang giao",
-        "Completed" => "Hoàn tất", "Cancelled" => "Đã hủy", "Active" => "Cần xử lý", _ => s ?? "—"
+        "Completed" => "Hoàn tất", "Cancelled" => "Đã hủy", "Active" => "Đang xử lý", "RefundPending" => "Chờ hoàn tiền" /* [ORD-01] */, _ => s ?? "—"
     };
     public static string Css(string? s) => s switch { "Completed" => "ok", "Cancelled" => "bad", "AwaitingPayment" or "Pending" => "warn", _ => "info" };
     public static string Fulfillment(string? s) => s == "Delivery" ? "Giao hàng" : "Nhận tại quầy";

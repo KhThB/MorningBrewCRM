@@ -272,10 +272,10 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
             throw new ApiException(400, "Tên size bị trùng.", [new("FIELD_INVALID", "variants")]);
         return list;
     }
-    // Nhóm tùy chọn "Nhiệt độ" (Đá / Nóng) do 13_ui_review.sql tạo: bắt buộc chọn đúng 1.
+    // Nhóm tùy chọn "Nhiệt độ" (Đá / Nóng) do 06_seed.sql tạo: bắt buộc chọn đúng 1. [GOP-01]
     private const string TemperatureSql = """
         DECLARE @temp int=(SELECT TOP(1) ModifierGroupID FROM dbo.ModifierGroups WHERE Kind='Ice' AND IsActive=1 ORDER BY ModifierGroupID);
-        IF @hasTemp=1 AND @temp IS NULL THROW 51100,N'Chưa có nhóm tùy chọn Nhiệt độ (Đá / Nóng). Chạy database/sql/13_ui_review.sql.',1;
+        IF @hasTemp=1 AND @temp IS NULL THROW 51100,N'Chưa có nhóm tùy chọn Nhiệt độ (Đá / Nóng). Cài lại database bằng database/sql_ssms/morningbrew_fullscript.sql.',1;
         IF @hasTemp=1 AND NOT EXISTS(SELECT 1 FROM dbo.ProductModifierGroups WHERE ProductID=@id AND ModifierGroupID=@temp)
             INSERT dbo.ProductModifierGroups(ProductID,ModifierGroupID,MinSelections,MaxSelections) VALUES(@id,@temp,1,1);
         IF @hasTemp=0 AND @temp IS NOT NULL DELETE dbo.ProductModifierGroups WHERE ProductID=@id AND ModifierGroupID=@temp;
@@ -346,16 +346,34 @@ public sealed partial class AdminController(SqlStore db, PageReader pages) : Con
 
     // [UI2-A4a] "Tạm hết / Còn hàng" (BranchProducts.IsAvailable) – khác với "Ngừng bán" (Products.IsActive, ẩn khỏi thực đơn).
     // App hiện nhãn "Tạm hết" và không cho đặt khi IsAvailable = 0. Trước đây Admin không chỉnh được trạng thái này.
+    // [REV-06] Báo tạm hết là việc vận hành hằng ngày → quyền Menu.Manage (quản lý, chủ cửa hàng), làm ở Quản lý CRM → Kho nguyên liệu → tab Tình trạng món [REV-08].
     [HttpPut("products/{id:int}/availability")]
     public async Task<IActionResult> ProductAvailability(int id, AvailabilityInput input)
     {
-        await RequireOwner();
+        await RequirePermission("Menu.Manage");
         await db.Query("""
             UPDATE dbo.BranchProducts SET IsAvailable=@available WHERE ProductID=@id;
             IF @@ROWCOUNT=0 THROW 51104,'Product not found.',1;
             INSERT dbo.AuditLogs(ActorID,Action,EntityType,EntityID,Details) VALUES(@actor,'Product.Availability','Products',@id,CASE WHEN @available=1 THEN 'InStock' ELSE 'OutOfStock' END);
             """, ("@id", id), ("@available", input.IsAvailable), ("@actor", Actor));
         return NoContent();
+    }
+    // [REV-06][REV-07] Tình trạng món (tab của Kho nguyên liệu): mỗi món đang bán, còn hàng / tạm hết và các nguyên liệu trong định mức đã dưới mức tối thiểu
+    // (gợi ý quản lý báo tạm hết – kho không tự chặn bán).
+    [HttpGet("menu/availability")]
+    public async Task<ApiPage> MenuAvailability()
+    {
+        await RequirePermission("Menu.Manage");
+        return new(await db.Query("""
+            SELECT p.ProductID,p.Name,c.Name AS Category,
+            CAST(COALESCE((SELECT MIN(CONVERT(int,bp.IsAvailable)) FROM dbo.BranchProducts bp WHERE bp.ProductID=p.ProductID),0) AS bit) AS InStock,
+            (SELECT STRING_AGG(CONCAT(x.Name,N' (còn ',FORMAT(x.Quantity,'0.###','vi-VN'),N' ',x.Unit,N')'),N', ')
+             FROM (SELECT DISTINCT g.Name,g.Quantity,g.Unit FROM dbo.ProductVariants v JOIN dbo.RecipeItems r ON r.VariantID=v.VariantID
+                   JOIN dbo.Ingredients g ON g.IngredientID=r.IngredientID
+                   WHERE v.ProductID=p.ProductID AND v.IsActive=1 AND g.IsActive=1 AND g.Quantity<g.MinStock) x) AS LowIngredients
+            FROM dbo.Products p JOIN dbo.Categories c ON c.CategoryID=p.CategoryID
+            WHERE p.IsActive=1 AND c.IsActive=1 ORDER BY c.Name,p.Name
+            """), null);
     }
     public record AvailabilityInput([property: System.Text.Json.Serialization.JsonRequired] bool IsAvailable);
     public record PriceInput([property: System.Text.Json.Serialization.JsonRequired] [Range(0,100000000)] decimal Price);

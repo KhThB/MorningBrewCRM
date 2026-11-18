@@ -3,16 +3,20 @@ using Microsoft.AspNetCore.Mvc;
 using MorningBrew.Admin.Services;
 namespace MorningBrew.Admin.Pages.ManagerArea;
 
-// [BUG-02] Trang Đơn hàng: danh sách theo trạng thái + chi tiết một đơn với các thao tác hợp lệ cho trạng thái hiện tại.
+// [BUG-02] Trang Đơn hàng: danh sách theo trạng thái + chi tiết một đơn.
+// [ORD-01] Chỉ xem đơn và xử lý hoàn tiền. Vận hành đơn (xác nhận → pha chế → sẵn sàng → giao → hoàn tất, thu tiền mặt,
+//          hủy, báo giao chưa thành công / giao lại) thực hiện trên POS để không trùng chức năng.
 public class OrdersModel(CrmApi api):WorkspaceBase(api)
 {
     public override string Title=>Id.HasValue?"Chi tiết đơn hàng":"Đơn hàng";
     protected override bool Searchable=>true;
-    protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"order-advance","order-collect","order-cancel","order-delivery","order-refund","refund-complete"};
-    [BindProperty(SupportsGet=true)] public string? Status {get;set;}="Active";
+    protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"order-refund","refund-complete"};
+    // [REV-10] Mặc định mở tab Chờ hoàn tiền – việc duy nhất quản lý xử lý trên trang này.
+    [BindProperty(SupportsGet=true)] public string? Status {get;set;}="RefundPending";
     [BindProperty(SupportsGet=true)] public int? Id {get;set;}
     public Dictionary<string,JsonElement>? Order {get;set;}
-    public static readonly string[] Filters={"Active","AwaitingPayment","Pending","Confirmed","Preparing","Ready","Delivering","Completed","Cancelled"};
+    // [REV-10] Rút từ 10 tab (+ Tất cả) còn 4 tab (+ Tất cả): các bước pha chế xử lý trên POS, trạng thái chi tiết vẫn hiện ở cột Trạng thái.
+    public static readonly string[] Filters={"RefundPending","Active","Completed","Cancelled"};
 
     protected override async Task LoadAsync()
     {
@@ -26,24 +30,12 @@ public class OrdersModel(CrmApi api):WorkspaceBase(api)
         var id=Number("id");
         switch(operation)
         {
-            case "order-advance":
-                await Api.Send(HttpMethod.Post,$"v1/orders/{id}:advance",new {nextStatus=Text("next"),reason=NullIfEmpty("reason"),courierName=NullIfEmpty("courierName"),courierPhone=NullIfEmpty("courierPhone")});
-                TempData["Success"]=$"Đã chuyển đơn sang: {OrderView.Status(Text("next"))}."; break;
-            case "order-collect":
-                await Api.Send(HttpMethod.Post,$"v1/orders/{id}:collect"); TempData["Success"]="Đã xác nhận thu tiền."; break;
-            case "order-cancel":
-                await Api.Send(HttpMethod.Post,$"v1/orders/{id}:cancel",new {reason=Text("reason")}); TempData["Success"]="Đã hủy đơn. Nếu đơn đã thanh toán, một yêu cầu hoàn tiền được tạo."; break;
-            case "order-delivery":
-                await Api.Send(HttpMethod.Post,$"v1/orders/{id}:delivery",new {status=Text("deliveryStatus"),reason=NullIfEmpty("reason")});
-                TempData["Success"]=Text("deliveryStatus")=="Failed"?"Đã ghi nhận giao thất bại.":"Đã chuyển sang giao lại."; break; // (kiểm thử: thiếu thông báo)
             case "order-refund":
-                await Api.Send(HttpMethod.Post,$"v1/orders/{id}:refund",new {reason=Text("reason")}); TempData["Success"]="Đã tạo yêu cầu hoàn tiền. Chốt kết quả ở mục Hoàn tiền."; break;
+                await Api.Send(HttpMethod.Post,$"v1/orders/{id}:refund",new {reason=Text("reason")}); TempData["Success"]="Đã tạo yêu cầu hoàn tiền. Ghi nhận kết quả ngay bên dưới."; break;
             case "refund-complete":
                 await Api.Send(HttpMethod.Post,$"v1/refunds/{Number("refundId")}:complete",new {outcome=Text("outcome"),failureReason=NullIfEmpty("reason")});
-                TempData["Success"]=Text("outcome")=="Succeeded"?"Hoàn tiền thành công: đã thu hồi điểm và trả lại voucher (nếu có).":"Đã ghi nhận hoàn tiền thất bại."; break; // (kiểm thử: thiếu thông báo)
+                TempData["Success"]=Text("outcome")=="Succeeded"?"Hoàn tiền thành công: đã thu hồi điểm và trả lại voucher (nếu có).":"Đã ghi nhận hoàn tiền thất bại."; break;
         }
-        // [UI-02] Thao tác nhanh từ danh sách: quay lại đúng bộ lọc đang xem thay vì mở trang chi tiết.
-        if(Text("back")=="list") return RedirectToPage(new {status=Text("listStatus"),q=Q});
         return RedirectToPage(new {id});
     }
     private string? NullIfEmpty(string key)=>string.IsNullOrWhiteSpace(Text(key))?null:Text(key);

@@ -1,5 +1,6 @@
 @page
 @model ProductsModel
+@* [REV-09] Chuyển từ Admin server sang Quản lý CRM; quản lý chỉ xem, chủ cửa hàng thao tác đầy đủ *@
 @{
     ViewData["Title"]=Model.Title;
     // [UI-02] Mỗi dòng là một kích cỡ: sửa giá kích cỡ đó; ngừng / mở bán áp dụng cho cả sản phẩm.
@@ -18,7 +19,7 @@
         <button type="button" class="btn-sm" data-open="m-image" data-fill="@(JsonSerializer.Serialize(new{id=item["product_id"].ToString(),display_name=item["display_name"].ToString(),current=Model.ImageSrc(ReportView.Text(item,"image_url"))}))">Ảnh</button>
         @* [UI2-A4a] Còn hàng / Tạm hết – áp dụng cho cả sản phẩm *@
         @{var inStock=item.TryGetValue("in_stock",out var s)&&s.ValueKind==JsonValueKind.True;}
-        <form method="post" class="inline-form"><input type="hidden" name="operation" value="product-stock"><input type="hidden" name="id" value="@item["product_id"]"><input type="hidden" name="available" value="@(inStock?"false":"true")"><button class="btn-sm">@(inStock?"Báo tạm hết":"Có hàng lại")</button></form>
+        @* [REV-06] Báo tạm hết / còn hàng chuyển sang Quản lý CRM → Kho nguyên liệu → tab Tình trạng món [REV-08] *@
         <button type="button" class="btn-sm @(active?"danger-text":null)" data-open="@(active?"m-stop":"m-start")" data-fill="@fill">@(active?"Ngừng bán":"Mở bán")</button>
     </div>;
 }
@@ -27,14 +28,15 @@
     @* [WEB-13] Tìm sản phẩm; [WEB-03] quản lý danh mục *@
     <div class="list-toolbar">
         <form method="get"><input name="q" type="search" value="@Model.Q" placeholder="Tìm theo tên món, danh mục, size" aria-label="Tìm sản phẩm"><button class="secondary">Tìm</button>@if(!string.IsNullOrEmpty(Model.Q)){<a class="btn-sm" href="?">Bỏ lọc</a>}</form>
-        <div class="row-actions"><button type="button" class="secondary" data-open="m-categories">Danh mục</button><button type="button" class="primary add-btn" data-open="m-add">+ Thêm sản phẩm</button></div>
+        @if(Model.CanEdit){<div class="row-actions"><button type="button" class="secondary" data-open="m-categories">Danh mục</button><button type="button" class="primary add-btn" data-open="m-add">+ Thêm sản phẩm</button></div>}
     </div>
     <p class="list-count">@Model.Rows.Count dòng (mỗi kích cỡ một dòng)@(string.IsNullOrEmpty(Model.Q)?"":$" khớp “{Model.Q}”")</p>
-    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=actions,Hide=new HashSet<string>{"variant_id","image_url","category_id","description"},ActiveLabels=("Đang bán","Ngừng bán"),
+    <partial name="_Table" model="@(new TableView{Rows=Model.Rows,Actions=Model.CanEdit?actions:null,Hide=new HashSet<string>{"variant_id","image_url","category_id","description"},ActiveLabels=("Đang bán","Ngừng bán"),
         Format=(k,r)=>k switch{"base_price"=>OrderView.Money(r,k),"size_active"=>r[k].ValueKind==JsonValueKind.True?"Đang bán":"Đã ẩn","has_temperature"=>r[k].ValueKind==JsonValueKind.True?"Đá / Nóng":"—",_=>null}})" />
     <partial name="_Pager" model="Model" />
 </section>
 
+@if(Model.CanEdit){ @* [REV-09] các cửa sổ thao tác chỉ dành cho chủ cửa hàng *@
 <dialog class="modal" id="m-add"><form method="post" enctype="multipart/form-data">
     <input type="hidden" name="operation" value="product"><input type="hidden" name="modal" value="m-add">
     <header><h2>Thêm sản phẩm</h2><button type="button" class="modal-x" data-close aria-label="Đóng">×</button></header>
@@ -146,3 +148,4 @@
     </div>
     <footer><button type="button" class="secondary" data-close>Hủy</button><button class="primary">Lưu ảnh</button></footer>
 </form></dialog>
+}

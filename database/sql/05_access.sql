@@ -1,3 +1,5 @@
+-- 05_access.sql – đọc dữ liệu theo quyền, báo cáo, view thống kê và vai trò database cho API.
+-- [GOP-01] Bản gộp: thêm vai trò MorningBrewApi (trước ở 08_admin.sql), view CustomerStats (16_crm.sql), view CustomerTiers (17_member_tiers.sql).
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -104,4 +106,41 @@ GO
 CREATE ROLE MorningBrewRuntime;
 DENY SELECT,INSERT,UPDATE,DELETE ON SCHEMA::dbo TO MorningBrewRuntime;
 GRANT EXECUTE ON SCHEMA::dbo TO MorningBrewRuntime;
+GO
+-- Trusted API service role: metadata CRUD and business procedures, without schema/DDL ownership.
+IF DATABASE_PRINCIPAL_ID('MorningBrewApi') IS NULL CREATE ROLE MorningBrewApi;
+GRANT SELECT,INSERT,UPDATE,DELETE,EXECUTE ON SCHEMA::dbo TO MorningBrewApi;
+GO
+-- ===== [CRM-02] Thống kê mua hàng và nhóm hành vi của từng khách =====
+-- Ngưỡng: Khách mới = đơn hoàn tất đầu tiên trong 30 ngày; Lâu không quay lại = lần mua cuối quá 60 ngày;
+-- Thân thiết = từ 5 đơn hoàn tất và còn mua trong 60 ngày; Đang mua = còn lại. Tổng chi tiêu đã trừ tiền hoàn.
+CREATE OR ALTER VIEW dbo.CustomerStats AS
+SELECT x.CustomerID,x.CompletedOrders,x.TotalSpent,x.FirstOrderAt,x.LastOrderAt,
+    CASE WHEN x.CompletedOrders=0 THEN 'None'
+         WHEN x.FirstOrderAt>=DATEADD(day,-30,SYSUTCDATETIME()) THEN 'New'
+         WHEN x.LastOrderAt<DATEADD(day,-60,SYSUTCDATETIME()) THEN 'Lapsed'
+         WHEN x.CompletedOrders>=5 THEN 'Loyal'
+         ELSE 'Active' END AS Segment
+FROM (
+    SELECT c.CustomerID,COUNT(o.OrderID) AS CompletedOrders,
+        CAST(COALESCE(SUM(o.TotalAmount-COALESCE(r.Refunded,0)),0) AS decimal(18,2)) AS TotalSpent,
+        MIN(o.CompletedAt) AS FirstOrderAt,MAX(o.CompletedAt) AS LastOrderAt
+    FROM dbo.Customers c LEFT JOIN dbo.Orders o ON o.CustomerID=c.CustomerID AND o.Status='Completed'
+    -- tiền đã hoàn gộp sẵn theo đơn (SUM không được chứa truy vấn con – lỗi Msg 130)
+    LEFT JOIN (SELECT OrderID,SUM(Amount) AS Refunded FROM dbo.Refunds WHERE Status='Succeeded' GROUP BY OrderID) r ON r.OrderID=o.OrderID
+    GROUP BY c.CustomerID) x;
+GO
+-- ===== Hạng hiện tại của từng khách =====
+CREATE OR ALTER VIEW dbo.CustomerTiers AS
+WITH spend AS (
+    SELECT c.CustomerID,CAST(COALESCE(SUM(o.TotalAmount-COALESCE(r.Refunded,0)),0) AS decimal(18,2)) AS Spent12M
+    FROM dbo.Customers c
+    LEFT JOIN dbo.Orders o ON o.CustomerID=c.CustomerID AND o.Status='Completed' AND o.CompletedAt>=DATEADD(month,-12,SYSUTCDATETIME())
+    LEFT JOIN (SELECT OrderID,SUM(Amount) AS Refunded FROM dbo.Refunds WHERE Status='Succeeded' GROUP BY OrderID) r ON r.OrderID=o.OrderID
+    GROUP BY c.CustomerID)
+SELECT s.CustomerID,s.Spent12M,t.TierID,t.Code AS TierCode,t.Name AS TierName,t.Benefit AS TierBenefit,
+       n.Code AS NextTierCode,n.Name AS NextTierName,n.MinSpent AS NextTierSpent
+FROM spend s
+OUTER APPLY (SELECT TOP(1) x.TierID,x.Code,x.Name,x.Benefit FROM dbo.MemberTiers x WHERE x.MinSpent<=s.Spent12M ORDER BY x.MinSpent DESC) t
+OUTER APPLY (SELECT TOP(1) y.Code,y.Name,y.MinSpent FROM dbo.MemberTiers y WHERE y.MinSpent>s.Spent12M ORDER BY y.MinSpent) n;
 GO

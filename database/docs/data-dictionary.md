@@ -1,6 +1,6 @@
 # Từ điển dữ liệu Morning Brew CRM
 
-45 bảng, 348 trường. Mục 1–40 (bảng lõi của `01_schema.sql`) sinh từ tools/schema.py; mục 41–45 là các bảng thêm ở script 08, 14, 15, 17, viết tay — nếu sinh lại bằng tools/document.py thì giữ lại phần này.
+45 bảng, 349 trường, khớp `database/sql/01_schema.sql` (sinh từ tools/schema.py). Mục 1–40 sinh tự động; mục 41–45 và cột `Users.DeletedAt` viết tay, nội dung khớp schema.py — sinh lại bằng tools/document.py sẽ ra cùng danh sách bảng.
 
 ## 1. Roles
 Tài khoản • Điều chỉnh bảng gốc. Bốn vai trò nghiệp vụ dùng chung cho ba ứng dụng.
@@ -46,6 +46,7 @@ Tài khoản • Điều chỉnh bảng gốc. Thông tin đăng nhập và liê
 | IsActive<br>bit | Bắt buộc<br>Mặc định: 1 | Cho phép ngừng sử dụng mà không xóa lịch sử đã tham chiếu.<br>Nguồn: Quản trị/backend ghi trong phạm vi được cấp quyền.<br>Ví dụ: 1 |
 | CreatedAt<br>datetime2(3) | Bắt buộc<br>Mặc định: SYSUTCDATETIME() | Thời điểm UTC phục vụ lịch sử và đối chiếu; giao diện đổi sang giờ Việt Nam.<br>Nguồn: Backend/SQL Server ghi khi sự kiện tương ứng xảy ra.<br>Ví dụ: 2026-09-17T03:00:00Z |
 | Version<br>rowversion | Bắt buộc<br>SQL tự sinh | Dấu phiên bản để phát hiện ghi đè dữ liệu khi hai người cùng sửa; không phải thời gian.<br>Nguồn: SQL Server tự cập nhật mỗi lần ghi.<br>Ví dụ: 0x00000000000007D1 |
+| DeletedAt<br>datetime2(3) | Được trống | Thời điểm UTC xóa mềm tài khoản; NULL là đang dùng. Dữ liệu cá nhân được ẩn danh, đơn và phản hồi cũ vẫn giữ.<br>Nguồn: thủ tục SoftDeleteUser.<br>Ví dụ: 2026-11-15T03:00:00Z |
 - UNIQUE (NormalizedEmail)
 - CHECK NormalizedEmail = UPPER(LTRIM(RTRIM(Email)))
 
@@ -681,7 +682,7 @@ Tài khoản • Bảng bổ sung. Nhật ký ai làm gì; không ghi mật kh�
 - Index  (BranchID,CreatedAt)
 
 ## 41. Suppliers
-Tài khoản, cửa hàng, hệ thống • Bảng bổ sung (`08_admin.sql`). Danh bạ nhà cung cấp nguyên liệu.
+Kho • Bảng bổ sung. Danh bạ nhà cung cấp nguyên liệu.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
 |---|---|---|
@@ -695,7 +696,7 @@ Tài khoản, cửa hàng, hệ thống • Bảng bổ sung (`08_admin.sql`). D
 - UNIQUE (Code)
 
 ## 42. Ingredients
-Kho nguyên liệu • Bảng bổ sung (`14_inventory.sql`). Nguyên liệu và tồn kho hiện tại.
+Kho • Bảng bổ sung. Nguyên liệu và tồn kho hiện tại.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
 |---|---|---|
@@ -714,7 +715,7 @@ Kho nguyên liệu • Bảng bổ sung (`14_inventory.sql`). Nguyên liệu và
 - CHECK Quantity >= 0, MinStock >= 0, LastUnitCost IS NULL OR LastUnitCost >= 0
 
 ## 43. InventoryTransactions
-Kho nguyên liệu • Bảng bổ sung (`14_inventory.sql`). Phiếu nhập / xuất / hủy / kiểm kê; chỉ thêm, trigger chặn sửa và xóa.
+Kho • Bảng bổ sung. Phiếu nhập / xuất / hủy / kiểm kê; chỉ thêm, trigger chặn sửa và xóa.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
 |---|---|---|
@@ -723,17 +724,17 @@ Kho nguyên liệu • Bảng bổ sung (`14_inventory.sql`). Phiếu nhập / x
 | SupplierID<br>int | Được trống<br>FK → Suppliers.<br>SupplierID | Nhà cung cấp; chỉ có ở phiếu nhập.<br>Ví dụ: 1 |
 | ActorID<br>int | Được trống<br>FK → Users.<br>UserID | Người lập phiếu; trống khi hệ thống tự trừ kho lúc đơn hoàn tất.<br>Ví dụ: 2 |
 | Kind<br>varchar(10) | Bắt buộc<br>CHECK Import / Export / Waste / Adjust | Loại phiếu: nhập, xuất dùng, hủy, kiểm kê.<br>Ví dụ: Import |
-| QuantityChange<br>decimal(18,3) | Bắt buộc | Lượng thay đổi: nhập > 0, xuất / hủy < 0, kiểm kê ±.<br>Ví dụ: 5.000 |
+| QuantityChange<br>decimal(18,3) | Bắt buộc | Lượng thay đổi: nhập > 0, xuất / hủy < 0, kiểm kê ±. Riêng xuất tự động khi tồn đã bằng 0 ghi 0, ActorID trống, BalanceAfter = 0 và ghi chú lượng thiếu cần kiểm kê.<br>Ví dụ: 5.000 |
 | BalanceAfter<br>decimal(18,3) | Bắt buộc<br>CHECK ≥ 0 | Tồn kho sau phiếu, để đối chiếu lịch sử.<br>Ví dụ: 17.500 |
 | UnitCost<br>decimal(18,2) | Được trống<br>CHECK ≥ 0 | Đơn giá; chỉ có ở phiếu nhập.<br>Ví dụ: 180000 |
 | TotalCost<br>(cột tính) | SQL tự tính | = |QuantityChange| × UnitCost khi Kind = Import, còn lại NULL.<br>Ví dụ: 900000 |
 | Note<br>nvarchar(300) | Được trống | Ghi chú phiếu.<br>Ví dụ: Xuất dùng cho đơn MB261115-0003 |
 | CreatedAt<br>datetime2(3) | Bắt buộc<br>Mặc định: SYSUTCDATETIME() | Thời điểm UTC lập phiếu.<br>Ví dụ: 2026-11-15T03:00:00Z |
 - CHECK Kind IN ('Import','Export','Waste','Adjust')
-- CHECK BalanceAfter >= 0; Import thì QuantityChange > 0; Export/Waste thì QuantityChange < 0
+- CHECK BalanceAfter >= 0; Import thì QuantityChange > 0; Export/Waste thì QuantityChange < 0. Ngoại lệ: Export tự động được ghi 0 khi ActorID trống, BalanceAfter = 0 và Note có nội dung bán hàng, lượng thiếu, cần kiểm kê.
 
 ## 44. RecipeItems
-Kho nguyên liệu • Bảng bổ sung (`15_web_admin.sql`). Định mức nguyên liệu cho từng size món; trigger `TR_Orders_Inventory` dùng để tự trừ kho khi đơn hoàn tất.
+Kho • Bảng bổ sung. Định mức nguyên liệu cho từng size món; trigger `TR_Orders_Inventory` dùng để tự trừ kho khi đơn hoàn tất.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
 |---|---|---|
@@ -744,7 +745,7 @@ Kho nguyên liệu • Bảng bổ sung (`15_web_admin.sql`). Định mức nguy
 - INDEX IX_RecipeItems_22 (IngredientID)
 
 ## 45. MemberTiers
-Tích điểm, ưu đãi • Bảng bổ sung (`17_member_tiers.sql`). Hạng thành viên theo chi tiêu 12 tháng; hạng của từng khách tính bằng view `CustomerTiers`, không lưu cứng.
+CRM • Bảng bổ sung. Hạng thành viên theo chi tiêu 12 tháng; hạng của từng khách tính bằng view `CustomerTiers`, không lưu cứng.
 
 | Trường và kiểu | Quy tắc | Ý nghĩa, nguồn và ví dụ |
 |---|---|---|

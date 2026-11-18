@@ -1,8 +1,8 @@
--- test_16_crm.sql – kiểm thử SQL cho 16_crm.sql [CRM-00][CRM-02][CRM-08][CRM-09] trên database có dữ liệu mẫu.
+-- test_16_crm.sql – kiểm thử SQL cho quyền, CustomerStats, SĐT khách [CRM-00][CRM-02][CRM-08][CRM-09] (trước ở 16_crm.sql, nay trong 01–07) trên database có dữ liệu mẫu.
 -- KHÔNG làm thay đổi dữ liệu: các thao tác ghi đều nằm trong giao dịch riêng và ROLLBACK (lỗi trong trigger hủy cả giao dịch nên mỗi ca một giao dịch). SSMS: chọn database → F5 → đọc tab Messages.
 SET NOCOUNT ON; SET XACT_ABORT OFF;
 IF OBJECT_ID(N'dbo.CustomerStats','V') IS NULL OR OBJECT_ID(N'dbo.TR_Users_CustomerPhone','TR') IS NULL
-BEGIN RAISERROR(N'Chưa chạy 16_crm.sql (hoặc fullscript bản mới) trên database này.',16,1); RETURN; END;
+BEGIN RAISERROR(N'Database chưa cài bằng fullscript bản mới (01–07).',16,1); RETURN; END;
 DECLARE @pass int=0,@fail int=0,@n int,@err int;
 DECLARE @customerRole int=(SELECT RoleID FROM dbo.Roles WHERE Code='Customer'),@staffRole int=(SELECT RoleID FROM dbo.Roles WHERE Code='Staff');
 DECLARE @lanPhone varchar(20)=(SELECT Phone FROM dbo.Users WHERE Email='lan@morningbrew.test'),

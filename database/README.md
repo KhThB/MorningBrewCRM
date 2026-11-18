@@ -1,49 +1,45 @@
 # Morning Brew CRM — database
 
-SQL Server 2022+ (hoặc LocalDB 2022). Mô hình **một cửa hàng** (Morning Brew Thủ Đức), **45 bảng** sau khi chạy đủ 17 script:
+SQL Server 2022+ (hoặc LocalDB 2022). Mô hình **một cửa hàng** (Morning Brew Thủ Đức), **45 bảng, 24 thủ tục, 21 trigger, 4 hàm, 3 view** sau khi chạy đủ 7 script:
 41 bảng CRM/đơn hàng/khảo sát/nhà cung cấp, 2 bảng kho nguyên liệu (`Ingredients`, `InventoryTransactions`), bảng định mức `RecipeItems` và bảng hạng thành viên `MemberTiers`.
 Database dùng cho cấu hình Development: **`MorningBrewCRM_Crm`** trên `(localdb)\MSSQLLocalDB`.
 
-## Cài mới hoặc nâng cấp — một file, không cần PowerShell
+## Cài database — một file, không cần PowerShell
 
 Mở SSMS → kết nối `(localdb)\MSSQLLocalDB` → File → Open **`database/sql_ssms/morningbrew_fullscript.sql`** → Execute (F5).
-Không cần chọn database trước. File tự nhận biết:
+Không cần chọn database trước: file tự tạo `MorningBrewCRM_Crm` (nếu chưa có) rồi chạy 01 → 07 (gồm dữ liệu mẫu).
+**Chỉ cài mới**: nếu database đã có bảng thì file dừng ngay, không thay đổi gì. Muốn cài lại thì đóng API / web / app / POS,
+xóa database cũ (SSMS → Databases → chuột phải `MorningBrewCRM_Crm` → Delete, tích *Close existing connections*) rồi chạy lại.
+Nên sao lưu dữ liệu đang dùng trước (Admin server → Sao lưu & phục hồi).
 
-| Tình trạng | File làm gì |
-|---|---|
-| Chưa có database / database trống | **Cài mới**: tạo `MorningBrewCRM_Crm`, chạy 01 → 17 (gồm dữ liệu mẫu). |
-| Database MorningBrew đang dùng | **Nâng cấp**: sao lưu `.bak` (CHECKSUM + VERIFYONLY) rồi chạy 08 → 17; không chạy lại 01–07, không xóa dữ liệu. |
-
-Thành công khi tab Messages có `=== HOÀN TẤT ...` và bảng kiểm tra có `SoBang = 45`. Thấy `>>> DỪNG` thì phần sau không chạy;
-đọc dòng lỗi đỏ đầu tiên. Đóng API, web Admin, app, POS trước khi nâng cấp. Tên database khác: Find and Replace `MorningBrewCRM_Crm`
+Thành công khi tab Messages có `=== HOÀN TẤT ...` và bảng kiểm tra có `SoBang = 45`, `SoThuTuc = 24`, `SoTrigger = 21`, `SoHam = 4`, `SoView = 3`.
+Thấy `>>> DỪNG` thì phần sau không chạy; đọc dòng lỗi đỏ đầu tiên. Tên database khác: Find and Replace `MorningBrewCRM_Crm`
 trong file và sửa `ConnectionStrings:MorningBrew` của API.
 
-Chạy lẻ một script trong SSMS: nhớ chọn đúng database `MorningBrewCRM_Crm` ở ô database (không để `master`). `14_inventory.sql`, `15_web_admin.sql`, `16_crm.sql`, `17_member_tiers.sql` tự dừng
-nếu đang chọn nhầm database.
+Chạy lẻ từng script (thay cho fullscript): tạo database trống, chọn database đó ở ô database (không để `master`) rồi chạy lần lượt 01 → 07.
+
+## Bản vá thiếu kho ngày 18/11/2026 cho database đang dùng
+
+Chọn đúng database CRM trong SSMS rồi chạy [patches/20261118_zero_stock_shortage.sql](patches/20261118_zero_stock_shortage.sql).
+Bản vá chỉ cập nhật CHECK của phiếu kho và trigger tự trừ kho trong một giao dịch, không xóa hay tạo lại dữ liệu; có thể chạy lại.
+Khi tồn đã bằng 0, đơn vẫn hoàn tất và có phiếu Xuất dùng tự động với thay đổi 0, kèm lượng thiếu cần kiểm kê.
+Phiếu xuất/hủy thủ công vẫn phải có lượng thay đổi âm. Bản vá không khôi phục ghi chú thiếu của các đơn cũ đã hoàn tất.
+Cài mới bằng fullscript đã có sẵn sửa này, không cần chạy thêm bản vá.
 
 ## Thứ tự script (`database/sql`)
 
+Bảy file, chạy đúng thứ tự trên database trống. [GOP-01] Ngày 17/11/2026 các script nâng cấp 08–17 đã được gộp vào 01–07
+(bản cũ lưu ở lịch sử Git); bộ gộp đã kiểm tra: cấu trúc trùng khớp database cài bằng 17 script cũ, test 15–17 đạt 18/18.
+
 | Script | Nội dung |
 |---|---|
-| `01_schema.sql` | Bảng, CHECK, UNIQUE, khóa ngoại, index; chỉ chạy trên database trống. |
-| `02_rules.sql` | Hàm phân quyền, trigger bảo vệ dữ liệu bất biến, vai trò, khảo sát. |
-| `03_orders.sql` | Đặt đơn (`CreateOrder`), voucher, thanh toán mô phỏng, trạng thái, giao hàng, hủy, hoàn tiền. |
-| `04_crm.sql` | Địa chỉ giao hàng (`SaveAddress`), khảo sát, phản hồi. |
-| `05_access.sql` | Đọc dữ liệu theo quyền, phân nhóm khách, báo cáo doanh thu. |
-| `06_seed.sql` | Vai trò, quyền, tài khoản mẫu, cửa hàng, thực đơn, chính sách điểm (dữ liệu mẫu). |
-| `07_demo.sql` | Đơn hàng, phản hồi, khảo sát mẫu tạo bằng chính các procedure (dữ liệu mẫu). |
-| `08_admin.sql` | Nhà cung cấp và quyền cho web Admin. |
-| `09_shared_prices.sql` | Giá dùng chung khi tạo đơn / đọc thực đơn; giữ giá lịch sử trên đơn cũ. |
-| `10_soft_delete.sql` | Xóa mềm tài khoản / khách hàng, ẩn danh dữ liệu cá nhân. |
-| `11_single_store.sql` | Chế độ một cửa hàng: nhiều quản lý, quyền `Customers.Manage`, bỏ vai trò AreaManager (database cũ). Từ nay `01_schema.sql`, `02_rules.sql` cũng không còn tạo AreaManager. |
-| `12_bugfix.sql` | Sửa lỗi đợt 1: thông báo lỗi khảo sát, mã đơn ngắn `MB261108-0028`. |
-| `13_ui_review.sql` | Góp ý giao diện 09/11: đồ uống chỉ còn Size M/L + Đá/Nóng, tình trạng còn hàng, nhà cung cấp mẫu. |
-| `14_inventory.sql` | Kho nguyên liệu: 2 bảng, trigger chống sửa/xóa phiếu kho, quyền `Inventory.Manage`, 16 nguyên liệu + phiếu mẫu. |
-| `15_web_admin.sql` | Sửa web Admin 15/11: thông báo cho khách khi giao hàng / hoàn tiền chưa thành công (`UpdateDelivery`, `SimulateRefund`); bảng định mức `RecipeItems` + trigger `TR_Orders_Inventory` tự lập phiếu "Xuất dùng" khi đơn hoàn tất; định mức mẫu cho 10 món. |
-| `16_crm.sql` | Nâng cấp CRM: view `CustomerStats` (số đơn, tổng chi tiêu, nhóm hành vi mua), trigger `TR_Users_CustomerPhone` (một SĐT chỉ thuộc một khách), quyền `Loyalty.Adjust`, bỏ quyền thừa `Organization.Manage`. |
-| `17_member_tiers.sql` | Hạng thành viên: bảng `MemberTiers` (Thành viên 0đ, Bạc 1 triệu, Vàng 3 triệu, Kim cương 6 triệu – sửa được trên web) và view `CustomerTiers` tính hạng theo chi tiêu 12 tháng. |
-
-08–17 chạy lại nhiều lần được (dùng cho nâng cấp). 01–07 chỉ dùng khi cài mới.
+| `01_schema.sql` | 45 bảng, CHECK, UNIQUE, khóa ngoại, index; sinh từ `tools/schema.py`, chỉ chạy trên database trống. |
+| `02_rules.sql` | 4 hàm phân quyền (`CanBranch`, `CanScope`, `CustomerInScope`, `IsCustomer`) và 21 trigger: dữ liệu bất biến, vai trò, khảo sát, mã đơn ngắn, phiếu kho không sửa được, tự trừ kho khi đơn hoàn tất, một SĐT chỉ thuộc một khách. |
+| `03_orders.sql` | Đặt đơn (`CreateOrder`), voucher, thanh toán mô phỏng, trạng thái, giao hàng, hủy, hoàn tiền (kèm thông báo cho khách). |
+| `04_crm.sql` | Địa chỉ giao hàng, khảo sát, phản hồi, xóa mềm tài khoản (`SoftDeleteUser`). |
+| `05_access.sql` | Đọc dữ liệu theo quyền, phân nhóm khách, báo cáo doanh thu; view `LoyaltyReconciliation`, `CustomerStats`, `CustomerTiers`; vai trò database cho API. |
+| `06_seed.sql` | Dữ liệu nền: vai trò, quyền, 33 tài khoản, cửa hàng, thực đơn (Size M/L + Đá/Nóng), chính sách điểm, ưu đãi, khảo sát, nhà cung cấp, 16 nguyên liệu + phiếu nhập khởi tạo, định mức món, 4 hạng thành viên. |
+| `07_demo.sql` | Giao dịch mẫu tạo bằng chính các thủ tục: lịch sử 12 tháng (68 đơn, nhập kho định kỳ, voucher đã dùng / còn hạn / hết hạn) để báo cáo, phân nhóm khách và hạng thành viên có số liệu; đơn, thanh toán, hủy, hoàn tiền, giao hàng, phản hồi, khảo sát; hủy hàng và kiểm kê cuối ngày. <!-- [DEMO-01] --> |
 
 ## Tài khoản mẫu
 
@@ -68,9 +64,9 @@ Cửa hàng mẫu mở 00:00–23:59:59 nên đặt hàng demo không phụ thu�
 
 - [Từ điển dữ liệu](docs/data-dictionary.md) (đủ 45 bảng), Word thiết kế database trong `docs/`. Phân tích nghiệp vụ chi tiết nằm trong báo cáo đồ án.
 - ERD: `docs/MorningBrewCRM.drawio`, `docs/MorningBrewCRM.mmd`, ảnh `docs/erd-*.png`; sơ đồ UML hệ thống ở `docs/diagrams/`.
-- Phần đầu từ điển dữ liệu và ERD sinh từ `tools/schema.py` / `tools/document.py` cho 40 bảng lõi của `01_schema.sql`; 5 bảng bổ sung sau (`Suppliers` ở 08, `Ingredients`, `InventoryTransactions` ở 14, `RecipeItems` ở 15, `MemberTiers` ở 17) được mô tả ở cuối từ điển dữ liệu.
+- `01_schema.sql`, `docs/schema.json`, từ điển dữ liệu và ERD sinh từ `tools/schema.py` / `tools/document.py` (đủ 45 bảng).
 
 ## Kiểm thử
 
-- `tests/test_15_web_admin.sql`, `tests/test_16_crm.sql`, `tests/test_17_member_tiers.sql`: chạy trong SSMS trên database `MorningBrewCRM_Crm` sau khi chạy fullscript; mỗi kiểm tra in PASS/FAIL, mọi dữ liệu thử được ROLLBACK.
+- `tests/test_15_web_admin.sql` (kho, giao hàng, hoàn tiền), `tests/test_16_crm.sql` (thống kê khách, SĐT), `tests/test_17_member_tiers.sql` (hạng thành viên): chạy trong SSMS trên database `MorningBrewCRM_Crm` sau khi chạy fullscript; mỗi kiểm tra in PASS/FAIL, mọi dữ liệu thử được ROLLBACK.
 - `tests/verify.py` là bộ kiểm thử SQL cũ (viết cho dữ liệu nhiều chi nhánh), chỉ chạy trên database kiểm thử riêng có chữ `Verify` trong tên.

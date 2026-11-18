@@ -6,7 +6,7 @@ Bản đồ án CRM hiện tại gồm **MorningBrew.Api**, **MorningBrew.Admin*
 
 Cài .NET SDK 10, workload .NET MAUI, Windows SDK phù hợp project, SQL Server 2022+ hoặc LocalDB và SQL Server Management Studio (SSMS). Mở **MorningBrewCRM.slnx** ở thư mục gốc; solution có đủ bốn project. Chọn Windows Machine khi chạy app MAUI; Android cần thêm SDK/emulator, iOS cần môi trường Mac để chạy.
 
-Tạo database khớp cấu hình Development (`MorningBrewCRM_Crm`): mở SSMS → kết nối `(localdb)\MSSQLLocalDB` → mở **`database/sql_ssms/morningbrew_fullscript.sql`** → Execute (F5). File tự **cài mới** (database trống: script 01–17 kèm dữ liệu mẫu) hoặc **nâng cấp** (database đang dùng: sao lưu `.bak` rồi chạy 08–17), không cần PowerShell.
+Tạo database khớp cấu hình Development (`MorningBrewCRM_Crm`): mở SSMS → kết nối `(localdb)\MSSQLLocalDB` → mở **`database/sql_ssms/morningbrew_fullscript.sql`** → Execute (F5). File **cài mới** database (chạy 7 script 01–07 kèm dữ liệu mẫu), không cần PowerShell. Database đã có bảng thì file dừng, không ghi đè: muốn cài lại thì xóa database cũ trước (xem [hướng dẫn database](database/README.md)).
 
 Nếu dùng database/server khác, cấu hình `ConnectionStrings:MorningBrew` bằng user secrets hoặc biến môi trường; xem [hướng dẫn database](database/README.md).
 
@@ -40,8 +40,8 @@ dotnet run --project MorningBrew.Admin --launch-profile http
   - **Admin server**: http://localhost:5190 — chỉ `/Admin/*`, chỉ chủ cửa hàng.
   - **Quản lý CRM**: http://localhost:5191 — chỉ `/Manager/*`, chủ cửa hàng và quản lý.
   - Mở nhầm khu của giao diện kia sẽ được chuyển sang trang hướng dẫn kèm link đúng cổng. Cổng/địa chỉ cấu hình ở `appsettings.json` → `Portals`. Cả hai gọi API ở cổng 5029.
-  - `/Admin/*` — **giao diện Quản trị** (chỉ chủ cửa hàng): tổng quan hệ thống, tài khoản (lọc, thêm, đổi vai trò, khóa, xóa), ma trận phân quyền, nhật ký hệ thống, sao lưu & phục hồi, sản phẩm & giá, nhà cung cấp.
-  - `/Manager/*` — **giao diện Quản lý CRM** (quản lý và chủ cửa hàng): tổng quan, đơn hàng, khách hàng (thêm/sửa/khóa/xóa, nhóm hành vi mua, xuất Excel), phản hồi (lọc theo trạng thái), khảo sát (câu hỏi đánh giá/chọn một/chọn nhiều/tự luận, mời hàng loạt theo nhóm), ưu đãi, hạng thành viên, kho nguyên liệu, nhà cung cấp, báo cáo.
+  - `/Admin/*` — **giao diện Quản trị** (chỉ chủ cửa hàng): tổng quan hệ thống, tài khoản (lọc, thêm, đổi vai trò, khóa, xóa), ma trận phân quyền, nhật ký hệ thống, sao lưu & phục hồi. Tài khoản khách chỉ đặt lại mật khẩu tại đây; thông tin khách quản lý ở cổng CRM.
+  - `/Manager/*` — **giao diện Quản lý CRM** (quản lý và chủ cửa hàng): tổng quan, đơn hàng, khách hàng (thêm/sửa/khóa/xóa, nhóm hành vi mua, xuất Excel), phản hồi (lọc theo trạng thái), khảo sát (câu hỏi đánh giá/chọn một/chọn nhiều/tự luận, mời hàng loạt theo nhóm), ưu đãi, hạng thành viên, sản phẩm & giá (chủ cửa hàng sửa, quản lý chỉ xem), kho nguyên liệu, nhà cung cấp, báo cáo.
   - Web chỉ dành cho nội bộ: chủ cửa hàng đăng nhập Admin server (5190) để quản trị và có thể đăng nhập riêng Quản lý CRM (5191); quản lý chỉ đăng nhập được Quản lý CRM. **Khách hàng chỉ dùng app MAUI** (đăng ký, đăng nhập, sửa hồ sơ, phản hồi, khảo sát); thu ngân dùng POS.
 - App MAUI khách hàng: chọn project `MorningBrewwApp` và **Windows Machine** trong Visual Studio rồi chạy. Android emulator gọi API qua `10.0.2.2:5029`; thiết bị thật cần địa chỉ LAN và cấu hình kết nối phù hợp.
 - App **POS** cho thu ngân: chọn project `MorningBrewPos` → **Windows Machine**. Đăng nhập bằng `staff.1@morningbrew.test` (quản lý / chủ cửa hàng cũng đăng nhập được và có thêm quyền hủy đơn).
@@ -51,7 +51,7 @@ Tài khoản **dữ liệu mẫu local**: `owner@morningbrew.test`, `manager.1@m
 ## Phạm vi và ảnh sản phẩm
 
 - CRM: tài khoản, khách hàng, phản hồi, khảo sát, báo cáo; dữ liệu từ SQL Server.
-- Thực đơn và đơn hàng là **dữ liệu thật**: app khách đặt đơn (nhận tại quầy / giao hàng; trả trước qua cổng thanh toán mô phỏng / tiền mặt), quản lý xử lý ở `/Manager/Orders`, thu ngân xử lý trên app POS. Đơn trả trước không thanh toán trong 15 phút được API tự hủy (chạy mỗi phút). Khi không kết nối được API, app báo lỗi kèm nút Thử lại.
+- Thực đơn và đơn hàng là **dữ liệu thật**: app khách đặt đơn (nhận tại quầy / giao hàng; trả trước qua cổng thanh toán mô phỏng / tiền mặt), quản lý xem đơn và xử lý hoàn tiền ở `/Manager/Orders`; các thao tác vận hành đơn thực hiện trên app POS. Đơn trả trước không thanh toán trong 15 phút được API tự hủy (chạy mỗi phút). Khi không kết nối được API, app báo lỗi kèm nút Thử lại.
 - 10 ảnh sản phẩm được đóng gói trong `MorningBrewApp/MauiApp1/MauiApp1/wwwroot/images/products`, ánh xạ theo tên tại `Services/ProductPhotos.cs`. Khi ảnh không tải được hoặc món chưa có ảnh, app dùng hình minh họa dự phòng.
 - Nguồn ảnh: [sources.json](MorningBrewApp/MauiApp1/MauiApp1/wwwroot/images/products/sources.json). Đây là ảnh tham khảo cho bản demo; hồ sơ nguồn không đồng nghĩa với giấy phép tái phân phối/thương mại. Cold brew có logo 1000M.
 
@@ -62,6 +62,6 @@ Tài khoản **dữ liệu mẫu local**: `owner@morningbrew.test`, `manager.1@m
 - [API v1](docs/api-v1.md): quy ước JSON, phân trang, danh sách endpoint.
 - [Sổ tay lỗi đã xử lý](docs/bug_history_summary.md) và [hướng dẫn app khách hàng](MorningBrewApp/HUONG_DAN_CHAY.md).
 - Kiểm thử SQL: `database/tests/test_15_web_admin.sql`, `test_16_crm.sql`, `test_17_member_tiers.sql` (mở trong SSMS, chọn database `MorningBrewCRM_Crm`, F5; mọi dòng phải là PASS). Bộ test case giao diện: `docs/TestCases_WebAdmin_CRM_15-11.xlsx`.
-- Database đã có (cài từ bản trước): chạy lại `database/sql_ssms/morningbrew_fullscript.sql` – file tự sao lưu rồi áp dụng 08–17 (chế độ một cửa hàng, sửa lỗi, góp ý giao diện, kho nguyên liệu, nâng cấp CRM, hạng thành viên). Không cần chạy lẻ từng script.
+- Fullscript chỉ cài mới bằng bộ 01–07, không tự nâng cấp database đã có. Với lỗi thiếu kho khi tồn bằng 0, dùng [bản vá 18/11/2026](database/patches/20261118_zero_stock_shortage.sql) trên database CRM hiện tại để giữ dữ liệu; xem [hướng dẫn database](database/README.md).
 
 Không đưa `bin/`, `obj/`, `.vs/`, file `*.user`, database MDF/LDF, bản backup hoặc cấu hình chứa mật khẩu riêng lên GitHub; các loại file này đã được `.gitignore` loại trừ.

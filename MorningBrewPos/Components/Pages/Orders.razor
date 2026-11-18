@@ -4,7 +4,8 @@
 @inject PosAuth Auth
 @inject ToastService Toasts
 @* [BUG-02 · giai đoạn 2] Hàng chờ đơn tại quầy (gồm đơn từ app khách): xác nhận → pha chế → sẵn sàng → (giao) → hoàn tất,
-   xác nhận thu tiền mặt. Hủy đơn chỉ hiện với quản lý / chủ cửa hàng. Tự làm mới mỗi 15 giây. *@
+   xác nhận thu tiền mặt. Hủy đơn chỉ hiện với quản lý / chủ cửa hàng. Tự làm mới mỗi 15 giây.
+   [ORD-01] Đơn đang giao: báo giao chưa thành công (kèm lý do) và giao lại – chuyển từ web Quản lý sang POS. *@
 <div class="pos-orders">
     <section>
         <div class="chips wrap">
@@ -54,9 +55,29 @@
                     <button class="btn btn-primary" disabled="@(busy || string.IsNullOrWhiteSpace(courierName) || string.IsNullOrWhiteSpace(courierPhone))" @onclick='() => Run(() => Pos.AdvanceAsync(o.OrderId, "Delivering", courierName, courierPhone))'>Giao cho shipper</button>
                 }
                 @if (o.Status == "Delivering") { <button class="btn btn-primary" disabled="@(busy || !o.IsPaid)" @onclick='() => Run(() => Pos.AdvanceAsync(o.OrderId, "Completed"))'>Đã giao – hoàn tất</button> }
-                @if (active && Auth.CanCancel) { <button class="btn btn-ghost" disabled="@busy" @onclick='() => Run(() => Pos.CancelAsync(o.OrderId, "Hủy tại quầy"))'>Hủy đơn</button> }
+                @if (o.Status == "Delivering" && o.DeliveryStatus == "Failed")
+                {
+                    <p class="small">Giao chưa thành công: @o.DeliveryFailure</p>
+                    <button class="btn btn-outline" disabled="@busy" @onclick='() => Run(() => Pos.DeliveryAsync(o.OrderId, "Delivering"))'>Giao lại</button>
+                }
+                else if (o.Status == "Delivering")
+                {
+                    <input class="input" placeholder="Lý do giao chưa thành công *" maxlength="500" @bind="failReason" @bind:event="oninput" />
+                    <button class="btn btn-outline" disabled="@(busy || string.IsNullOrWhiteSpace(failReason))" @onclick='() => Run(() => Pos.DeliveryAsync(o.OrderId, "Failed", failReason))'>Báo giao chưa thành công</button>
+                }
+                @* [REV-05] Hủy đơn: bấm Hủy đơn → nhập lý do → xác nhận (trước đây hủy ngay với lý do cố định "Hủy tại quầy") *@
+                @if (active && Auth.CanCancel && !confirmCancel) { <button class="btn btn-ghost" disabled="@busy" @onclick="() => confirmCancel = true">Hủy đơn</button> }
             </div>
             @if (!o.IsPaid && o.Status is "Ready" or "Delivering") { <p class="muted small">Cần xác nhận đã thu tiền trước khi hoàn tất.</p> }
+            @if (active && Auth.CanCancel && confirmCancel)
+            {
+                <div class="pos-actions">
+                    <p class="small"><b>Hủy đơn @o.OrderCode?</b> @(o.IsPaid ? "Đơn đã thanh toán – hệ thống sẽ tạo yêu cầu hoàn tiền." : "") Khách nhận thông báo kèm lý do.</p>
+                    <input class="input" placeholder="Lý do hủy * (ít nhất 3 ký tự)" maxlength="500" @bind="cancelReason" @bind:event="oninput" />
+                    <button class="btn btn-danger" disabled="@(busy || (cancelReason?.Trim().Length ?? 0) < 3)" @onclick='() => Run(() => Pos.CancelAsync(o.OrderId, cancelReason!.Trim()))'>Xác nhận hủy</button>
+                    <button class="btn btn-outline" disabled="@busy" @onclick="() => { confirmCancel = false; cancelReason = null; }">Không hủy</button>
+                </div>
+            }
         }
     </aside>
 </div>
@@ -67,7 +88,8 @@
     private List<Order> orders = [];
     private Order? selected;
     private bool loading = true, busy;
-    private string? error, courierName, courierPhone;
+    private string? error, courierName, courierPhone, failReason, cancelReason; // [ORD-01] failReason, [REV-05] cancelReason
+    private bool confirmCancel; // [REV-05]
     private System.Threading.Timer? timer;
 
     protected override async Task OnInitializedAsync()
@@ -94,7 +116,7 @@
 
     private async Task Select(int id)
     {
-        try { selected = await Pos.GetAsync(id); courierName = courierPhone = null; }
+        try { selected = await Pos.GetAsync(id); courierName = courierPhone = failReason = cancelReason = null; confirmCancel = false; }
         catch (ApiException e) { Toasts.Error(e); }
     }
 
@@ -104,7 +126,7 @@
         try
         {
             selected = await action();
-            courierName = courierPhone = null;
+            courierName = courierPhone = failReason = cancelReason = null; confirmCancel = false;
             Toasts.Show($"Đơn {selected.OrderCode}: {Fmt.OrderStatus(selected.Status)}");
             orders = await Pos.QueueAsync(status);
         }

@@ -62,11 +62,12 @@ Token được mã hóa và xác thực bằng ASP.NET Data Protection, hết h�
 | Danh mục chung | `GET/POST /v1/products` (POST: `variants` `[{"display_name":"M","price":45000}]`, `has_temperature`), `GET/PUT /v1/products/{id}`, `POST /v1/products/{id}/variants`, `GET /v1/variants?q=`, `GET /v1/variants/{id}`, `PUT /v1/variants/{id}/active` |
 | Danh mục sản phẩm | `GET/POST /v1/categories`, `PUT /v1/categories/{id}` (đổi tên), `PUT /v1/categories/{id}/active` |
 | Giá chung | `GET/PUT /v1/variants/{id}/price` |
+| Tình trạng món (Kho nguyên liệu) | `GET /v1/menu/availability` (món đang bán, `in_stock`, `low_ingredients`), `PUT /v1/products/{id}/availability` body `{"is_available":false}`; quyền `Menu.Manage` (quản lý, chủ cửa hàng) <!-- [REV-06][REV-07] --> |
 | Nhà cung cấp | `GET /v1/suppliers?q=`, `POST /v1/suppliers`, `GET/PUT /v1/suppliers/{id}`; quyền `Inventory.Manage` (chủ cửa hàng, quản lý) |
 | Kho nguyên liệu | `GET /v1/inventory/summary`, `GET/POST /v1/inventory/ingredients`, `PUT .../{id}`, `PUT .../{id}/active`, `GET/POST /v1/inventory/transactions` |
 | Định mức (trừ kho khi bán) | `GET /v1/inventory/recipes?q=`, `PUT /v1/inventory/recipes` (`variant_id`, `ingredient_id`, `quantity`), `DELETE /v1/inventory/recipes/{variantId}/{ingredientId}` |
-| Đơn hàng (quản lý) | `GET /v1/orders`, `GET /v1/orders/{id}`, `POST /v1/orders/{id}:{advance|cancel|collect|delivery|refund}`, `POST /v1/refunds/{id}:complete` |
-| POS | `GET /v1/pos/menu`, `GET /v1/pos/customers?phone=`, `GET/POST /v1/pos/orders`, `GET /v1/pos/orders/{id}`, `POST ...:{advance|collect|cancel}` |
+| Đơn hàng (quản lý) | `GET /v1/orders?status=` (`Active`, `RefundPending` = chờ hoàn tiền, hoặc một trạng thái đơn) <!-- [ORD-01] web chỉ dùng xem đơn, `:refund`, `refunds/{id}:complete` -->, `GET /v1/orders/{id}`, `POST /v1/orders/{id}:refund` <!-- [REV-03] đã bỏ :advance/:cancel/:collect/:delivery của quản lý, dùng v1/pos/orders -->, `POST /v1/refunds/{id}:complete` |
+| POS | `GET /v1/pos/menu`, `GET /v1/pos/customers?phone=`, `GET/POST /v1/pos/orders`, `GET /v1/pos/orders/{id}`, `POST ...:{advance|collect|cancel|delivery}` (`delivery`: `status` = `Failed` kèm `reason` / `Delivering` = giao lại) <!-- [ORD-01] --> |
 | Khảo sát | `GET/POST /v1/surveys`, `GET /v1/surveys/{id}`, `POST ...:publish`, `...:close`, `...:invite` |
 | Kết quả khảo sát | `GET /v1/surveys/{id}/results?pageSize=50&pageToken=...` |
 | Khuyến mãi | `GET /v1/promotions?q=`, `POST /v1/promotions`, `GET/PUT /v1/promotions/{id}`, `POST ...:issue`, `POST ...:issueBulk` (`customer_ids` hoặc `all` / `age_group` / `gender` / `product_id` / `segment`); mời khảo sát hàng loạt cũng nhận `segment` |
@@ -134,9 +135,9 @@ ETag kiểm tra đồng thời phiên bản `Users` và `Customers` trong transa
 
 Lỗi validation, JSON sai, xác thực, routing và rate limit dùng cùng envelope. Không gửi SQL stack trace cho client.
 
-## Nâng cấp database đã có
+## Cài đặt database
 
-Chạy `database/sql_ssms/morningbrew_fullscript.sql` trong SSMS: file tự sao lưu rồi áp dụng `08`–`17`. Giá dùng chung (`09`) lấy `ProductVariants.BasePrice` và `ModifierOptions.ExtraPrice`; **không sửa giá snapshot trên đơn hàng đã tạo.**
+Chạy `database/sql_ssms/morningbrew_fullscript.sql` trong SSMS (chỉ cài mới, 7 script 01–07). Giá bán dùng chung lấy `ProductVariants.BasePrice` và `ModifierOptions.ExtraPrice`; **giá đã chụp trên đơn hàng cũ không bị sửa.** Với database đã có cấu trúc CRM, áp dụng [bản vá thiếu kho 18/11/2026](../database/patches/20261118_zero_stock_shortage.sql) để giữ nguyên dữ liệu; không chạy lại fullscript như một bước nâng cấp.
 
 ## Cấu hình và kiểm thử
 

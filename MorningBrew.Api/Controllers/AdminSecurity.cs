@@ -9,7 +9,7 @@ namespace MorningBrew.Api.Controllers;
 public sealed partial class AdminController
 {
     // Quyền quản trị luôn chỉ thuộc chủ cửa hàng, không sửa qua API.
-    // [CRM-00] bỏ Organization.Manage (quyền thừa từ mô hình nhiều chi nhánh, 16_crm.sql xóa khỏi database)
+    // [CRM-00] bỏ Organization.Manage (quyền thừa từ mô hình nhiều chi nhánh, 06_seed.sql không còn tạo quyền này)
     private static readonly HashSet<string> ProtectedPermissions = ["Security.Manage", "Catalog.Manage"];
     private static readonly string[] InternalRoles = ["Owner", "BranchManager", "Staff"];
 

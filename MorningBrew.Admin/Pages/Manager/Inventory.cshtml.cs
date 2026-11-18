@@ -9,9 +9,10 @@ public class InventoryModel(CrmApi api):WorkspaceBase(api)
 {
     public override string Title=>"Kho nguyên liệu";
     protected override bool Searchable=>true;
-    protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"ingredient","ingredient-update","ingredient-active","stock","recipe","recipe-delete"} /* [WEB-14] */;
+    protected override IReadOnlySet<string> Operations {get;}=new HashSet<string>{"ingredient","ingredient-update","ingredient-active","stock","recipe","recipe-delete","product-stock"} /* [WEB-14] [REV-06] */;
 
     // tab = stock (tồn kho) | history (lịch sử phiếu) | recipes ([WEB-14] định mức nguyên liệu theo size)
+    //       | menu ([REV-06][REV-07] tình trạng món: báo tạm hết / có hàng lại, gợi ý món có nguyên liệu dưới mức tối thiểu)
     [BindProperty(SupportsGet=true)] public string Tab {get;set;}="stock";
     [BindProperty(SupportsGet=true)] public bool Low {get;set;}
     [BindProperty(SupportsGet=true)] public int? IngredientId {get;set;}
@@ -25,6 +26,7 @@ public class InventoryModel(CrmApi api):WorkspaceBase(api)
     public List<Dictionary<string,JsonElement>> VariantOptions {get;set;}=[]; // [WEB-14]
     public bool History=>Tab=="history";
     public bool Recipes=>Tab=="recipes"; // [WEB-14]
+    public bool MenuTab=>Tab=="menu"; // [REV-06]
 
     public static string KindName(string? kind)=>kind switch
     {
@@ -41,7 +43,11 @@ public class InventoryModel(CrmApi api):WorkspaceBase(api)
         SupplierOptions=List(Summary,"supplier_options");
         VariantOptions=List(Summary,"variant_options"); // [WEB-14]
 
-        if(Recipes) // [WEB-14]
+        if(MenuTab) // [REV-06] gộp trang "Thực đơn hôm nay" vào kho
+        {
+            Rows=(await Api.Get<ApiPage>("v1/menu/availability")).Items;
+        }
+        else if(Recipes) // [WEB-14]
         {
             Rows=(await Api.Get<ApiPage>($"v1/inventory/recipes?q={Uri.EscapeDataString(Q??"")}")).Items;
         }
@@ -98,6 +104,8 @@ public class InventoryModel(CrmApi api):WorkspaceBase(api)
             case "recipe": // [WEB-14] đặt định mức (thêm mới hoặc sửa lượng)
                 await Api.Send(HttpMethod.Put,"v1/inventory/recipes",new{variantId=Number("variantId"),ingredientId=Number("ingredientId"),quantity=Money("quantity")});
                 TempData["Success"]="Đã lưu định mức. Đơn hoàn tất từ bây giờ sẽ trừ kho theo định mức này."; break;
+            case "product-stock": // [REV-06] báo tạm hết / có hàng lại (thông báo do WorkspaceBase ghi)
+                await base.ExecuteAsync(operation); break;
             case "recipe-delete": // [WEB-14]
                 await Api.Send(HttpMethod.Delete,$"v1/inventory/recipes/{Number("variantId")}/{Number("ingredientId")}");
                 TempData["Success"]="Đã xóa dòng định mức."; break;

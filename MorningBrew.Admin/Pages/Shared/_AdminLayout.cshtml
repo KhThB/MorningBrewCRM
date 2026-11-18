@@ -22,8 +22,8 @@
         </nav>
         <div class="nav-label">DỮ LIỆU DÙNG CHUNG</div>
         <nav>
-            <a asp-page="/Admin/Products">Sản phẩm &amp; giá</a>
-            <a asp-page="/Admin/Suppliers">Nhà cung cấp</a>
+            @* [REV-09] Sản phẩm & giá chuyển sang Quản lý CRM *@
+            @* [REV-01] Nhà cung cấp chuyển hẳn sang Quản lý CRM (gắn với nhập kho) *@
         </nav>
         <a class="area-switch" href="@(Portals.Manager.BaseUrl + Portals.Manager.Home)" target="_blank" rel="noopener">Mở Quản lý CRM (cổng riêng, đăng nhập riêng) ↗</a> @* [SEP-06] *@
         <a class="side-link" asp-page="/Password">Đổi mật khẩu</a> @* [WEB-05] *@

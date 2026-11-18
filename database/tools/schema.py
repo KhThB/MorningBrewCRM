@@ -36,7 +36,7 @@ t('Permissions','Tài khoản','Tách quyền thao tác khỏi tên vai trò đ�
  idc('PermissionID'),c('Code','varchar(80)','Mã chức năng được backend kiểm tra.','Orders.Manage'),c('Description','nvarchar(250)','Giải thích hành động được cho phép.','Xử lý đơn hàng trong phạm vi phụ trách')],'PermissionID',uniques=['Code'])
 t('RolePermissions','Tài khoản','Liên kết vai trò với các quyền được cấp.',[fk('RoleID','Roles'),fk('PermissionID','Permissions')],'RoleID,PermissionID')
 t('Users','Tài khoản','Thông tin đăng nhập và liên hệ duy nhất, tránh sao chép sang Customers.',[
- idc('UserID'),fk('RoleID','Roles'),c('Email','nvarchar(254)','Email hiển thị và nhận diện đăng nhập.','lan@example.test'),c('NormalizedEmail','nvarchar(254)','Email viết hoa và bỏ khoảng trắng hai đầu; duy nhất không phân biệt hoa thường.','LAN@EXAMPLE.TEST'),c('PasswordHash','varchar(512)','Hash PBKDF2 định dạng ASP.NET PasswordHasher; không lưu mật khẩu thô.','AQAAAAIAAYag...'),c('FullName','nvarchar(120)','Tên nhân viên/khách hàng.','Nguyễn Lan'),c('Phone','varchar(20)','Số điện thoại liên hệ; không duy nhất vì có thể dùng chung.','0901234567',True),flag(),at(),rv()],'UserID',uniques=['NormalizedEmail'],checks=['NormalizedEmail = UPPER(LTRIM(RTRIM(Email)))'])
+ idc('UserID'),fk('RoleID','Roles'),c('Email','nvarchar(254)','Email hiển thị và nhận diện đăng nhập.','lan@example.test'),c('NormalizedEmail','nvarchar(254)','Email viết hoa và bỏ khoảng trắng hai đầu; duy nhất không phân biệt hoa thường.','LAN@EXAMPLE.TEST'),c('PasswordHash','varchar(512)','Hash PBKDF2 định dạng ASP.NET PasswordHasher; không lưu mật khẩu thô.','AQAAAAIAAYag...'),c('FullName','nvarchar(120)','Tên nhân viên/khách hàng.','Nguyễn Lan'),c('Phone','varchar(20)','Số điện thoại liên hệ; không duy nhất vì có thể dùng chung.','0901234567',True),flag(),at(),rv(),at('DeletedAt',True)],'UserID',uniques=['NormalizedEmail'],checks=['NormalizedEmail = UPPER(LTRIM(RTRIM(Email)))'])
 t('UserSessions','Tài khoản','Lưu phiên và hash refresh token để thu hồi đăng nhập từng thiết bị.',[
  idc('SessionID'),fk('UserID','Users'),c('TokenHash','binary(32)','SHA-256 của refresh token ngẫu nhiên; không lưu token có thể dùng trực tiếp.','32 bytes'),c('DeviceName','nvarchar(120)','Nhãn thiết bị cho khách nhận biết phiên.','Android cá nhân',True),at(),c('ExpiresAt','datetime2(3)','Hạn sử dụng UTC bắt buộc; ngăn phiên hoặc voucher tồn tại vô thời hạn.','2027-09-17T03:00:00Z',source='Backend ghi khi cấp phiên/voucher; voucher lấy hạn của chương trình.'),at('RevokedAt',True)],'SessionID',uniques=['TokenHash'],checks=['ExpiresAt IS NOT NULL AND ExpiresAt > CreatedAt','RevokedAt IS NULL OR RevokedAt >= CreatedAt'])
 t('Areas','Tổ chức','Phân vùng chuỗi để giới hạn dữ liệu của quản lý khu vực.',[idc('AreaID'),c('Name','nvarchar(120)','Tên khu vực quản lý.','Khu vực Đông'),flag()],'AreaID',uniques=['Name'])
@@ -102,6 +102,24 @@ t('Notifications','CRM','Hộp thông báo trong app; chưa tích hợp push/SMS
 t('AuditLogs','Tài khoản','Nhật ký ai làm gì; không ghi mật khẩu, refresh token hoặc bí mật thanh toán.',[
  idc('AuditID'),c('ActorID','int','Tài khoản thao tác; NULL cho hệ thống.',1,True,ref='Users.UserID'),fk('BranchID','Branches',True),c('Action','varchar(80)','Tên hành động để tìm kiếm sự cố.','Order.Cancel'),c('EntityType','varchar(60)','Loại đối tượng bị tác động.','Orders'),c('EntityID','int','Mã đối tượng; kết hợp EntityType, không phải FK đa hình.',1,True),c('Details','nvarchar(4000)','Thông tin nghiệp vụ đã loại bỏ dữ liệu bí mật.','Khách yêu cầu hủy',True),at()],'AuditID')
 
+# [GOP-01] 5 bảng trước đây tạo ở script nâng cấp (08 Suppliers, 14 Ingredients + InventoryTransactions, 15 RecipeItems, 17 MemberTiers).
+t('Suppliers','Kho','Danh bạ nhà cung cấp nguyên liệu.',[
+ idc('SupplierID'),c('Code','varchar(30)','Mã nhà cung cấp dạng chữ.','NCC-CF01'),c('Name','nvarchar(150)','Tên nhà cung cấp.','Công ty TNHH Cà phê Cầu Đất'),c('Phone','varchar(20)','Số điện thoại liên hệ.','0263 3812 456',True),c('Email','nvarchar(254)','Email liên hệ.','kinhdoanh@caudatcoffee.test',True),c('ProductGroup','nvarchar(150)','Nhóm hàng cung cấp.','Cà phê hạt',True),flag()],'SupplierID',uniques=['Code'])
+t('Ingredients','Kho','Nguyên liệu và tồn kho hiện tại; chỉ thay đổi qua phiếu kho.',[
+ idc('IngredientID'),fk('SupplierID','Suppliers',True,'Nhà cung cấp chính của nguyên liệu.'),c('Code','varchar(30)','Mã nguyên liệu.','NL-CF01'),c('Name','nvarchar(150)','Tên nguyên liệu.','Cà phê Robusta'),c('Unit','nvarchar(20)','Đơn vị tính.','kg'),
+ c('Quantity','decimal(18,3)','Tồn kho hiện tại.','13.500',default='0'),c('MinStock','decimal(18,3)','Mức tồn tối thiểu; dưới mức này cảnh báo sắp hết.','5.000',default='0'),c('LastUnitCost','decimal(18,2)','Đơn giá lần nhập gần nhất.','180000',True),flag(),at('StockUpdatedAt',True),at()],'IngredientID',uniques=['Code'],
+ checks=['[Quantity]  >= 0','[MinStock]  >= 0','[LastUnitCost] IS NULL OR [LastUnitCost] >= 0'])
+t('InventoryTransactions','Kho','Phiếu nhập / xuất / hủy / kiểm kê; chỉ thêm, trigger chặn sửa và xóa.',[
+ idc('TransactionID'),fk('IngredientID','Ingredients'),fk('SupplierID','Suppliers',True,'Nhà cung cấp; chỉ có ở phiếu nhập.'),c('ActorID','int','Người lập phiếu; NULL khi hệ thống tự trừ kho lúc đơn hoàn tất.',2,True,ref='Users.UserID'),
+ c('Kind','varchar(10)','Loại phiếu: Import / Export / Waste / Adjust.','Import'),c('QuantityChange','decimal(18,3)','Lượng thay đổi: nhập > 0, xuất / hủy < 0; xuất tự động khi tồn đã bằng 0 ghi 0 kèm lượng thiếu cần kiểm kê.','5.000'),c('BalanceAfter','decimal(18,3)','Tồn kho sau phiếu.','17.500'),c('UnitCost','decimal(18,2)','Đơn giá (chỉ phiếu nhập).','180000',True),
+ c('TotalCost',"AS CASE WHEN [Kind]='Import' AND [UnitCost] IS NOT NULL THEN ABS([QuantityChange])*[UnitCost] ELSE NULL END",'Thành tiền phiếu nhập (cột tính).','900000'),c('Note','nvarchar(300)','Ghi chú phiếu.','Nhập kho',True),at()],'TransactionID',
+ checks=["[Kind] IN ('Import','Export','Waste','Adjust')",'[BalanceAfter] >= 0','[UnitCost] IS NULL OR [UnitCost] >= 0',"[Kind] <> 'Import' OR [QuantityChange] > 0","[Kind] NOT IN ('Export','Waste') OR [QuantityChange] < 0 OR ([Kind]='Export' AND [QuantityChange]=0 AND [BalanceAfter]=0 AND [ActorID] IS NULL AND [Note] IS NOT NULL AND [Note] LIKE N'Bán hàng%thiếu%kiểm kê%')"])
+t('RecipeItems','Kho','Định mức nguyên liệu cho từng size món; dùng để tự trừ kho khi đơn hoàn tất.',[
+ fk('VariantID','ProductVariants',why='Size của món.'),fk('IngredientID','Ingredients',why='Nguyên liệu dùng.'),c('Quantity','decimal(18,3)','Lượng dùng cho 1 phần, theo đơn vị của nguyên liệu.','0.020')],'VariantID,IngredientID',checks=['[Quantity] > 0'])
+t('MemberTiers','CRM','Hạng thành viên theo chi tiêu 12 tháng; hạng của từng khách tính qua view CustomerTiers.',[
+ idc('TierID'),c('Code','varchar(20)','Mã hạng cố định, dùng để lọc.','Silver'),c('Name','nvarchar(50)','Tên hạng hiển thị.','Bạc'),c('MinSpent','decimal(18,2)','Chi tiêu 12 tháng tối thiểu để đạt hạng.','1000000'),c('Benefit','nvarchar(300)','Mô tả quyền lợi.','Ưu tiên nhận voucher riêng hạng Bạc.',True),at()],'TierID',
+ uniques=['Code','Name','MinSpent'],checks=['[MinSpent] >= 0'])
+
 EXTRA_FKS = [
  ('BranchProductVariants','BranchID,ProductID','BranchProducts','BranchID,ProductID'),
  ('BranchProductVariants','VariantID,ProductID','ProductVariants','VariantID,ProductID'),
@@ -128,18 +146,21 @@ INDEXES = [
  ('OrderDetails','OrderID','',''),('OrderStatusHistory','OrderID,CreatedAt','',''),
  ('Feedbacks','BranchID,Status,CreatedAt','',''),('SurveyRecipients','CustomerID,CompletedAt','',''),
  ('Notifications','UserID,ReadAt,CreatedAt','',''),('AuditLogs','BranchID,CreatedAt','',''),
- ('UserSessions','UserID,ExpiresAt','',''),('Customers','DateOfBirth,Gender','','')]
+ ('UserSessions','UserID,ExpiresAt','',''),('Customers','DateOfBirth,Gender','',''),
+ # [GOP-01] index của 14_inventory, 15_web_admin, 16_crm
+ ('Ingredients','[IsActive],[Name]','',''),('InventoryTransactions','[IngredientID],[CreatedAt] DESC','',''),('InventoryTransactions','[CreatedAt] DESC','',''),
+ ('RecipeItems','[IngredientID]','',''),('Users','Phone','','','IX_Users_Phone')]
 
 def generate():
-    assert len(TABLES)==40 and sum(not x['original'] for x in TABLES)==20 # [AREA-01] 41 → 40 (bỏ AreaManagers)
+    assert len(TABLES)==45 and sum(not x['original'] for x in TABLES)==25 # [AREA-01] bỏ AreaManagers; [GOP-01] +5 bảng của 08, 14, 15, 17
     (ROOT/'sql').mkdir(parents=True,exist_ok=True)
     (ROOT/'docs').mkdir(exist_ok=True)
-    sql=['-- Generated by tools/schema.py. SQL Server 2022+. Run only in a NEW empty database.\n-- [AREA-01] Không còn vai trò / bảng AreaManager (mô hình một cửa hàng).',
+    sql=['-- Generated by tools/schema.py. SQL Server 2022+. Run only in a NEW empty database.\n-- [AREA-01] Không còn vai trò / bảng AreaManager (mô hình một cửa hàng).\n-- [GOP-01] Đủ 45 bảng: gộp các bảng / cột / index trước đây thêm ở script nâng cấp 08, 10, 14, 15, 16, 17.',
          'SET NOCOUNT ON; SET XACT_ABORT ON; SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON;','IF EXISTS (SELECT 1 FROM sys.tables) THROW 51000, N\'Database must be empty; no objects were changed.\', 1;','BEGIN TRANSACTION;']
     for tab in TABLES:
         name=tab['name']; lines=[]
         for col in tab['columns']:
-            line=f"    [{col['name']}] {col['type']} {'NULL' if col['nullable'] else 'NOT NULL'}"
+            line=f"    [{col['name']}] {col['type']}" if col['type'].startswith('AS ') else f"    [{col['name']}] {col['type']} {'NULL' if col['nullable'] else 'NOT NULL'}" # [GOP-01] cột tính
             if col['default'] is not None: line+=f" CONSTRAINT [DF_{name}_{col['name']}] DEFAULT ({col['default']})"
             lines.append(line)
         lines.append(f"    CONSTRAINT [PK_{name}] PRIMARY KEY ({','.join('['+x+']' for x in tab['pk'])})")
@@ -152,7 +173,7 @@ def generate():
                 dest, key=col['ref'].split('.')
                 sql.append(f"ALTER TABLE dbo.[{tab['name']}] ADD CONSTRAINT [FK_{tab['name']}_{col['name']}] FOREIGN KEY ([{col['name']}]) REFERENCES dbo.[{dest}]([{key}]);")
     for i,(src,cols,dest,keys) in enumerate(EXTRA_FKS): sql.append(f'ALTER TABLE dbo.[{src}] ADD CONSTRAINT FK_Composite_{i} FOREIGN KEY ({cols}) REFERENCES dbo.[{dest}]({keys});')
-    for i,(tab,cols,unique,where) in enumerate(INDEXES): sql.append(f"CREATE {unique} INDEX IX_{tab}_{i} ON dbo.[{tab}]({cols})"+(f' WHERE {where}' if where else '')+';')
+    for i,(tab,cols,unique,where,*name) in enumerate(INDEXES): sql.append(f"CREATE {unique} INDEX {name[0] if name else f'IX_{tab}_{i}'} ON dbo.[{tab}]({cols})"+(f' WHERE {where}' if where else '')+';') # [GOP-01] cho phép đặt tên index
     sql.extend(['COMMIT;','GO'])
     (ROOT/'sql/01_schema.sql').write_text('\n\n'.join(sql),encoding='utf-8')
     (ROOT/'docs/schema.json').write_text(json.dumps(dict(tables=TABLES,extra_foreign_keys=EXTRA_FKS,indexes=INDEXES),ensure_ascii=False,indent=2),encoding='utf-8')

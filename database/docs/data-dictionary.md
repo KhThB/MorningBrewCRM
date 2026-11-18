@@ -724,7 +724,7 @@ Kho • Bảng bổ sung. Phiếu nhập / xuất / hủy / kiểm kê; chỉ th
 | SupplierID<br>int | Được trống<br>FK → Suppliers.<br>SupplierID | Nhà cung cấp; chỉ có ở phiếu nhập.<br>Ví dụ: 1 |
 | ActorID<br>int | Được trống<br>FK → Users.<br>UserID | Người lập phiếu; trống khi hệ thống tự trừ kho lúc đơn hoàn tất.<br>Ví dụ: 2 |
 | Kind<br>varchar(10) | Bắt buộc<br>CHECK Import / Export / Waste / Adjust | Loại phiếu: nhập, xuất dùng, hủy, kiểm kê.<br>Ví dụ: Import |
-| QuantityChange<br>decimal(18,3) | Bắt buộc | Lượng thay đổi: nhập > 0, xuất / hủy < 0, kiểm kê ±.<br>Ví dụ: 5.000 |
+| QuantityChange<br>decimal(18,3) | Bắt buộc | Lượng thay đổi: nhập > 0, xuất / hủy < 0, kiểm kê ±. Riêng xuất tự động khi tồn đã bằng 0 ghi 0, ActorID trống, BalanceAfter = 0 và ghi chú lượng thiếu cần kiểm kê.<br>Ví dụ: 5.000 |
 | BalanceAfter<br>decimal(18,3) | Bắt buộc<br>CHECK ≥ 0 | Tồn kho sau phiếu, để đối chiếu lịch sử.<br>Ví dụ: 17.500 |
 | UnitCost<br>decimal(18,2) | Được trống<br>CHECK ≥ 0 | Đơn giá; chỉ có ở phiếu nhập.<br>Ví dụ: 180000 |
 | TotalCost<br>(cột tính) | SQL tự tính | = |QuantityChange| × UnitCost khi Kind = Import, còn lại NULL.<br>Ví dụ: 900000 |

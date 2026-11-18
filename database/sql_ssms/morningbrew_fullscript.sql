@@ -713,7 +713,7 @@ CREATE TABLE dbo.[InventoryTransactions] (
     CONSTRAINT [CK_InventoryTransactions_1] CHECK ([BalanceAfter] >= 0),
     CONSTRAINT [CK_InventoryTransactions_2] CHECK ([UnitCost] IS NULL OR [UnitCost] >= 0),
     CONSTRAINT [CK_InventoryTransactions_3] CHECK ([Kind] <> 'Import' OR [QuantityChange] > 0),
-    CONSTRAINT [CK_InventoryTransactions_4] CHECK ([Kind] NOT IN ('Export','Waste') OR [QuantityChange] < 0)
+    CONSTRAINT [CK_InventoryTransactions_4] CHECK ([Kind] NOT IN ('Export','Waste') OR [QuantityChange] < 0 OR ([Kind]='Export' AND [QuantityChange]=0 AND [BalanceAfter]=0 AND [ActorID] IS NULL AND [Note] IS NOT NULL AND [Note] LIKE N'Bán hàng%thiếu%kiểm kê%'))
 );
 
 CREATE TABLE dbo.[RecipeItems] (
@@ -1348,7 +1348,9 @@ BEGIN
     INSERT dbo.InventoryTransactions(IngredientID,ActorID,Kind,QuantityChange,BalanceAfter,Note)
     SELECT IngredientID,NULL,'Export',Delta,Balance,
            CONCAT(@note,CASE WHEN Short>0 THEN CONCAT(N' (thiếu ',FORMAT(Short,'0.###','vi-VN'),N' – cần kiểm kê)') END)
-    FROM @moved WHERE Delta<0;
+    -- Tồn đã bằng 0 vẫn cần phiếu tự động ghi lượng thiếu; không tạo biến động kho giả.
+    -- CHECK của InventoryTransactions chỉ cho phép Export=0 khi là phiếu thiếu kho tự động.
+    FROM @moved WHERE Delta<0 OR Short>0;
 END;
 GO
 IF @@ERROR <> 0

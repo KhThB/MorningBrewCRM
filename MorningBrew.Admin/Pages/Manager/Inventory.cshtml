@@ -88,7 +88,7 @@
         @foreach(var r in Model.Rows)
         {
             var inStock=r["in_stock"].ValueKind==JsonValueKind.True; var low=T(r,"low_ingredients");
-            <tr><td>@T(r,"category")</td><td><b>@T(r,"name")</b></td>
+            <tr><td>@T(r,"category")</td><td><b>@T(r,"display_name")</b></td>
                 <td><span class="badge @(inStock?"ok":"bad")">@(inStock?"Còn hàng":"Tạm hết")</span></td>
                 <td>@if(low!=""){<span class="badge warn">Sắp hết</span> <small>@low</small>}else{<span class="muted">—</span>}</td>
                 <td class="actions-col"><form method="post" class="inline-form"><input type="hidden" name="operation" value="product-stock"><input type="hidden" name="tab" value="menu"><input type="hidden" name="id" value="@T(r,"product_id")"><input type="hidden" name="available" value="@(inStock?"false":"true")"><button class="btn-sm @(inStock?"danger-text":null)">@(inStock?"Báo tạm hết":"Có hàng lại")</button></form></td></tr>

@@ -59,6 +59,39 @@ BEGIN TRY
     BEGIN SET @pass+=1; PRINT N'PASS TC-SQL-03 Thiếu nguyên liệu → đơn vẫn hoàn tất, tồn về 0, ghi chú "thiếu 0,05 – cần kiểm kê"'; END
     ELSE BEGIN SET @fail+=1; PRINT N'FAIL TC-SQL-03 Xử lý thiếu nguyên liệu chưa đúng'; END
 
+    -- TC-SQL-03b: tồn ban đầu bằng 0 vẫn phải ghi thiếu, không trừ âm hoặc ghi trùng khi gọi lại.
+    SET @key=NEWID(); INSERT @r EXEC dbo.CreateOrder @ActorID=@staff,@BranchID=@branch,@Source='POS',@Fulfillment='Pickup',@PaymentMode='COD',@Items=@items,@RequestKey=@key;
+    SELECT @order=ID FROM @r; DELETE @r;
+    SET @key=NEWID(); INSERT @r EXEC dbo.StartPayment @staff,@order,@key; SELECT @payment=ID FROM @r; DELETE @r;
+    EXEC dbo.SimulatePayment @staff,@payment,'Succeeded';
+    EXEC dbo.AdvanceOrder @staff,@order,'Confirmed'; EXEC dbo.AdvanceOrder @staff,@order,'Preparing'; EXEC dbo.AdvanceOrder @staff,@order,'Ready';
+    EXEC dbo.AdvanceOrder @staff,@order,'Completed'; EXEC dbo.AdvanceOrder @staff,@order,'Completed';
+    SELECT @code=OrderCode FROM dbo.Orders WHERE OrderID=@order;
+    IF (SELECT Status FROM dbo.Orders WHERE OrderID=@order)='Completed' AND (SELECT Quantity FROM dbo.Ingredients WHERE IngredientID=@bk02)=0
+       AND (SELECT COUNT(*) FROM dbo.InventoryTransactions WHERE IngredientID=@bk02 AND Note LIKE N'%'+@code+N'%')=1
+       AND EXISTS(SELECT 1 FROM dbo.InventoryTransactions WHERE IngredientID=@bk02 AND Kind='Export' AND ActorID IS NULL
+           AND QuantityChange=0 AND BalanceAfter=0 AND Note LIKE N'%'+@code+N'%thiếu 0,06%kiểm kê%')
+    BEGIN SET @pass+=1; PRINT N'PASS TC-SQL-03b Tồn bằng 0 → ghi thiếu tự động đúng một lần, tồn không âm'; END
+    ELSE BEGIN SET @fail+=1; PRINT N'FAIL TC-SQL-03b Mất hoặc trùng phiếu thiếu kho khi tồn bằng 0'; END;
+
+    -- TC-SQL-03c: ngoại lệ chỉ cho phiếu thiếu tự động, không nới kiểm tra xuất / hủy thủ công.
+    DECLARE @guard int=0,@guardErrors int=0;
+    WHILE @guard<4
+    BEGIN
+        BEGIN TRY
+            INSERT dbo.InventoryTransactions(IngredientID,ActorID,Kind,QuantityChange,BalanceAfter,Note)
+            VALUES(@bk02,CASE WHEN @guard=0 THEN @staff END,CASE WHEN @guard=1 THEN 'Waste' ELSE 'Export' END,
+                CASE WHEN @guard=3 THEN 1 ELSE 0 END,0,
+                CASE WHEN @guard<>2 THEN CONCAT(N'Bán hàng – đơn ',@code,N' (thiếu 0,06 – cần kiểm kê)') END);
+        END TRY
+        BEGIN CATCH
+            IF ERROR_NUMBER()=547 SET @guardErrors+=1; ELSE THROW;
+        END CATCH;
+        SET @guard+=1;
+    END;
+    IF @guardErrors=4 BEGIN SET @pass+=1; PRINT N'PASS TC-SQL-03c Vẫn chặn xuất thủ công 0, hủy 0, xuất 0 thiếu ghi chú và xuất dương'; END
+    ELSE BEGIN SET @fail+=1; PRINT N'FAIL TC-SQL-03c Ràng buộc số lượng phiếu kho bị nới quá rộng'; END;
+
     -- TC-SQL-04/05: giao hàng chưa thành công / giao lại → thông báo cho khách
     SET @items=CONCAT(N'[{"variantId":',@cake,N',"quantity":1}]');
     SET @key=NEWID(); INSERT @r EXEC dbo.CreateOrder @ActorID=@minhUser,@BranchID=@branch,@Source='App',@Fulfillment='Delivery',@PaymentMode='COD',@Items=@items,@RequestKey=@key,@CustomerID=@minh,@AddressID=@minhAddress;

@@ -199,7 +199,9 @@ BEGIN
     INSERT dbo.InventoryTransactions(IngredientID,ActorID,Kind,QuantityChange,BalanceAfter,Note)
     SELECT IngredientID,NULL,'Export',Delta,Balance,
            CONCAT(@note,CASE WHEN Short>0 THEN CONCAT(N' (thiếu ',FORMAT(Short,'0.###','vi-VN'),N' – cần kiểm kê)') END)
-    FROM @moved WHERE Delta<0;
+    -- Tồn đã bằng 0 vẫn cần phiếu tự động ghi lượng thiếu; không tạo biến động kho giả.
+    -- CHECK của InventoryTransactions chỉ cho phép Export=0 khi là phiếu thiếu kho tự động.
+    FROM @moved WHERE Delta<0 OR Short>0;
 END;
 GO
 -- ===== [CRM-08] Một SĐT chỉ thuộc một khách hàng chưa xóa =====

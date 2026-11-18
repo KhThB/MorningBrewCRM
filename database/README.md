@@ -18,6 +18,14 @@ trong file và sửa `ConnectionStrings:MorningBrew` của API.
 
 Chạy lẻ từng script (thay cho fullscript): tạo database trống, chọn database đó ở ô database (không để `master`) rồi chạy lần lượt 01 → 07.
 
+## Bản vá thiếu kho ngày 18/11/2026 cho database đang dùng
+
+Chọn đúng database CRM trong SSMS rồi chạy [patches/20261118_zero_stock_shortage.sql](patches/20261118_zero_stock_shortage.sql).
+Bản vá chỉ cập nhật CHECK của phiếu kho và trigger tự trừ kho trong một giao dịch, không xóa hay tạo lại dữ liệu; có thể chạy lại.
+Khi tồn đã bằng 0, đơn vẫn hoàn tất và có phiếu Xuất dùng tự động với thay đổi 0, kèm lượng thiếu cần kiểm kê.
+Phiếu xuất/hủy thủ công vẫn phải có lượng thay đổi âm. Bản vá không khôi phục ghi chú thiếu của các đơn cũ đã hoàn tất.
+Cài mới bằng fullscript đã có sẵn sửa này, không cần chạy thêm bản vá.
+
 ## Thứ tự script (`database/sql`)
 
 Bảy file, chạy đúng thứ tự trên database trống. [GOP-01] Ngày 17/11/2026 các script nâng cấp 08–17 đã được gộp vào 01–07

@@ -4130,7 +4130,7 @@
         {
           "name": "QuantityChange",
           "type": "decimal(18,3)",
-          "why": "Lượng thay đổi: nhập > 0, xuất / hủy < 0.",
+          "why": "Lượng thay đổi: nhập > 0, xuất / hủy < 0; xuất tự động khi tồn đã bằng 0 ghi 0 kèm lượng thiếu cần kiểm kê.",
           "example": "5.000",
           "nullable": false,
           "default": null,
@@ -4196,7 +4196,7 @@
         "[BalanceAfter] >= 0",
         "[UnitCost] IS NULL OR [UnitCost] >= 0",
         "[Kind] <> 'Import' OR [QuantityChange] > 0",
-        "[Kind] NOT IN ('Export','Waste') OR [QuantityChange] < 0"
+        "[Kind] NOT IN ('Export','Waste') OR [QuantityChange] < 0 OR ([Kind]='Export' AND [QuantityChange]=0 AND [BalanceAfter]=0 AND [ActorID] IS NULL AND [Note] IS NOT NULL AND [Note] LIKE N'Bán hàng%thiếu%kiểm kê%')"
       ],
       "uniques": [],
       "original": false

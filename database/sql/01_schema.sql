@@ -626,7 +626,7 @@ CREATE TABLE dbo.[InventoryTransactions] (
     CONSTRAINT [CK_InventoryTransactions_1] CHECK ([BalanceAfter] >= 0),
     CONSTRAINT [CK_InventoryTransactions_2] CHECK ([UnitCost] IS NULL OR [UnitCost] >= 0),
     CONSTRAINT [CK_InventoryTransactions_3] CHECK ([Kind] <> 'Import' OR [QuantityChange] > 0),
-    CONSTRAINT [CK_InventoryTransactions_4] CHECK ([Kind] NOT IN ('Export','Waste') OR [QuantityChange] < 0)
+    CONSTRAINT [CK_InventoryTransactions_4] CHECK ([Kind] NOT IN ('Export','Waste') OR [QuantityChange] < 0 OR ([Kind]='Export' AND [QuantityChange]=0 AND [BalanceAfter]=0 AND [ActorID] IS NULL AND [Note] IS NOT NULL AND [Note] LIKE N'Bán hàng%thiếu%kiểm kê%'))
 );
 
 CREATE TABLE dbo.[RecipeItems] (

@@ -137,7 +137,7 @@ Lỗi validation, JSON sai, xác thực, routing và rate limit dùng cùng enve
 
 ## Cài đặt database
 
-Chạy `database/sql_ssms/morningbrew_fullscript.sql` trong SSMS (chỉ cài mới, 7 script 01–07). Giá bán dùng chung lấy `ProductVariants.BasePrice` và `ModifierOptions.ExtraPrice`; **giá đã chụp trên đơn hàng cũ không bị sửa.**
+Chạy `database/sql_ssms/morningbrew_fullscript.sql` trong SSMS (chỉ cài mới, 7 script 01–07). Giá bán dùng chung lấy `ProductVariants.BasePrice` và `ModifierOptions.ExtraPrice`; **giá đã chụp trên đơn hàng cũ không bị sửa.** Với database đã có cấu trúc CRM, áp dụng [bản vá thiếu kho 18/11/2026](../database/patches/20261118_zero_stock_shortage.sql) để giữ nguyên dữ liệu; không chạy lại fullscript như một bước nâng cấp.
 
 ## Cấu hình và kiểm thử
 

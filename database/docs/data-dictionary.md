@@ -731,7 +731,7 @@ Kho • Bảng bổ sung. Phiếu nhập / xuất / hủy / kiểm kê; chỉ th
 | Note<br>nvarchar(300) | Được trống | Ghi chú phiếu.<br>Ví dụ: Xuất dùng cho đơn MB261115-0003 |
 | CreatedAt<br>datetime2(3) | Bắt buộc<br>Mặc định: SYSUTCDATETIME() | Thời điểm UTC lập phiếu.<br>Ví dụ: 2026-11-15T03:00:00Z |
 - CHECK Kind IN ('Import','Export','Waste','Adjust')
-- CHECK BalanceAfter >= 0; Import thì QuantityChange > 0; Export/Waste thì QuantityChange < 0
+- CHECK BalanceAfter >= 0; Import thì QuantityChange > 0; Export/Waste thì QuantityChange < 0. Ngoại lệ: Export tự động được ghi 0 khi ActorID trống, BalanceAfter = 0 và Note có nội dung bán hàng, lượng thiếu, cần kiểm kê.
 
 ## 44. RecipeItems
 Kho • Bảng bổ sung. Định mức nguyên liệu cho từng size món; trigger `TR_Orders_Inventory` dùng để tự trừ kho khi đơn hoàn tất.
